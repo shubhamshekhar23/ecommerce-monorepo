@@ -5,23 +5,16 @@ import helmet from 'helmet';
 import compression from 'compression';
 import { AppModule } from './app.module';
 
-async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule);
-  const port = process.env.PORT ?? 3000;
-
-  // Security: Helmet middleware
+function setupMiddleware(app: any): void {
   app.use(helmet());
-
-  // Compression middleware
   app.use(compression());
-
-  // CORS configuration
   app.enableCors({
     origin: process.env.CORS_ORIGIN?.split(',') ?? 'http://localhost:3000',
     credentials: true,
   });
+}
 
-  // Global validation pipe
+function setupPipes(app: any): void {
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -32,11 +25,9 @@ async function bootstrap(): Promise<void> {
       },
     }),
   );
+}
 
-  // API prefix
-  app.setGlobalPrefix(process.env.API_PREFIX ?? 'api');
-
-  // Swagger documentation
+function setupSwagger(app: any): void {
   const config = new DocumentBuilder()
     .setTitle('E-Commerce Backend API')
     .setDescription('RESTful API for e-commerce platform')
@@ -45,13 +36,26 @@ async function bootstrap(): Promise<void> {
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
+}
+
+async function bootstrap(): Promise<void> {
+  const app = await NestFactory.create(AppModule);
+  const port = process.env.PORT ?? 3000;
+
+  setupMiddleware(app);
+  setupPipes(app);
+  app.setGlobalPrefix(process.env.API_PREFIX ?? 'api');
+  setupSwagger(app);
 
   await app.listen(port);
+  // eslint-disable-next-line no-console
   console.log(`✅ Application started on http://localhost:${port}`);
+  // eslint-disable-next-line no-console
   console.log(`📚 API Documentation: http://localhost:${port}/api/docs`);
 }
 
 bootstrap().catch((error) => {
+  // eslint-disable-next-line no-console
   console.error('❌ Failed to start application:', error);
   process.exit(1);
 });
