@@ -1,5 +1,10 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
+import { PrismaModule } from '@/modules/prisma/prisma.module';
+import { UsersModule } from '@/modules/users/users.module';
+import { AuthModule } from '@/modules/auth/auth.module';
+import { JwtAuthGuard, RolesGuard } from '@/common/guards';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -9,8 +14,21 @@ import { AppService } from './app.service';
       isGlobal: true,
       envFilePath: ['.env', '.env.local'],
     }),
+    PrismaModule,
+    AuthModule,
+    UsersModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
+  ],
 })
 export class AppModule {}
