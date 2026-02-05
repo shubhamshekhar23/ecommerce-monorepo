@@ -11,6 +11,8 @@ import { OrdersModule } from '@/modules/orders/orders.module';
 import { StripeModule } from '@/modules/stripe/stripe.module';
 import { MailModule } from '@/modules/mail/mail.module';
 import { UploadModule } from '@/modules/upload/upload.module';
+import { LoggerModule } from '@/modules/logger/logger.module';
+import { HealthModule } from '@/modules/health/health.module';
 import { JwtAuthGuard, RolesGuard } from '@/common/guards';
 import { HttpExceptionFilter } from '@/common/filters/http-exception.filter';
 import { AppController } from './app.controller';
@@ -22,6 +24,7 @@ import { AppService } from './app.service';
       isGlobal: true,
       envFilePath: ['.env', '.env.local'],
     }),
+    LoggerModule,
     PrismaModule,
     AuthModule,
     UsersModule,
@@ -32,6 +35,7 @@ import { AppService } from './app.service';
     StripeModule,
     MailModule,
     UploadModule,
+    HealthModule,
   ],
   controllers: [AppController],
   providers: [
