@@ -13,6 +13,7 @@ import { MailModule } from '@/modules/mail/mail.module';
 import { UploadModule } from '@/modules/upload/upload.module';
 import { LoggerModule } from '@/modules/logger/logger.module';
 import { HealthModule } from '@/modules/health/health.module';
+import { MetricsModule } from '@/modules/metrics/metrics.module';
 import { JwtAuthGuard, RolesGuard } from '@/common/guards';
 import { HttpExceptionFilter } from '@/common/filters/http-exception.filter';
 import { AppController } from './app.controller';
@@ -36,6 +37,7 @@ import { AppService } from './app.service';
     MailModule,
     UploadModule,
     HealthModule,
+    MetricsModule,
   ],
   controllers: [AppController],
   providers: [
