@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import * as express from 'express';
 import helmet from 'helmet';
 import compression from 'compression';
 import { AppModule } from './app.module';
@@ -41,6 +42,9 @@ function setupSwagger(app: any): void {
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
   const port = process.env.PORT ?? 3000;
+
+  // Configure raw body parser for Stripe webhook before other middleware
+  app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 
   setupMiddleware(app);
   setupPipes(app);

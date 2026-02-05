@@ -29,6 +29,15 @@ enum OrderStatus {
   REFUNDED
 }
 
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+  CANCELED
+}
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
@@ -141,19 +150,23 @@ model CartItem {
 }
 
 model Order {
-  id          String      @id @default(cuid())
-  orderNumber String      @unique
-  userId      String
-  user        User        @relation(fields: [userId], references: [id], onDelete: Restrict)
-  items       OrderItem[]
-  totalPrice  Decimal     @db.Decimal(10, 2)
-  status      OrderStatus @default(PENDING)
-  notes       String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id              String         @id @default(cuid())
+  orderNumber     String         @unique
+  userId          String
+  user            User           @relation(fields: [userId], references: [id], onDelete: Restrict)
+  items           OrderItem[]
+  totalPrice      Decimal        @db.Decimal(10, 2)
+  status          OrderStatus    @default(PENDING)
+  paymentIntentId String?        @unique
+  paymentStatus   PaymentStatus  @default(PENDING)
+  paidAt          DateTime?
+  notes           String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 
   @@index([userId])
   @@index([status])
+  @@index([paymentStatus])
 }
 
 model OrderItem {

@@ -8,6 +8,7 @@ import { CategoriesModule } from '@/modules/categories/categories.module';
 import { ProductsModule } from '@/modules/products/products.module';
 import { CartModule } from '@/modules/cart/cart.module';
 import { OrdersModule } from '@/modules/orders/orders.module';
+import { StripeModule } from '@/modules/stripe/stripe.module';
 import { JwtAuthGuard, RolesGuard } from '@/common/guards';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -25,6 +26,7 @@ import { AppService } from './app.service';
     ProductsModule,
     CartModule,
     OrdersModule,
+    StripeModule,
   ],
   controllers: [AppController],
   providers: [

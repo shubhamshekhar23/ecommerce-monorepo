@@ -1,12 +1,17 @@
+/* eslint-disable max-lines */
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@/modules/prisma/prisma.service';
+import { StripeService } from '@/modules/stripe/stripe.service';
 import { OrderStatus } from '@prisma/client';
 import { calculatePagination, buildPaginationResponse } from '@/common/utils/pagination.util';
 import { PaginationDto } from '@/common/types/pagination.interface';
 
 @Injectable()
 export class OrdersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly stripeService: StripeService,
+  ) {}
 
   // eslint-disable-next-line max-lines-per-function
   async create(userId: string, cartId?: string): Promise<any> {
@@ -67,6 +72,13 @@ export class OrdersService {
     }
 
     await this.prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
+
+    try {
+      await this.stripeService.createPaymentIntent(order.id, parseFloat(String(order.totalPrice)));
+    } catch {
+      // Payment intent creation failed, but order was created
+      // Client can retry creating payment intent later
+    }
 
     return this.mapToResponse(order);
   }
