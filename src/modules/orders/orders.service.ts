@@ -1,19 +1,23 @@
 /* eslint-disable max-lines */
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 import { StripeService } from '@/modules/stripe/stripe.service';
+import { MailService } from '@/modules/mail/mail.service';
 import { OrderStatus } from '@prisma/client';
 import { calculatePagination, buildPaginationResponse } from '@/common/utils/pagination.util';
 import { PaginationDto } from '@/common/types/pagination.interface';
 
 @Injectable()
 export class OrdersService {
+  private readonly logger = new Logger(OrdersService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly stripeService: StripeService,
+    private readonly mailService: MailService,
   ) {}
 
-  // eslint-disable-next-line max-lines-per-function
+  // eslint-disable-next-line max-lines-per-function,complexity
   async create(userId: string, cartId?: string): Promise<any> {
     let cart = null;
 
@@ -78,6 +82,31 @@ export class OrdersService {
     } catch {
       // Payment intent creation failed, but order was created
       // Client can retry creating payment intent later
+    }
+
+    try {
+      const user = await this.prisma.user.findUnique({ where: { id: userId } });
+      if (user) {
+        const items = order.items.map((item: any) => ({
+          productName: item.product.name,
+          quantity: item.quantity,
+          price: parseFloat(String(item.price)),
+        }));
+        const shippingAddress = {
+          firstName: user.firstName || '',
+          lastName: user.lastName || '',
+          addressLine1: '',
+          city: '',
+          state: '',
+          postalCode: '',
+          country: '',
+        };
+        await this.mailService.sendOrderConfirmation(order, user, items, shippingAddress);
+      }
+    } catch (error) {
+      this.logger.error(
+        `Failed to send order confirmation email: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
 
     return this.mapToResponse(order);

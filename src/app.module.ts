@@ -9,6 +9,8 @@ import { ProductsModule } from '@/modules/products/products.module';
 import { CartModule } from '@/modules/cart/cart.module';
 import { OrdersModule } from '@/modules/orders/orders.module';
 import { StripeModule } from '@/modules/stripe/stripe.module';
+import { MailModule } from '@/modules/mail/mail.module';
+import { UploadModule } from '@/modules/upload/upload.module';
 import { JwtAuthGuard, RolesGuard } from '@/common/guards';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -27,6 +29,8 @@ import { AppService } from './app.service';
     CartModule,
     OrdersModule,
     StripeModule,
+    MailModule,
+    UploadModule,
   ],
   controllers: [AppController],
   providers: [

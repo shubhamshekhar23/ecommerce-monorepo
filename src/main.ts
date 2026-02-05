@@ -1,9 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import * as express from 'express';
 import helmet from 'helmet';
 import compression from 'compression';
+import { join } from 'path';
 import { AppModule } from './app.module';
 
 function setupMiddleware(app: any): void {
@@ -40,7 +42,7 @@ function setupSwagger(app: any): void {
 }
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const port = process.env.PORT ?? 3000;
 
   // Configure raw body parser for Stripe webhook before other middleware
@@ -49,6 +51,9 @@ async function bootstrap(): Promise<void> {
   setupMiddleware(app);
   setupPipes(app);
   app.setGlobalPrefix(process.env.API_PREFIX ?? 'api');
+  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+    prefix: '/uploads/',
+  });
   setupSwagger(app);
 
   await app.listen(port);

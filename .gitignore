@@ -37,6 +37,7 @@ prisma/*.db-journal
 
 # Uploads
 uploads/
+!uploads/.gitkeep
 
 # OS
 *.DS_Store

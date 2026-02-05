@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 import { UsersService } from '@/modules/users/users.service';
+import { MailService } from '@/modules/mail/mail.service';
 import { validatePasswordStrength } from '@/common/utils/password.util';
 import { RegisterDto, LoginDto, AuthResponseDto, RefreshTokenDto } from './dto';
 import { JwtPayload } from '@/common/types/jwt-payload.interface';
@@ -20,6 +21,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
   ) {}
 
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
@@ -28,6 +30,15 @@ export class AuthService {
     }
 
     const user = await this.usersService.create(registerDto);
+
+    try {
+      await this.mailService.sendWelcomeEmail(user);
+    } catch (error) {
+      this.logger.error(
+        `Failed to send welcome email: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+
     return this.generateAuthResponse(user.id, user.email);
   }
 
