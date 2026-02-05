@@ -79,9 +79,11 @@ export class OrdersService {
 
     try {
       await this.stripeService.createPaymentIntent(order.id, parseFloat(String(order.totalPrice)));
-    } catch {
-      // Payment intent creation failed, but order was created
-      // Client can retry creating payment intent later
+    } catch (error) {
+      this.logger.error(
+        `Failed to create payment intent for order ${order.id}: ${error instanceof Error ? error.message : String(error)}`,
+        error instanceof Error ? error.stack : undefined,
+      );
     }
 
     try {

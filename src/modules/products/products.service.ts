@@ -4,6 +4,7 @@ import {
   BadRequestException,
   NotFoundException,
   ConflictException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 import { CreateProductDto, ProductImageDto } from './dto';
@@ -12,6 +13,8 @@ import { PaginationDto } from '@/common/types/pagination.interface';
 
 @Injectable()
 export class ProductsService {
+  private readonly logger = new Logger(ProductsService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   // eslint-disable-next-line max-lines-per-function
@@ -42,6 +45,7 @@ export class ProductsService {
       await this.addImages(product.id, images);
     }
 
+    this.logger.log(`Product created: id=${product.id}, name=${product.name}`);
     return this.mapToResponse(product);
   }
 

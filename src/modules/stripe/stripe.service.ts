@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 import { PrismaService } from '@/modules/prisma/prisma.service';
@@ -7,6 +7,7 @@ import { PaymentStatus } from '@prisma/client';
 @Injectable()
 export class StripeService {
   private stripe: Stripe;
+  private readonly logger = new Logger(StripeService.name);
 
   constructor(
     private readonly configService: ConfigService,
@@ -32,6 +33,9 @@ export class StripeService {
       data: { paymentIntentId: paymentIntent.id },
     });
 
+    this.logger.log(
+      `Payment intent created: paymentIntentId=${paymentIntent.id}, orderId=${orderId}, amount=${amount}`,
+    );
     return paymentIntent;
   }
 
@@ -50,6 +54,8 @@ export class StripeService {
         paidAt: new Date(),
       },
     });
+
+    this.logger.log(`Payment confirmed: orderId=${order.id}, paymentIntentId=${paymentIntentId}`);
   }
 
   async cancelPaymentIntent(paymentIntentId: string): Promise<void> {
@@ -59,6 +65,8 @@ export class StripeService {
       where: { paymentIntentId },
       data: { paymentStatus: PaymentStatus.CANCELED },
     });
+
+    this.logger.log(`Payment intent cancelled: paymentIntentId=${paymentIntentId}`);
   }
 
   async createRefund(paymentIntentId: string, amount?: number): Promise<Stripe.Refund> {
@@ -75,8 +83,13 @@ export class StripeService {
   constructWebhookEvent(payload: Buffer, signature: string): Stripe.Event {
     const secret = this.configService.get<string>('STRIPE_WEBHOOK_SECRET') || '';
     try {
-      return this.stripe.webhooks.constructEvent(payload, signature, secret);
-    } catch {
+      const event = this.stripe.webhooks.constructEvent(payload, signature, secret);
+      this.logger.log(`Webhook received: eventType=${event.type}, eventId=${event.id}`);
+      return event;
+    } catch (error) {
+      this.logger.error(
+        `Webhook signature validation failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
       throw new BadRequestException('Invalid webhook signature');
     }
   }
@@ -94,6 +107,8 @@ export class StripeService {
         paidAt: new Date(),
       },
     });
+
+    this.logger.log(`Payment succeeded: orderId=${orderId}, paymentIntentId=${paymentIntent.id}`);
   }
 
   async handlePaymentFailed(paymentIntent: Stripe.PaymentIntent): Promise<void> {
@@ -104,6 +119,10 @@ export class StripeService {
       where: { id: orderId },
       data: { paymentStatus: PaymentStatus.FAILED },
     });
+
+    this.logger.warn(
+      `Payment failed: orderId=${orderId}, paymentIntentId=${paymentIntent.id}, lastError=${paymentIntent.last_payment_error?.message || 'unknown'}`,
+    );
   }
 
   async handleRefundProcessed(data: unknown): Promise<void> {
@@ -117,6 +136,10 @@ export class StripeService {
       where: { id: order.id },
       data: { paymentStatus: PaymentStatus.REFUNDED },
     });
+
+    this.logger.log(
+      `Refund processed: orderId=${order.id}, refundId=${refund.id}, amount=${refund.amount}`,
+    );
   }
 
   async getPaymentIntentByOrderId(orderId: string): Promise<Stripe.PaymentIntent> {
@@ -127,6 +150,9 @@ export class StripeService {
       throw new NotFoundException('Payment intent not found for this order');
     }
 
+    this.logger.log(
+      `Retrieved payment intent: orderId=${orderId}, paymentIntentId=${order.paymentIntentId}`,
+    );
     return this.stripe.paymentIntents.retrieve(order.paymentIntentId);
   }
 }
