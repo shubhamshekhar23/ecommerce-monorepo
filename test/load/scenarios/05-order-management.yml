@@ -1,0 +1,76 @@
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 30
+      arrivalRate: 5
+      name: "Warm-up"
+    - duration: 60
+      arrivalRate: 5
+      rampTo: 40
+      name: "Ramp-up"
+    - duration: 120
+      arrivalRate: 40
+      name: "Sustained load"
+    - duration: 30
+      arrivalRate: 40
+      rampTo: 10
+      name: "Cool-down"
+  variables:
+    apiPrefix: "/api"
+    testUserEmail: "loadtest1@example.com"
+    testUserPassword: "LoadTest123!"
+  defaults:
+    headers:
+      Content-Type: "application/json"
+  ensure:
+    maxErrorRate: 1
+    p95: 400
+    p99: 800
+
+scenarios:
+  - name: "Order Management"
+    flow:
+      # Login
+      - post:
+          url: "{{ apiPrefix }}/auth/login"
+          json:
+            email: "{{ testUserEmail }}"
+            password: "{{ testUserPassword }}"
+          expect:
+            - statusCode: 200
+          capture:
+            json: "$.accessToken"
+            as: "accessToken"
+      - think: 1
+      # List user orders (paginated)
+      - get:
+          url: "{{ apiPrefix }}/orders/me?page=1&limit=20"
+          headers:
+            Authorization: "Bearer {{ accessToken }}"
+          expect:
+            - statusCode: 200
+      - think: 2
+      # View specific order
+      - get:
+          url: "{{ apiPrefix }}/orders/550e8400-e29b-41d4-a716-446655440000"
+          headers:
+            Authorization: "Bearer {{ accessToken }}"
+          expect:
+            - statusCode: [200, 404]
+      - think: 2
+      # 20% chance to cancel order
+      - post:
+          url: "{{ apiPrefix }}/orders/550e8400-e29b-41d4-a716-446655440001/cancel"
+          headers:
+            Authorization: "Bearer {{ accessToken }}"
+          expect:
+            - statusCode: [200, 400, 404]
+          skip: 80
+      - think: 1
+      # Check next page of orders
+      - get:
+          url: "{{ apiPrefix }}/orders/me?page=2&limit=20"
+          headers:
+            Authorization: "Bearer {{ accessToken }}"
+          expect:
+            - statusCode: 200

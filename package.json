@@ -23,7 +23,17 @@
     "type-check": "tsc --noEmit",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "load:setup": "ts-node test/load/scripts/setup-test-data.ts",
+    "load:clean": "ts-node test/load/scripts/cleanup-test-data.ts",
+    "load:guest": "artillery run test/load/scenarios/01-guest-browse.yml",
+    "load:auth": "artillery run test/load/scenarios/02-user-auth.yml",
+    "load:cart": "artillery run test/load/scenarios/03-shopping-cart.yml",
+    "load:checkout": "artillery run test/load/scenarios/04-checkout.yml",
+    "load:orders": "artillery run test/load/scenarios/05-order-management.yml",
+    "load:mixed": "artillery run test/load/scenarios/06-mixed-traffic.yml",
+    "load:all": "npm run load:guest && npm run load:auth && npm run load:cart && npm run load:checkout && npm run load:orders",
+    "load:report": "artillery run --output report.json test/load/scenarios/06-mixed-traffic.yml && artillery report report.json --output report.html"
   },
   "dependencies": {
     "@nestjs-modules/mailer": "^2.0.2",
@@ -72,6 +82,8 @@
     "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^6.15.0",
     "@typescript-eslint/parser": "^6.15.0",
+    "artillery": "^2.0.21",
+    "artillery-plugin-expect": "^2.24.0",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.0.1",

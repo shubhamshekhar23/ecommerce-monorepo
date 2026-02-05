@@ -1,0 +1,60 @@
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 30
+      arrivalRate: 5
+      name: "Warm-up"
+    - duration: 60
+      arrivalRate: 5
+      rampTo: 50
+      name: "Ramp-up"
+    - duration: 120
+      arrivalRate: 50
+      name: "Sustained load"
+    - duration: 30
+      arrivalRate: 50
+      rampTo: 10
+      name: "Cool-down"
+  variables:
+    apiPrefix: "/api"
+    testUserEmail: "loadtest1@example.com"
+    testUserPassword: "LoadTest123!"
+  defaults:
+    headers:
+      Content-Type: "application/json"
+  ensure:
+    maxErrorRate: 0.5
+    p95: 500
+    p99: 1000
+
+scenarios:
+  - name: "User Authentication Flow"
+    flow:
+      # User Login (most common)
+      - post:
+          url: "{{ apiPrefix }}/auth/login"
+          json:
+            email: "{{ testUserEmail }}"
+            password: "{{ testUserPassword }}"
+          expect:
+            - statusCode: 200
+          capture:
+            json: "$.accessToken"
+            as: "accessToken"
+      - think: 1
+      # Get User Profile
+      - get:
+          url: "{{ apiPrefix }}/users/me"
+          headers:
+            Authorization: "Bearer {{ accessToken }}"
+          expect:
+            - statusCode: 200
+      - think: 2
+      # Refresh Token (less common)
+      - post:
+          url: "{{ apiPrefix }}/auth/refresh"
+          json:
+            refreshToken: "{{ refreshToken }}"
+          expect:
+            - statusCode: [200, 401]
+      - think: 1
