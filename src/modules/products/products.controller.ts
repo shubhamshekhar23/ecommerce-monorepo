@@ -9,7 +9,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto';
 import { Public, Roles } from '@/common/decorators';
@@ -23,6 +23,7 @@ export class ProductsController {
 
   @Post()
   @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new product' })
   @ApiResponse({ status: 201 })
@@ -56,6 +57,7 @@ export class ProductsController {
 
   @Post(':id/images')
   @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Add images to product' })
   @ApiResponse({ status: 201 })
   async addImages(@Param('id') id: string, @Body() images: any[]): Promise<void> {
@@ -64,6 +66,7 @@ export class ProductsController {
 
   @Delete('images/:imageId')
   @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Remove image from product' })
   @ApiResponse({ status: 204 })
@@ -73,6 +76,7 @@ export class ProductsController {
 
   @Delete(':id')
   @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Soft delete product' })
   @ApiResponse({ status: 204 })

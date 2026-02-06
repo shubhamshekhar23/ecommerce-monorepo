@@ -10,7 +10,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto, UpdateCategoryDto, CategoryResponseDto, CategoryTreeDto } from './dto';
 import { Public, Roles } from '@/common/decorators';
@@ -24,6 +24,7 @@ export class CategoriesController {
 
   @Post()
   @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new category' })
   @ApiResponse({ status: 201, type: CategoryResponseDto })
@@ -68,6 +69,7 @@ export class CategoriesController {
 
   @Patch(':id')
   @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Update category' })
   @ApiResponse({ status: 200, type: CategoryResponseDto })
   async update(
@@ -79,6 +81,7 @@ export class CategoriesController {
 
   @Delete(':id')
   @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Soft delete category' })
   @ApiResponse({ status: 204 })
