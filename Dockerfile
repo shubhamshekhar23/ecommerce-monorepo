@@ -1,5 +1,6 @@
 # Build stage
 FROM node:20-alpine AS builder
+RUN apk add --no-cache python3 make g++ libc6-compat
 
 WORKDIR /app
 
@@ -24,7 +25,7 @@ FROM node:20-alpine
 WORKDIR /app
 
 # Install dumb-init for proper signal handling
-RUN apk add --no-cache dumb-init
+RUN apk add --no-cache dumb-init python3 make g++ libc6-compat
 
 # Copy package files
 COPY package*.json ./

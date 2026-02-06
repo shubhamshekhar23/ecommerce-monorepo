@@ -19,7 +19,7 @@ const serializers = {
 };
 
 function createPinoConfig(configService: ConfigService) {
-  const isDevelopment = configService.get<string>('NODE_ENV') === 'development';
+  // const isDevelopment = configService.get<string>('NODE_ENV') === 'development';
 
   return {
     pinoHttp: {
