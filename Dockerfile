@@ -12,6 +12,9 @@ RUN npm ci
 # Copy source code
 COPY . .
 
+# Generate Prisma client
+RUN npx prisma generate
+
 # Build the application
 RUN npm run build
 
@@ -38,9 +41,14 @@ RUN addgroup -g 1001 -S nodejs && \
 
 USER nestjs
 
+# Build arguments and environment
+ARG NODE_ENV=production
+ENV NODE_ENV=${NODE_ENV}
+ENV PORT=3000
+
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
+  CMD node -e "require('http').get('http://localhost:${PORT}/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
 
 # Expose port
 EXPOSE 3000
