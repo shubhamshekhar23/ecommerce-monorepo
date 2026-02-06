@@ -19,6 +19,7 @@ This guide covers deploying the E-Commerce Backend application to production env
 ## Prerequisites
 
 ### Required Software
+
 - Docker Engine 20.10+
 - Docker Compose 2.0+
 - Node.js 20+ (for local development/CI)
@@ -26,6 +27,7 @@ This guide covers deploying the E-Commerce Backend application to production env
 - Redis 7+ (if using external cache)
 
 ### Infrastructure Requirements
+
 - Linux server (Ubuntu 20.04 LTS or similar)
 - Minimum 4GB RAM
 - Minimum 20GB disk space
@@ -33,6 +35,7 @@ This guide covers deploying the E-Commerce Backend application to production env
 - Domain name with DNS configured
 
 ### Credentials & Secrets
+
 - Stripe API keys (test and live)
 - SMTP server credentials
 - AWS S3 credentials (if using)
@@ -94,11 +97,13 @@ GRAFANA_PASSWORD=strong_grafana_password
 Never commit `.env.production` to version control. Use one of:
 
 **Option A: Docker Secrets (Swarm)**
+
 ```bash
 echo "sk_live_xxx..." | docker secret create stripe_key -
 ```
 
 **Option B: Environment Variables**
+
 ```bash
 export STRIPE_SECRET_KEY="sk_live_xxx..."
 export JWT_SECRET="..."
@@ -309,7 +314,7 @@ Update `docker-compose.prod.yml`:
 services:
   app:
     deploy:
-      replicas: 3  # Run 3 instances
+      replicas: 3 # Run 3 instances
 ```
 
 ### 2. Load Balancing
@@ -516,6 +521,7 @@ stripe trigger payment_intent.succeeded
 ## Support & Monitoring
 
 ### Monitoring URLs
+
 - **API Docs**: https://api.example.com/api/docs
 - **Health Check**: https://api.example.com/health
 - **Metrics**: https://api.example.com/api/metrics
@@ -523,4 +529,5 @@ stripe trigger payment_intent.succeeded
 - **Grafana**: https://grafana.example.com:3001
 
 ### Contact & Support
+
 For deployment issues, contact the DevOps team or create an issue in the repository.

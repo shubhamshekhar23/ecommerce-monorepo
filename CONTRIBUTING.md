@@ -76,6 +76,7 @@ git checkout -b feature/your-feature-name
 ```
 
 **Branch naming conventions:**
+
 - `feature/description` - New features
 - `fix/description` - Bug fixes
 - `refactor/description` - Code refactoring
@@ -107,6 +108,7 @@ npm run test -- src/modules/auth/auth.service.spec.ts
 ```
 
 **Testing requirements:**
+
 - Unit tests for all services
 - 80%+ code coverage
 - Test both happy path and error cases
@@ -169,10 +171,11 @@ src/modules/feature/
 - ✅ Use `interface` for object types, `type` for unions
 
 Example:
+
 ```typescript
 // ❌ Bad
 function getUser(id: any): any {
-  return users.find(u => u.id === id);
+  return users.find((u) => u.id === id);
 }
 
 // ✅ Good
@@ -204,6 +207,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 ### Documentation
 
 Add JSDoc comments for:
+
 - Public methods/functions
 - Complex business logic
 - Non-obvious algorithm implementations
@@ -230,12 +234,14 @@ npm run test
 ```
 
 Requirements:
+
 - Test all public methods
 - Mock external dependencies (Prisma, Redis, Stripe)
 - Use Arrange-Act-Assert pattern
 - Target 80%+ coverage
 
 Example:
+
 ```typescript
 describe('AuthService', () => {
   describe('login', () => {
@@ -293,6 +299,7 @@ footer
 ```
 
 **Types:**
+
 - `feat` - New feature
 - `fix` - Bug fix
 - `refactor` - Code refactoring
@@ -302,6 +309,7 @@ footer
 - `style` - Formatting, semicolons (non-functional)
 
 **Examples:**
+
 ```bash
 git commit -m "feat(auth): add password reset functionality"
 git commit -m "fix(products): prevent stock from going negative"
@@ -330,31 +338,38 @@ Create PR on GitHub with:
 **Title:** `[FEATURE/FIX] Brief description`
 
 **Description:**
+
 ```markdown
 ## Description
+
 Brief description of changes
 
 ## Related Issue
+
 Closes #123
 
 ## Changes Made
+
 - Change 1
 - Change 2
 - Change 3
 
 ## Testing
+
 - [ ] Unit tests added
 - [ ] Integration tests pass
 - [ ] E2E tests pass
 - [ ] Manual testing completed
 
 ## Screenshots (if applicable)
+
 Attach screenshots for UI changes
 ```
 
 ### 2. PR Checklist
 
 Before submitting, ensure:
+
 - [ ] Code follows style guidelines
 - [ ] All tests pass: `npm run test`
 - [ ] Code coverage maintained (80%+)
@@ -375,6 +390,7 @@ Before submitting, ensure:
 ### 4. Merge
 
 Maintainers will merge when:
+
 - ✅ All tests pass
 - ✅ Code review approved
 - ✅ Branch is up-to-date with main
@@ -390,6 +406,7 @@ Title: `[BUG] Brief description`
 Clear description of the bug
 
 **Steps to Reproduce:**
+
 1. Step 1
 2. Step 2
 3. Step 3
@@ -401,11 +418,13 @@ What should happen
 What actually happened
 
 **Environment:**
+
 - Node.js version
 - OS
 - Docker version (if applicable)
 
 **Logs:**
+
 ```
 Paste relevant error logs
 ```
@@ -426,6 +445,7 @@ Clear description of the feature
 Why this feature is needed
 
 **Acceptance Criteria:**
+
 - [ ] Criterion 1
 - [ ] Criterion 2
 - [ ] Criterion 3
@@ -442,6 +462,7 @@ Why this feature is needed
 ## Recognition
 
 All contributors will be recognized in:
+
 - CHANGELOG.md
 - GitHub contributors page
 - Project README

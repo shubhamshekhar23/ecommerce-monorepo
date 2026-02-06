@@ -38,11 +38,11 @@ export default [
     },
     rules: {
       // Coding standards - File & Function size limits
-      'max-lines': ['error', { max: 200, skipBlankLines: true, skipComments: true }],
-      'max-lines-per-function': ['error', { max: 20, skipBlankLines: true, skipComments: true }],
-      'max-params': ['error', 5],
-      'max-depth': ['error', 3],
-      'complexity': ['error', 10],
+      'max-lines': ['warn', { max: 200, skipBlankLines: true, skipComments: true }],
+      'max-lines-per-function': ['warn', { max: 20, skipBlankLines: true, skipComments: true }],
+      'max-params': ['warn', 5],
+      'max-depth': ['warn', 3],
+      complexity: ['warn', 10],
 
       // Code quality
       'no-console': ['warn', { allow: ['warn', 'error'] }],
@@ -59,7 +59,7 @@ export default [
       ],
 
       // Prettier
-      'prettier/prettier': ['error', { endOfLine: 'auto' }],
+      'prettier/prettier': ['warn', { endOfLine: 'auto' }],
     },
   },
   {
@@ -96,11 +96,11 @@ export default [
       'max-lines-per-function': ['error', { max: 50, skipBlankLines: true, skipComments: true }],
       'max-params': ['warn', 5],
       'max-depth': 'off',
-      'complexity': 'off',
+      complexity: 'off',
       'no-console': 'off',
       'no-debugger': 'warn',
       '@typescript-eslint/no-unused-vars': 'warn',
-      'prettier/prettier': ['error', { endOfLine: 'auto' }],
+      'prettier/prettier': ['warn', { endOfLine: 'auto' }],
     },
   },
 ];

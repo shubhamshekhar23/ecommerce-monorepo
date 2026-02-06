@@ -1,93 +1,93 @@
 config:
-  target: "http://localhost:3000"
+  target: 'http://localhost:3000'
   phases:
     - duration: 30
       arrivalRate: 3
-      name: "Warm-up"
+      name: 'Warm-up'
     - duration: 60
       arrivalRate: 3
       rampTo: 30
-      name: "Ramp-up"
+      name: 'Ramp-up'
     - duration: 120
       arrivalRate: 30
-      name: "Sustained load"
+      name: 'Sustained load'
     - duration: 30
       arrivalRate: 30
       rampTo: 5
-      name: "Cool-down"
+      name: 'Cool-down'
   variables:
-    apiPrefix: "/api"
-    testUserEmail: "loadtest1@example.com"
-    testUserPassword: "LoadTest123!"
+    apiPrefix: '/api'
+    testUserEmail: 'loadtest1@example.com'
+    testUserPassword: 'LoadTest123!'
   defaults:
     headers:
-      Content-Type: "application/json"
+      Content-Type: 'application/json'
   ensure:
     maxErrorRate: 1
     p95: 1000
     p99: 2000
 
 scenarios:
-  - name: "Complete Checkout Flow"
+  - name: 'Complete Checkout Flow'
     flow:
       # Login
       - post:
-          url: "{{ apiPrefix }}/auth/login"
+          url: '{{ apiPrefix }}/auth/login'
           json:
-            email: "{{ testUserEmail }}"
-            password: "{{ testUserPassword }}"
+            email: '{{ testUserEmail }}'
+            password: '{{ testUserPassword }}'
           expect:
             - statusCode: 200
           capture:
-            json: "$.accessToken"
-            as: "accessToken"
+            json: '$.accessToken'
+            as: 'accessToken'
       - think: 1
       # Add product to cart
       - post:
-          url: "{{ apiPrefix }}/cart/items"
+          url: '{{ apiPrefix }}/cart/items'
           headers:
-            Authorization: "Bearer {{ accessToken }}"
+            Authorization: 'Bearer {{ accessToken }}'
           json:
-            productId: "550e8400-e29b-41d4-a716-446655440000"
+            productId: '550e8400-e29b-41d4-a716-446655440000'
             quantity: 1
           expect:
             - statusCode: 201
       - think: 2
       # Get cart for review
       - get:
-          url: "{{ apiPrefix }}/cart"
+          url: '{{ apiPrefix }}/cart'
           headers:
-            Authorization: "Bearer {{ accessToken }}"
+            Authorization: 'Bearer {{ accessToken }}'
           expect:
             - statusCode: 200
       - think: 1
       # Create payment intent
       - post:
-          url: "{{ apiPrefix }}/stripe/create-payment-intent"
+          url: '{{ apiPrefix }}/stripe/create-payment-intent'
           headers:
-            Authorization: "Bearer {{ accessToken }}"
+            Authorization: 'Bearer {{ accessToken }}'
           json:
-            orderId: "550e8400-e29b-41d4-a716-446655440002"
+            orderId: '550e8400-e29b-41d4-a716-446655440002'
           expect:
             - statusCode: [200, 404]
       - think: 2
       # Create order (this is write-heavy)
       - post:
-          url: "{{ apiPrefix }}/orders"
+          url: '{{ apiPrefix }}/orders'
           headers:
-            Authorization: "Bearer {{ accessToken }}"
+            Authorization: 'Bearer {{ accessToken }}'
           json:
-            cartId: "550e8400-e29b-41d4-a716-446655440003"
+            cartId: '550e8400-e29b-41d4-a716-446655440003'
           expect:
             - statusCode: [201, 400, 404]
           capture:
-            json: "$.id"
-            as: "orderId"
+            json: '$.id'
+            as: 'orderId'
       - think: 1
       # View order confirmation
       - get:
-          url: "{{ apiPrefix }}/orders/550e8400-e29b-41d4-a716-446655440004"
+          url: '{{ apiPrefix }}/orders/550e8400-e29b-41d4-a716-446655440004'
           headers:
-            Authorization: "Bearer {{ accessToken }}"
+            Authorization: 'Bearer {{ accessToken }}'
           expect:
             - statusCode: [200, 404]

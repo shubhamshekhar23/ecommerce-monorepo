@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 #### Core Features
+
 - JWT-based authentication with refresh tokens
 - Role-based access control (RBAC) for Users and Admins
 - Complete product catalog with categories and search
@@ -21,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Local file storage for uploads
 
 #### API & Documentation
+
 - Comprehensive REST API with 25+ endpoints
 - Swagger/OpenAPI documentation at `/api/docs`
 - DTOs for all request/response types
@@ -29,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Detailed API error responses with validation details
 
 #### Authentication & Security
+
 - Password hashing with bcrypt (12 rounds)
 - JWT tokens with configurable expiry (access: 15m, refresh: 7d)
 - Token revocation support via database
@@ -38,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CORS configuration for multiple origins
 
 #### Database & ORM
+
 - PostgreSQL database with Prisma ORM
 - Type-safe database queries
 - Database migrations with version control
@@ -46,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Automatic timestamp tracking (createdAt, updatedAt)
 
 #### Monitoring & Observability
+
 - Structured JSON logging with Pino
 - Request correlation IDs for tracing
 - Prometheus metrics collection
@@ -54,6 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Database, memory, and disk health indicators
 
 #### Infrastructure & Deployment
+
 - Docker containerization with multi-stage builds
 - Docker Compose for local development
 - Production Docker Compose with scaling
@@ -63,6 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Comprehensive documentation for deployment
 
 #### Testing
+
 - Unit tests for all services (80%+ coverage)
 - Integration tests with test database
 - E2E tests for complete user flows
@@ -70,6 +77,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pre-commit hooks with Husky (lint, format, test)
 
 #### CI/CD & DevOps
+
 - GitHub Actions CI/CD pipeline
 - Automated linting and formatting checks
 - TypeScript type checking
@@ -79,6 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Security scanning with npm audit and Snyk
 
 #### Code Quality
+
 - ESLint configuration with size limits
 - Prettier code formatting
 - TypeScript strict mode enabled
@@ -88,6 +97,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pre-commit hooks for quality checks
 
 #### Documentation
+
 - Comprehensive README with setup instructions
 - Contributing guide for developers
 - Deployment guide for production deployment
@@ -98,6 +108,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Technical Specifications
 
 **Technology Stack:**
+
 - NestJS 10.x
 - Node.js 20+
 - TypeScript 5.x
@@ -108,6 +119,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Prometheus & Grafana
 
 **Database Models:**
+
 - User (authentication, profile)
 - RefreshToken (token management)
 - Category (product categories)
@@ -120,6 +132,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Address (shipping/billing addresses)
 
 **API Endpoints:**
+
 - Authentication: register, login, refresh, logout (4 endpoints)
 - Users: profile, update profile (2 endpoints)
 - Products: list, get, create, update, delete (5 endpoints)
@@ -204,6 +217,7 @@ Not applicable - this is a backend API service.
 ## Versioning
 
 ### Version Format
+
 `MAJOR.MINOR.PATCH`
 
 - **MAJOR**: Breaking changes
@@ -211,11 +225,13 @@ Not applicable - this is a backend API service.
 - **PATCH**: Bug fixes and security updates
 
 ### Release Schedule
+
 - Scheduled releases: Monthly
 - Security patches: As needed (within 24 hours)
 - Critical updates: Emergency release
 
 ### End of Life (EOL)
+
 - Version 1.x: Supported for 12 months from release
 
 ---
@@ -223,6 +239,7 @@ Not applicable - this is a backend API service.
 ## Future Releases
 
 ### Planned for v1.1.0
+
 - Product reviews and ratings system
 - Wishlist functionality
 - Coupon and discount codes
@@ -231,6 +248,7 @@ Not applicable - this is a backend API service.
 - Product inventory tracking
 
 ### Planned for v1.2.0
+
 - Multi-currency support
 - Shipping integration (ShipEngine)
 - Real-time order notifications (WebSockets)
@@ -239,6 +257,7 @@ Not applicable - this is a backend API service.
 - Product recommendations
 
 ### Planned for v2.0.0
+
 - Microservices architecture
 - Message queue integration (RabbitMQ)
 - Elasticsearch for advanced search
@@ -247,6 +266,7 @@ Not applicable - this is a backend API service.
 - B2B features and wholesale
 
 ### Backlog
+
 - Inventory management system
 - Customer segmentation
 - Marketing automation integration

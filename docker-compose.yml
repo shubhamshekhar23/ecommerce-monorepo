@@ -10,11 +10,11 @@ services:
       POSTGRES_PASSWORD: ecommerce_password
       POSTGRES_DB: ecommerce_db
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ecommerce_user"]
+      test: ['CMD-SHELL', 'pg_isready -U ecommerce_user']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -26,11 +26,11 @@ services:
     image: redis:7-alpine
     container_name: ecommerce_redis
     ports:
-      - "6379:6379"
+      - '6379:6379'
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -46,7 +46,7 @@ services:
       PGADMIN_DEFAULT_PASSWORD: admin
       PGADMIN_CONFIG_SERVER_MODE: 'False'
     ports:
-      - "5050:80"
+      - '5050:80'
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     depends_on:
@@ -69,7 +69,7 @@ services:
       - JWT_SECRET=dev-secret-key-min-32-chars-do-not-use-in-production
       - JWT_REFRESH_SECRET=dev-refresh-secret-key-min-32-chars-do-not-use-in-production
     ports:
-      - "3000:3000"
+      - '3000:3000'
     depends_on:
       postgres:
         condition: service_healthy
@@ -87,7 +87,7 @@ services:
     image: prom/prometheus:latest
     container_name: ecommerce_prometheus
     ports:
-      - "9090:9090"
+      - '9090:9090'
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
@@ -105,7 +105,7 @@ services:
     image: grafana/grafana:latest
     container_name: ecommerce_grafana
     ports:
-      - "3001:3000"
+      - '3001:3000'
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_SECURITY_ADMIN_USER=admin

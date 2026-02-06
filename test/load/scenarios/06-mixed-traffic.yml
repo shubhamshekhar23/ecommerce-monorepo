@@ -1,31 +1,31 @@
 config:
-  target: "http://localhost:3000"
+  target: 'http://localhost:3000'
   phases:
     - duration: 30
       arrivalRate: 10
-      name: "Warm-up"
+      name: 'Warm-up'
     - duration: 180
       arrivalRate: 10
       rampTo: 150
-      name: "Normal traffic"
+      name: 'Normal traffic'
     - duration: 120
       arrivalRate: 150
       rampTo: 300
-      name: "Ramp to peak"
+      name: 'Ramp to peak'
     - duration: 180
       arrivalRate: 300
-      name: "Sustained peak"
+      name: 'Sustained peak'
     - duration: 60
       arrivalRate: 300
       rampTo: 50
-      name: "Cool-down"
+      name: 'Cool-down'
   variables:
-    apiPrefix: "/api"
-    testUserEmail: "loadtest1@example.com"
-    testUserPassword: "LoadTest123!"
+    apiPrefix: '/api'
+    testUserEmail: 'loadtest1@example.com'
+    testUserPassword: 'LoadTest123!'
   defaults:
     headers:
-      Content-Type: "application/json"
+      Content-Type: 'application/json'
   ensure:
     maxErrorRate: 1
     p95: 500
@@ -33,141 +33,141 @@ config:
 
 scenarios:
   # 50% Guest browsing
-  - name: "Guest Browse (50%)"
+  - name: 'Guest Browse (50%)'
     weight: 50
     flow:
       - get:
-          url: "{{ apiPrefix }}/products?page=1&limit=20"
+          url: '{{ apiPrefix }}/products?page=1&limit=20'
           expect:
             - statusCode: 200
       - think: 2
       - get:
-          url: "{{ apiPrefix }}/categories/tree"
+          url: '{{ apiPrefix }}/categories/tree'
           expect:
             - statusCode: 200
       - think: 3
       - get:
-          url: "{{ apiPrefix }}/products/550e8400-e29b-41d4-a716-446655440000"
+          url: '{{ apiPrefix }}/products/550e8400-e29b-41d4-a716-446655440000'
           expect:
             - statusCode: [200, 404]
       - think: 1
 
   # 20% Cart operations (authenticated)
-  - name: "Cart Operations (20%)"
+  - name: 'Cart Operations (20%)'
     weight: 20
     flow:
       - post:
-          url: "{{ apiPrefix }}/auth/login"
+          url: '{{ apiPrefix }}/auth/login'
           json:
-            email: "{{ testUserEmail }}"
-            password: "{{ testUserPassword }}"
+            email: '{{ testUserEmail }}'
+            password: '{{ testUserPassword }}'
           expect:
             - statusCode: 200
           capture:
-            json: "$.accessToken"
-            as: "accessToken"
+            json: '$.accessToken'
+            as: 'accessToken'
       - think: 1
       - get:
-          url: "{{ apiPrefix }}/cart"
+          url: '{{ apiPrefix }}/cart'
           headers:
-            Authorization: "Bearer {{ accessToken }}"
+            Authorization: 'Bearer {{ accessToken }}'
           expect:
             - statusCode: 200
       - think: 1
       - post:
-          url: "{{ apiPrefix }}/cart/items"
+          url: '{{ apiPrefix }}/cart/items'
           headers:
-            Authorization: "Bearer {{ accessToken }}"
+            Authorization: 'Bearer {{ accessToken }}'
           json:
-            productId: "550e8400-e29b-41d4-a716-446655440000"
+            productId: '550e8400-e29b-41d4-a716-446655440000'
             quantity: 1
           expect:
             - statusCode: 201
       - think: 2
 
   # 15% User login/register
-  - name: "Authentication (15%)"
+  - name: 'Authentication (15%)'
     weight: 15
     flow:
       - post:
-          url: "{{ apiPrefix }}/auth/login"
+          url: '{{ apiPrefix }}/auth/login'
           json:
-            email: "{{ testUserEmail }}"
-            password: "{{ testUserPassword }}"
+            email: '{{ testUserEmail }}'
+            password: '{{ testUserPassword }}'
           expect:
             - statusCode: 200
           capture:
-            json: "$.accessToken"
-            as: "accessToken"
+            json: '$.accessToken'
+            as: 'accessToken'
       - think: 1
       - get:
-          url: "{{ apiPrefix }}/users/me"
+          url: '{{ apiPrefix }}/users/me'
           headers:
-            Authorization: "Bearer {{ accessToken }}"
+            Authorization: 'Bearer {{ accessToken }}'
           expect:
             - statusCode: 200
       - think: 1
 
   # 10% Checkout/order creation
-  - name: "Checkout (10%)"
+  - name: 'Checkout (10%)'
     weight: 10
     flow:
       - post:
-          url: "{{ apiPrefix }}/auth/login"
+          url: '{{ apiPrefix }}/auth/login'
           json:
-            email: "{{ testUserEmail }}"
-            password: "{{ testUserPassword }}"
+            email: '{{ testUserEmail }}'
+            password: '{{ testUserPassword }}'
           expect:
             - statusCode: 200
           capture:
-            json: "$.accessToken"
-            as: "accessToken"
+            json: '$.accessToken'
+            as: 'accessToken'
       - think: 1
       - post:
-          url: "{{ apiPrefix }}/cart/items"
+          url: '{{ apiPrefix }}/cart/items'
           headers:
-            Authorization: "Bearer {{ accessToken }}"
+            Authorization: 'Bearer {{ accessToken }}'
           json:
-            productId: "550e8400-e29b-41d4-a716-446655440000"
+            productId: '550e8400-e29b-41d4-a716-446655440000'
             quantity: 1
           expect:
             - statusCode: 201
       - think: 2
       - post:
-          url: "{{ apiPrefix }}/orders"
+          url: '{{ apiPrefix }}/orders'
           headers:
-            Authorization: "Bearer {{ accessToken }}"
+            Authorization: 'Bearer {{ accessToken }}'
           json:
-            cartId: "550e8400-e29b-41d4-a716-446655440003"
+            cartId: '550e8400-e29b-41d4-a716-446655440003'
           expect:
             - statusCode: [201, 400, 404]
       - think: 1
 
   # 5% Order viewing/management
-  - name: "Order Management (5%)"
+  - name: 'Order Management (5%)'
     weight: 5
     flow:
       - post:
-          url: "{{ apiPrefix }}/auth/login"
+          url: '{{ apiPrefix }}/auth/login'
           json:
-            email: "{{ testUserEmail }}"
-            password: "{{ testUserPassword }}"
+            email: '{{ testUserEmail }}'
+            password: '{{ testUserPassword }}'
           expect:
             - statusCode: 200
           capture:
-            json: "$.accessToken"
-            as: "accessToken"
+            json: '$.accessToken'
+            as: 'accessToken'
       - think: 1
       - get:
-          url: "{{ apiPrefix }}/orders/me?page=1&limit=20"
+          url: '{{ apiPrefix }}/orders/me?page=1&limit=20'
           headers:
-            Authorization: "Bearer {{ accessToken }}"
+            Authorization: 'Bearer {{ accessToken }}'
           expect:
             - statusCode: 200
       - think: 1
       - get:
-          url: "{{ apiPrefix }}/orders/550e8400-e29b-41d4-a716-446655440000"
+          url: '{{ apiPrefix }}/orders/550e8400-e29b-41d4-a716-446655440000'
           headers:
-            Authorization: "Bearer {{ accessToken }}"
+            Authorization: 'Bearer {{ accessToken }}'
           expect:
             - statusCode: [200, 404]

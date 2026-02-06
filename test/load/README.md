@@ -74,12 +74,12 @@ npm run load:report
 
 ### Response Times
 
-| Operation | p50 | p95 | p99 | Max |
-|-----------|-----|-----|-----|-----|
-| GET (simple) | <100ms | <200ms | <500ms | <1000ms |
-| GET (complex) | <150ms | <300ms | <800ms | <1500ms |
-| POST (write) | <200ms | <500ms | <1000ms | <2000ms |
-| Payment ops | <500ms | <1000ms | <2000ms | <3000ms |
+| Operation     | p50    | p95     | p99     | Max     |
+| ------------- | ------ | ------- | ------- | ------- |
+| GET (simple)  | <100ms | <200ms  | <500ms  | <1000ms |
+| GET (complex) | <150ms | <300ms  | <800ms  | <1500ms |
+| POST (write)  | <200ms | <500ms  | <1000ms | <2000ms |
+| Payment ops   | <500ms | <1000ms | <2000ms | <3000ms |
 
 ### Error Rates
 
@@ -100,6 +100,7 @@ npm run load:report
 ### Grafana Dashboard
 
 Open http://localhost:3001 to view:
+
 - Request rate (req/s)
 - Response times (p50, p95, p99)
 - Error rates
@@ -109,6 +110,7 @@ Open http://localhost:3001 to view:
 ### Prometheus Metrics
 
 Access http://localhost:9090 to query:
+
 ```
 http_requests_total
 http_request_duration_seconds
@@ -163,6 +165,7 @@ Codes:
 ### Issue: "Connection refused"
 
 **Solution**: Ensure application is running on port 3000
+
 ```bash
 npm run start:dev
 ```
@@ -170,12 +173,14 @@ npm run start:dev
 ### Issue: High error rate (>5%)
 
 **Possible causes**:
+
 - Application not running
 - Database not responding
 - Connection pool exhausted
 - Invalid test data
 
 **Solution**:
+
 1. Check application logs: `docker logs -f ecommerce_app`
 2. Verify database: `pg_isready -h localhost`
 3. Check connection pool size in `schema.prisma`
@@ -184,12 +189,14 @@ npm run start:dev
 ### Issue: Slow response times (p95 > 1000ms)
 
 **Possible causes**:
+
 - High CPU usage
 - Database queries too slow
 - Stripe API latency
 - Large result sets
 
 **Solutions**:
+
 1. Monitor CPU during test: `top` or Grafana
 2. Check slow queries: `npx prisma studio`
 3. Add database indexes
@@ -201,6 +208,7 @@ npm run start:dev
 **Cause**: Connection pool exhausted
 
 **Solution**: Increase Prisma connection pool
+
 ```prisma
 datasource db {
   provider = "postgresql"
@@ -210,6 +218,7 @@ datasource db {
 ```
 
 Then restart application:
+
 ```bash
 npx prisma generate
 npm run start:dev
@@ -223,21 +232,22 @@ Create a new file in `scenarios/` with custom load profile:
 
 ```yaml
 config:
-  target: "http://localhost:3000"
+  target: 'http://localhost:3000'
   phases:
     - duration: 60
       arrivalRate: 100
 
 scenarios:
-  - name: "Custom Flow"
+  - name: 'Custom Flow'
     flow:
       - get:
-          url: "/api/products"
+          url: '/api/products'
           expect:
             - statusCode: 200
 ```
 
 Run with:
+
 ```bash
 artillery run test/load/scenarios/custom.yml
 ```
@@ -252,23 +262,23 @@ phases:
   - duration: 60
     arrivalRate: 10
     rampTo: 50
-    name: "Warm-up"
+    name: 'Warm-up'
 
   # Sustained: constant load
   - duration: 300
     arrivalRate: 100
-    name: "Sustained"
+    name: 'Sustained'
 
   # Peak: sudden spike
   - duration: 120
     arrivalRate: 500
-    name: "Peak"
+    name: 'Peak'
 
   # Cool-down: gradual decrease
   - duration: 60
     arrivalRate: 500
     rampTo: 50
-    name: "Cool-down"
+    name: 'Cool-down'
 ```
 
 ## Best Practices

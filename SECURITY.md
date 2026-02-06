@@ -10,6 +10,7 @@ If you discover a security vulnerability, please email **security@example.com** 
 4. Suggested fix (if you have one)
 
 We will:
+
 - Acknowledge receipt within 48 hours
 - Provide a timeline for fix and disclosure
 - Keep you updated on progress
@@ -22,6 +23,7 @@ We will:
 ### 1. Authentication & Passwords
 
 **Password Security:**
+
 - Minimum 8 characters required
 - Must contain: uppercase, lowercase, number, special character
 - Hashed with bcrypt (12 rounds)
@@ -29,6 +31,7 @@ We will:
 - Never sent via email (only reset link)
 
 **JWT Tokens:**
+
 - Access tokens: 15 minute expiry (short-lived)
 - Refresh tokens: 7 day expiry (long-lived)
 - Different secrets for access/refresh (NEVER share)
@@ -36,6 +39,7 @@ We will:
 - Revoked tokens checked against database
 
 **Token Security:**
+
 - ✅ Validate signature on every request
 - ✅ Check token expiration
 - ✅ Verify token hasn't been revoked
@@ -46,18 +50,21 @@ We will:
 ### 2. Data Protection
 
 **At Rest:**
+
 - Database: Use PostgreSQL with encryption (optional)
 - Backups: Encrypt with GPG or AWS KMS
 - Secrets: Use environment variables, never commit to git
 - Sensitive fields: Never return in API responses
 
 **In Transit:**
+
 - HTTPS/TLS 1.2+ required in production
 - HSTS headers enforced (1 year, includeSubDomains)
 - Certificate validation required
 - Forward secrecy enabled
 
 **Sensitive Data:**
+
 - Email addresses: Hash for lookups, never expose
 - Passwords: bcrypt with 12 rounds
 - Tokens: HttpOnly, Secure, SameSite cookies
@@ -86,6 +93,7 @@ createUser(@Body() user: any) { }
 ```
 
 **Validation covers:**
+
 - Type checking
 - Length limits
 - Format validation (email, URL, phone)
@@ -155,6 +163,7 @@ location /api/auth/login {
 ```
 
 **Database rate limiting (optional):**
+
 ```typescript
 // Track login attempts
 @Post('/login')
@@ -172,13 +181,13 @@ async login(@Body() dto: LoginDto, @Req() req: Request) {
 
 ```typescript
 // Only allow trusted origins
-const app = createNestApplication(
-  AppModule,
-  { cors: { origin: ['https://example.com', 'https://app.example.com'] } }
-);
+const app = createNestApplication(AppModule, {
+  cors: { origin: ['https://example.com', 'https://app.example.com'] },
+});
 ```
 
 **CSRF Protection:**
+
 - GET requests: Safe (no state change)
 - POST/PUT/DELETE: Require JWT token (CSRF token not needed)
 - Cookies: SameSite=Strict (never send cross-site)
@@ -210,10 +219,12 @@ handleStripeWebhook(
 ```
 
 **Idempotency:**
+
 - Stripe automatically handles with client-provided idempotency key
 - Store payment intent IDs to prevent duplicate charges
 
 **API Keys:**
+
 - ✅ Use restricted API keys (only required permissions)
 - ✅ Rotate keys every 90 days
 - ✅ Use test keys in development
@@ -243,6 +254,7 @@ const safeFilename = `${uuidv4()}-${sanitize(file.originalname)}`;
 ```
 
 **Storage Security:**
+
 - Store outside web root
 - Don't allow direct execution (no .exe, .php, .sh)
 - Set proper file permissions (644)
@@ -251,6 +263,7 @@ const safeFilename = `${uuidv4()}-${sanitize(file.originalname)}`;
 ### 9. Logging & Monitoring
 
 **What to log:**
+
 - ✅ Authentication attempts (success/failure)
 - ✅ Authorization failures (403 Forbidden)
 - ✅ Data access (sensitive operations)
@@ -258,6 +271,7 @@ const safeFilename = `${uuidv4()}-${sanitize(file.originalname)}`;
 - ✅ Errors (with context)
 
 **What NOT to log:**
+
 - ❌ Passwords (any form)
 - ❌ API keys or tokens
 - ❌ Credit card numbers
@@ -281,6 +295,7 @@ const safeFilename = `${uuidv4()}-${sanitize(file.originalname)}`;
 ### 10. Infrastructure Security
 
 **Docker Security:**
+
 - ✅ Run as non-root user (nestjs:1001)
 - ✅ Use distroless images (smaller attack surface)
 - ✅ Pin image versions (never use `latest`)
@@ -288,12 +303,14 @@ const safeFilename = `${uuidv4()}-${sanitize(file.originalname)}`;
 - ❌ Don't expose secrets in Dockerfile
 
 **Kubernetes (if used):**
+
 - Network policies (restrict traffic between pods)
 - Pod security policies (enforce security standards)
 - RBAC (role-based access control)
 - Service mesh (mTLS between services)
 
 **Database Security:**
+
 - ✅ Strong passwords (20+ chars, mix of types)
 - ✅ Restricted network access (private subnet)
 - ✅ Connection encryption (SSL)
@@ -321,6 +338,7 @@ npm install  # Development: allow updates
 ```
 
 **Dependency Best Practices:**
+
 - ✅ Use exact versions in production
 - ✅ Regularly update dependencies (monthly)
 - ✅ Audit before updating
@@ -359,6 +377,7 @@ Before merging, verify:
 ### Major Incident Escalation
 
 For critical vulnerabilities:
+
 - Create security advisory
 - Recommend immediate upgrade
 - Provide workarounds if needed
@@ -366,23 +385,23 @@ For critical vulnerabilities:
 
 ## Security Features Summary
 
-| Feature | Implementation | Status |
-|---------|----------------|--------|
-| HTTPS/TLS | Nginx reverse proxy | ✅ |
-| JWT Authentication | Passport.js + custom guards | ✅ |
-| Password Hashing | Bcrypt (12 rounds) | ✅ |
-| Input Validation | class-validator DTOs | ✅ |
-| Rate Limiting | Nginx rate limiting | ✅ |
-| CORS | Whitelist origins | ✅ |
-| CSRF | JWT token (implicit) | ✅ |
-| SQL Injection Prevention | Prisma ORM | ✅ |
-| XSS Prevention | Input validation | ✅ |
-| HTTPS Headers | Nginx security headers | ✅ |
-| Structured Logging | Pino JSON logs | ✅ |
-| Monitoring & Alerts | Prometheus + Grafana | ✅ |
-| Backup Strategy | Automated encrypted backups | ✅ |
-| Dependency Scanning | npm audit | ✅ |
-| Secret Management | Environment variables | ✅ |
+| Feature                  | Implementation              | Status |
+| ------------------------ | --------------------------- | ------ |
+| HTTPS/TLS                | Nginx reverse proxy         | ✅     |
+| JWT Authentication       | Passport.js + custom guards | ✅     |
+| Password Hashing         | Bcrypt (12 rounds)          | ✅     |
+| Input Validation         | class-validator DTOs        | ✅     |
+| Rate Limiting            | Nginx rate limiting         | ✅     |
+| CORS                     | Whitelist origins           | ✅     |
+| CSRF                     | JWT token (implicit)        | ✅     |
+| SQL Injection Prevention | Prisma ORM                  | ✅     |
+| XSS Prevention           | Input validation            | ✅     |
+| HTTPS Headers            | Nginx security headers      | ✅     |
+| Structured Logging       | Pino JSON logs              | ✅     |
+| Monitoring & Alerts      | Prometheus + Grafana        | ✅     |
+| Backup Strategy          | Automated encrypted backups | ✅     |
+| Dependency Scanning      | npm audit                   | ✅     |
+| Secret Management        | Environment variables       | ✅     |
 
 ## Resources
 
@@ -395,6 +414,7 @@ For critical vulnerabilities:
 ## Contact
 
 For security questions or to report vulnerabilities:
+
 - **Email**: security@example.com
 - **PGP Key**: [Link to public key]
 

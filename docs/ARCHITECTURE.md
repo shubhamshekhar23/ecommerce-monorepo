@@ -60,19 +60,19 @@ The E-Commerce Backend is a production-ready REST API built with NestJS, Postgre
 
 ### Core Technologies
 
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| Framework | NestJS 10 | Web framework |
-| Language | TypeScript | Type safety |
-| Database | PostgreSQL 16 | Relational data |
-| ORM | Prisma | Database access |
-| Cache | Redis 7 | Session, rate limiting |
-| Authentication | Passport.js | JWT strategies |
-| API Docs | Swagger/OpenAPI | Interactive docs |
-| Logging | Pino | Structured logging |
-| Monitoring | Prometheus/Grafana | Metrics & dashboards |
-| Container | Docker | Application packaging |
-| Orchestration | Docker Compose | Local development |
+| Component      | Technology         | Purpose                |
+| -------------- | ------------------ | ---------------------- |
+| Framework      | NestJS 10          | Web framework          |
+| Language       | TypeScript         | Type safety            |
+| Database       | PostgreSQL 16      | Relational data        |
+| ORM            | Prisma             | Database access        |
+| Cache          | Redis 7            | Session, rate limiting |
+| Authentication | Passport.js        | JWT strategies         |
+| API Docs       | Swagger/OpenAPI    | Interactive docs       |
+| Logging        | Pino               | Structured logging     |
+| Monitoring     | Prometheus/Grafana | Metrics & dashboards   |
+| Container      | Docker             | Application packaging  |
+| Orchestration  | Docker Compose     | Local development      |
 
 ## Project Structure
 
@@ -151,6 +151,7 @@ ecommerce-backend/
 ### 1. Authentication Module
 
 **Flow:**
+
 ```
 User Request
     │
@@ -163,12 +164,14 @@ JWT Guard (validates token)
 ```
 
 **Key Files:**
+
 - `auth.controller.ts` - POST /auth/register, /auth/login, /auth/refresh
 - `auth.service.ts` - JWT generation, validation, token storage
 - `jwt.strategy.ts` - Token extraction and validation
 - `jwt-auth.guard.ts` - Global authentication guard
 
 **Token Strategy:**
+
 - Access token: 15 minutes (short-lived)
 - Refresh token: 7 days (long-lived)
 - Stored in PostgreSQL for revocation support
@@ -177,6 +180,7 @@ JWT Guard (validates token)
 ### 2. Database Layer (Prisma)
 
 **Architecture:**
+
 ```
 Application
     │
@@ -191,12 +195,14 @@ PostgreSQL Database
 ```
 
 **Database Features:**
+
 - Type-safe database queries
 - Automatic migrations
 - Connection pooling
 - Transaction support for complex operations
 
 **Key Models:**
+
 - User, RefreshToken (authentication)
 - Product, Category, ProductImage (catalog)
 - Cart, CartItem (shopping)
@@ -251,6 +257,7 @@ GET    /api/metrics                     # Prometheus metrics
 Each module has a service containing business logic:
 
 **Pattern:**
+
 ```typescript
 @Injectable()
 export class ProductsService {
@@ -267,6 +274,7 @@ export class ProductsService {
 ```
 
 **Responsibilities:**
+
 - Database operations
 - Business rule validation
 - Error handling
@@ -275,6 +283,7 @@ export class ProductsService {
 ### 5. Guards & Decorators
 
 **Authentication Guard:**
+
 ```typescript
 @UseGuards(JwtAuthGuard)
 @Get('/protected')
@@ -286,6 +295,7 @@ publicRoute() { }
 ```
 
 **Authorization Guard:**
+
 ```typescript
 @Roles(UserRole.ADMIN)
 @Delete('/:id')
@@ -293,6 +303,7 @@ deleteProduct() { }
 ```
 
 **Current User Decorator:**
+
 ```typescript
 @Get('/me')
 getProfile(@CurrentUser() user: User) { }
@@ -462,6 +473,7 @@ Address {
 ### JWT Implementation
 
 **Access Token (15 minutes):**
+
 ```json
 {
   "sub": "user-id",
@@ -474,6 +486,7 @@ Address {
 ```
 
 **Refresh Token (7 days):**
+
 ```json
 {
   "sub": "user-id",
@@ -513,23 +526,25 @@ deleteProduct(@Param('id') id: string) { }
 ### Response Format
 
 **Success Response:**
+
 ```json
 {
-  "data": { /* ... */ },
+  "data": {
+    /* ... */
+  },
   "statusCode": 200,
   "message": "Success"
 }
 ```
 
 **Error Response:**
+
 ```json
 {
   "statusCode": 400,
   "message": "Validation failed",
   "error": "BadRequest",
-  "details": [
-    { "field": "email", "message": "Invalid email format" }
-  ]
+  "details": [{ "field": "email", "message": "Invalid email format" }]
 }
 ```
 
@@ -667,6 +682,7 @@ Reverse Proxy (Nginx)
 ---
 
 For more details, see:
+
 - [DEPLOYMENT.md](./DEPLOYMENT.md) - Deployment procedures
 - [README.md](../README.md) - Project overview
 - [API.md](./API.md) - API endpoints documentation

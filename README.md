@@ -5,6 +5,7 @@ A production-ready e-commerce backend application built with NestJS, PostgreSQL,
 ## Project Overview
 
 This is a comprehensive e-commerce backend system that includes:
+
 - RESTful API with Swagger documentation
 - JWT authentication with refresh tokens
 - PostgreSQL database with Prisma ORM
@@ -147,6 +148,7 @@ test/
 ## Coding Standards
 
 See [claude.md](./claude.md) for comprehensive coding standards including:
+
 - File & function size limits
 - Naming conventions
 - Code organization
@@ -159,11 +161,13 @@ See [claude.md](./claude.md) for comprehensive coding standards including:
 ### Quick References
 
 **File Size Limits:**
+
 - Max 200 lines per file
 - Max 20 lines per function
 - Max 5 parameters per function
 
 **Naming:**
+
 - Classes: PascalCase (`UserService`)
 - Functions: camelCase (`getUserById`)
 - Constants: UPPER_SNAKE_CASE (`MAX_RETRY_ATTEMPTS`)
@@ -171,6 +175,7 @@ See [claude.md](./claude.md) for comprehensive coding standards including:
 
 **Pre-commit Hooks:**
 The project uses Husky for pre-commit hooks that automatically:
+
 - Run ESLint
 - Check Prettier formatting
 - Type check with TypeScript

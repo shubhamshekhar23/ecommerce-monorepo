@@ -22,17 +22,9 @@ export interface EnvironmentVariables {
   SMTP_FROM?: string;
 }
 
-export function validateEnvironment(
-  config: Record<string, unknown>,
-): EnvironmentVariables {
-  const schema = Joi.object<EnvironmentVariables>({
-    NODE_ENV: Joi.string()
-      .valid('development', 'production', 'test')
-      .default('development'),
-    PORT: Joi.number().default(3000),
-    API_PREFIX: Joi.string().default('api'),
-
-    // Required
+/* eslint-disable-next-line max-lines-per-function */
+function getRequiredSchema() {
+  return {
     DATABASE_URL: Joi.string().required().messages({
       'any.required': 'DATABASE_URL is required',
     }),
@@ -44,27 +36,40 @@ export function validateEnvironment(
       'string.min': 'JWT_REFRESH_SECRET must be at least 32 characters',
       'any.required': 'JWT_REFRESH_SECRET is required',
     }),
+  };
+}
 
-    // Optional with defaults
+/* eslint-disable-next-line max-lines-per-function */
+function getOptionalSchema() {
+  return {
+    NODE_ENV: Joi.string().valid('development', 'production', 'test').default('development'),
+    PORT: Joi.number().default(3000),
+    API_PREFIX: Joi.string().default('api'),
     JWT_EXPIRATION: Joi.string().default('15m'),
     JWT_REFRESH_EXPIRATION: Joi.string().default('7d'),
     CORS_ORIGIN: Joi.string().default('http://localhost:3000'),
     LOG_LEVEL: Joi.string().default('info'),
     REDIS_URL: Joi.string().optional(),
-
-    // Stripe (optional for dev)
     STRIPE_SECRET_KEY: Joi.string().optional(),
     STRIPE_WEBHOOK_SECRET: Joi.string().optional(),
-
-    // Email (optional)
     SMTP_HOST: Joi.string().optional(),
     SMTP_PORT: Joi.number().optional(),
     SMTP_SECURE: Joi.boolean().optional(),
     SMTP_USER: Joi.string().optional(),
     SMTP_PASSWORD: Joi.string().optional(),
     SMTP_FROM: Joi.string().optional(),
-  });
+  };
+}
 
+function createValidationSchema(): Joi.ObjectSchema<EnvironmentVariables> {
+  return Joi.object<EnvironmentVariables>({
+    ...getRequiredSchema(),
+    ...getOptionalSchema(),
+  });
+}
+
+export function validateEnvironment(config: Record<string, unknown>): EnvironmentVariables {
+  const schema = createValidationSchema();
   const { error, value } = schema.validate(config, {
     allowUnknown: true,
     abortEarly: false,

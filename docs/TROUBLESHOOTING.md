@@ -7,6 +7,7 @@ This guide helps resolve common issues when running the E-Commerce Backend appli
 ### 1. npm or node Command Not Found
 
 **Problem:**
+
 ```
 command not found: npm
 command not found: node
@@ -15,6 +16,7 @@ command not found: node
 **Solution:**
 
 First, verify Node.js installation:
+
 ```bash
 # Check if Node.js is installed
 node --version
@@ -35,6 +37,7 @@ nvm use 20
 ```
 
 **For shell PATH issues:**
+
 ```bash
 # If npm is installed but not in PATH
 # Add Node to your shell profile
@@ -55,6 +58,7 @@ source ~/.zshrc
 ### 2. Module Not Found / Dependency Errors
 
 **Problem:**
+
 ```
 Error: Cannot find module '@nestjs/common'
 ```
@@ -75,6 +79,7 @@ npm ci
 ### 3. ENOENT: Cannot Find Prisma Schema
 
 **Problem:**
+
 ```
 Error: ENOENT: no such file or directory, open 'prisma/schema.prisma'
 ```
@@ -98,6 +103,7 @@ ls -la prisma/schema.prisma
 ### 4. Database Connection Failed
 
 **Problem:**
+
 ```
 Error: Can't reach database server at `localhost:5432`
 ```
@@ -105,6 +111,7 @@ Error: Can't reach database server at `localhost:5432`
 **Solution:**
 
 **Check PostgreSQL is running:**
+
 ```bash
 # macOS
 brew services list | grep postgres
@@ -121,6 +128,7 @@ sudo systemctl start postgresql
 ```
 
 **Using Docker (Recommended):**
+
 ```bash
 # Start development containers
 docker-compose up -d postgres redis
@@ -133,6 +141,7 @@ docker-compose exec postgres psql -U ecommerce_user -d ecommerce_db -c "SELECT 1
 ```
 
 **Check DATABASE_URL in .env:**
+
 ```bash
 # Edit .env and ensure DATABASE_URL is correct
 # Development (local)
@@ -147,6 +156,7 @@ DATABASE_URL=postgresql://ecommerce_user:ecommerce_password@postgres:5432/ecomme
 ### 5. .env File Not Found
 
 **Problem:**
+
 ```
 Error: Missing required environment variable: DATABASE_URL
 ```
@@ -164,6 +174,7 @@ vim .env
 ```
 
 **Required environment variables:**
+
 ```env
 DATABASE_URL=postgresql://user:password@host:5432/db
 JWT_SECRET=your_32_char_secret_key_here
@@ -177,6 +188,7 @@ PORT=3000
 ### 6. TypeScript Compilation Errors
 
 **Problem:**
+
 ```
 error TS2304: Cannot find name 'RequestUser'
 ```
@@ -203,6 +215,7 @@ npm run build
 ### 7. Nest Build Fails
 
 **Problem:**
+
 ```
 Error: Cannot find source file src/main.ts
 ```
@@ -229,6 +242,7 @@ npm run build
 ### 8. Port Already in Use
 
 **Problem:**
+
 ```
 Error: listen EADDRINUSE: address already in use :::3000
 ```
@@ -253,6 +267,7 @@ PORT=3001 npm run start:dev
 ### 9. Redis Connection Failed
 
 **Problem:**
+
 ```
 Error: connect ECONNREFUSED 127.0.0.1:6379
 ```
@@ -260,6 +275,7 @@ Error: connect ECONNREFUSED 127.0.0.1:6379
 **Solution:**
 
 **Check Redis is running:**
+
 ```bash
 # macOS
 brew services list | grep redis
@@ -276,6 +292,7 @@ sudo systemctl start redis-server
 ```
 
 **Using Docker:**
+
 ```bash
 # Start Redis container
 docker-compose up -d redis
@@ -286,6 +303,7 @@ docker-compose exec redis redis-cli ping
 ```
 
 **Disable Redis (optional):**
+
 ```env
 # Leave empty to disable caching
 REDIS_URL=
@@ -296,6 +314,7 @@ REDIS_URL=
 ### 10. Prisma Migration Issues
 
 **Problem:**
+
 ```
 Error: Migration failed
 ```
@@ -324,6 +343,7 @@ npx prisma migrate resolve --rolled-back "migration_name"
 ### 11. Start Script Doesn't Work
 
 **Problem:**
+
 ```
 npm run start:dev
 # or
@@ -353,6 +373,7 @@ npm install --save-dev @nestjs/cli
 ### 12. Tests Not Running
 
 **Problem:**
+
 ```
 Error: Cannot find jest configuration
 ```
@@ -381,6 +402,7 @@ ls -la jest.config.js
 ### 13. Linting Errors
 
 **Problem:**
+
 ```
 error  Unexpected any  @typescript-eslint/no-explicit-any
 ```
@@ -406,6 +428,7 @@ npm run lint -- src/modules/auth/auth.service.ts
 ### 14. Docker Compose Issues
 
 **Problem:**
+
 ```
 Error response from daemon: invalid mount config
 ```
@@ -439,6 +462,7 @@ docker-compose exec app df -h   # Disk
 ### 15. Health Check Failing
 
 **Problem:**
+
 ```
 HEALTHCHECK FAILED: failed to get response from 'http://localhost:3000/health'
 ```
@@ -467,6 +491,7 @@ npm run start:dev  # Watch output
 ### 16. JWT Token Errors
 
 **Problem:**
+
 ```
 Error: JWT secret is not set
 Error: Invalid token signature
@@ -494,6 +519,7 @@ cat .env | grep JWT_SECRET | wc -c  # Should be > 32
 ### 17. CORS Errors
 
 **Problem:**
+
 ```
 Access to XMLHttpRequest blocked by CORS policy
 ```
@@ -510,6 +536,7 @@ CORS_ORIGIN=https://example.com,https://app.example.com
 ```
 
 **Verify in code:**
+
 ```bash
 # Check CORS configuration in src/main.ts
 grep -A 5 "cors:" src/main.ts
@@ -523,6 +550,7 @@ grep -A 10 "cors" src/app.module.ts
 ### 18. Swagger/OpenAPI Not Loading
 
 **Problem:**
+
 ```
 Cannot GET /api/docs
 ```
@@ -549,6 +577,7 @@ npm list @nestjs/swagger
 ### 19. Memory Leaks / High Memory Usage
 
 **Problem:**
+
 ```
 JavaScript heap out of memory
 FATAL ERROR: CALL_AND_RETRY_LAST Allocation failed - JavaScript heap out of memory
@@ -573,6 +602,7 @@ npm run start:dev
 ### 20. Unable to Connect to Stripe
 
 **Problem:**
+
 ```
 Error: Missing API Key. Provide your API key as an argument to Stripe()
 ```
@@ -593,6 +623,7 @@ STRIPE_SECRET_KEY=sk_live_your_live_key_here
 ### 21. Pino Logger Transport Error
 
 **Problem:**
+
 ```
 ERROR [ExceptionHandler] unable to determine transport target for "pino-pretty"
 Error: unable to determine transport target for "pino-pretty"
@@ -603,6 +634,7 @@ Error: unable to determine transport target for "pino-pretty"
 This error occurs when the logger tries to use `pino-pretty` for pretty-printing logs but it's not installed. It's an optional development dependency.
 
 **Option A: Install pino-pretty (Recommended for development)**
+
 ```bash
 npm install --save-dev pino-pretty
 
@@ -612,6 +644,7 @@ npm install --save-dev pino-pretty
 
 **Option B: Use without pino-pretty (Works fine as-is)**
 The application works perfectly with JSON format logs (the default). No additional setup needed:
+
 ```bash
 # Just run normally - logs will be in JSON format
 npm run start:dev
@@ -620,14 +653,16 @@ npm run start:dev
 **Log format comparison:**
 
 With pino-pretty (pretty, human-readable):
+
 ```
   10:30:00 AM POST /api/auth/login 200 (12ms)
   User logged in successfully
 ```
 
 Without pino-pretty (JSON, machine-readable, default):
+
 ```json
-{"level":30,"time":"2024-01-15T10:30:00.000Z","method":"POST","msg":"User logged in"}
+{ "level": 30, "time": "2024-01-15T10:30:00.000Z", "method": "POST", "msg": "User logged in" }
 ```
 
 Both formats work equally well. JSON is actually preferred in production for log aggregation.

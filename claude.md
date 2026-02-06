@@ -5,6 +5,7 @@ This document outlines the coding standards and best practices for the e-commerc
 ## 1. File & Function Size Limits
 
 **Enforced Rules:**
+
 - **Max 200 lines per file** (excluding imports, exports, and whitespace)
   - Exception: Prisma schema, config files
   - If exceeded: Refactor into multiple files or extract utilities
@@ -21,24 +22,29 @@ This document outlines the coding standards and best practices for the e-commerc
 ## 2. Naming Conventions
 
 **Classes & Interfaces:**
+
 - PascalCase: `UserService`, `CreateProductDto`, `IEmailProvider`
 - DTOs: Suffix with `Dto`
 - Entities: No suffix needed
 
 **Functions & Variables:**
+
 - camelCase: `getUserById`, `isActive`, `productCount`
 - Boolean predicates: `is*`, `has*`, `can*`, `should*`
 
 **Constants:**
+
 - UPPER_SNAKE_CASE: `MAX_RETRY_ATTEMPTS`, `DEFAULT_PAGE_SIZE`
 
 **Files:**
+
 - kebab-case: `user.service.ts`, `create-order.dto.ts`
 - Test files: `*.spec.ts` or `*.e2e-spec.ts`
 
 ## 3. Code Organization
 
 **Module Structure:**
+
 ```
 modules/users/
 ├── dto/
@@ -52,6 +58,7 @@ modules/users/
 ```
 
 **Import Order:**
+
 1. External packages (Node.js built-ins, npm packages)
 2. NestJS imports
 3. Internal absolute imports (`@/*`)
@@ -67,16 +74,19 @@ modules/users/
 ## 5. NestJS-Specific Standards
 
 **Controllers:**
+
 - **Thin controllers** - max 30 lines per method
 - Only handle HTTP concerns
 - Delegate business logic to services
 
 **Services:**
+
 - Single responsibility principle
 - Business logic lives here
 - Return domain objects
 
 **DTOs:**
+
 - Use `class-validator` decorators
 - One DTO per operation
 - Use `@ApiProperty()` for Swagger
@@ -91,10 +101,12 @@ modules/users/
 ## 7. Testing Standards
 
 **Coverage Requirements:**
+
 - Minimum 80% code coverage
 - Critical paths: 100% coverage (auth, payments)
 
 **Test Structure:**
+
 - Use Arrange-Act-Assert (AAA) pattern
 - Descriptive test names
 
@@ -115,11 +127,13 @@ modules/users/
 ## 10. Git & Version Control
 
 **Commit Messages:**
+
 - Format: `type(scope): subject`
 - Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`
 - Example: `feat(products): add product search with filters`
 
 **Branch Naming:**
+
 - Format: `type/description`
 - Examples: `feature/stripe-integration`, `fix/cart-total-calculation`
 
@@ -137,6 +151,7 @@ modules/users/
 ## 12. Automated Enforcement
 
 **ESLint Rules Applied:**
+
 - max-lines: 200
 - max-lines-per-function: 20
 - max-params: 5
@@ -146,6 +161,7 @@ modules/users/
 - no-console: warn (except warn/error)
 
 **Prettier Configuration:**
+
 - Single quotes
 - 2 spaces indentation
 - Trailing commas (all)
@@ -153,6 +169,7 @@ modules/users/
 - Semicolons: always
 
 **Pre-commit Hooks:**
+
 - Run linter (ESLint)
 - Run formatter check (Prettier)
 - Type check with `tsc --noEmit`
@@ -160,6 +177,7 @@ modules/users/
 ## Quick Reference
 
 ### Useful Commands
+
 ```bash
 npm run start:dev      # Development mode with hot reload
 npm run build          # Build for production
@@ -173,12 +191,14 @@ docker-compose up     # Start all services
 ```
 
 ### File Size Check
+
 ```bash
 # Check which files exceed 200 lines
 find src -name "*.ts" -exec wc -l {} + | sort -rn | head -20
 ```
 
 ### Coverage Report
+
 ```bash
 npm run test:cov
 open coverage/lcov-report/index.html
