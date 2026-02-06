@@ -590,6 +590,50 @@ STRIPE_SECRET_KEY=sk_live_your_live_key_here
 
 ---
 
+### 21. Pino Logger Transport Error
+
+**Problem:**
+```
+ERROR [ExceptionHandler] unable to determine transport target for "pino-pretty"
+Error: unable to determine transport target for "pino-pretty"
+```
+
+**Solution:**
+
+This error occurs when the logger tries to use `pino-pretty` for pretty-printing logs but it's not installed. It's an optional development dependency.
+
+**Option A: Install pino-pretty (Recommended for development)**
+```bash
+npm install --save-dev pino-pretty
+
+# Then enable it in src/modules/logger/logger.module.ts:
+# Uncomment the line with transport configuration
+```
+
+**Option B: Use without pino-pretty (Works fine as-is)**
+The application works perfectly with JSON format logs (the default). No additional setup needed:
+```bash
+# Just run normally - logs will be in JSON format
+npm run start:dev
+```
+
+**Log format comparison:**
+
+With pino-pretty (pretty, human-readable):
+```
+  10:30:00 AM POST /api/auth/login 200 (12ms)
+  User logged in successfully
+```
+
+Without pino-pretty (JSON, machine-readable, default):
+```json
+{"level":30,"time":"2024-01-15T10:30:00.000Z","method":"POST","msg":"User logged in"}
+```
+
+Both formats work equally well. JSON is actually preferred in production for log aggregation.
+
+---
+
 ## Development Server Setup Checklist
 
 - [ ] Node.js 20+ installed (`node --version`)
