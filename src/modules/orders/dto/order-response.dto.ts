@@ -6,37 +6,37 @@ export class OrderItemResponseDto {
     description: 'Order item ID',
     example: '550e8400-e29b-41d4-a716-446655440000',
   })
-  id: string;
+  id?: string;
 
   @ApiProperty({
     description: 'Product ID',
     example: '550e8400-e29b-41d4-a716-446655440001',
   })
-  productId: string;
+  productId?: string;
 
   @ApiProperty({
     description: 'Product name',
     example: 'Wireless Mouse',
   })
-  productName: string;
+  productName?: string;
 
   @ApiProperty({
     description: 'Quantity ordered',
     example: 1,
   })
-  quantity: number;
+  quantity?: number;
 
   @ApiProperty({
     description: 'Unit price at time of order',
     example: 49.99,
   })
-  price: number;
+  price?: number;
 
   @ApiProperty({
     description: 'Item subtotal',
     example: 49.99,
   })
-  subtotal: number;
+  subtotal?: number;
 }
 
 export class OrderResponseDto {
@@ -44,45 +44,45 @@ export class OrderResponseDto {
     description: 'Order ID',
     example: '550e8400-e29b-41d4-a716-446655440000',
   })
-  id: string;
+  id?: string;
 
   @ApiProperty({
     description: 'Unique order number',
     example: 'ORD-20240115-ABC123',
   })
-  orderNumber: string;
+  orderNumber?: string;
 
   @ApiProperty({
     description: 'User ID',
     example: '550e8400-e29b-41d4-a716-446655440001',
   })
-  userId: string;
+  userId?: string;
 
   @ApiProperty({
     description: 'Order items',
     type: [OrderItemResponseDto],
   })
-  items: OrderItemResponseDto[];
+  items?: OrderItemResponseDto[];
 
   @ApiProperty({
     description: 'Total order amount',
     example: 299.97,
   })
-  totalPrice: number;
+  totalPrice?: number;
 
   @ApiProperty({
     description: 'Order status',
     enum: OrderStatus,
     example: OrderStatus.PENDING,
   })
-  status: OrderStatus;
+  status?: OrderStatus;
 
   @ApiProperty({
     description: 'Payment status',
     enum: PaymentStatus,
     example: PaymentStatus.PENDING,
   })
-  paymentStatus: PaymentStatus;
+  paymentStatus?: PaymentStatus;
 
   @ApiProperty({
     description: 'Stripe payment intent ID',
@@ -102,11 +102,11 @@ export class OrderResponseDto {
     description: 'Order creation timestamp',
     example: '2024-01-15T10:30:00Z',
   })
-  createdAt: Date;
+  createdAt?: Date;
 
   @ApiProperty({
     description: 'Last update timestamp',
     example: '2024-01-15T10:35:00Z',
   })
-  updatedAt: Date;
+  updatedAt?: Date;
 }

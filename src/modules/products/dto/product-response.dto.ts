@@ -5,13 +5,13 @@ export class ProductImageResponseDto {
     description: 'Image ID',
     example: '550e8400-e29b-41d4-a716-446655440000',
   })
-  id: string;
+  id?: string;
 
   @ApiProperty({
     description: 'Image URL',
     example: '/uploads/products/2024/01/abc123-product.jpg',
   })
-  url: string;
+  url?: string;
 
   @ApiProperty({
     description: 'Alternative text for accessibility',
@@ -26,19 +26,19 @@ export class ProductResponseDto {
     description: 'Product ID',
     example: '550e8400-e29b-41d4-a716-446655440000',
   })
-  id: string;
+  id?: string;
 
   @ApiProperty({
     description: 'Product name',
     example: 'Wireless Headphones',
   })
-  name: string;
+  name?: string;
 
   @ApiProperty({
     description: 'URL-friendly product name',
     example: 'wireless-headphones',
   })
-  slug: string;
+  slug?: string;
 
   @ApiProperty({
     description: 'Detailed product description',
@@ -50,7 +50,7 @@ export class ProductResponseDto {
     description: 'Current product price',
     example: 99.99,
   })
-  price: number;
+  price?: number;
 
   @ApiProperty({
     description: 'Original price before discount',
@@ -63,7 +63,7 @@ export class ProductResponseDto {
     description: 'Category ID',
     example: '550e8400-e29b-41d4-a716-446655440001',
   })
-  categoryId: string;
+  categoryId?: string;
 
   @ApiProperty({
     description: 'Category name',
@@ -76,35 +76,35 @@ export class ProductResponseDto {
     description: 'Stock keeping unit (SKU)',
     example: 'WH-BT-001',
   })
-  sku: string;
+  sku?: string;
 
   @ApiProperty({
     description: 'Current stock quantity',
     example: 150,
   })
-  stock: number;
+  stock?: number;
 
   @ApiProperty({
     description: 'Whether product is active',
     example: true,
   })
-  isActive: boolean;
+  isActive?: boolean;
 
   @ApiProperty({
     description: 'Product images',
     type: [ProductImageResponseDto],
   })
-  images: ProductImageResponseDto[];
+  images?: ProductImageResponseDto[];
 
   @ApiProperty({
     description: 'Product creation timestamp',
     example: '2024-01-10T08:00:00Z',
   })
-  createdAt: Date;
+  createdAt?: Date;
 
   @ApiProperty({
     description: 'Last update timestamp',
     example: '2024-01-15T10:30:00Z',
   })
-  updatedAt: Date;
+  updatedAt?: Date;
 }
