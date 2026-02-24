@@ -118,6 +118,19 @@ export class CategoriesService {
       throw new NotFoundException(`Category with ID ${id} not found`);
     }
 
+    if (updateCategoryDto.slug || updateCategoryDto.name) {
+      const orConditions = [
+        ...(updateCategoryDto.slug ? [{ slug: updateCategoryDto.slug }] : []),
+        ...(updateCategoryDto.name ? [{ name: updateCategoryDto.name }] : []),
+      ];
+      const conflict = await this.prisma.category.findFirst({
+        where: { AND: [{ id: { not: id } }, { OR: orConditions }] },
+      });
+      if (conflict) {
+        throw new ConflictException('Category name or slug already exists');
+      }
+    }
+
     if (updateCategoryDto.parentId) {
       if (updateCategoryDto.parentId === id) {
         throw new BadRequestException('Category cannot be its own parent');

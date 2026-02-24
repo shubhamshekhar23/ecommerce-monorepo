@@ -3,7 +3,7 @@ import {
   Get,
   Post,
   Body,
-  Patch,
+  Put,
   Delete,
   Param,
   Query,
@@ -67,7 +67,7 @@ export class CategoriesController {
     return this.categoriesService.findBySlug(slug);
   }
 
-  @Patch(':id')
+  @Put(':id')
   @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update category' })
