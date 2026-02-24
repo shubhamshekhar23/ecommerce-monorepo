@@ -1,0 +1,66 @@
+// src/app/page.module.scss
+
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+.container {
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  padding: var(--space-12) var(--space-4);
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--space-8);
+  padding: var(--space-16) var(--space-4);
+}
+
+.title {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  max-width: 600px;
+
+  @include respond-to('md') {
+    font-size: var(--font-size-2xl);
+  }
+
+  @include respond-to('sm') {
+    font-size: var(--font-size-xl);
+  }
+}
+
+.subtitle {
+  font-size: var(--font-size-lg);
+  color: var(--color-text-secondary);
+  max-width: 500px;
+  line-height: var(--line-height-relaxed);
+
+  @include respond-to('sm') {
+    font-size: var(--font-size-base);
+  }
+}
+
+.cta {
+  display: inline-block;
+  padding: var(--space-3) var(--space-8);
+  background-color: var(--color-accent);
+  color: white;
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: all var(--transition-base);
+
+  &:hover {
+    background-color: var(--color-accent-hover);
+    text-decoration: none;
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}

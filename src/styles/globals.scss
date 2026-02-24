@@ -1,0 +1,196 @@
+// src/styles/globals.scss
+// Global styles, CSS reset, and base element styles
+
+@use './variables';
+
+// === CSS RESET ===
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-primary);
+  background-color: var(--color-background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// === TYPOGRAPHY ===
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  margin: 0;
+}
+
+h1 {
+  font-size: var(--font-size-3xl);
+}
+
+h2 {
+  font-size: var(--font-size-2xl);
+}
+
+h3 {
+  font-size: var(--font-size-xl);
+}
+
+h4 {
+  font-size: var(--font-size-lg);
+}
+
+h5,
+h6 {
+  font-size: var(--font-size-base);
+}
+
+p {
+  margin: 0;
+}
+
+// === LINKS ===
+
+a {
+  color: var(--color-link);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+
+  &:hover {
+    color: var(--color-accent-hover);
+    text-decoration: underline;
+  }
+
+  &:visited {
+    color: var(--color-link-visited);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+}
+
+// === BUTTONS & FORM ELEMENTS ===
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+input,
+textarea,
+select {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+textarea {
+  resize: vertical;
+}
+
+// === LISTS ===
+
+ul,
+ol {
+  list-style: none;
+}
+
+// === IMAGES ===
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+// === CODE ===
+
+code,
+pre {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-sm);
+}
+
+code {
+  background-color: var(--color-background);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  color: var(--color-error);
+}
+
+pre {
+  background-color: var(--color-background);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+
+  code {
+    background: none;
+    padding: 0;
+    color: inherit;
+  }
+}
+
+// === TABLE ===
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  text-align: left;
+  font-weight: var(--font-weight-semibold);
+}
+
+td,
+th {
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+// === UTILITY CLASSES ===
+
+.container {
+  width: 100%;
+  max-width: var(--container-max-width);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+}
+
+// Hide scrollbar while maintaining scroll functionality
+.hide-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+
+  &::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+  }
+}

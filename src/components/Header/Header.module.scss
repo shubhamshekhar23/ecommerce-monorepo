@@ -1,0 +1,151 @@
+// src/components/Header/Header.module.scss
+
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+.header {
+  background-color: var(--color-header-bg);
+  color: var(--color-header-text);
+  padding: var(--space-3) 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow-md);
+}
+
+.container {
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  padding: 0 var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.logo {
+  flex-shrink: 0;
+  text-decoration: none;
+  color: var(--color-header-text);
+  display: flex;
+  align-items: center;
+
+  &:hover .logoText {
+    color: var(--color-accent);
+  }
+
+  &:focus-visible {
+    @include focus-ring(var(--color-accent));
+  }
+}
+
+.logoText {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  transition: color var(--transition-base);
+}
+
+.searchBar {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background-color: var(--color-header-text);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  max-width: 600px;
+}
+
+.searchInput {
+  flex: 1;
+  padding: var(--space-3) var(--space-4);
+  border: none;
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+
+  &:focus {
+    outline: 2px solid var(--color-accent);
+    outline-offset: -2px;
+  }
+
+  &::placeholder {
+    color: var(--color-text-muted);
+  }
+
+  &:disabled {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+  }
+}
+
+.searchBtn {
+  padding: var(--space-3) var(--space-4);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: var(--font-size-lg);
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:hover:not(:disabled) {
+    background-color: #e8e8e8;
+  }
+}
+
+.nav {
+  display: flex;
+  gap: var(--space-8);
+  flex-shrink: 0;
+
+  @include respond-to('md') {
+    gap: var(--space-4);
+  }
+}
+
+.navItem {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  text-decoration: none;
+}
+
+.greeting {
+  font-size: var(--font-size-xs);
+  color: var(--color-header-text);
+  opacity: 0.9;
+}
+
+.navLink,
+.signoutLink {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-header-text);
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+  transition: color var(--transition-base);
+
+  &:hover {
+    color: var(--color-accent);
+  }
+
+  &:focus-visible {
+    @include focus-ring(var(--color-accent), 4px);
+    border-radius: var(--radius-sm);
+  }
+}
+
+.subtext {
+  font-size: var(--font-size-xs);
+  color: var(--color-header-text);
+  opacity: 0.9;
+}
+
+.cartIcon {
+  font-size: var(--font-size-lg);
+}

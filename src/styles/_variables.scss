@@ -1,0 +1,108 @@
+// src/styles/_variables.scss
+// Design tokens - Colors, Typography, Spacing, Radii, Shadows
+
+:root {
+  // === COLORS ===
+
+  // Header/Footer & Navigation
+  --color-header-bg: #0f2035;
+  --color-header-text: #ffffff;
+  --color-nav-bg: #1a3a5c;
+  --color-nav-text: #ffffff;
+
+  // Primary Actions & Accents
+  --color-accent: #00b4cc;
+  --color-accent-hover: #017ea3;
+  --color-accent-text: #003d52;
+
+  // Page Structure
+  --color-background: #eef0f3;
+  --color-card: #ffffff;
+
+  // Text Colors
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #555f6e;
+  --color-text-muted: #8d9299;
+
+  // UI Elements
+  --color-border: #d5d9d9;
+  --color-link: #017ea3;
+  --color-link-visited: #6a2e80;
+
+  // Status Colors
+  --color-success: #007600;
+  --color-error: #c40000;
+  --color-warning: #f0a500;
+  --color-star: #f0a500;
+  --color-badge: #cc0c39;
+
+  // === TYPOGRAPHY ===
+
+  --font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+  --font-family-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+
+  --font-size-xs: 0.75rem;       // 12px
+  --font-size-sm: 0.875rem;      // 14px
+  --font-size-base: 1rem;        // 16px
+  --font-size-lg: 1.125rem;      // 18px
+  --font-size-xl: 1.25rem;       // 20px
+  --font-size-2xl: 1.5rem;       // 24px
+  --font-size-3xl: 1.875rem;     // 30px
+
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  // Line height
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  // === SPACING ===
+
+  --space-1: 0.25rem;   // 4px
+  --space-2: 0.5rem;    // 8px
+  --space-3: 0.75rem;   // 12px
+  --space-4: 1rem;      // 16px
+  --space-6: 1.5rem;    // 24px
+  --space-8: 2rem;      // 32px
+  --space-10: 2.5rem;   // 40px
+  --space-12: 3rem;     // 48px
+  --space-16: 4rem;     // 64px
+
+  // === BORDER RADIUS ===
+
+  --radius-sm: 0.25rem;  // 4px (Amazon-like subtle)
+  --radius-md: 0.5rem;   // 8px
+  --radius-lg: 0.75rem;  // 12px
+  --radius-full: 9999px;
+
+  // === SHADOWS ===
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -1px rgb(0 0 0 / 0.06);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.05);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 10px 10px -5px rgb(0 0 0 / 0.04);
+
+  // === TRANSITIONS ===
+
+  --transition-fast: 100ms ease-in-out;
+  --transition-base: 200ms ease-in-out;
+  --transition-slow: 300ms ease-in-out;
+
+  // === BREAKPOINTS ===
+
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+
+  // === LAYOUT ===
+
+  --container-max-width: 1200px;
+  --header-height: 56px;
+  --navbar-height: 40px;
+}

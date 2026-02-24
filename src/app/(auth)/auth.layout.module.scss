@@ -1,0 +1,26 @@
+// src/app/(auth)/auth.layout.module.scss
+
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+.container {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background-color: var(--color-background);
+  padding: var(--space-4);
+}
+
+.card {
+  width: 100%;
+  max-width: 380px;
+  padding: var(--space-8);
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+
+  @include respond-to('sm') {
+    padding: var(--space-6);
+  }
+}
