@@ -22,7 +22,7 @@ export class StripeController {
   ): Promise<PaymentIntentResponseDto> {
     const { orderId } = createPaymentIntentDto;
 
-    const paymentIntent = await this.stripeService.createPaymentIntent(orderId, 9999);
+    const paymentIntent = await this.stripeService.getPaymentIntentByOrderId(orderId);
 
     return {
       paymentIntentId: paymentIntent.id,
