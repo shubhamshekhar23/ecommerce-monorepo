@@ -24,6 +24,13 @@ export function ProductCard({ product }: ProductCardProps) {
   const status = useAuthStore((state) => state.status);
   const { mutate: addToCart, isPending } = useAddToCart();
   const [buttonState, setButtonState] = useState<'idle' | 'success' | 'error'>('idle');
+  const [imageSrc, setImageSrc] = useState(mainImage?.url || null);
+
+  const fallbackImage = `https://picsum.photos/400/400`;
+
+  const handleImageError = () => {
+    setImageSrc(fallbackImage);
+  };
 
   const handleAddToCart = useCallback(
     (e: React.MouseEvent) => {
@@ -64,13 +71,14 @@ export function ProductCard({ product }: ProductCardProps) {
   return (
     <Link href={`/products/${product.slug}`} className={styles.card}>
       <div className={styles.imageWrapper}>
-        {mainImage ? (
+        {imageSrc ? (
           <Image
-            src={mainImage.url}
-            alt={mainImage.altText || product.name}
+            src={imageSrc}
+            alt={mainImage?.altText || product.name}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             className={styles.image}
+            onError={handleImageError}
           />
         ) : (
           <div className={styles.placeholder} />

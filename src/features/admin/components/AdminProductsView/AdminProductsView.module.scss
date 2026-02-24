@@ -37,6 +37,31 @@
   }
 }
 
+.searchBar {
+  margin-bottom: var(--space-4);
+}
+
+.searchInput {
+  width: 100%;
+  max-width: 400px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  background-color: var(--color-card);
+  @include transition(border-color 0.2s ease);
+
+  &::placeholder {
+    color: var(--color-text-secondary);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-accent);
+  }
+}
+
 .loading {
   padding: var(--space-6);
   text-align: center;

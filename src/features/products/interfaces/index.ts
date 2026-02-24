@@ -64,4 +64,5 @@ export interface PaginatedCategories {
 export interface ProductsQueryParams {
   page?: number;
   limit?: number;
+  text?: string;
 }

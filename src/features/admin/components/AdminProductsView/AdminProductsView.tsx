@@ -12,7 +12,8 @@ interface AdminProductsViewProps {
 }
 
 export function AdminProductsView({ page = 1 }: AdminProductsViewProps) {
-  const { data, isLoading } = useAdminProducts(page);
+  const [search, setSearch] = useState('');
+  const { data, isLoading } = useAdminProducts(page, search || undefined);
   const { mutate: deleteProduct, isPending } = useDeleteProduct();
   const [showConfirmId, setShowConfirmId] = useState<string | null>(null);
 
@@ -36,6 +37,16 @@ export function AdminProductsView({ page = 1 }: AdminProductsViewProps) {
         <Link href="/admin/products/new" className={styles.addBtn}>
           + Add Product
         </Link>
+      </div>
+
+      <div className={styles.searchBar}>
+        <input
+          type="text"
+          placeholder="Search products..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className={styles.searchInput}
+        />
       </div>
 
       {products.length === 0 ? (

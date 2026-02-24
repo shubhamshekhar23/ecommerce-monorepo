@@ -5,9 +5,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { getProductsApi } from '@/features/products/api/products.api';
 
-export function useAdminProducts(page = 1) {
+export function useAdminProducts(page = 1, search?: string) {
   return useQuery({
-    queryKey: ['admin', 'products', page],
-    queryFn: () => getProductsApi({ page, limit: 20 }),
+    queryKey: ['admin', 'products', page, search],
+    queryFn: () => getProductsApi({ page, limit: 20, text: search }),
   });
 }

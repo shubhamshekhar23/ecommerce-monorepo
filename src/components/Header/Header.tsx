@@ -3,17 +3,29 @@
 
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth.store';
 import { useLogout } from '@/features/auth/hooks';
 import { useCart } from '@/features/cart/hooks';
 import styles from './Header.module.scss';
 
 export function Header() {
+  const router = useRouter();
+  const [searchInput, setSearchInput] = useState('');
   const user = useAuthStore((state) => state.user);
   const { mutate: logout } = useLogout();
   const { data: cart } = useCart();
   const cartItemCount = cart?.itemCount ?? 0;
+
+  const handleSearch = (e: React.SyntheticEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (searchInput.trim()) {
+      router.push(`/products?search=${encodeURIComponent(searchInput)}`);
+      setSearchInput('');
+    }
+  };
 
   return (
     <header className={styles.header}>
@@ -23,18 +35,19 @@ export function Header() {
           <span className={styles.logoText}>ShopHub</span>
         </Link>
 
-        {/* Search Bar (placeholder for Phase 1) */}
-        <div className={styles.searchBar}>
+        {/* Search Bar */}
+        <form onSubmit={handleSearch} className={styles.searchBar}>
           <input
             type="text"
             placeholder="Search products..."
             className={styles.searchInput}
-            disabled
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
           />
-          <button className={styles.searchBtn} disabled>
+          <button type="submit" className={styles.searchBtn}>
             🔍
           </button>
-        </div>
+        </form>
 
         {/* Account & Cart Links */}
         <div className={styles.nav}>

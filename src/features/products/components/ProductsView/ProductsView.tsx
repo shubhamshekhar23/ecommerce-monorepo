@@ -12,11 +12,13 @@ import styles from './ProductsView.module.scss';
 export function ProductsView() {
   const searchParams = useSearchParams();
   const page = Number(searchParams.get('page')) || 1;
+  const search = searchParams.get('search') || undefined;
   const limit = 20;
 
   const { data, isLoading, error } = useProducts({
     page,
     limit,
+    text: search,
   });
 
   const products = data?.data || [];
@@ -29,7 +31,9 @@ export function ProductsView() {
 
       <main className={styles.main}>
         <div className={styles.header}>
-          <h1 className={styles.title}>Products</h1>
+          <h1 className={styles.title}>
+            {search ? `Search Results for "${search}"` : 'Products'}
+          </h1>
           <p className={styles.count}>
             {resultCount > 0 ? `${resultCount} results` : 'No results'}
           </p>
