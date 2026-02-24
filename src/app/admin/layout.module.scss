@@ -1,0 +1,20 @@
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+.container {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: 100vh;
+  gap: 0;
+
+  @include respond-to('md') {
+    grid-template-columns: 1fr;
+  }
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-background);
+  overflow-y: auto;
+}

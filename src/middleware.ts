@@ -4,7 +4,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const PROTECTED_PATHS = ['/account', '/orders', '/admin'];
+const PROTECTED_PATHS = ['/account', '/orders', '/admin', '/cart', '/checkout'];
 const AUTH_PATHS = ['/login', '/register'];
 const AUTH_COOKIE = 'auth_session';
 

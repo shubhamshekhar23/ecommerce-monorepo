@@ -6,11 +6,14 @@
 import Link from 'next/link';
 import { useAuthStore } from '@/store/auth.store';
 import { useLogout } from '@/features/auth/hooks';
+import { useCart } from '@/features/cart/hooks';
 import styles from './Header.module.scss';
 
 export function Header() {
   const user = useAuthStore((state) => state.user);
   const { mutate: logout } = useLogout();
+  const { data: cart } = useCart();
+  const cartItemCount = cart?.itemCount ?? 0;
 
   return (
     <header className={styles.header}>
@@ -35,6 +38,15 @@ export function Header() {
 
         {/* Account & Cart Links */}
         <div className={styles.nav}>
+          {user?.role === 'ADMIN' && (
+            <div className={styles.navItem}>
+              <span className={styles.subtext}>Manage</span>
+              <Link href="/admin" className={styles.navLink}>
+                Admin
+              </Link>
+            </div>
+          )}
+
           <div className={styles.navItem}>
             {user ? (
               <>
@@ -64,6 +76,11 @@ export function Header() {
             <span className={styles.cartIcon}>🛒</span>
             <Link href="/cart" className={styles.navLink}>
               Cart
+              {cartItemCount > 0 && (
+                <span className={styles.cartBadge}>
+                  {cartItemCount > 99 ? '99+' : cartItemCount}
+                </span>
+              )}
             </Link>
           </div>
         </div>

@@ -119,6 +119,7 @@
 
 .navLink,
 .signoutLink {
+  position: relative;
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-header-text);
@@ -148,4 +149,22 @@
 
 .cartIcon {
   font-size: var(--font-size-lg);
+}
+
+.cartBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: #cc0c39;
+  color: white;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  border-radius: var(--radius-full);
+  padding: 0 4px;
+  line-height: 1;
 }

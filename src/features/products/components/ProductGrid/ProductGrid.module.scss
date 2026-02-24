@@ -1,0 +1,60 @@
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-lg);
+  width: 100%;
+
+  @include respond-to('lg') {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-md);
+  }
+
+  @include respond-to('md') {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-md);
+  }
+
+  @include respond-to('sm') {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+}
+
+.error {
+  padding: var(--spacing-xl);
+  text-align: center;
+  color: #cb2431;
+  background-color: #ffeaea;
+  border-radius: var(--radius-sm);
+
+  p {
+    margin: 0;
+    font-size: var(--font-size-md);
+  }
+}
+
+.empty {
+  padding: var(--spacing-xl);
+  text-align: center;
+  color: var(--color-text-secondary);
+
+  p {
+    margin: 0 0 var(--spacing-md) 0;
+    font-size: var(--font-size-md);
+  }
+
+  a {
+    color: var(--color-accent);
+    text-decoration: none;
+    font-weight: 600;
+    @include transition(color 0.2s ease);
+
+    &:hover {
+      color: #0096a8;
+      text-decoration: underline;
+    }
+  }
+}
