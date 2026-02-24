@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./node_modules/.bin/prisma migrate dev --name add_indexes_user_product_order)",
+      "Read(//usr/local/**)",
+      "Bash(/usr/local/bin/node ./node_modules/.bin/prisma migrate dev --name add_indexes_user_product_order)"
+    ]
+  }
+}

@@ -56,6 +56,10 @@ model User {
 
   @@index([email])
   @@index([role])
+  @@index([isActive])
+  @@index([createdAt])
+  @@index([emailVerified])
+  @@index([role, isActive])
 }
 
 model RefreshToken {
@@ -104,10 +108,14 @@ model Product {
   orderItems  OrderItem[]
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  updatedAt   DateTime  @updatedAt
 
   @@index([slug])
   @@index([categoryId])
+  @@index([isActive])
+  @@index([createdAt])
+  @@index([price])
+  @@index([isActive, createdAt])
 }
 
 model ProductImage {
@@ -167,6 +175,9 @@ model Order {
   @@index([userId])
   @@index([status])
   @@index([paymentStatus])
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
 }
 
 model OrderItem {
