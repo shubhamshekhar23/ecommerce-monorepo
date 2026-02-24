@@ -7,7 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '@/modules/prisma/prisma.service';
-import { CreateProductDto, ProductImageDto } from './dto';
+import { CreateProductDto, UpdateProductDto, ProductImageDto } from './dto';
 import { calculatePagination, buildPaginationResponse } from '@/common/utils/pagination.util';
 import { PaginationDto } from '@/common/types/pagination.interface';
 
@@ -49,18 +49,75 @@ export class ProductsService {
     return this.mapToResponse(product);
   }
 
-  async findAll(page = 1, limit = 20): Promise<PaginationDto<any>> {
+  async update(id: string, updateProductDto: UpdateProductDto): Promise<any> {
+    const product = await this.prisma.product.findUnique({ where: { id } });
+
+    if (!product) {
+      throw new NotFoundException(`Product with ID ${id} not found`);
+    }
+
+    if (updateProductDto.slug && updateProductDto.slug !== product.slug) {
+      const existing = await this.prisma.product.findFirst({
+        where: { slug: updateProductDto.slug },
+      });
+      if (existing) {
+        throw new ConflictException('Product slug already exists');
+      }
+    }
+
+    if (updateProductDto.categoryId) {
+      await this.validateCategoryExists(updateProductDto.categoryId);
+    }
+
+    const { images, ...productData } = updateProductDto;
+
+    const updateData: any = {
+      ...productData,
+    };
+
+    if (productData.price !== undefined) {
+      updateData.price = new Decimal(String(productData.price));
+    }
+    if (productData.cost !== undefined) {
+      updateData.cost = new Decimal(String(productData.cost));
+    }
+
+    const updated = await this.prisma.product.update({
+      where: { id },
+      data: updateData,
+      include: { images: true },
+    });
+
+    if (images && images.length > 0) {
+      await this.addImages(id, images);
+    }
+
+    this.logger.log(`Product updated: id=${updated.id}, name=${updated.name}`);
+    return this.mapToResponse(updated);
+  }
+
+  async findAll(page = 1, limit = 20, text?: string): Promise<PaginationDto<any>> {
     const { skip, take } = calculatePagination(page, limit);
+
+    const where = {
+      isActive: true,
+      ...(text && {
+        OR: [
+          { name: { contains: text, mode: 'insensitive' as const } },
+          { description: { contains: text, mode: 'insensitive' as const } },
+        ],
+      }),
+    };
 
     const [products, total] = await Promise.all([
       this.prisma.product.findMany({
-        where: { isActive: true },
+        where,
         skip,
         take,
         include: { images: { where: { isMain: true } } },
         orderBy: { createdAt: 'desc' },
       }),
-      this.prisma.product.count({ where: { isActive: true } }),
+      this.prisma.product.count({ where }),
     ]);
 
     return buildPaginationResponse(

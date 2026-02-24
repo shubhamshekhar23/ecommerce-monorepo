@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Put,
   Body,
   Param,
   Delete,
@@ -11,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { ProductsService } from './products.service';
-import { CreateProductDto } from './dto';
+import { CreateProductDto, UpdateProductDto } from './dto';
 import { Public, Roles } from '@/common/decorators';
 import { UserRole } from '@prisma/client';
 import { PaginationDto } from '@/common/types/pagination.interface';
@@ -31,12 +32,25 @@ export class ProductsController {
     return this.productsService.create(createProductDto);
   }
 
+  @Put(':id')
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update a product' })
+  @ApiResponse({ status: 200 })
+  async update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto): Promise<any> {
+    return this.productsService.update(id, updateProductDto);
+  }
+
   @Get()
   @Public()
-  @ApiOperation({ summary: 'Get all products with pagination' })
+  @ApiOperation({ summary: 'Get all products with pagination and optional search' })
   @ApiResponse({ status: 200 })
-  async findAll(@Query('page') page = 1, @Query('limit') limit = 20): Promise<PaginationDto<any>> {
-    return this.productsService.findAll(page, limit);
+  async findAll(
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+    @Query('text') text?: string,
+  ): Promise<PaginationDto<any>> {
+    return this.productsService.findAll(page, limit, text);
   }
 
   @Get(':id')
