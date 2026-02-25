@@ -72,7 +72,7 @@ export function AdminProductsView({ page = 1 }: AdminProductsViewProps) {
                     <td className={styles.name}>{product.name}</td>
                     <td>${Number(product.price).toFixed(2)}</td>
                     <td>{product.stock}</td>
-                    <td>{product.category?.name || '—'}</td>
+                    <td>{(product as any).categoryName || product.category?.name || '—'}</td>
                     <td className={styles.actions}>
                       {showConfirmId === product.id ? (
                         <div className={styles.confirm}>
@@ -93,12 +93,17 @@ export function AdminProductsView({ page = 1 }: AdminProductsViewProps) {
                           </button>
                         </div>
                       ) : (
-                        <button
-                          className={styles.deleteBtn}
-                          onClick={() => setShowConfirmId(product.id)}
-                        >
-                          Delete
-                        </button>
+                        <div className={styles.actionButtons}>
+                          <Link href={`/admin/products/${product.id}/edit`} className={styles.editBtn}>
+                            Edit
+                          </Link>
+                          <button
+                            className={styles.deleteBtn}
+                            onClick={() => setShowConfirmId(product.id)}
+                          >
+                            Delete
+                          </button>
+                        </div>
                       )}
                     </td>
                   </tr>

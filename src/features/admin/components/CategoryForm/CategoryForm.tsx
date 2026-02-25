@@ -2,15 +2,24 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAdminCategories, useCreateCategory } from '../../hooks';
+import { useAdminCategories, useCreateCategory, useUpdateCategory } from '../../hooks';
+import type { Category } from '@/features/products/interfaces';
 import styles from './CategoryForm.module.scss';
 
-export function CategoryForm() {
+interface CategoryFormProps {
+  category?: Category;
+}
+
+export function CategoryForm({ category }: CategoryFormProps) {
   const router = useRouter();
   const { data: categoriesData } = useAdminCategories();
-  const { mutate: createCategory, isPending } = useCreateCategory();
+  const { mutate: createCategory, isPending: isCreating } = useCreateCategory();
+  const { mutate: updateCategory, isPending: isUpdating } = useUpdateCategory();
+
+  const isEditMode = !!category;
+  const isPending = isCreating || isUpdating;
 
   const [formData, setFormData] = useState({
     name: '',
@@ -20,6 +29,19 @@ export function CategoryForm() {
     parentId: '',
   });
 
+  // Initialize form data on category load (for edit mode)
+  useEffect(() => {
+    if (category) {
+      setFormData({
+        name: category.name,
+        slug: category.slug,
+        description: category.description || '',
+        image: category.image || '',
+        parentId: category.parentId || '',
+      });
+    }
+  }, [category]);
+
   const handleNameChange = (value: string): void => {
     const slug = value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
     setFormData((prev) => ({ ...prev, name: value, slug }));
@@ -28,25 +50,44 @@ export function CategoryForm() {
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
 
-    createCategory(
-      {
-        name: formData.name,
-        slug: formData.slug,
-        description: formData.description || undefined,
-        image: formData.image || undefined,
-        parentId: formData.parentId || undefined,
-      },
-      {
+    const payload: any = {
+      name: formData.name,
+      slug: formData.slug,
+    };
+
+    // Only include optional fields if they have values
+    if (formData.description) {
+      payload.description = formData.description;
+    }
+    // Always include image if it has a value (even empty string)
+    if (formData.image !== '' && formData.image !== null && formData.image !== undefined) {
+      payload.image = formData.image;
+    }
+    if (formData.parentId) {
+      payload.parentId = formData.parentId;
+    }
+
+    if (isEditMode && category) {
+      updateCategory(
+        { id: category.id, data: payload },
+        {
+          onSuccess: () => {
+            router.push('/admin/categories');
+          },
+        },
+      );
+    } else {
+      createCategory(payload, {
         onSuccess: () => {
           router.push('/admin/categories');
         },
-      },
-    );
+      });
+    }
   };
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>Create Category</h1>
+      <h1 className={styles.title}>{isEditMode ? 'Edit Category' : 'Create Category'}</h1>
 
       <form onSubmit={handleSubmit} className={styles.form}>
         <div className={styles.fieldGroup}>
@@ -105,7 +146,7 @@ export function CategoryForm() {
           >
             <option value="">None (top-level)</option>
             {categoriesData?.data.map((cat) => (
-              <option key={cat.id} value={cat.id}>
+              <option key={cat.id} value={cat.id} disabled={isEditMode && cat.id === category?.id}>
                 {cat.name}
               </option>
             ))}
@@ -114,7 +155,7 @@ export function CategoryForm() {
 
         <div className={styles.actions}>
           <button type="submit" className={styles.submitBtn} disabled={isPending}>
-            {isPending ? 'Creating...' : 'Create Category'}
+            {isPending ? (isEditMode ? 'Saving...' : 'Creating...') : isEditMode ? 'Save Changes' : 'Create Category'}
           </button>
           <button
             type="button"

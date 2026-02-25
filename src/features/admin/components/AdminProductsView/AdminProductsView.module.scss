@@ -130,6 +130,29 @@
   white-space: nowrap;
 }
 
+.actionButtons {
+  display: flex;
+  gap: var(--space-1);
+  justify-content: flex-end;
+}
+
+.editBtn {
+  padding: var(--space-1) var(--space-2);
+  background-color: #0066cc;
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-block;
+  @include transition(opacity 0.2s ease);
+
+  &:hover {
+    opacity: 0.9;
+  }
+}
+
 .deleteBtn {
   padding: var(--space-1) var(--space-2);
   background-color: #cc0c39;

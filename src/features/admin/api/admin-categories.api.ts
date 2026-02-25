@@ -33,9 +33,21 @@ export async function createCategoryApi(dto: CreateCategoryDto): Promise<Categor
   }
 }
 
+export async function getCategoryByIdApi(id: string): Promise<Category> {
+  try {
+    const response = await apiClient.get<Category>(`/categories/${id}`);
+    return response.data;
+  } catch (error) {
+    if (error instanceof ApiRequestError) {
+      throw error;
+    }
+    throw new ApiRequestError(500, 'Failed to fetch category');
+  }
+}
+
 export async function updateCategoryApi(id: string, dto: UpdateCategoryDto): Promise<Category> {
   try {
-    const response = await apiClient.patch<Category>(`/categories/${id}`, dto);
+    const response = await apiClient.put<Category>(`/categories/${id}`, dto);
     return response.data;
   } catch (error) {
     if (error instanceof ApiRequestError) {

@@ -23,6 +23,17 @@ export interface ProductImageDto {
   order?: number;
 }
 
+export interface UpdateProductDto {
+  name?: string;
+  slug?: string;
+  description?: string;
+  price?: number;
+  cost?: number;
+  stock?: number;
+  categoryId?: string;
+  images?: ProductImageDto[];
+}
+
 export async function createProductApi(dto: CreateProductDto): Promise<Product> {
   try {
     const response = await apiClient.post<Product>('/products', dto);
@@ -68,5 +79,29 @@ export async function deleteProductApi(id: string): Promise<void> {
       throw error;
     }
     throw new ApiRequestError(500, 'Failed to delete product');
+  }
+}
+
+export async function getProductByIdApi(id: string): Promise<Product> {
+  try {
+    const response = await apiClient.get<Product>(`/products/${id}`);
+    return response.data;
+  } catch (error) {
+    if (error instanceof ApiRequestError) {
+      throw error;
+    }
+    throw new ApiRequestError(500, 'Failed to fetch product');
+  }
+}
+
+export async function updateProductApi(id: string, dto: UpdateProductDto): Promise<Product> {
+  try {
+    const response = await apiClient.put<Product>(`/products/${id}`, dto);
+    return response.data;
+  } catch (error) {
+    if (error instanceof ApiRequestError) {
+      throw error;
+    }
+    throw new ApiRequestError(500, 'Failed to update product');
   }
 }

@@ -74,12 +74,17 @@ export function AdminCategoriesView() {
                         </button>
                       </div>
                     ) : (
-                      <button
-                        className={styles.deleteBtn}
-                        onClick={() => setShowConfirmId(category.id)}
-                      >
-                        Delete
-                      </button>
+                      <div className={styles.actionButtons}>
+                        <Link href={`/admin/categories/${category.id}/edit`} className={styles.editBtn}>
+                          Edit
+                        </Link>
+                        <button
+                          className={styles.deleteBtn}
+                          onClick={() => setShowConfirmId(category.id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
                     )}
                   </td>
                 </tr>
