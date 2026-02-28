@@ -41,14 +41,6 @@ export class ProductsController {
     return this.productsService.update(id, updateProductDto);
   }
 
-  @Get('slug/:slug')
-  @Public()
-  @ApiOperation({ summary: 'Get product by slug' })
-  @ApiResponse({ status: 200 })
-  async findBySlug(@Param('slug') slug: string): Promise<any> {
-    return this.productsService.findBySlug(slug);
-  }
-
   @Get()
   @Public()
   @ApiOperation({ summary: 'Get all products with pagination and optional search' })
@@ -59,6 +51,14 @@ export class ProductsController {
     @Query('text') text?: string,
   ): Promise<PaginationDto<any>> {
     return this.productsService.findAll(page, limit, text);
+  }
+
+  @Get('slug/:slug')
+  @Public()
+  @ApiOperation({ summary: 'Get product by slug' })
+  @ApiResponse({ status: 200 })
+  async findBySlug(@Param('slug') slug: string): Promise<any> {
+    return this.productsService.findBySlug(slug);
   }
 
   @Get(':id')

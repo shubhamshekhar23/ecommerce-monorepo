@@ -24,12 +24,14 @@ export function ProductDetailView({ slug }: ProductDetailViewProps) {
     (e: React.MouseEvent) => {
       e.preventDefault();
 
+      if (!product) {
+        return;
+      }
+
       if (status !== 'authenticated') {
         router.push('/login');
         return;
       }
-
-      if (!product) return;
 
       addToCart(
         { productId: product.id, quantity: 1 },
@@ -45,8 +47,15 @@ export function ProductDetailView({ slug }: ProductDetailViewProps) {
         },
       );
     },
-    [status, router, addToCart, product],
+    [product, status, router, addToCart],
   );
+
+  const getButtonLabel = (): string => {
+    if (isPending) return 'Adding...';
+    if (buttonState === 'success') return 'Added ✓';
+    if (buttonState === 'error') return 'Failed';
+    return 'Add to Cart';
+  };
 
   if (isLoading) {
     return (
@@ -69,13 +78,6 @@ export function ProductDetailView({ slug }: ProductDetailViewProps) {
   const price = Number(product.price).toFixed(2);
   const inStock = product.stock > 0;
 
-  const getButtonLabel = (): string => {
-    if (isPending) return 'Adding...';
-    if (buttonState === 'success') return 'Added ✓';
-    if (buttonState === 'error') return 'Failed';
-    return 'Add to Cart';
-  };
-
   const isButtonDisabled = !inStock || isPending || buttonState === 'success';
 
   return (
@@ -97,9 +99,13 @@ export function ProductDetailView({ slug }: ProductDetailViewProps) {
         </div>
 
         <div className={styles.info}>
+          <p className={styles.kicker}>Signature Pick</p>
           <h1 className={styles.name}>{product.name}</h1>
 
-          <div className={styles.price}>${price}</div>
+          <div className={styles.priceWrap}>
+            <div className={styles.price}>${price}</div>
+            <p className={styles.priceNote}>Inclusive of all taxes</p>
+          </div>
 
           <div
             className={inStock ? styles.inStock : styles.outOfStock}
@@ -115,6 +121,12 @@ export function ProductDetailView({ slug }: ProductDetailViewProps) {
                 Out of Stock
               </>
             )}
+          </div>
+
+          <div className={styles.quickPoints}>
+            <p className={styles.point}>Ready to ship in 24 hours</p>
+            <p className={styles.point}>Secure checkout with Stripe</p>
+            <p className={styles.point}>Easy returns within 7 days</p>
           </div>
 
           {product.description && (
@@ -135,7 +147,7 @@ export function ProductDetailView({ slug }: ProductDetailViewProps) {
           {product.category && (
             <div className={styles.section}>
               <p className={styles.category}>
-                Category: <strong>{product.category.name}</strong>
+                Category <strong>{product.category.name}</strong>
               </p>
             </div>
           )}
