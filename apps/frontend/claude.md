@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-# Frontend Architecture Guide:
+# Frontend Architecture Guide
 
 ## Stack
 
