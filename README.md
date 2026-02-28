@@ -82,36 +82,6 @@ npm run dev --workspace=apps/backend
 npm run dev --workspaces
 ```
 
-## Shared Packages (Future)
-
-When you're ready to share code between frontend and backend:
-
-1. Create a `packages/` directory:
-   ```
-   packages/
-   ├── shared-types/
-   ├── shared-utils/
-   └── ui-components/
-   ```
-
-2. Add to `package.json` workspaces:
-   ```json
-   "workspaces": [
-     "apps/frontend",
-     "apps/backend",
-     "packages/*"
-   ]
-   ```
-
-3. Reference from apps:
-   ```json
-   {
-     "dependencies": {
-       "@ecommerce/shared-types": "workspace:*"
-     }
-   }
-   ```
-
 ## Notes
 
 - Both frontend and backend maintain their own `package.json` files
