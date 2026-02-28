@@ -1,0 +1,89 @@
+.container {
+  padding: var(--space-6);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-5);
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(1.6rem, 2vw, 2rem);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+.addBtn {
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  color: #fff;
+  font-weight: var(--font-weight-semibold);
+}
+
+.loading,
+.empty {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-surface);
+  padding: var(--space-6);
+  text-align: center;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-surface);
+}
+
+.table th {
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.name {
+  font-weight: var(--font-weight-semibold);
+}
+
+.actions {
+  text-align: right;
+}
+
+.actionButtons,
+.confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.editBtn,
+.deleteBtn,
+.confirmYes,
+.confirmNo {
+  border: 0;
+  border-radius: var(--radius-md);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+}
+
+.editBtn {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.deleteBtn,
+.confirmYes {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.confirmNo {
+  border: 1px solid var(--color-border);
+  background: #fff;
+}

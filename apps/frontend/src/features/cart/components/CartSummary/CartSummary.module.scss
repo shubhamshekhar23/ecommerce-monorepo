@@ -1,0 +1,127 @@
+@use '@/styles/mixins' as *;
+
+.summary {
+  display: grid;
+  gap: var(--space-4);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  position: sticky;
+  top: calc(var(--header-height) + var(--navbar-height) + var(--space-3));
+
+  @media (max-width: 960px) {
+    position: static;
+  }
+}
+
+.title {
+  font-size: var(--font-size-xl);
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.label {
+  font-size: var(--font-size-sm);
+}
+
+.value {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.divider {
+  height: 1px;
+  background: var(--color-border);
+}
+
+.totalRow {
+  padding-top: var(--space-1);
+}
+
+.totalLabel,
+.totalValue {
+  font-weight: var(--font-weight-bold);
+}
+
+.totalValue {
+  color: var(--color-accent-text);
+  font-size: var(--font-size-2xl);
+}
+
+.checkoutBtn,
+.clearBtn {
+  border: 0;
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  font-weight: var(--font-weight-semibold);
+}
+
+.checkoutBtn {
+  background: var(--color-accent);
+  color: #fff;
+
+  &:hover {
+    background: var(--color-accent-hover);
+  }
+}
+
+.clearBtn {
+  border: 1px solid var(--color-border);
+  background: #fff;
+
+  &:hover:not(:disabled) {
+    background: var(--color-bg-soft);
+  }
+}
+
+.phase4Note {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.confirmBox {
+  border: 1px solid #fecdd3;
+  background: #fff1f2;
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  display: grid;
+  gap: var(--space-2);
+}
+
+.confirmText {
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-error);
+}
+
+.confirmActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+}
+
+.confirmYes,
+.confirmNo {
+  border: 0;
+  border-radius: var(--radius-md);
+  padding: var(--space-2);
+  font-weight: var(--font-weight-semibold);
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+.confirmYes {
+  background: var(--color-error);
+  color: #fff;
+}
+
+.confirmNo {
+  background: #fff;
+  border: 1px solid var(--color-border);
+}
