@@ -16,21 +16,16 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const mainImage = product.images.find((img) => img.isMain) || product.images[0];
-  const price = Number(product.price).toFixed(2);
-  const inStock = product.stock > 0;
-
   const router = useRouter();
   const status = useAuthStore((state) => state.status);
   const { mutate: addToCart, isPending } = useAddToCart();
   const [buttonState, setButtonState] = useState<'idle' | 'success' | 'error'>('idle');
+  const mainImage = product.images.find((img) => img.isMain) || product.images[0];
   const [imageSrc, setImageSrc] = useState(mainImage?.url || null);
 
-  const fallbackImage = `https://picsum.photos/400/400`;
-
-  const handleImageError = () => {
-    setImageSrc(fallbackImage);
-  };
+  const handleImageError = useCallback(() => {
+    setImageSrc(`https://picsum.photos/400/400`);
+  }, []);
 
   const handleAddToCart = useCallback(
     (e: React.MouseEvent) => {
@@ -58,6 +53,9 @@ export function ProductCard({ product }: ProductCardProps) {
     },
     [status, router, addToCart, product.id],
   );
+
+  const price = Number(product.price).toFixed(2);
+  const inStock = product.stock > 0;
 
   const getButtonLabel = (): string => {
     if (isPending) return 'Adding...';

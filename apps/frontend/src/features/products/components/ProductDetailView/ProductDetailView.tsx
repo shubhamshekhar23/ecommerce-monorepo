@@ -20,6 +20,34 @@ export function ProductDetailView({ slug }: ProductDetailViewProps) {
   const { mutate: addToCart, isPending } = useAddToCart();
   const [buttonState, setButtonState] = useState<'idle' | 'success' | 'error'>('idle');
 
+  const handleAddToCart = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+
+      if (status !== 'authenticated') {
+        router.push('/login');
+        return;
+      }
+
+      if (!product) return;
+
+      addToCart(
+        { productId: product.id, quantity: 1 },
+        {
+          onSuccess: () => {
+            setButtonState('success');
+            setTimeout(() => setButtonState('idle'), 2000);
+          },
+          onError: () => {
+            setButtonState('error');
+            setTimeout(() => setButtonState('idle'), 2000);
+          },
+        },
+      );
+    },
+    [status, router, addToCart, product],
+  );
+
   if (isLoading) {
     return (
       <div className={styles.container}>
@@ -40,32 +68,6 @@ export function ProductDetailView({ slug }: ProductDetailViewProps) {
 
   const price = Number(product.price).toFixed(2);
   const inStock = product.stock > 0;
-
-  const handleAddToCart = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-
-      if (status !== 'authenticated') {
-        router.push('/login');
-        return;
-      }
-
-      addToCart(
-        { productId: product.id, quantity: 1 },
-        {
-          onSuccess: () => {
-            setButtonState('success');
-            setTimeout(() => setButtonState('idle'), 2000);
-          },
-          onError: () => {
-            setButtonState('error');
-            setTimeout(() => setButtonState('idle'), 2000);
-          },
-        },
-      );
-    },
-    [status, router, addToCart, product.id],
-  );
 
   const getButtonLabel = (): string => {
     if (isPending) return 'Adding...';
