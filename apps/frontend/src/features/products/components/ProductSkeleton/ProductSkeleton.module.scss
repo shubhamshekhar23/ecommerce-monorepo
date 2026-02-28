@@ -1,0 +1,60 @@
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--color-bg-surface);
+}
+
+.imageWrapper,
+.name,
+.price,
+.stock,
+.button {
+  background: linear-gradient(90deg, #ebf1ff 20%, #f8fafe 45%, #ebf1ff 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s infinite;
+}
+
+.imageWrapper {
+  aspect-ratio: 1;
+}
+
+.content {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+}
+
+.name {
+  height: 0.95rem;
+  border-radius: var(--radius-sm);
+}
+
+.price {
+  height: 1.3rem;
+  width: 50%;
+  border-radius: var(--radius-sm);
+}
+
+.stock {
+  height: 0.7rem;
+  width: 35%;
+  border-radius: var(--radius-sm);
+}
+
+.button {
+  margin-top: var(--space-2);
+  height: 2.1rem;
+  border-radius: var(--radius-md);
+}

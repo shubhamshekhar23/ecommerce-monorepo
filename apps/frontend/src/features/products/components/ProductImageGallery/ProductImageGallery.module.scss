@@ -1,0 +1,64 @@
+@use '@/styles/mixins' as *;
+
+.gallery {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.mainImageWrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: linear-gradient(160deg, #f8fbff, #e8efff);
+  border: 1px solid var(--color-border);
+}
+
+.mainImage {
+  object-fit: cover;
+}
+
+.placeholder {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  font-size: clamp(2.8rem, 5vw, 4rem);
+  color: #94a3b8;
+  font-weight: var(--font-weight-bold);
+}
+
+.thumbnails {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+}
+
+.thumbnail {
+  position: relative;
+  flex-shrink: 0;
+  width: 68px;
+  height: 68px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: #fff;
+  overflow: hidden;
+
+  &:hover {
+    border-color: var(--color-border-strong);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+
+  &.active {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 2px rgb(37 99 235 / 0.18);
+  }
+}
+
+.thumbnailImage {
+  object-fit: cover;
+}

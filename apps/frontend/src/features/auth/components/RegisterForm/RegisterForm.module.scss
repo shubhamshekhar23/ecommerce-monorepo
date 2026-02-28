@@ -1,0 +1,66 @@
+@use '@/styles/mixins' as *;
+
+.form {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.title {
+  font-size: var(--font-size-2xl);
+}
+
+.serverError {
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: #fff1f2;
+  color: var(--color-error);
+  border: 1px solid #fecdd3;
+  font-size: var(--font-size-sm);
+}
+
+.nameRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.input {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+}
+
+.submit {
+  border: 0;
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-accent);
+  color: #fff;
+  font-weight: var(--font-weight-semibold);
+
+  &:hover:not(:disabled) {
+    background: var(--color-accent-hover);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+.footer {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-5);
+}
+
+.footerText {
+  text-align: center;
+  font-size: var(--font-size-sm);
+}
+
+.link {
+  color: var(--color-accent);
+  font-weight: var(--font-weight-semibold);
+}
