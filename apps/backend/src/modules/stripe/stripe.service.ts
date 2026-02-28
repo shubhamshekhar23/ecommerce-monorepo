@@ -6,17 +6,25 @@ import { PaymentStatus } from '@prisma/client';
 
 @Injectable()
 export class StripeService {
-  private stripe: Stripe;
+  private stripe?: Stripe;
   private readonly logger = new Logger(StripeService.name);
 
   constructor(
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
   ) {
-    this.stripe = new Stripe(this.configService.get<string>('STRIPE_SECRET_KEY') || '');
+    const stripeKey = this.configService.get<string>('STRIPE_SECRET_KEY');
+    if (stripeKey && stripeKey.startsWith('sk_')) {
+      this.stripe = new Stripe(stripeKey);
+    } else {
+      this.logger.warn('Stripe API key not configured. Stripe features will be disabled.');
+    }
   }
 
   async createPaymentIntent(orderId: string, amount: number): Promise<Stripe.PaymentIntent> {
+    if (!this.stripe) {
+      throw new BadRequestException('Stripe is not configured. Payment processing is unavailable.');
+    }
     const order = await this.prisma.order.findUnique({ where: { id: orderId } });
     if (!order) {
       throw new NotFoundException(`Order with ID ${orderId} not found`);
@@ -59,6 +67,9 @@ export class StripeService {
   }
 
   async cancelPaymentIntent(paymentIntentId: string): Promise<void> {
+    if (!this.stripe) {
+      throw new BadRequestException('Stripe is not configured.');
+    }
     await this.stripe.paymentIntents.cancel(paymentIntentId);
 
     await this.prisma.order.updateMany({
@@ -70,6 +81,9 @@ export class StripeService {
   }
 
   async createRefund(paymentIntentId: string, amount?: number): Promise<Stripe.Refund> {
+    if (!this.stripe) {
+      throw new BadRequestException('Stripe is not configured.');
+    }
     const refundParams: Stripe.RefundCreateParams = {
       payment_intent: paymentIntentId,
     };
@@ -81,6 +95,9 @@ export class StripeService {
   }
 
   constructWebhookEvent(payload: Buffer, signature: string): Stripe.Event {
+    if (!this.stripe) {
+      throw new BadRequestException('Stripe is not configured.');
+    }
     const secret = this.configService.get<string>('STRIPE_WEBHOOK_SECRET') || '';
     try {
       const event = this.stripe.webhooks.constructEvent(payload, signature, secret);
@@ -143,6 +160,9 @@ export class StripeService {
   }
 
   async getPaymentIntentByOrderId(orderId: string): Promise<Stripe.PaymentIntent> {
+    if (!this.stripe) {
+      throw new BadRequestException('Stripe is not configured.');
+    }
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
     });
