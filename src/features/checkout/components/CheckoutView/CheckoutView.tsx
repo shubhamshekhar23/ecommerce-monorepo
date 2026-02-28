@@ -3,7 +3,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Elements } from '@stripe/react-stripe-js';
 import { stripePromise } from '@/lib/stripe';
 import { useCart } from '@/features/cart/hooks';
@@ -15,7 +14,6 @@ import styles from './CheckoutView.module.scss';
 type Stage = 'review' | 'payment' | 'success';
 
 export function CheckoutView() {
-  const router = useRouter();
   const [stage, setStage] = useState<Stage>('review');
   const [orderId, setOrderId] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);

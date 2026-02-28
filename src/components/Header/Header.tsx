@@ -1,6 +1,3 @@
-// src/components/Header/Header.tsx
-// Amazon-like header with logo, search, and account/cart links
-
 'use client';
 
 import { useState } from 'react';
@@ -30,37 +27,39 @@ export function Header() {
   return (
     <header className={styles.header}>
       <div className={styles.container}>
-        {/* Logo */}
-        <Link href="/" className={styles.logo}>
-          <span className={styles.logoText}>ShopHub</span>
+        <Link href="/" className={styles.brand}>
+          <span className={styles.brandMark}>S</span>
+          <div className={styles.brandText}>
+            <span className={styles.brandTitle}>ShopHub</span>
+            <span className={styles.brandSub}>Curated everyday commerce</span>
+          </div>
         </Link>
 
-        {/* Search Bar */}
         <form onSubmit={handleSearch} className={styles.searchBar}>
           <input
             type="text"
-            placeholder="Search products..."
+            placeholder="Search products, brands, categories"
             className={styles.searchInput}
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
+            aria-label="Search products"
           />
-          <button type="submit" className={styles.searchBtn}>
-            🔍
+          <button type="submit" className={styles.searchBtn} aria-label="Search">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14Z" stroke="currentColor" strokeWidth="2" />
+              <path d="m20 20-4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
           </button>
         </form>
 
-        {/* Account & Cart Links */}
-        <div className={styles.nav}>
+        <div className={styles.actions}>
           {user?.role === 'ADMIN' && (
-            <div className={styles.navItem}>
-              <span className={styles.subtext}>Manage</span>
-              <Link href="/admin" className={styles.navLink}>
-                Admin
-              </Link>
-            </div>
+            <Link href="/admin" className={styles.adminLink}>
+              Admin
+            </Link>
           )}
 
-          <div className={styles.navItem}>
+          <div className={styles.account}>
             {user ? (
               <>
                 <span className={styles.greeting}>Hello, {user.firstName}</span>
@@ -70,32 +69,31 @@ export function Header() {
               </>
             ) : (
               <>
-                <span className={styles.greeting}>Hello, sign in</span>
-                <Link href="/login" className={styles.navLink}>
+                <span className={styles.greeting}>Welcome back</span>
+                <Link href="/login" className={styles.signinLink}>
                   Sign in
                 </Link>
               </>
             )}
           </div>
 
-          <div className={styles.navItem}>
-            <span className={styles.subtext}>Returns</span>
-            <Link href="/orders" className={styles.navLink}>
-              Orders
-            </Link>
-          </div>
+          <Link href="/orders" className={styles.ordersLink}>
+            Orders
+          </Link>
 
-          <div className={styles.navItem}>
-            <span className={styles.cartIcon}>🛒</span>
-            <Link href="/cart" className={styles.navLink}>
-              Cart
-              {cartItemCount > 0 && (
-                <span className={styles.cartBadge}>
-                  {cartItemCount > 99 ? '99+' : cartItemCount}
-                </span>
-              )}
-            </Link>
-          </div>
+          <Link href="/cart" className={styles.cartLink}>
+            <span className={styles.cartIcon} aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M3 5h2l2.2 10.2A2 2 0 0 0 9.2 17H18a2 2 0 0 0 1.94-1.5L21 8H7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                <circle cx="10" cy="20" r="1" fill="currentColor" />
+                <circle cx="18" cy="20" r="1" fill="currentColor" />
+              </svg>
+            </span>
+            <span>Cart</span>
+            {cartItemCount > 0 && (
+              <span className={styles.cartBadge}>{cartItemCount > 99 ? '99+' : cartItemCount}</span>
+            )}
+          </Link>
         </div>
       </div>
     </header>

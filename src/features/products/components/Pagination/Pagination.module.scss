@@ -1,29 +1,31 @@
-@use '@/styles/variables' as *;
 @use '@/styles/mixins' as *;
 
 .pagination {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--spacing-md);
-  margin-top: var(--spacing-lg);
-  padding: var(--spacing-lg) 0;
+  gap: var(--space-3);
+  margin-top: var(--space-8);
 }
 
-.button {
-  padding: var(--spacing-sm) var(--spacing-md);
-  border: 1px solid #ddd;
-  border-radius: var(--radius-sm);
-  background: white;
-  color: var(--color-text-primary);
-  text-decoration: none;
-  font-weight: 500;
-  @include transition(all 0.2s ease);
+.button,
+.page {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  min-width: 2.4rem;
+  height: 2.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-surface);
+  color: var(--color-text-secondary);
+  padding: 0 var(--space-3);
+  font-size: var(--font-size-sm);
+  transition: all var(--transition-base);
 
   &:hover {
-    background-color: var(--color-accent);
-    border-color: var(--color-accent);
-    color: white;
+    border-color: var(--color-border-strong);
+    color: var(--color-accent-text);
   }
 
   &:focus-visible {
@@ -34,40 +36,16 @@
 .pages {
   display: flex;
   align-items: center;
-  gap: var(--spacing-xs);
+  gap: var(--space-1);
 }
 
-.page {
-  min-width: 2.5rem;
-  height: 2.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #ddd;
-  border-radius: var(--radius-sm);
-  background: white;
-  color: var(--color-text-primary);
-  text-decoration: none;
-  font-weight: 500;
-  @include transition(all 0.2s ease);
-
-  &:hover {
-    background-color: #f0f0f0;
-    border-color: var(--color-accent);
-  }
-
-  &:focus-visible {
-    @include focus-ring;
-  }
-
-  &.active {
-    background-color: var(--color-accent);
-    border-color: var(--color-accent);
-    color: white;
-  }
+.page.active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
 }
 
 .dots {
-  padding: 0 var(--spacing-xs);
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
 }

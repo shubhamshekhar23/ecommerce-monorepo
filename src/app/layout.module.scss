@@ -1,9 +1,5 @@
-// src/app/layout.module.scss
-
-@use '@/styles/variables' as *;
-
 .main {
   flex: 1;
   min-height: calc(100vh - var(--header-height) - var(--navbar-height));
-  background-color: var(--color-background);
+  padding-block: var(--space-8) var(--space-12);
 }

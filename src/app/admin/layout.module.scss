@@ -1,20 +1,15 @@
-@use '@/styles/variables' as *;
-@use '@/styles/mixins' as *;
-
 .container {
   display: grid;
-  grid-template-columns: 220px 1fr;
+  grid-template-columns: 250px minmax(0, 1fr);
   min-height: 100vh;
-  gap: 0;
 
-  @include respond-to('md') {
+  @media (max-width: 900px) {
     grid-template-columns: 1fr;
   }
 }
 
 .main {
-  display: flex;
-  flex-direction: column;
-  background-color: var(--color-background);
-  overflow-y: auto;
+  min-width: 0;
+  background: transparent;
+  overflow-x: hidden;
 }

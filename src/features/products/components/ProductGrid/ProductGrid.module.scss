@@ -1,60 +1,30 @@
-@use '@/styles/variables' as *;
-@use '@/styles/mixins' as *;
-
 .grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--spacing-lg);
-  width: 100%;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
 
-  @include respond-to('lg') {
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--spacing-md);
+  @media (max-width: 1280px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  @include respond-to('md') {
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--spacing-md);
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  @include respond-to('sm') {
+  @media (max-width: 640px) {
     grid-template-columns: 1fr;
-    gap: var(--spacing-md);
   }
 }
 
-.error {
-  padding: var(--spacing-xl);
-  text-align: center;
-  color: #cb2431;
-  background-color: #ffeaea;
-  border-radius: var(--radius-sm);
-
-  p {
-    margin: 0;
-    font-size: var(--font-size-md);
-  }
-}
-
+.error,
 .empty {
-  padding: var(--spacing-xl);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
   text-align: center;
-  color: var(--color-text-secondary);
 
   p {
-    margin: 0 0 var(--spacing-md) 0;
-    font-size: var(--font-size-md);
-  }
-
-  a {
-    color: var(--color-accent);
-    text-decoration: none;
-    font-weight: 600;
-    @include transition(color 0.2s ease);
-
-    &:hover {
-      color: #0096a8;
-      text-decoration: underline;
-    }
+    margin-bottom: var(--space-2);
   }
 }

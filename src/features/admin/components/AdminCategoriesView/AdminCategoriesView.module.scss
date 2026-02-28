@@ -1,175 +1,89 @@
-@use '@/styles/variables' as *;
-@use '@/styles/mixins' as *;
-
 .container {
   padding: var(--space-6);
-
-  @include respond-to('md') {
-    padding: var(--space-4);
-  }
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-5);
 }
 
 .title {
   margin: 0;
-  font-size: var(--font-size-2xl);
-  font-weight: 700;
-  color: var(--color-text-primary);
+  font-size: clamp(1.6rem, 2vw, 2rem);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
 }
 
 .addBtn {
   padding: var(--space-2) var(--space-4);
-  background-color: var(--color-accent);
-  color: white;
-  border-radius: var(--radius-sm);
-  text-decoration: none;
-  font-weight: 600;
-  @include transition(background-color 0.2s ease);
-
-  &:hover {
-    background-color: #0096a8;
-  }
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  color: #fff;
+  font-weight: var(--font-weight-semibold);
 }
 
 .loading,
 .empty {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-surface);
   padding: var(--space-6);
   text-align: center;
-  color: var(--color-text-secondary);
-}
-
-.empty a {
-  color: var(--color-accent);
-  text-decoration: none;
-
-  &:hover {
-    text-decoration: underline;
-  }
 }
 
 .tableWrapper {
   overflow-x: auto;
-  background-color: var(--color-card);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-surface);
 }
 
-.table {
-  width: 100%;
-  border-collapse: collapse;
-
-  th {
-    padding: var(--space-3);
-    text-align: left;
-    font-weight: 600;
-    color: var(--color-text-primary);
-    background-color: #f9f9f9;
-    border-bottom: 1px solid var(--color-border);
-    font-size: var(--font-size-sm);
-  }
-
-  td {
-    padding: var(--space-3);
-    border-bottom: 1px solid var(--color-border);
-    color: var(--color-text-primary);
-    font-size: var(--font-size-sm);
-  }
-
-  tr:hover {
-    background-color: #f9f9f9;
-  }
+.table th {
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .name {
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .actions {
   text-align: right;
-  white-space: nowrap;
 }
 
-.actionButtons {
-  display: flex;
-  gap: var(--space-1);
-  justify-content: flex-end;
+.actionButtons,
+.confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.editBtn,
+.deleteBtn,
+.confirmYes,
+.confirmNo {
+  border: 0;
+  border-radius: var(--radius-md);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
 }
 
 .editBtn {
-  padding: var(--space-1) var(--space-2);
-  background-color: #0066cc;
-  color: white;
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-xs);
-  font-weight: 600;
-  text-decoration: none;
-  display: inline-block;
-  @include transition(opacity 0.2s ease);
-
-  &:hover {
-    opacity: 0.9;
-  }
+  background: #e2e8f0;
+  color: #334155;
 }
 
-.deleteBtn {
-  padding: var(--space-1) var(--space-2);
-  background-color: #cc0c39;
-  color: white;
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-xs);
-  font-weight: 600;
-  cursor: pointer;
-  @include transition(opacity 0.2s ease);
-
-  &:hover {
-    opacity: 0.9;
-  }
-}
-
-.confirm {
-  display: flex;
-  gap: var(--space-1);
-  align-items: center;
-  font-size: var(--font-size-xs);
-}
-
-.confirmText {
-  color: var(--color-text-secondary);
-}
-
-.confirmYes,
-.confirmNo {
-  padding: var(--space-1) var(--space-2);
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-xs);
-  font-weight: 600;
-  cursor: pointer;
-  @include transition(all 0.2s ease);
-}
-
+.deleteBtn,
 .confirmYes {
-  background-color: #cc0c39;
-  color: white;
-
-  &:hover:not(:disabled) {
-    opacity: 0.9;
-  }
+  background: #fee2e2;
+  color: #b91c1c;
 }
 
 .confirmNo {
-  background-color: #f0f0f0;
-  color: var(--color-text-primary);
-
-  &:hover {
-    background-color: #e0e0e0;
-  }
+  border: 1px solid var(--color-border);
+  background: #fff;
 }

@@ -1,29 +1,21 @@
-// src/features/auth/components/RegisterForm/RegisterForm.module.scss
-
-@use '@/styles/variables' as *;
 @use '@/styles/mixins' as *;
 
 .form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-6);
+  display: grid;
+  gap: var(--space-5);
 }
 
 .title {
   font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
-  margin-bottom: var(--space-2);
 }
 
 .serverError {
-  padding: var(--space-4);
-  background-color: #fef2f2;
-  border: 1px solid var(--color-error);
+  padding: var(--space-3);
   border-radius: var(--radius-md);
+  background: #fff1f2;
   color: var(--color-error);
+  border: 1px solid #fecdd3;
   font-size: var(--font-size-sm);
-  role: alert;
 }
 
 .nameRow {
@@ -31,7 +23,7 @@
   grid-template-columns: 1fr 1fr;
   gap: var(--space-4);
 
-  @include respond-to('sm') {
+  @media (max-width: 640px) {
     grid-template-columns: 1fr;
   }
 }
@@ -39,42 +31,18 @@
 .input {
   width: 100%;
   padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-base);
-  background-color: var(--color-card);
-  color: var(--color-text-primary);
-  transition: border-color var(--transition-base);
-
-  &:focus {
-    outline: none;
-    border-color: var(--color-accent);
-    box-shadow: 0 0 0 3px rgba(0, 180, 204, 0.1);
-  }
-
-  &::placeholder {
-    color: var(--color-text-muted);
-  }
 }
 
 .submit {
-  padding: var(--space-3) var(--space-4);
-  background-color: var(--color-accent);
-  color: white;
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
-  border: none;
+  border: 0;
   border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: background-color var(--transition-base);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-accent);
+  color: #fff;
+  font-weight: var(--font-weight-semibold);
 
   &:hover:not(:disabled) {
-    background-color: var(--color-accent-hover);
-  }
-
-  &:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
+    background: var(--color-accent-hover);
   }
 
   &:focus-visible {
@@ -84,25 +52,15 @@
 
 .footer {
   border-top: 1px solid var(--color-border);
-  padding-top: var(--space-6);
+  padding-top: var(--space-5);
 }
 
 .footerText {
   text-align: center;
-  color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
 }
 
 .link {
   color: var(--color-accent);
   font-weight: var(--font-weight-semibold);
-
-  &:hover {
-    color: var(--color-accent-hover);
-    text-decoration: none;
-  }
-
-  &:focus-visible {
-    @include focus-ring;
-  }
 }
