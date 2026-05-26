@@ -4,9 +4,14 @@ import Stripe from 'stripe';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 import { PaymentStatus } from '@prisma/client';
 
+type StripeClient = InstanceType<typeof Stripe>;
+type StripePaymentIntent = Awaited<ReturnType<StripeClient['paymentIntents']['create']>>;
+type StripeRefund = Awaited<ReturnType<StripeClient['refunds']['create']>>;
+type StripeEvent = ReturnType<StripeClient['webhooks']['constructEvent']>;
+
 @Injectable()
 export class StripeService {
-  private stripe?: Stripe;
+  private stripe?: StripeClient;
   private readonly logger = new Logger(StripeService.name);
 
   constructor(
@@ -21,7 +26,7 @@ export class StripeService {
     }
   }
 
-  async createPaymentIntent(orderId: string, amount: number): Promise<Stripe.PaymentIntent> {
+  async createPaymentIntent(orderId: string, amount: number): Promise<StripePaymentIntent> {
     if (!this.stripe) {
       throw new BadRequestException('Stripe is not configured. Payment processing is unavailable.');
     }
@@ -80,11 +85,11 @@ export class StripeService {
     this.logger.log(`Payment intent cancelled: paymentIntentId=${paymentIntentId}`);
   }
 
-  async createRefund(paymentIntentId: string, amount?: number): Promise<Stripe.Refund> {
+  async createRefund(paymentIntentId: string, amount?: number): Promise<StripeRefund> {
     if (!this.stripe) {
       throw new BadRequestException('Stripe is not configured.');
     }
-    const refundParams: Stripe.RefundCreateParams = {
+    const refundParams: Parameters<StripeClient['refunds']['create']>[0] = {
       payment_intent: paymentIntentId,
     };
     if (amount) {
@@ -94,7 +99,7 @@ export class StripeService {
     return this.stripe.refunds.create(refundParams);
   }
 
-  constructWebhookEvent(payload: Buffer, signature: string): Stripe.Event {
+  constructWebhookEvent(payload: Buffer, signature: string): StripeEvent {
     if (!this.stripe) {
       throw new BadRequestException('Stripe is not configured.');
     }
@@ -111,7 +116,7 @@ export class StripeService {
     }
   }
 
-  async handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent): Promise<void> {
+  async handlePaymentSuccess(paymentIntent: StripePaymentIntent): Promise<void> {
     const orderId = paymentIntent.metadata?.orderId as string;
     if (!orderId) {
       throw new BadRequestException('Order ID not found in payment metadata');
@@ -128,7 +133,7 @@ export class StripeService {
     this.logger.log(`Payment succeeded: orderId=${orderId}, paymentIntentId=${paymentIntent.id}`);
   }
 
-  async handlePaymentFailed(paymentIntent: Stripe.PaymentIntent): Promise<void> {
+  async handlePaymentFailed(paymentIntent: StripePaymentIntent): Promise<void> {
     const orderId = paymentIntent.metadata?.orderId as string;
     if (!orderId) return;
 
@@ -143,7 +148,7 @@ export class StripeService {
   }
 
   async handleRefundProcessed(data: unknown): Promise<void> {
-    const refund = data as Stripe.Refund;
+    const refund = data as StripeRefund;
     const order = await this.prisma.order.findUnique({
       where: { paymentIntentId: refund.payment_intent as string },
     });
@@ -159,7 +164,7 @@ export class StripeService {
     );
   }
 
-  async getPaymentIntentByOrderId(orderId: string): Promise<Stripe.PaymentIntent> {
+  async getPaymentIntentByOrderId(orderId: string): Promise<StripePaymentIntent> {
     if (!this.stripe) {
       throw new BadRequestException('Stripe is not configured.');
     }

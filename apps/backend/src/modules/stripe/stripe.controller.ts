@@ -2,10 +2,12 @@ import { Controller, Post, Body, Param, Req, HttpCode, HttpStatus } from '@nestj
 import type { RawBodyRequest } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import type { Request } from 'express';
-import type Stripe from 'stripe';
 import { StripeService } from './stripe.service';
 import { CreatePaymentIntentDto, PaymentIntentResponseDto } from './dto';
 import { Public } from '@/common/decorators';
+
+type StripeWebhookEvent = ReturnType<StripeService['constructWebhookEvent']>;
+type StripePaymentIntent = Awaited<ReturnType<StripeService['getPaymentIntentByOrderId']>>;
 
 @ApiTags('payments')
 @ApiBearerAuth()
@@ -45,13 +47,13 @@ export class StripeController {
     return { received: true };
   }
 
-  private async processWebhookEvent(event: Stripe.Event): Promise<void> {
+  private async processWebhookEvent(event: StripeWebhookEvent): Promise<void> {
     switch (event.type) {
       case 'payment_intent.succeeded':
-        await this.stripeService.handlePaymentSuccess(event.data.object as Stripe.PaymentIntent);
+        await this.stripeService.handlePaymentSuccess(event.data.object as StripePaymentIntent);
         break;
       case 'payment_intent.payment_failed':
-        await this.stripeService.handlePaymentFailed(event.data.object as Stripe.PaymentIntent);
+        await this.stripeService.handlePaymentFailed(event.data.object as StripePaymentIntent);
         break;
       case 'charge.refunded':
         await this.stripeService.handleRefundProcessed(event.data.object);
