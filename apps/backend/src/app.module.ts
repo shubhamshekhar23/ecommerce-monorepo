@@ -14,6 +14,9 @@ import { UploadModule } from '@/modules/upload/upload.module';
 import { LoggerModule } from '@/modules/logger/logger.module';
 import { HealthModule } from '@/modules/health/health.module';
 import { MetricsModule } from '@/modules/metrics/metrics.module';
+import { QueueModule } from '@/modules/queue/queue.module';
+import { OutboxModule } from '@/modules/outbox/outbox.module';
+import { AdminModule } from '@/modules/admin/admin.module';
 import { JwtAuthGuard, RolesGuard } from '@/common/guards';
 import { HttpExceptionFilter } from '@/common/filters/http-exception.filter';
 import { AppController } from './app.controller';
@@ -21,10 +24,7 @@ import { AppService } from './app.service';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      envFilePath: ['.env', '.env.local'],
-    }),
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: ['.env', '.env.local'] }),
     LoggerModule,
     PrismaModule,
     AuthModule,
@@ -38,22 +38,16 @@ import { AppService } from './app.service';
     UploadModule,
     HealthModule,
     MetricsModule,
+    QueueModule,
+    OutboxModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
-    {
-      provide: APP_FILTER,
-      useClass: HttpExceptionFilter,
-    },
-    {
-      provide: APP_GUARD,
-      useClass: JwtAuthGuard,
-    },
-    {
-      provide: APP_GUARD,
-      useClass: RolesGuard,
-    },
+    { provide: APP_FILTER, useClass: HttpExceptionFilter },
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
   ],
 })
 export class AppModule {}

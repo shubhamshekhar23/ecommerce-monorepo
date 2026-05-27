@@ -1,0 +1,240 @@
+/* eslint-disable max-lines */
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { Prisma, OrderStatus } from '@prisma/client';
+import { PrismaService } from '@/modules/prisma/prisma.service';
+import { OutboxService } from '@/modules/outbox/outbox.service';
+import { CircuitBreakerService } from '@/modules/circuit-breaker/circuit-breaker.service';
+import type { NotificationJobPayload } from '@/modules/queue/dto/notification-job.dto';
+
+// Prisma payload types for full type-safety without `any`
+type CartWithItems = Prisma.CartGetPayload<{
+  include: { items: { include: { product: true } } };
+}>;
+type OrderWithItems = Prisma.OrderGetPayload<{
+  include: { items: { include: { product: true } } };
+}>;
+type UserForNotification = { email: string; firstName: string | null };
+
+// Why a Saga?
+// The order flow spans multiple resources: DB (create order + decrement stock),
+// an external payment API (Stripe), and a notification queue (outbox).
+// A saga coordinates these as discrete steps and defines compensating actions
+// for each step so that a partial failure can be cleanly rolled back — without
+// requiring a distributed 2-phase commit that locks every participant.
+@Injectable()
+export class OrderSagaService {
+  private readonly logger = new Logger(OrderSagaService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly outbox: OutboxService,
+    private readonly circuitBreaker: CircuitBreakerService,
+  ) {}
+
+  async execute(userId: string, cartId?: string): Promise<OrderWithItems> {
+    const [cart, user] = await Promise.all([
+      this.loadCart(userId, cartId),
+      this.loadUser(userId),
+    ]);
+
+    this.validateCart(cart);
+
+    const order = await this.runOrderTransaction(userId, cart, user);
+
+    try {
+      await this.circuitBreaker.createPaymentIntent(
+        order.id,
+        parseFloat(String(order.totalPrice)),
+      );
+    } catch (error) {
+      await this.compensate(order);
+      throw error;
+    }
+
+    return order;
+  }
+
+  // Step 1: everything that must be atomic with the DB state change.
+  // The outbox event is written here so it is guaranteed to exist
+  // even if the app crashes between this commit and the Stripe call.
+  private async runOrderTransaction(
+    userId: string,
+    cart: CartWithItems,
+    user: UserForNotification,
+  ): Promise<OrderWithItems> {
+    return this.prisma.$transaction(
+      async (tx) => {
+        await this.acquireProductLocks(tx, cart);
+        await this.validateStock(tx, cart);
+        const order = await this.createOrderRecord(tx, userId, cart);
+        await this.decrementStock(tx, cart);
+        await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
+        await this.publishOrderCreatedEvent(tx, order, user, cart);
+        return order;
+      },
+      { timeout: 10_000, isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted },
+    );
+  }
+
+  private async acquireProductLocks(
+    tx: Prisma.TransactionClient,
+    cart: CartWithItems,
+  ): Promise<void> {
+    const ids = [...new Set(cart.items.map((i) => i.productId))].sort();
+    for (const id of ids) {
+      await tx.$queryRaw(Prisma.sql`SELECT id FROM "Product" WHERE id = ${id} FOR UPDATE`);
+    }
+  }
+
+  private async validateStock(
+    tx: Prisma.TransactionClient,
+    cart: CartWithItems,
+  ): Promise<void> {
+    for (const item of cart.items) {
+      const product = await tx.product.findUnique({ where: { id: item.productId } });
+      if (!product || product.stock < item.quantity) {
+        throw new BadRequestException(
+          `Insufficient stock for "${item.product?.name ?? item.productId}"`,
+        );
+      }
+    }
+  }
+
+  private async createOrderRecord(
+    tx: Prisma.TransactionClient,
+    userId: string,
+    cart: CartWithItems,
+  ): Promise<OrderWithItems> {
+    const totalPrice = cart.items.reduce(
+      (sum, item) => sum + parseFloat(String(item.product.price)) * item.quantity,
+      0,
+    );
+
+    return tx.order.create({
+      data: {
+        orderNumber: this.generateOrderNumber(),
+        userId,
+        totalPrice,
+        status: OrderStatus.PENDING,
+        items: {
+          createMany: {
+            data: cart.items.map((item) => ({
+              productId: item.productId,
+              quantity: item.quantity,
+              price: item.product.price,
+            })),
+          },
+        },
+      },
+      include: { items: { include: { product: true } } },
+    });
+  }
+
+  private async decrementStock(
+    tx: Prisma.TransactionClient,
+    cart: CartWithItems,
+  ): Promise<void> {
+    for (const item of cart.items) {
+      await tx.product.update({
+        where: { id: item.productId },
+        data: { stock: { decrement: item.quantity } },
+      });
+    }
+  }
+
+  private async publishOrderCreatedEvent(
+    tx: Prisma.TransactionClient,
+    order: OrderWithItems,
+    user: UserForNotification,
+    cart: CartWithItems,
+  ): Promise<void> {
+    const payload: NotificationJobPayload = {
+      type: 'order-confirmation',
+      orderId: order.id,
+      userId: order.userId,
+      userEmail: user.email,
+      firstName: user.firstName ?? '',
+      orderNumber: order.orderNumber,
+      totalPrice: parseFloat(String(order.totalPrice)),
+      items: cart.items.map((i) => ({
+        productName: i.product.name,
+        quantity: i.quantity,
+        price: parseFloat(String(i.product.price)),
+      })),
+      createdAt: order.createdAt.toISOString(),
+    };
+
+    await this.outbox.publish(tx, {
+      aggregateId: order.id,
+      aggregateType: 'Order',
+      eventType: 'ORDER_CREATED',
+      payload: payload as unknown as Prisma.InputJsonValue,
+    });
+  }
+
+  // Compensating transaction: undoes the DB changes when the Stripe call fails.
+  // This runs OUTSIDE the original transaction (which has already committed),
+  // so we open a new transaction for the rollback. If compensation itself fails,
+  // we log the error and let an operator resolve it — the outbox table shows
+  // the ORDER_CREATED event without a matching payment, which is visible for audit.
+  private async compensate(order: OrderWithItems): Promise<void> {
+    this.logger.warn(`Compensating order ${order.id} — Stripe charge failed`);
+
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        await tx.order.update({
+          where: { id: order.id },
+          data: { status: OrderStatus.CANCELLED },
+        });
+
+        for (const item of order.items) {
+          await tx.product.update({
+            where: { id: item.productId },
+            data: { stock: { increment: item.quantity } },
+          });
+        }
+
+        await this.outbox.publish(tx, {
+          aggregateId: order.id,
+          aggregateType: 'Order',
+          eventType: 'ORDER_CANCELLED',
+          payload: { orderId: order.id, userId: order.userId, orderNumber: order.orderNumber },
+        });
+      });
+    } catch (compError) {
+      this.logger.error(
+        `Compensation failed for order ${order.id}: ${compError instanceof Error ? compError.message : String(compError)}`,
+      );
+    }
+  }
+
+  private async loadCart(userId: string, cartId?: string): Promise<CartWithItems> {
+    const where = cartId ? { id: cartId } : { userId };
+    const cart = await this.prisma.cart.findUnique({
+      where,
+      include: { items: { include: { product: true } } },
+    });
+
+    if (!cart) throw new BadRequestException('Cart not found');
+    return cart;
+  }
+
+  private async loadUser(userId: string): Promise<UserForNotification> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, firstName: true },
+    });
+    if (!user) throw new BadRequestException('User not found');
+    return user;
+  }
+
+  private validateCart(cart: CartWithItems): void {
+    if (cart.items.length === 0) throw new BadRequestException('Cart is empty');
+  }
+
+  private generateOrderNumber(): string {
+    const ts = new Date().toISOString().replace(/[-:T.Z]/g, '').substring(0, 14);
+    const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `${ts}-${rand}`;
+  }
+}

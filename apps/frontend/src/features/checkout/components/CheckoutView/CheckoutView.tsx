@@ -1,5 +1,3 @@
-// src/features/checkout/components/CheckoutView/CheckoutView.tsx
-
 'use client';
 
 import { useState } from 'react';
@@ -9,14 +7,28 @@ import { useCart } from '@/features/cart/hooks';
 import { useCreateOrder } from '@/features/orders/hooks';
 import { useGetClientSecret } from '../../hooks';
 import { CheckoutForm } from '../CheckoutForm/CheckoutForm';
+import { ApiRequestError } from '@/shared/apiClient';
 import styles from './CheckoutView.module.scss';
 
 type Stage = 'review' | 'payment' | 'success';
+
+function resolveOrderError(error: unknown): string {
+  if (!(error instanceof ApiRequestError)) return 'Something went wrong. Please try again.';
+
+  if (error.statusCode === 503) {
+    return 'Payment service is temporarily unavailable. Please try again in a few minutes.';
+  }
+  if (error.statusCode === 409) {
+    return 'Your order is still being processed — please wait a moment before retrying.';
+  }
+  return error.message || 'Failed to place order. Please try again.';
+}
 
 export function CheckoutView() {
   const [stage, setStage] = useState<Stage>('review');
   const [orderId, setOrderId] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [orderError, setOrderError] = useState<string | null>(null);
 
   const { data: cart, isLoading: cartLoading } = useCart();
   const { mutate: createOrder, isPending: isCreatingOrder } = useCreateOrder();
@@ -42,6 +54,8 @@ export function CheckoutView() {
   }
 
   const handlePlaceOrder = (): void => {
+    setOrderError(null);
+
     createOrder(undefined, {
       onSuccess: (order) => {
         setOrderId(order.id);
@@ -50,10 +64,11 @@ export function CheckoutView() {
             setClientSecret(response.clientSecret);
             setStage('payment');
           },
-          onError: () => {
-            setStage('review');
-          },
+          onError: () => setStage('review'),
         });
+      },
+      onError: (error) => {
+        setOrderError(resolveOrderError(error));
       },
     });
   };
@@ -95,6 +110,10 @@ export function CheckoutView() {
                 <span className={styles.totalValue}>${total}</span>
               </div>
             </div>
+
+            {orderError && (
+              <p className={styles.orderError}>{orderError}</p>
+            )}
           </div>
 
           <button

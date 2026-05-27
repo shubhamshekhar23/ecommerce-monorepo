@@ -5,9 +5,16 @@
 import apiClient, { ApiRequestError } from '@/shared/apiClient';
 import type { Order, PaginatedOrders } from '../interfaces';
 
-export async function createOrderApi(): Promise<Order> {
+// idempotencyKey: a UUID the caller generates once per checkout intent and
+// reuses on retry. The backend returns the cached first response instead of
+// creating a second order, preventing duplicate charges on network failures.
+export async function createOrderApi(idempotencyKey: string): Promise<Order> {
   try {
-    const response = await apiClient.post<Order>('/orders', {});
+    const response = await apiClient.post<Order>(
+      '/orders',
+      {},
+      { headers: { 'X-Idempotency-Key': idempotencyKey } },
+    );
     return response.data;
   } catch (error) {
     if (error instanceof ApiRequestError) {

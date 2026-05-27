@@ -5,7 +5,11 @@
       "Bash(npx eslint *)",
       "Bash(npx prettier *)",
       "Bash(xargs ls)",
-      "Bash(xargs cat)"
+      "Bash(xargs cat)",
+      "Bash(npm install *)",
+      "Bash(node -e \"require\\('@nestjs/bullmq'\\); require\\('bullmq'\\); require\\('opossum'\\); console.log\\('all OK'\\)\")",
+      "Bash(npx prisma *)",
+      "Bash(node -e \"require\\('opossum'\\); console.log\\('ok'\\)\")"
     ]
   }
 }

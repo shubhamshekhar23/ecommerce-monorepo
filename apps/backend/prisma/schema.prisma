@@ -36,6 +36,13 @@ enum PaymentStatus {
   CANCELED
 }
 
+enum OutboxEventStatus {
+  PENDING
+  PROCESSING
+  PROCESSED
+  FAILED
+}
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
@@ -268,6 +275,44 @@ model Order {
   @@index([createdAt])
   @@index([userId, createdAt])
   @@index([status, createdAt])
+}
+
+// ── Reliability (Phase 2) ─────────────────────────────────────────────────────
+
+// Idempotency: stores request key + cached response so retries return the same
+// result without re-executing the handler. Applied to POST /orders.
+model IdempotencyKey {
+  id           String    @id @default(cuid())
+  userId       String
+  key          String
+  statusCode   Int       @default(201)
+  // Cached response body — returned verbatim on duplicate requests
+  responseBody Json      @default("{}")
+  processedAt  DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@unique([userId, key])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// Outbox: events written atomically with the business transaction and processed
+// asynchronously. Guarantees at-least-once delivery even if the app crashes
+// between the DB write and the queue enqueue.
+model OutboxEvent {
+  id            String            @id @default(cuid())
+  aggregateId   String
+  aggregateType String
+  eventType     String
+  payload       Json
+  status        OutboxEventStatus @default(PENDING)
+  attempts      Int               @default(0)
+  error         String?
+  processedAt   DateTime?
+  createdAt     DateTime          @default(now())
+
+  @@index([status, createdAt])
+  @@index([aggregateId])
 }
 
 model OrderItem {
