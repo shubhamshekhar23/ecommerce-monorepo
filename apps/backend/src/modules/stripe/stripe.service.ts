@@ -1,8 +1,10 @@
 import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import Stripe from 'stripe';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 import { PaymentStatus } from '@prisma/client';
+import { PaymentConfirmedEvent } from '@/modules/events/order.events';
 
 type StripeClient = InstanceType<typeof Stripe>;
 type StripePaymentIntent = Awaited<ReturnType<StripeClient['paymentIntents']['create']>>;
@@ -17,6 +19,7 @@ export class StripeService {
   constructor(
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
+    private readonly eventEmitter: EventEmitter2,
   ) {
     const stripeKey = this.configService.get<string>('STRIPE_SECRET_KEY');
     if (stripeKey && stripeKey.startsWith('sk_')) {
@@ -122,14 +125,15 @@ export class StripeService {
       throw new BadRequestException('Order ID not found in payment metadata');
     }
 
-    await this.prisma.order.update({
+    const order = await this.prisma.order.update({
       where: { id: orderId },
-      data: {
-        paymentStatus: PaymentStatus.SUCCEEDED,
-        paidAt: new Date(),
-      },
+      data: { paymentStatus: PaymentStatus.SUCCEEDED, paidAt: new Date() },
     });
 
+    this.eventEmitter.emit(
+      PaymentConfirmedEvent.EVENT_NAME,
+      new PaymentConfirmedEvent(orderId, order.userId, paymentIntent.id, new Date()),
+    );
     this.logger.log(`Payment succeeded: orderId=${orderId}, paymentIntentId=${paymentIntent.id}`);
   }
 

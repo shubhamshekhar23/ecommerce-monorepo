@@ -18,6 +18,8 @@ export type OrderStatus =
   | 'CANCELLED'
   | 'REFUNDED';
 
+export type PaymentStatus = 'PENDING' | 'SUCCEEDED' | 'FAILED' | 'CANCELED' | 'REFUNDED';
+
 export interface Order {
   id: string;
   orderNumber: string;
@@ -25,6 +27,7 @@ export interface Order {
   items: OrderItem[];
   totalPrice: number;
   status: OrderStatus;
+  paymentStatus: PaymentStatus;
   notes?: string | null;
   createdAt: string;
   updatedAt: string;

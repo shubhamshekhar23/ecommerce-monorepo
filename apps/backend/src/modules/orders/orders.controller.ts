@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
+import { OrderQueryService } from './queries/order-query.service';
 import { CurrentUser, Roles } from '@/common/decorators';
 import { IdempotencyInterceptor } from '@/common/interceptors';
 import { RateLimit } from '@/modules/rate-limit/rate-limit.decorator';
@@ -29,7 +30,10 @@ void PrismaModule;
 @ApiBearerAuth()
 @Controller('orders')
 export class OrdersController {
-  constructor(private readonly ordersService: OrdersService) {}
+  constructor(
+    private readonly ordersService: OrdersService,
+    private readonly orderQueryService: OrderQueryService,
+  ) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -50,7 +54,7 @@ export class OrdersController {
     @Query('page') page = 1,
     @Query('limit') limit = 20,
   ): Promise<PaginationDto<unknown>> {
-    return this.ordersService.listUserOrders(user.id, page, limit);
+    return this.orderQueryService.listUserOrders(user.id, page, limit);
   }
 
   @Get()
@@ -60,13 +64,13 @@ export class OrdersController {
     @Query('page') page = 1,
     @Query('limit') limit = 20,
   ): Promise<PaginationDto<unknown>> {
-    return this.ordersService.listAllOrders(page, limit);
+    return this.orderQueryService.listAllOrders(page, limit);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get order by ID' })
   async getOrder(@Param('id') id: string): Promise<unknown> {
-    return this.ordersService.findById(id);
+    return this.orderQueryService.findById(id);
   }
 
   @Patch(':id/status')

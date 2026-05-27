@@ -107,6 +107,11 @@
   }
 }
 
+.paymentFailed {
+  color: #721c24;
+  font-weight: 700;
+}
+
 .actions {
   display: flex;
   gap: var(--space-2);

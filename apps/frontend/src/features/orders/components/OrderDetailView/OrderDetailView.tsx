@@ -5,7 +5,21 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useOrder, useCancelOrder } from '../../hooks';
-import type { OrderStatus } from '../../interfaces';
+import type { OrderStatus, PaymentStatus } from '../../interfaces';
+
+const PAYMENT_LABELS: Partial<Record<PaymentStatus, string>> = {
+  SUCCEEDED: 'Paid',
+  FAILED: 'Payment Failed',
+  REFUNDED: 'Refunded',
+  CANCELED: 'Payment Canceled',
+};
+
+const PAYMENT_STYLE_MAP: Partial<Record<PaymentStatus, string>> = {
+  SUCCEEDED: 'paymentSucceeded',
+  FAILED: 'paymentFailed',
+  REFUNDED: 'paymentRefunded',
+  CANCELED: 'paymentCanceled',
+};
 import styles from './OrderDetailView.module.scss';
 
 interface OrderDetailViewProps {
@@ -74,8 +88,21 @@ export function OrderDetailView({ id }: OrderDetailViewProps) {
             })}
           </p>
         </div>
-        <div className={styles.status}>{order.status}</div>
+        <div className={styles.headerBadges}>
+          <div className={styles.status}>{order.status}</div>
+          {PAYMENT_LABELS[order.paymentStatus] && (
+            <div className={`${styles.paymentBadge} ${styles[PAYMENT_STYLE_MAP[order.paymentStatus] ?? ''] ?? ''}`}>
+              {PAYMENT_LABELS[order.paymentStatus]}
+            </div>
+          )}
+        </div>
       </div>
+
+      {order.paymentStatus === 'FAILED' && (
+        <div className={styles.paymentWarning}>
+          Payment was declined — your order has not been charged. Please contact support.
+        </div>
+      )}
 
       <div className={styles.timeline}>
         <h2 className={styles.timelineTitle}>Order Status</h2>

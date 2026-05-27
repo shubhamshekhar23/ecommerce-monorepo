@@ -70,6 +70,12 @@ export function OrderCard({ order }: OrderCardProps) {
           <span className={styles.label}>Total</span>
           <span className={`${styles.value} ${styles.total}`}>${total}</span>
         </div>
+        {order.paymentStatus === 'FAILED' && (
+          <div className={styles.row}>
+            <span className={styles.label}>Payment</span>
+            <span className={`${styles.value} ${styles.paymentFailed}`}>Failed</span>
+          </div>
+        )}
       </div>
 
       <div className={styles.actions}>
