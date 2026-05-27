@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -67,12 +61,12 @@ model User {
 }
 
 model RefreshToken {
-  id        String   @id @default(cuid())
-  token     String   @unique
+  id        String    @id @default(cuid())
+  token     String    @unique
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
   revokedAt DateTime?
 
   @@index([userId])
@@ -80,39 +74,51 @@ model RefreshToken {
 }
 
 model Category {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  slug        String   @unique
+  id          String     @id @default(cuid())
+  name        String     @unique
+  slug        String     @unique
   description String?
   image       String?
   parentId    String?
-  parent      Category? @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  parent      Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
   children    Category[] @relation("CategoryHierarchy")
   products    Product[]
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 
   @@index([slug])
   @@index([parentId])
 }
 
+// ── Product ───────────────────────────────────────────────────────────────────
+// Parent product: searchable/displayable unit. Price/cost/stock live on
+// ProductVariant. The price/cost/stock fields here are kept during the
+// expand step of expand-contract migration (see ROADMAP Phase 1).
+// They will be removed in a future "contract" migration once all cart/order
+// code has been migrated to reference ProductVariant.
 model Product {
-  id          String   @id @default(cuid())
+  id          String         @id @default(cuid())
   name        String
-  slug        String   @unique
+  slug        String         @unique
   description String?
-  price       Decimal  @db.Decimal(10, 2)
-  cost        Decimal  @db.Decimal(10, 2)
-  stock       Int      @default(0)
+  // Kept for backward compat (expand step) — move to ProductVariant in contract step
+  price       Decimal        @db.Decimal(10, 2)
+  cost        Decimal        @db.Decimal(10, 2)
+  stock       Int            @default(0)
   categoryId  String
-  category    Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  category    Category       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   images      ProductImage[]
   cartItems   CartItem[]
   orderItems  OrderItem[]
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime  @updatedAt
+  variantTypes VariantType[]
+  variants    ProductVariant[]
+  isActive    Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  // searchVector (tsvector GENERATED column) is managed by raw SQL migration — not
+  // declared here so Prisma does not try to ORM-manage it. Use prisma.$queryRaw for FTS.
 
   @@index([slug])
   @@index([categoryId])
@@ -123,58 +129,138 @@ model Product {
 }
 
 model ProductImage {
-  id        String  @id @default(cuid())
+  id        String   @id @default(cuid())
   productId String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   url       String
   altText   String?
-  isMain    Boolean @default(false)
-  order     Int     @default(0)
+  isMain    Boolean  @default(false)
+  order     Int      @default(0)
   createdAt DateTime @default(now())
 
   @@index([productId])
 }
 
+// ── Variant taxonomy ──────────────────────────────────────────────────────────
+// VariantType: "Size", "Color" (belongs to a Product)
+// VariantOption: "S", "M", "L" or "Red", "Blue" (belongs to a VariantType)
+// ProductVariant: the actual sellable SKU with its own price/cost/stock/images
+// VariantAttributeValue: junction mapping variant → options (Size=L, Color=Red)
+model VariantType {
+  id        String          @id @default(cuid())
+  productId String
+  product   Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name      String          // e.g. "Size", "Color"
+  options   VariantOption[]
+  createdAt DateTime        @default(now())
+
+  @@unique([productId, name])
+  @@index([productId])
+}
+
+model VariantOption {
+  id            String                  @id @default(cuid())
+  variantTypeId String
+  variantType   VariantType             @relation(fields: [variantTypeId], references: [id], onDelete: Cascade)
+  value         String                  // e.g. "S", "M", "Red"
+  attributeValues VariantAttributeValue[]
+
+  @@unique([variantTypeId, value])
+  @@index([variantTypeId])
+}
+
+model ProductVariant {
+  id              String                  @id @default(cuid())
+  productId       String
+  product         Product                 @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sku             String                  @unique
+  price           Decimal                 @db.Decimal(10, 2)
+  cost            Decimal                 @db.Decimal(10, 2)
+  stock           Int                     @default(0)
+  images          VariantImage[]
+  attributeValues VariantAttributeValue[]
+  cartItems       CartItem[]
+  isActive        Boolean                 @default(true)
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+
+  @@index([productId])
+  @@index([sku])
+  @@index([isActive])
+  @@index([productId, isActive])
+}
+
+model VariantImage {
+  id        String         @id @default(cuid())
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  url       String
+  altText   String?
+  isMain    Boolean        @default(false)
+  order     Int            @default(0)
+  createdAt DateTime       @default(now())
+
+  @@index([variantId])
+}
+
+// Composite PK: a variant can only have one option per type (e.g. can't be both S and M)
+model VariantAttributeValue {
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  optionId  String
+  option    VariantOption  @relation(fields: [optionId], references: [id], onDelete: Restrict)
+
+  @@id([variantId, optionId])
+  @@index([variantId])
+  @@index([optionId])
+}
+
+// ── Cart ──────────────────────────────────────────────────────────────────────
 model Cart {
-  id        String    @id @default(cuid())
-  userId    String    @unique
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String     @id @default(cuid())
+  userId    String     @unique
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   items     CartItem[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 
   @@index([userId])
 }
 
+// Expand step: variantId is nullable — existing items continue to reference Product.
+// Contract step (future): make variantId required, drop productId + update unique constraint.
 model CartItem {
-  id        String  @id @default(cuid())
+  id        String          @id @default(cuid())
   cartId    String
-  cart      Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  cart      Cart            @relation(fields: [cartId], references: [id], onDelete: Cascade)
   productId String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  product   Product         @relation(fields: [productId], references: [id], onDelete: Restrict)
+  variantId String?
+  variant   ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
   quantity  Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
 
   @@unique([cartId, productId])
   @@index([cartId])
   @@index([productId])
+  @@index([variantId])
 }
 
 model Order {
-  id              String         @id @default(cuid())
-  orderNumber     String         @unique
+  id              String        @id @default(cuid())
+  orderNumber     String        @unique
   userId          String
-  user            User           @relation(fields: [userId], references: [id], onDelete: Restrict)
+  user            User          @relation(fields: [userId], references: [id], onDelete: Restrict)
   items           OrderItem[]
-  totalPrice      Decimal        @db.Decimal(10, 2)
-  status          OrderStatus    @default(PENDING)
-  paymentIntentId String?        @unique
-  paymentStatus   PaymentStatus  @default(PENDING)
+  totalPrice      Decimal       @db.Decimal(10, 2)
+  status          OrderStatus   @default(PENDING)
+  paymentIntentId String?       @unique
+  paymentStatus   PaymentStatus @default(PENDING)
   paidAt          DateTime?
   notes           String?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   @@index([userId])
   @@index([status])
@@ -185,13 +271,17 @@ model Order {
 }
 
 model OrderItem {
-  id        String  @id @default(cuid())
-  orderId   String
-  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
-  quantity  Int
-  price     Decimal @db.Decimal(10, 2)
+  id                String   @id @default(cuid())
+  orderId           String
+  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId         String
+  product           Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity          Int
+  price             Decimal  @db.Decimal(10, 2)
+  // Snapshot of variant attributes at purchase time (e.g. {Size: "L", Color: "Red"}).
+  // Stored as JSON, NOT a FK — variants can be deleted but the order must remember
+  // what was purchased. This is the canonical pattern for order line items.
+  variantAttributes Json?
 
   @@index([orderId])
   @@index([productId])

@@ -1,4 +1,5 @@
 /* eslint-disable max-lines */
+import { Prisma } from '@prisma/client';
 import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 import { StripeService } from '@/modules/stripe/stripe.service';
@@ -19,64 +20,113 @@ export class OrdersService {
 
   // eslint-disable-next-line max-lines-per-function,complexity
   async create(userId: string, cartId?: string): Promise<any> {
-    let cart = null;
-
-    if (cartId) {
-      cart = await this.prisma.cart.findUnique({
-        where: { id: cartId },
-        include: { items: { include: { product: true } } },
-      });
-    } else {
-      cart = await this.prisma.cart.findUnique({
-        where: { userId },
-        include: { items: { include: { product: true } } },
-      });
-    }
+    const cart = await this.loadCart(userId, cartId);
 
     if (!cart || cart.items.length === 0) {
       throw new BadRequestException('Cart is empty');
     }
 
-    for (const item of cart.items) {
-      if (item.product.stock < item.quantity) {
-        throw new BadRequestException(`Insufficient stock for product ${item.product.name}`);
-      }
-    }
+    const order = await this.createOrderWithPessimisticLock(userId, cart);
 
-    const totalPrice = cart.items.reduce((sum, item) => {
-      return sum + parseFloat(String(item.product.price)) * item.quantity;
-    }, 0);
+    await this.postOrderSideEffects(order, userId);
 
-    const orderNumber = this.generateOrderNumber();
+    return this.mapToResponse(order);
+  }
 
-    const order = await this.prisma.order.create({
-      data: {
-        orderNumber,
-        userId,
-        totalPrice,
-        status: OrderStatus.PENDING,
-        items: {
-          createMany: {
-            data: cart.items.map((item) => ({
-              productId: item.productId,
-              quantity: item.quantity,
-              price: item.product.price,
-            })),
+  // Pessimistic locking prevents oversell under concurrent requests.
+  //
+  // The bug without locking:
+  //   Thread A reads stock=1, Thread B reads stock=1 → both pass the check
+  //   → both decrement → stock=-1 (oversell!)
+  //
+  // With SELECT FOR UPDATE:
+  //   Thread A acquires the row-level lock.
+  //   Thread B blocks at the FOR UPDATE until A commits.
+  //   After A commits (stock=0), B reads stock=0 → throws InsufficientStock.
+  //
+  // Concurrency demo: fire 10 concurrent POST /orders requests with 1 item in stock.
+  // Without FOR UPDATE: all 10 succeed. With it: exactly 1 succeeds.
+  //
+  // Prisma interactive transactions let you mix $queryRaw and ORM calls in one txn.
+  // eslint-disable-next-line max-lines-per-function
+  private async createOrderWithPessimisticLock(userId: string, cart: any): Promise<any> {
+    return this.prisma.$transaction(
+      async (tx) => {
+        // Acquire row-level locks on all products in the cart.
+        // All locks are acquired upfront (sorted by id) to prevent deadlocks when two
+        // concurrent carts overlap on the same products in different orders.
+        const sortedProductIds = [
+          ...new Set(cart.items.map((i: any) => i.productId as string)),
+        ].sort();
+
+        for (const productId of sortedProductIds) {
+          await tx.$queryRaw(
+            Prisma.sql`SELECT id FROM "Product" WHERE id = ${productId} FOR UPDATE`,
+          );
+        }
+
+        // Re-read stock inside the transaction — the values are now locked and consistent.
+        for (const item of cart.items) {
+          const product = await tx.product.findUnique({ where: { id: item.productId } });
+          if (!product || product.stock < item.quantity) {
+            throw new BadRequestException(
+              `Insufficient stock for product "${item.product?.name ?? item.productId}"`,
+            );
+          }
+        }
+
+        const totalPrice = cart.items.reduce((sum: number, item: any) => {
+          return sum + parseFloat(String(item.product.price)) * item.quantity;
+        }, 0);
+
+        const order = await tx.order.create({
+          data: {
+            orderNumber: this.generateOrderNumber(),
+            userId,
+            totalPrice,
+            status: OrderStatus.PENDING,
+            items: {
+              createMany: {
+                data: cart.items.map((item: any) => ({
+                  productId: item.productId,
+                  quantity: item.quantity,
+                  price: item.product.price,
+                })),
+              },
+            },
           },
-        },
+          include: { items: { include: { product: true } } },
+        });
+
+        // Decrement stock for all cart items inside the same transaction.
+        for (const item of cart.items) {
+          await tx.product.update({
+            where: { id: item.productId },
+            data: { stock: { decrement: item.quantity } },
+          });
+        }
+
+        await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
+
+        return order;
       },
+      {
+        // 10s timeout is enough for typical order sizes; prevents long-held locks
+        timeout: 10_000,
+        isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted,
+      },
+    );
+  }
+
+  private async loadCart(userId: string, cartId?: string): Promise<any> {
+    const where = cartId ? { id: cartId } : { userId };
+    return this.prisma.cart.findUnique({
+      where,
       include: { items: { include: { product: true } } },
     });
+  }
 
-    for (const item of cart.items) {
-      await this.prisma.product.update({
-        where: { id: item.productId },
-        data: { stock: { decrement: item.quantity } },
-      });
-    }
-
-    await this.prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
-
+  private async postOrderSideEffects(order: any, userId: string): Promise<void> {
     try {
       await this.stripeService.createPaymentIntent(order.id, parseFloat(String(order.totalPrice)));
     } catch (error) {
@@ -107,11 +157,9 @@ export class OrdersService {
       }
     } catch (error) {
       this.logger.error(
-        `Failed to send order confirmation email: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to send order confirmation: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
-
-    return this.mapToResponse(order);
   }
 
   async findById(orderId: string): Promise<any> {
@@ -222,7 +270,7 @@ export class OrdersService {
       OrderStatus.REFUNDED,
     ];
 
-    if (unCancellableStatuses.includes(order.status as any)) {
+    if (unCancellableStatuses.includes(order.status as 'SHIPPED' | 'DELIVERED' | 'REFUNDED')) {
       throw new BadRequestException(`Cannot cancel order with status ${order.status}`);
     }
 
@@ -243,13 +291,11 @@ export class OrdersService {
   }
 
   private generateOrderNumber(): string {
-    const now = new Date();
-    const timestamp = now
+    const timestamp = new Date()
       .toISOString()
       .replace(/[-:T.Z]/g, '')
       .substring(0, 14);
     const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-
     return `${timestamp}-${random}`;
   }
 
@@ -266,6 +312,7 @@ export class OrdersService {
           productName: item.product?.name,
           quantity: item.quantity,
           price: item.price,
+          variantAttributes: item.variantAttributes,
           subtotal: parseFloat(String(item.price)) * item.quantity,
         })) || [],
       totalPrice: order.totalPrice,

@@ -10,12 +10,13 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { ProductsService } from './products.service';
 import { CreateProductDto, UpdateProductDto } from './dto';
 import { Public, Roles } from '@/common/decorators';
 import { UserRole } from '@prisma/client';
 import { PaginationDto } from '@/common/types/pagination.interface';
+import { CursorPageDto } from '@/common/types/cursor-pagination.interface';
 
 @ApiTags('products')
 @Controller('products')
@@ -27,7 +28,6 @@ export class ProductsController {
   @ApiBearerAuth()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new product' })
-  @ApiResponse({ status: 201 })
   async create(@Body() createProductDto: CreateProductDto): Promise<any> {
     return this.productsService.create(createProductDto);
   }
@@ -36,15 +36,44 @@ export class ProductsController {
   @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update a product' })
-  @ApiResponse({ status: 200 })
   async update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto): Promise<any> {
     return this.productsService.update(id, updateProductDto);
   }
 
+  // Cursor pagination endpoint — use this for infinite scroll / "load more" UIs.
+  // cursor is an opaque base64 token returned in meta.nextCursor from the previous page.
+  @Get('cursor')
+  @Public()
+  @ApiOperation({ summary: 'List products with cursor-based pagination (recommended)' })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'cursor', required: false, type: String, description: 'Opaque cursor from previous response meta.nextCursor' })
+  async findAllCursor(
+    @Query('limit') limit = 20,
+    @Query('cursor') cursor?: string,
+  ): Promise<CursorPageDto<any>> {
+    return this.productsService.findAllCursor(Number(limit), cursor);
+  }
+
+  // Full-text search endpoint using PostgreSQL tsvector + GIN index.
+  // Results ordered by relevance (ts_rank) then recency.
+  @Get('search')
+  @Public()
+  @ApiOperation({ summary: 'Full-text search products (PostgreSQL FTS)' })
+  @ApiQuery({ name: 'q', required: true, type: String })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'cursor', required: false, type: String })
+  async search(
+    @Query('q') term: string,
+    @Query('limit') limit = 20,
+    @Query('cursor') cursor?: string,
+  ): Promise<CursorPageDto<any>> {
+    return this.productsService.search(term, Number(limit), cursor);
+  }
+
+  // Legacy offset pagination — kept for backward compat. Use /products/cursor instead.
   @Get()
   @Public()
-  @ApiOperation({ summary: 'Get all products with pagination and optional search' })
-  @ApiResponse({ status: 200 })
+  @ApiOperation({ summary: 'List products (offset pagination — use /products/cursor for new clients)' })
   async findAll(
     @Query('page') page = 1,
     @Query('limit') limit = 20,
@@ -56,15 +85,13 @@ export class ProductsController {
   @Get('slug/:slug')
   @Public()
   @ApiOperation({ summary: 'Get product by slug' })
-  @ApiResponse({ status: 200 })
   async findBySlug(@Param('slug') slug: string): Promise<any> {
     return this.productsService.findBySlug(slug);
   }
 
   @Get(':id')
   @Public()
-  @ApiOperation({ summary: 'Get product by ID' })
-  @ApiResponse({ status: 200 })
+  @ApiOperation({ summary: 'Get product by ID (includes active variants)' })
   async findById(@Param('id') id: string): Promise<any> {
     return this.productsService.findById(id);
   }
@@ -83,7 +110,6 @@ export class ProductsController {
   @ApiBearerAuth()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Remove image from product' })
-  @ApiResponse({ status: 204 })
   async removeImage(@Param('imageId') imageId: string): Promise<void> {
     await this.productsService.removeImage(imageId);
   }
@@ -93,7 +119,6 @@ export class ProductsController {
   @ApiBearerAuth()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Soft delete product' })
-  @ApiResponse({ status: 204 })
   async softDelete(@Param('id') id: string): Promise<void> {
     await this.productsService.softDelete(id);
   }

@@ -41,3 +41,42 @@
   font-size: var(--font-size-sm);
   color: var(--color-text-muted);
 }
+
+.loadMore {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-8);
+}
+
+.loadMoreBtn {
+  padding: 0.65rem 2.2rem;
+  border: 1.5px solid rgb(37 99 235 / 0.4);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-accent-text);
+  font-weight: var(--font-weight-semibold);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    transform var(--transition-fast);
+
+  &:hover:not(:disabled) {
+    background: rgb(37 99 235 / 0.07);
+    border-color: #2563eb;
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.endOfList {
+  text-align: center;
+  margin-top: var(--space-8);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}

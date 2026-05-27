@@ -7,6 +7,8 @@ import { useAuthStore } from '@/store/auth.store';
 import { useAddToCart } from '@/features/cart/hooks';
 import { useProduct } from '../../hooks';
 import { ProductImageGallery } from '../ProductImageGallery/ProductImageGallery';
+import { VariantSelector } from '../VariantSelector/VariantSelector';
+import type { ProductVariant } from '../../interfaces';
 import styles from './ProductDetailView.module.scss';
 
 interface ProductDetailViewProps {
@@ -20,19 +22,26 @@ export function ProductDetailView({ slug }: ProductDetailViewProps) {
   const { mutate: addToCart, isPending } = useAddToCart();
   const [buttonState, setButtonState] = useState<'idle' | 'success' | 'error'>('idle');
 
+  // Variant selection state — null until a complete combination is chosen
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
+  const [isVariantFullySelected, setIsVariantFullySelected] = useState(false);
+
+  const handleVariantChange = useCallback(
+    (variant: ProductVariant | null, isFullySelected: boolean) => {
+      setSelectedVariant(variant);
+      setIsVariantFullySelected(isFullySelected);
+    },
+    [],
+  );
+
   const handleAddToCart = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
-
-      if (!product) {
-        return;
-      }
-
+      if (!product) return;
       if (status !== 'authenticated') {
         router.push('/login');
         return;
       }
-
       addToCart(
         { productId: product.id, quantity: 1 },
         {
@@ -54,6 +63,8 @@ export function ProductDetailView({ slug }: ProductDetailViewProps) {
     if (isPending) return 'Adding...';
     if (buttonState === 'success') return 'Added ✓';
     if (buttonState === 'error') return 'Failed';
+    const hasVariants = (product?.variants?.length ?? 0) > 0;
+    if (hasVariants && !isVariantFullySelected) return 'Select options';
     return 'Add to Cart';
   };
 
@@ -69,16 +80,36 @@ export function ProductDetailView({ slug }: ProductDetailViewProps) {
     return (
       <div className={styles.error}>
         <h1>Product not found</h1>
-        <p>This product doesn't exist or has been removed.</p>
+        <p>This product does not exist or has been removed.</p>
         <Link href="/products">← Back to products</Link>
       </div>
     );
   }
 
-  const price = Number(product.price).toFixed(2);
-  const inStock = product.stock > 0;
+  const hasVariants = (product.variants?.length ?? 0) > 0;
 
-  const isButtonDisabled = !inStock || isPending || buttonState === 'success';
+  // When a variant is selected show its values; otherwise fall back to the base product.
+  const displayPrice = Number(selectedVariant?.price ?? product.price).toFixed(2);
+  const displayStock = selectedVariant ? selectedVariant.stock : (hasVariants ? null : product.stock);
+
+  // null means "variants exist but none selected yet" — show a prompt instead of a count
+  const inStock = displayStock !== null && displayStock > 0;
+  const isButtonDisabled =
+    isPending ||
+    buttonState === 'success' ||
+    (hasVariants && (!isVariantFullySelected || !selectedVariant)) ||
+    (!hasVariants && !inStock);
+
+  const galleryImages =
+    selectedVariant?.images && selectedVariant.images.length > 0
+      ? selectedVariant.images.map((img) => ({
+          id: img.id,
+          url: img.url,
+          altText: img.altText,
+          isMain: img.isMain,
+          order: img.order,
+        }))
+      : product.images;
 
   return (
     <div className={styles.container}>
@@ -92,10 +123,7 @@ export function ProductDetailView({ slug }: ProductDetailViewProps) {
 
       <div className={styles.content}>
         <div className={styles.gallery}>
-          <ProductImageGallery
-            images={product.images}
-            productName={product.name}
-          />
+          <ProductImageGallery images={galleryImages} productName={product.name} />
         </div>
 
         <div className={styles.info}>
@@ -103,25 +131,35 @@ export function ProductDetailView({ slug }: ProductDetailViewProps) {
           <h1 className={styles.name}>{product.name}</h1>
 
           <div className={styles.priceWrap}>
-            <div className={styles.price}>${price}</div>
+            <div className={styles.price}>${displayPrice}</div>
             <p className={styles.priceNote}>Inclusive of all taxes</p>
           </div>
 
-          <div
-            className={inStock ? styles.inStock : styles.outOfStock}
-          >
-            {inStock ? (
-              <>
-                <span className={styles.badge}>✓</span>
-                In Stock ({product.stock} available)
-              </>
-            ) : (
-              <>
-                <span className={styles.badge}>✗</span>
-                Out of Stock
-              </>
-            )}
-          </div>
+          {/* Stock badge — adapts to variant selection state */}
+          {displayStock === null ? (
+            <div className={styles.selectOptions}>Select options to see availability</div>
+          ) : inStock ? (
+            <div className={styles.inStock}>
+              <span className={styles.badge}>✓</span>
+              In Stock ({displayStock} available)
+            </div>
+          ) : (
+            <div className={styles.outOfStock}>
+              <span className={styles.badge}>✗</span>
+              Out of Stock
+            </div>
+          )}
+
+          {/* Variant selector — only rendered when the product has variants */}
+          {hasVariants && (
+            <div className={styles.section}>
+              <VariantSelector variants={product.variants} onVariantChange={handleVariantChange} />
+            </div>
+          )}
+
+          {selectedVariant && (
+            <p className={styles.sku}>SKU: {selectedVariant.sku}</p>
+          )}
 
           <div className={styles.quickPoints}>
             <p className={styles.point}>Ready to ship in 24 hours</p>

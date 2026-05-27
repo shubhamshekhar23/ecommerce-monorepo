@@ -198,6 +198,23 @@
   line-height: var(--line-height-relaxed);
 }
 
+.selectOptions {
+  font-size: 0.88rem;
+  color: var(--color-text-muted);
+  padding: 0.58rem 0.8rem;
+  border-radius: var(--radius-full);
+  width: fit-content;
+  border: 1px dashed rgb(148 163 184 / 0.5);
+  background: rgb(248 250 252 / 0.8);
+}
+
+.sku {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  letter-spacing: 0.04em;
+}
+
 .category {
   font-size: 0.84rem;
   margin: 0;
