@@ -14,6 +14,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { OrdersService } from './orders.service';
 import { CurrentUser, Roles } from '@/common/decorators';
 import { IdempotencyInterceptor } from '@/common/interceptors';
+import { RateLimit } from '@/modules/rate-limit/rate-limit.decorator';
 import { PrismaModule } from '@/modules/prisma/prisma.module';
 import type { RequestUser } from '@/common/types/request-user.interface';
 import { UserRole, OrderStatus } from '@prisma/client';
@@ -33,9 +34,11 @@ export class OrdersController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @UseInterceptors(IdempotencyInterceptor)
+  @RateLimit({ limit: 10, windowMs: 60 * 60 * 1000, keyStrategy: 'user' }) // 10 orders/hour per user
   @ApiOperation({ summary: 'Create order from cart (idempotent via X-Idempotency-Key header)' })
   @ApiResponse({ status: 201 })
   @ApiResponse({ status: 409, description: 'Request already in-flight for this idempotency key' })
+  @ApiResponse({ status: 429, description: 'Too many order attempts' })
   async create(@CurrentUser() user: RequestUser, @Body() { cartId }: { cartId?: string }): Promise<unknown> {
     return this.ordersService.create(user.id, cartId);
   }

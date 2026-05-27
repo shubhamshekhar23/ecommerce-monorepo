@@ -17,6 +17,9 @@ import { MetricsModule } from '@/modules/metrics/metrics.module';
 import { QueueModule } from '@/modules/queue/queue.module';
 import { OutboxModule } from '@/modules/outbox/outbox.module';
 import { AdminModule } from '@/modules/admin/admin.module';
+import { CacheModule } from '@/modules/cache/cache.module';
+import { RateLimitModule } from '@/modules/rate-limit/rate-limit.module';
+import { RateLimitGuard } from '@/modules/rate-limit/rate-limit.guard';
 import { JwtAuthGuard, RolesGuard } from '@/common/guards';
 import { HttpExceptionFilter } from '@/common/filters/http-exception.filter';
 import { AppController } from './app.controller';
@@ -41,6 +44,8 @@ import { AppService } from './app.service';
     QueueModule,
     OutboxModule,
     AdminModule,
+    CacheModule,
+    RateLimitModule,
   ],
   controllers: [AppController],
   providers: [
@@ -48,6 +53,7 @@ import { AppService } from './app.service';
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_GUARD, useClass: RateLimitGuard },
   ],
 })
 export class AppModule {}

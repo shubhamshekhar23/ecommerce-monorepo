@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { registerSchema, type RegisterFormValues } from '../../utils/auth.schemas';
 import { useRegister } from '../../hooks';
+import { resolveAuthError } from '../../utils/auth.utils';
 import { FormField } from '@/components/FormField/FormField';
 import styles from './RegisterForm.module.scss';
 
@@ -33,7 +34,7 @@ export function RegisterForm() {
 
       {error && (
         <div role="alert" className={styles.serverError}>
-          {(error as any).message || 'Registration failed. Please try again.'}
+          {resolveAuthError(error, 'Registration failed. Please try again.')}
         </div>
       )}
 

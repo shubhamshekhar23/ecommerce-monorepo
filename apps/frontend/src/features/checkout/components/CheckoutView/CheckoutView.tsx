@@ -21,6 +21,9 @@ function resolveOrderError(error: unknown): string {
   if (error.statusCode === 409) {
     return 'Your order is still being processed — please wait a moment before retrying.';
   }
+  if (error.statusCode === 429) {
+    return 'Too many orders placed recently. Please wait a while before trying again.';
+  }
   return error.message || 'Failed to place order. Please try again.';
 }
 

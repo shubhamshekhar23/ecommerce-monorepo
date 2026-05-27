@@ -4,6 +4,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto, AuthResponseDto, RefreshTokenDto } from './dto';
 import { Public, CurrentUser } from '@/common/decorators';
+import { RateLimit } from '@/modules/rate-limit/rate-limit.decorator';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -13,12 +14,10 @@ export class AuthController {
   @Post('register')
   @Public()
   @HttpCode(HttpStatus.CREATED)
+  @RateLimit({ limit: 3, windowMs: 60 * 60 * 1000, keyStrategy: 'ip' }) // 3 registrations/hour per IP
   @ApiOperation({ summary: 'Register a new user' })
-  @ApiResponse({
-    status: 201,
-    type: AuthResponseDto,
-    description: 'User registered successfully with tokens',
-  })
+  @ApiResponse({ status: 201, type: AuthResponseDto, description: 'User registered successfully with tokens' })
+  @ApiResponse({ status: 429, description: 'Too many registration attempts' })
   async register(@Body() registerDto: RegisterDto): Promise<AuthResponseDto> {
     return this.authService.register(registerDto);
   }
@@ -26,12 +25,10 @@ export class AuthController {
   @Post('login')
   @Public()
   @HttpCode(HttpStatus.OK)
+  @RateLimit({ limit: 10, windowMs: 15 * 60 * 1000, keyStrategy: 'ip' }) // 10 attempts/15 min per IP — brute-force protection
   @ApiOperation({ summary: 'Login with credentials' })
-  @ApiResponse({
-    status: 200,
-    type: AuthResponseDto,
-    description: 'Logged in successfully with tokens',
-  })
+  @ApiResponse({ status: 200, type: AuthResponseDto, description: 'Logged in successfully with tokens' })
+  @ApiResponse({ status: 429, description: 'Too many login attempts' })
   async login(@Body() loginDto: LoginDto): Promise<AuthResponseDto> {
     return this.authService.login(loginDto);
   }

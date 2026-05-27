@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, type LoginFormValues } from '../../utils/auth.schemas';
 import { useLogin } from '../../hooks';
+import { resolveAuthError } from '../../utils/auth.utils';
 import { FormField } from '@/components/FormField/FormField';
 import styles from './LoginForm.module.scss';
 
@@ -31,7 +32,7 @@ export function LoginForm() {
 
       {error && (
         <div role="alert" className={styles.serverError}>
-          {(error as any).message || 'Sign in failed. Please try again.'}
+          {resolveAuthError(error, 'Sign in failed. Please try again.')}
         </div>
       )}
 
