@@ -5,6 +5,7 @@ export interface EnvironmentVariables {
   PORT: number;
   API_PREFIX: string;
   DATABASE_URL: string;
+  DIRECT_DATABASE_URL: string;
   REDIS_URL?: string;
   JWT_SECRET: string;
   JWT_EXPIRATION: string;
@@ -26,7 +27,10 @@ export interface EnvironmentVariables {
 function getRequiredSchema() {
   return {
     DATABASE_URL: Joi.string().required().messages({
-      'any.required': 'DATABASE_URL is required',
+      'any.required': 'DATABASE_URL is required (use PgBouncer URL in production)',
+    }),
+    DIRECT_DATABASE_URL: Joi.string().required().messages({
+      'any.required': 'DIRECT_DATABASE_URL is required (direct Postgres URL for migrations)',
     }),
     JWT_SECRET: Joi.string().min(32).required().messages({
       'string.min': 'JWT_SECRET must be at least 32 characters',

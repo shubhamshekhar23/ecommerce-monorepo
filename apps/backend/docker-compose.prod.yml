@@ -54,18 +54,51 @@ services:
           cpus: '0.5'
           memory: 256M
 
+  # ── PgBouncer ─────────────────────────────────────────────────────────────
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    container_name: ecommerce_pgbouncer_prod
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-ecommerce_db}
+      DB_USER: ${DB_USER:-ecommerce_user}
+      DB_PASSWORD: ${DB_PASSWORD}
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: 200
+      DEFAULT_POOL_SIZE: 20
+      MIN_POOL_SIZE: 5
+      RESERVE_POOL_SIZE: 5
+      IGNORE_STARTUP_PARAMETERS: extra_float_digits
+      SERVER_RESET_QUERY: DISCARD ALL
+      AUTH_TYPE: plain
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ecommerce_network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+
   # NestJS Application
   app:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: apps/backend/Dockerfile
       args:
         NODE_ENV: production
     container_name: ecommerce_app_prod
     environment:
       NODE_ENV: production
       PORT: 3000
-      DATABASE_URL: postgresql://${DB_USER:-ecommerce_user}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-ecommerce_db}
+      # Routes through PgBouncer in production
+      DATABASE_URL: postgresql://${DB_USER:-ecommerce_user}:${DB_PASSWORD}@pgbouncer:6432/${DB_NAME:-ecommerce_db}?pgbouncer=true&connection_limit=1
+      # Direct URL for migrations (bypasses PgBouncer — migrations use advisory locks)
+      DIRECT_DATABASE_URL: postgresql://${DB_USER:-ecommerce_user}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-ecommerce_db}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       JWT_SECRET: ${JWT_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
@@ -87,8 +120,8 @@ services:
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       AWS_S3_BUCKET: ${AWS_S3_BUCKET}
     depends_on:
-      postgres:
-        condition: service_healthy
+      pgbouncer:
+        condition: service_started
       redis:
         condition: service_healthy
     networks:

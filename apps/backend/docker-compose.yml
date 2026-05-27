@@ -1,7 +1,19 @@
 version: '3.8'
+name: ecommerce-monorepo-backend
+
+# ─── Development Stack ────────────────────────────────────────────────────────
+# Topology:
+#   Browser → Nginx (:80) → NestJS App (:3000)
+#                  ↓
+#             App → PgBouncer (:6432) → PostgreSQL (:5432)
+#             App → Redis (:6379)
+#
+# Why PgBouncer in dev?
+#   Same as production. You learn to watch real connection pool behaviour
+#   with `docker exec -it ecommerce_pgbouncer psql -p 6432 pgbouncer -U ecommerce_user -c "SHOW POOLS"`.
 
 services:
-  # PostgreSQL Database
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
   postgres:
     image: postgres:16-alpine
     container_name: ecommerce_postgres
@@ -10,7 +22,7 @@ services:
       POSTGRES_PASSWORD: ecommerce_password
       POSTGRES_DB: ecommerce_db
     ports:
-      - '5432:5432'
+      - '5434:5432' # exposed for direct access (psql, Prisma Studio, migrations)
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -21,10 +33,47 @@ services:
     networks:
       - ecommerce-network
 
-  # Redis Cache
+  # ── PgBouncer ───────────────────────────────────────────────────────────────
+  # The NestJS app connects HERE (port 6432), not directly to PostgreSQL.
+  # PgBouncer multiplexes many app connections into a small pool of real DB connections.
+  #
+  # Try this while load testing to see pooling in action:
+  #   docker exec ecommerce_postgres psql -U ecommerce_user -c "SELECT count(*) FROM pg_stat_activity"
+  # You will see ~20 connections regardless of how many app requests are in flight.
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    container_name: ecommerce_pgbouncer
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ecommerce_db
+      DB_USER: ecommerce_user
+      DB_PASSWORD: ecommerce_password
+      # TRANSACTION mode: connection returned to pool after each transaction.
+      # Required for Prisma. See docker/pgbouncer/pgbouncer.ini for full explanation.
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: 200
+      DEFAULT_POOL_SIZE: 20
+      MIN_POOL_SIZE: 5
+      RESERVE_POOL_SIZE: 5
+      # Prisma sends this startup parameter; PgBouncer must be told to ignore it
+      IGNORE_STARTUP_PARAMETERS: extra_float_digits
+      SERVER_RESET_QUERY: DISCARD ALL
+      AUTH_TYPE: plain
+      LISTEN_PORT: 6432
+    ports:
+      - '6432:6432'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ecommerce-network
+
+  # ── Redis ───────────────────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
     container_name: ecommerce_redis
+    command: redis-server --appendonly yes --appendfsync everysec
     ports:
       - '6379:6379'
     volumes:
@@ -37,12 +86,62 @@ services:
     networks:
       - ecommerce-network
 
-  # PgAdmin for Database Management
+  # ── Nginx ───────────────────────────────────────────────────────────────────
+  # Reverse proxy: terminates HTTP, injects X-Request-ID, applies rate limits.
+  # Access the app via http://localhost (port 80) to go through Nginx.
+  # You can also hit http://localhost:3000 directly (bypassing Nginx) for debugging.
+  nginx:
+    image: nginx:alpine
+    container_name: ecommerce_nginx
+    ports:
+      - '80:80'
+    volumes:
+      - ./nginx.dev.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - app
+    networks:
+      - ecommerce-network
+
+  # ── NestJS Application ──────────────────────────────────────────────────────
+  app:
+    build:
+      context: ../..
+      dockerfile: apps/backend/Dockerfile
+      target: deps        # use the deps stage so devDeps (@nestjs/cli) are present
+    container_name: ecommerce_app
+    environment:
+      - NODE_ENV=development
+      # Connects to PgBouncer, not Postgres directly.
+      # ?pgbouncer=true  → disables Prisma prepared statements (session-scoped, break in transaction mode)
+      # &connection_limit=1 → Prisma opens 1 connection to PgBouncer per instance (PgBouncer handles the pooling)
+      - DATABASE_URL=postgresql://ecommerce_user:ecommerce_password@pgbouncer:6432/ecommerce_db?pgbouncer=true&connection_limit=1
+      # DIRECT_DATABASE_URL bypasses PgBouncer for Prisma migrations (which use advisory locks — session-scoped)
+      - DIRECT_DATABASE_URL=postgresql://ecommerce_user:ecommerce_password@postgres:5432/ecommerce_db
+      - REDIS_URL=redis://redis:6379
+      - PORT=4000
+      - JWT_SECRET=dev-secret-key-min-32-chars-do-not-use-in-production
+      - JWT_REFRESH_SECRET=dev-refresh-secret-key-min-32-chars-do-not-use-in-production
+      - CORS_ORIGIN=http://localhost,http://localhost:3000,http://localhost:3001,http://localhost:3002
+    ports:
+      - '4000:4000' # direct access (bypasses Nginx) — useful for debugging
+    depends_on:
+      pgbouncer:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run start:dev
+    networks:
+      - ecommerce-network
+
+  # ── PgAdmin ─────────────────────────────────────────────────────────────────
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: ecommerce_pgadmin
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@ecommerce.local
+      PGADMIN_DEFAULT_EMAIL: admin@ecommerce.com
       PGADMIN_DEFAULT_PASSWORD: admin
       PGADMIN_CONFIG_SERVER_MODE: 'False'
     ports:
@@ -55,34 +154,7 @@ services:
     networks:
       - ecommerce-network
 
-  # NestJS Application
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: ecommerce_app
-    environment:
-      - NODE_ENV=development
-      - DATABASE_URL=postgresql://ecommerce_user:ecommerce_password@postgres:5432/ecommerce_db
-      - REDIS_URL=redis://redis:6379
-      - PORT=3000
-      - JWT_SECRET=dev-secret-key-min-32-chars-do-not-use-in-production
-      - JWT_REFRESH_SECRET=dev-refresh-secret-key-min-32-chars-do-not-use-in-production
-    ports:
-      - '3000:3000'
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - .:/app
-      - /app/node_modules
-    command: npm run start:dev
-    networks:
-      - ecommerce-network
-
-  # Prometheus for metrics collection
+  # ── Prometheus ──────────────────────────────────────────────────────────────
   prometheus:
     image: prom/prometheus:latest
     container_name: ecommerce_prometheus
@@ -100,7 +172,7 @@ services:
     depends_on:
       - app
 
-  # Grafana for visualization
+  # ── Grafana ─────────────────────────────────────────────────────────────────
   grafana:
     image: grafana/grafana:latest
     container_name: ecommerce_grafana

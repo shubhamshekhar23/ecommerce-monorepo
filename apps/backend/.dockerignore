@@ -56,7 +56,9 @@ Thumbs.db
 .prettierrc
 .editorconfig
 eslint.config.mjs
-prisma
+# Keep prisma/schema.prisma in context — Stage 1 (deps) needs it for prisma generate
+# Only exclude files not needed in the image
+prisma/seed.ts
 uploads
 
 # CI/CD
