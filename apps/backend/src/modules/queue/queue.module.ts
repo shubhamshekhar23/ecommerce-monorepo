@@ -1,14 +1,11 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { MailModule } from '@/modules/mail/mail.module';
-import { NotificationWorker } from './workers/notification.worker';
 import { QUEUE_NAMES } from './queue.constants';
 
-// Why one shared BullModule.forRootAsync?
-// BullMQ creates a single Redis connection per root config. All queues in the app
-// reuse it. Defining it here (re-exported via BullModule) means every other module
-// that imports QueueModule gets the connection for free.
+// NotificationWorker removed — notifications are now handled by the standalone
+// notification-service which consumes from RabbitMQ. BullMQ is kept here for
+// other background jobs (stock alerts, abandoned cart, invoice generation).
 @Module({
   imports: [
     BullModule.forRootAsync({
@@ -26,10 +23,7 @@ import { QUEUE_NAMES } from './queue.constants';
       },
     }),
     BullModule.registerQueue({ name: QUEUE_NAMES.NOTIFICATIONS }),
-    MailModule,
   ],
-  providers: [NotificationWorker],
-  // Export BullModule so other modules can inject queues with @InjectQueue()
   exports: [BullModule],
 })
 export class QueueModule {}

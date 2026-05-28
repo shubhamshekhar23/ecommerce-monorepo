@@ -1,0 +1,226 @@
+# Full stack — infrastructure + all application services.
+# Build context is always the monorepo root so all Dockerfiles can access shared packages.
+#
+# Usage:
+#   docker compose up --build        # first time or after code changes
+#   docker compose up                # subsequent starts (uses cached images)
+#   docker compose down              # stop everything
+#   docker compose down -v           # stop and delete all data volumes
+#   docker compose logs -f gateway   # tail logs for a specific service
+
+name: ecommerce
+
+# ── Shared env fragments ──────────────────────────────────────────────────────
+# YAML anchors let us define env vars once and reuse them across services.
+x-db-env: &db-env
+  DATABASE_URL: postgresql://ecommerce_user:ecommerce_password@pgbouncer:6432/ecommerce_db?pgbouncer=true&connection_limit=1
+  DIRECT_DATABASE_URL: postgresql://ecommerce_user:ecommerce_password@postgres:5432/ecommerce_db
+
+x-rabbitmq-env: &rabbitmq-env
+  RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+
+x-jwt-env: &jwt-env
+  JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY}
+  JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY}
+
+services:
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # INFRASTRUCTURE
+  # ════════════════════════════════════════════════════════════════════════════
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: ecommerce_postgres
+    environment:
+      POSTGRES_USER: ecommerce_user
+      POSTGRES_PASSWORD: ecommerce_password
+      POSTGRES_DB: ecommerce_db
+    ports:
+      - '5434:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ecommerce_user']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    container_name: ecommerce_pgbouncer
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ecommerce_db
+      DB_USER: ecommerce_user
+      DB_PASSWORD: ecommerce_password
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: 200
+      DEFAULT_POOL_SIZE: 20
+      IGNORE_STARTUP_PARAMETERS: extra_float_digits
+      SERVER_RESET_QUERY: DISCARD ALL
+      AUTH_TYPE: plain
+      LISTEN_PORT: 6432
+    ports:
+      - '6432:6432'
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  redis:
+    image: redis:7-alpine
+    container_name: ecommerce_redis
+    command: redis-server
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    container_name: ecommerce_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ['CMD', 'rabbitmq-diagnostics', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  opensearch:
+    image: opensearchproject/opensearch:2.12.0
+    container_name: ecommerce_opensearch
+    environment:
+      - discovery.type=single-node
+      - DISABLE_SECURITY_PLUGIN=true
+      - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
+      - cluster.routing.allocation.disk.watermark.low=99%
+      - cluster.routing.allocation.disk.watermark.high=99.5%
+      - cluster.routing.allocation.disk.watermark.flood_stage=99.9%
+    ports:
+      - '9200:9200'
+    volumes:
+      - opensearch_data:/usr/share/opensearch/data
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -sf http://localhost:9200/_cluster/health | grep -q "\"status\":\"green\"\|\"status\":\"yellow\""']
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: ecommerce_mailpit
+    ports:
+      - '1025:1025'
+      - '8025:8025'
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # APPLICATION SERVICES
+  # ════════════════════════════════════════════════════════════════════════════
+
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    container_name: ecommerce_backend
+    environment:
+      <<: [*db-env, *rabbitmq-env, *jwt-env]
+      NODE_ENV: production
+      PORT: 3001
+      REDIS_URL: redis://redis:6379
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+    depends_on:
+      postgres:
+        condition: service_healthy
+      pgbouncer:
+        condition: service_started
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: apps/auth-service/Dockerfile
+    container_name: ecommerce_auth
+    environment:
+      <<: [*db-env, *rabbitmq-env, *jwt-env]
+      PORT: 3006
+      DATABASE_URL: postgresql://ecommerce_user:ecommerce_password@postgres:5432/ecommerce_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  search-service:
+    build:
+      context: .
+      dockerfile: apps/search-service/Dockerfile
+    container_name: ecommerce_search
+    environment:
+      <<: *rabbitmq-env
+      PORT: 3005
+      OPENSEARCH_URL: http://opensearch:9200
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      opensearch:
+        condition: service_healthy
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: apps/notification-service/Dockerfile
+    container_name: ecommerce_notification
+    environment:
+      <<: *rabbitmq-env
+      PORT: 3004
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+
+  gateway:
+    build:
+      context: .
+      dockerfile: apps/gateway/Dockerfile
+    container_name: ecommerce_gateway
+    environment:
+      <<: *jwt-env
+      PORT: 3000
+      BACKEND_URL: http://backend:3001
+      AUTH_SERVICE_URL: http://auth-service:3006
+      SEARCH_SERVICE_URL: http://search-service:3005
+      NOTIFICATION_SERVICE_URL: http://notification-service:3004
+    ports:
+      - '3000:3000'
+    depends_on:
+      - backend
+      - auth-service
+      - search-service
+      - notification-service
+
+volumes:
+  postgres_data:
+  redis_data:
+  rabbitmq_data:
+  opensearch_data:

@@ -37,6 +37,8 @@
     "load:report": "artillery run --output report.json test/load/scenarios/06-mixed-traffic.yml && artillery report report.json --output report.html"
   },
   "dependencies": {
+    "@ecommerce/shared-types": "*",
+    "@golevelup/nestjs-rabbitmq": "^9.0.2",
     "@nestjs-modules/mailer": "^2.0.2",
     "@nestjs/bullmq": "^11.0.4",
     "@nestjs/common": "^10.3.0",
@@ -74,6 +76,7 @@
     "passport-jwt": "^4.0.1",
     "pdfkit": "^0.18.0",
     "pino": "^8.17.0",
+    "pino-http": "^8.0.0",
     "prom-client": "^15.1.3",
     "qrcode": "^1.5.4",
     "reflect-metadata": "^0.2.1",

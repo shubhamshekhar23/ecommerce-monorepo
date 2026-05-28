@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaModule } from '@/modules/prisma/prisma.module';
 import { UsersModule } from '@/modules/users/users.module';
 import { MailModule } from '@/modules/mail/mail.module';
+import { OutboxModule } from '@/modules/outbox/outbox.module';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwksController } from './jwks.controller';
@@ -21,6 +22,7 @@ import { PasswordResetService } from './password-reset.service';
     PrismaModule,
     UsersModule,
     MailModule,
+    OutboxModule,
     PassportModule,
     JwtModule.registerAsync({
       inject: [ConfigService],

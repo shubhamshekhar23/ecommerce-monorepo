@@ -269,6 +269,59 @@ services:
     entrypoint: []
     command: sh /usr/local/bin/backup.sh
 
+  # ── RabbitMQ ──────────────────────────────────────────────────────────────────
+  # Message broker for cross-service event delivery.
+  # Management UI accessible via SSH tunnel: ssh -L 15672:localhost:15672 user@server
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    container_name: ecommerce_rabbitmq_prod
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ['CMD', 'rabbitmq-diagnostics', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ecommerce_network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+  # ── Notification Service ───────────────────────────────────────────────────
+  # Consumes order/user events from RabbitMQ and sends transactional emails.
+  # Stateless — safe to restart without data loss (messages queue in RabbitMQ).
+  notification-service:
+    image: "${REGISTRY:-ghcr.io}/${IMAGE_NAME?}/notification-service:${APP_IMAGE:-latest}"
+    container_name: ecommerce_notification_prod
+    environment:
+      NODE_ENV: production
+      PORT: "3004"
+      RABBITMQ_URL: "amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASSWORD}@rabbitmq:5672"
+      SMTP_HOST: "${SMTP_HOST}"
+      SMTP_PORT: "${SMTP_PORT}"
+      SMTP_USER: "${SMTP_USER}"
+      SMTP_PASSWORD: "${SMTP_PASSWORD}"
+      SMTP_FROM: "${SMTP_FROM}"
+      APP_URL: "${APP_URL}"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - ecommerce_network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
 networks:
   ecommerce_network:
     driver: bridge
@@ -283,4 +336,6 @@ volumes:
   grafana_data:
     driver: local
   backup_data:
+    driver: local
+  rabbitmq_data:
     driver: local

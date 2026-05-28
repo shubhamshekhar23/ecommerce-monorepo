@@ -4,17 +4,29 @@
   "description": "E-commerce application monorepo (frontend + backend)",
   "private": true,
   "workspaces": [
+    "apps/backend",
     "apps/frontend",
-    "apps/backend"
+    "apps/notification-service",
+    "apps/search-service",
+    "apps/auth-service",
+    "apps/gateway",
+    "packages/shared-types"
   ],
   "scripts": {
-    "dev": "npm run dev --workspace=apps/frontend & npm run start:dev --workspace=apps/backend",
-    "dev:frontend": "npm run dev --workspace=apps/frontend",
-    "dev:backend": "npm run start:dev --workspace=apps/backend",
-    "build": "npm run build --workspaces",
-    "test": "npm run test --workspaces",
-    "lint": "npm run lint --workspaces",
+    "dev": "turbo run start:dev --filter=apps/*",
+    "dev:services": "turbo run start:dev --filter=apps/backend --filter=apps/gateway --filter=apps/auth-service --filter=apps/search-service --filter=apps/notification-service",
+    "dev:backend": "turbo run start:dev --filter=apps/backend",
+    "dev:notification": "turbo run start:dev --filter=apps/notification-service",
+    "dev:search": "turbo run start:dev --filter=apps/search-service",
+    "dev:auth": "turbo run start:dev --filter=apps/auth-service",
+    "dev:gateway": "turbo run start:dev --filter=apps/gateway",
+    "dev:infra": "docker compose -f docker-compose.dev.yml up -d",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
     "install:all": "npm install"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "turbo": "^2.9.16"
+  }
 }

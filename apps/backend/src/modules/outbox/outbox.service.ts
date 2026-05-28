@@ -1,10 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import type { OutboxEvent, Prisma } from '@prisma/client';
 import { PrismaService } from '@/modules/prisma/prisma.service';
-import { QUEUE_NAMES } from '@/modules/queue/queue.constants';
-import type { NotificationJobPayload } from '@/modules/queue/dto/notification-job.dto';
+import { EXCHANGES, ROUTING_KEYS } from '@ecommerce/shared-types';
+import type { OrderPlacedEvent } from '@ecommerce/shared-types';
 
 export interface OutboxEventData {
   aggregateId: string;
@@ -16,27 +15,18 @@ export interface OutboxEventData {
 const MAX_ATTEMPTS = 5;
 const BATCH_SIZE = 50;
 
-// Retry with exponential backoff + ±20 % jitter to prevent retry storms when
-// multiple workers are polling simultaneously.
-function retryDelayMs(attempt: number): number {
-  const base = 1000 * Math.pow(2, attempt);
-  const jitter = base * 0.2 * (Math.random() * 2 - 1);
-  return Math.round(base + jitter);
-}
-
 @Injectable()
 export class OutboxService {
   private readonly logger = new Logger(OutboxService.name);
 
   constructor(
     private readonly prisma: PrismaService,
-    @InjectQueue(QUEUE_NAMES.NOTIFICATIONS)
-    private readonly notificationsQueue: Queue<NotificationJobPayload>,
+    private readonly amqp: AmqpConnection,
   ) {}
 
   // Called inside a Prisma transaction so the event is persisted atomically
-  // with the business state change (order creation). If the app crashes before
-  // the processor runs, the event is still in the DB and will be picked up.
+  // with the business state change. If the app crashes before the processor
+  // runs, the event is still in the DB and will be picked up on next poll.
   async publish(tx: Prisma.TransactionClient, data: OutboxEventData): Promise<void> {
     await tx.outboxEvent.create({ data });
   }
@@ -63,7 +53,7 @@ export class OutboxService {
         data: { status: 'PROCESSING', attempts: { increment: 1 } },
       });
 
-      await this.enqueueNotification(event);
+      await this.publishToRabbitMQ(event);
 
       await this.prisma.outboxEvent.update({
         where: { id: event.id },
@@ -96,18 +86,16 @@ export class OutboxService {
     }
   }
 
-  private async enqueueNotification(event: OutboxEvent): Promise<void> {
-    if (event.eventType !== 'ORDER_CREATED') return;
+  private async publishToRabbitMQ(event: OutboxEvent): Promise<void> {
+    if (event.eventType === 'ORDER_CREATED') {
+      const payload = event.payload as unknown as OrderPlacedEvent;
+      await this.amqp.publish(EXCHANGES.ORDER, ROUTING_KEYS.ORDER.PLACED, payload);
+      this.logger.log(`Published order.placed to RabbitMQ: orderId=${payload.orderId}`);
+      return;
+    }
 
-    const payload = event.payload as unknown as NotificationJobPayload;
-    const attempt = event.attempts + 1;
-
-    await this.notificationsQueue.add(payload.type, payload, {
-      attempts: 5,
-      // BullMQ exponential backoff; jitter is applied at the outbox level on re-poll
-      backoff: { type: 'exponential', delay: retryDelayMs(attempt) },
-      removeOnComplete: true,
-      removeOnFail: false,
-    });
+    // USER_REGISTERED publishing is wired in Step 3 (auth service extraction).
+    // Until then, welcome emails are still sent directly by auth.service.ts.
+    this.logger.warn(`No RabbitMQ route for event type: ${event.eventType}`);
   }
 }

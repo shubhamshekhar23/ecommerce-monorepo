@@ -1,10 +1,12 @@
 import { Injectable, UnauthorizedException, BadRequestException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 import { UsersService } from '@/modules/users/users.service';
-import { MailService } from '@/modules/mail/mail.service';
 import { AuditService } from '@/modules/audit/audit.service';
+import { EXCHANGES, ROUTING_KEYS } from '@ecommerce/shared-types';
+import type { UserRegisteredEvent } from '@ecommerce/shared-types';
 import { TotpService } from './totp.service';
 import { validatePasswordStrength } from '@/common/utils/password.util';
 import { RegisterDto, LoginDto, AuthResponseDto, RefreshTokenDto } from './dto';
@@ -31,7 +33,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
-    private readonly mailService: MailService,
+    private readonly amqp: AmqpConnection,
     private readonly auditService: AuditService,
     private readonly totpService: TotpService,
   ) {
@@ -46,13 +48,12 @@ export class AuthService {
 
     const user = await this.usersService.create(registerDto);
 
-    try {
-      await this.mailService.sendWelcomeEmail(user);
-    } catch (error) {
-      this.logger.error(
-        `Failed to send welcome email: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
+    const event: UserRegisteredEvent = {
+      userId: user.id,
+      email: user.email,
+      firstName: user.firstName ?? '',
+    };
+    await this.amqp.publish(EXCHANGES.USER, ROUTING_KEYS.USER.REGISTERED, event);
 
     return this.generateAuthResponse(user.id, user.email);
   }

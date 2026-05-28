@@ -14,9 +14,17 @@ WORKDIR /app
 
 # Root manifests first — Docker caches this layer until package*.json changes
 COPY package*.json .npmrc ./
+# All workspace package.json files must be present so npm ci can build the full
+# dependency graph and hoist packages correctly to /app/node_modules.
+# Missing manifests cause npm to misplace packages into workspace-local node_modules,
+# breaking Node's module resolution for the app running from /app/dist.
 COPY apps/backend/package*.json ./apps/backend/
-# npm workspaces requires all workspace package.json files to be present for npm ci
 COPY apps/frontend/package*.json ./apps/frontend/
+COPY apps/notification-service/package.json ./apps/notification-service/
+COPY apps/search-service/package.json ./apps/search-service/
+COPY apps/auth-service/package.json ./apps/auth-service/
+COPY apps/gateway/package.json ./apps/gateway/
+COPY packages/shared-types/package.json ./packages/shared-types/
 
 # Prisma schema must be present before npm ci so the postinstall
 # hook (prisma generate) can find it
@@ -39,6 +47,12 @@ WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/backend/node_modules ./apps/backend/node_modules
+
+# Build shared-types first — backend tsconfig resolves @ecommerce/shared-types
+# to ../../packages/shared-types/dist, so the dist must exist before nest build.
+COPY packages/shared-types ./packages/shared-types
+RUN cd packages/shared-types && npx tsc
+
 COPY apps/backend ./apps/backend
 
 WORKDIR /app/apps/backend
@@ -47,34 +61,30 @@ RUN npx prisma generate
 RUN npm run build
 
 # ─── Stage 3: runner ──────────────────────────────────────────────────────────
-# Lean production image. No build tools (python3/make/g++), no devDependencies.
+# Lean production image — no build tools (python3/make/g++) from the deps stage.
 FROM node:20-alpine AS runner
 
 # dumb-init: proper PID 1 that forwards OS signals (SIGTERM etc.) to Node.
 # Without this, `docker stop` sends SIGTERM to dumb-init → dumb-init forwards
 # it to Node → graceful shutdown runs. Without dumb-init, Node is not PID 1
 # and Docker's SIGTERM is ignored; container is killed after 10s timeout.
-RUN apk add --no-cache dumb-init
+RUN apk add --no-cache dumb-init openssl
 
+# Place node_modules in the standard layout, then set WORKDIR to the backend
+# workspace directory. Node.js resolves modules by traversing up from the
+# running file's location — running from /app/apps/backend puts both
+# /app/apps/backend/node_modules AND /app/node_modules in the search path,
+# which is where workspace-specific packages (OTel, Prisma client) live.
 WORKDIR /app
 
-# Copy root manifests (npm prune needs package.json to know what devDeps to remove)
-COPY package*.json ./
-COPY apps/backend/package*.json ./apps/backend/
-
-# Copy fully-installed node_modules from deps (includes compiled native binaries)
 COPY --from=deps /app/node_modules ./node_modules
-# Workspace-specific packages (Prisma client, OTel, etc.) live here — not in root node_modules
 COPY --from=deps /app/apps/backend/node_modules ./apps/backend/node_modules
+# Symlink node_modules/@ecommerce/shared-types → ../../packages/shared-types
+# resolves to /app/packages/shared-types — must exist in the runner.
+COPY --from=builder /app/packages/shared-types/package.json ./packages/shared-types/package.json
+COPY --from=builder /app/packages/shared-types/dist ./packages/shared-types/dist
+COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
 
-# Remove devDependencies from root — shrinks the image by ~60% without recompiling anything
-# Note: apps/backend/node_modules devDeps are small and not worth a second prune pass
-RUN npm prune --production
-
-# Copy compiled application from builder
-COPY --from=builder /app/apps/backend/dist ./dist
-
-# Non-root user: limits damage if the process is ever compromised
 RUN addgroup -g 1001 -S nodejs && adduser -S nestjs -u 1001
 USER nestjs
 
@@ -82,12 +92,12 @@ ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
 ENV PORT=3000
 
-# Liveness probe: checks /api/health/live (memory + disk only, no DB/Redis)
-# start-period gives the app 15s to connect to the DB before checks begin
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3000/api/health/live',(r)=>{if(r.statusCode!==200)process.exit(1)}).on('error',()=>process.exit(1))"
 
 EXPOSE 3000
+
+WORKDIR /app/apps/backend
 
 ENTRYPOINT ["dumb-init", "--"]
 CMD ["node", "dist/main.js"]

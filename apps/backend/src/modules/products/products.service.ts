@@ -8,8 +8,11 @@ import {
   ConflictException,
   Logger,
 } from '@nestjs/common';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 import { CacheService } from '@/modules/cache/cache.service';
+import { EXCHANGES, ROUTING_KEYS } from '@ecommerce/shared-types';
+import type { ProductCreatedEvent, ProductUpdatedEvent, ProductDeletedEvent } from '@ecommerce/shared-types';
 import { CreateProductDto, UpdateProductDto, ProductImageDto } from './dto';
 import { buildPaginationResponse } from '@/common/utils/pagination.util';
 import {
@@ -48,6 +51,7 @@ export class ProductsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly cache: CacheService,
+    private readonly amqp: AmqpConnection,
   ) {}
 
   // Cache-aside: check cache → on miss, fetch from DB → populate cache → return.
@@ -97,6 +101,15 @@ export class ProductsService {
 
     this.logger.log(`Product created: id=${product.id}, name=${product.name}`);
     await this.invalidateProducts();
+    const event: ProductCreatedEvent = {
+      productId: product.id,
+      name: product.name,
+      description: product.description,
+      price: Number(product.price),
+      categoryId: product.categoryId,
+      slug: product.slug,
+    };
+    await this.amqp.publish(EXCHANGES.PRODUCT, ROUTING_KEYS.PRODUCT.CREATED, event);
     return this.mapToResponse(product);
   }
 
@@ -143,6 +156,15 @@ export class ProductsService {
 
     this.logger.log(`Product updated: id=${updated.id}, name=${updated.name}`);
     await this.invalidateProducts();
+    const event: ProductUpdatedEvent = {
+      productId: updated.id,
+      name: updated.name,
+      description: updated.description,
+      price: Number(updated.price),
+      categoryId: updated.categoryId,
+      slug: updated.slug,
+    };
+    await this.amqp.publish(EXCHANGES.PRODUCT, ROUTING_KEYS.PRODUCT.UPDATED, event);
     return this.mapToResponse(updated);
   }
 
@@ -366,6 +388,8 @@ export class ProductsService {
       data: { isActive: false },
     });
     await this.invalidateProducts();
+    const event: ProductDeletedEvent = { productId: id };
+    await this.amqp.publish(EXCHANGES.PRODUCT, ROUTING_KEYS.PRODUCT.DELETED, event);
   }
 
   private async validateCategoryExists(categoryId: string): Promise<void> {
