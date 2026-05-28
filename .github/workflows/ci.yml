@@ -1,0 +1,265 @@
+name: CI
+
+# Only run on backend changes — no wasted CI minutes for frontend-only commits.
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'apps/backend/**'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'apps/backend/**'
+      - '.github/workflows/ci.yml'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/backend
+
+jobs:
+  # ── Job 1: Lint + Type Check ──────────────────────────────────────────────
+  # Fastest job — runs in parallel with test. Catches code quality issues immediately.
+  lint-typecheck:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: apps/backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          # Scope cache to backend package-lock — frontend changes don't bust this cache.
+          cache: 'npm'
+          cache-dependency-path: apps/backend/package-lock.json
+
+      - run: npm ci
+
+      - run: npm run lint:check
+
+      - run: npm run format:check
+
+      - run: npm run type-check
+
+  # ── Job 2: Migration Safety ───────────────────────────────────────────────
+  # WHY this job exists:
+  # Zero-downtime deploys require backward-compatible migrations.
+  # The deploy sequence is: migrate → start new containers → switch traffic → stop old.
+  # During the window between migrate and traffic switch, the OLD app version is still live.
+  # If the migration drops a column the old app reads → crash on every request.
+  #
+  # The Expand/Contract pattern solves this:
+  #   Release N:   ADD COLUMN new_col (nullable) — old code ignores it
+  #   Release N+1: backfill, make NOT NULL if needed
+  #   Release N+2: DROP COLUMN old_col — old code is gone by now
+  migration-safety:
+    name: Migration Safety
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # needed to compare against base branch
+
+      - name: Check migrations
+        run: bash apps/backend/scripts/migration-safety-check.sh
+
+  # ── Job 3: Tests ──────────────────────────────────────────────────────────
+  # Uses REAL Postgres + Redis — no mocks.
+  # Why no mocks? Mock DB tests pass when the real query would fail due to:
+  #   - Missing index causing timeout under load
+  #   - Type mismatch between TypeScript model and actual column type
+  #   - Constraint violation that the mock doesn't enforce
+  # The cost of spinning up Postgres in CI (~15s) is worth the accuracy.
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: apps/backend
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: apps/backend/package-lock.json
+
+      - run: npm ci
+
+      # Must run before tsc and before jest — generates @prisma/client TypeScript types.
+      # Without this, any "import { PrismaClient } from '@prisma/client'" fails at compile time.
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      # Use "migrate deploy" (not "migrate dev") in CI.
+      # "migrate dev" creates a shadow DB to detect schema drift — useful locally, overkill in CI.
+      # "migrate deploy" applies pending migrations and nothing else. Faster, no shadow DB needed.
+      - name: Apply migrations
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+          DIRECT_DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+        run: npx prisma migrate deploy
+
+      - name: Unit tests
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: test-secret-at-least-32-chars-for-ci-only
+          JWT_REFRESH_SECRET: test-refresh-secret-at-least-32-chars-for-ci
+          JWT_PRIVATE_KEY: ""
+          JWT_PUBLIC_KEY: ""
+          NODE_ENV: test
+        run: npm run test -- --passWithNoTests --forceExit --coverage
+
+      - uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          files: apps/backend/coverage/coverage-final.json
+          fail_ci_if_error: false
+
+  # ── Job 4: Build & Push Docker Image ─────────────────────────────────────
+  # Only runs on push (not PRs) — PRs verify the code is correct, pushes ship it.
+  # Uses GitHub Actions cache for Docker layer cache:
+  #   Cold build: ~3 min. Cache hit: ~30s (only changed layers rebuild).
+  #   cache-from reads layers from cache; cache-to writes new layers back.
+  #   mode=max caches ALL intermediate layers, not just the final stage.
+  build:
+    name: Build & Push
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [lint-typecheck, migration-safety, test]
+    if: github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      # Immutable SHA tag used by deploy jobs for rollback capability.
+      # Branch tags (main, develop) are floating — they move with each push.
+      # SHA tags never move — you can always roll back to sha-abc1234.
+      image-tag: ${{ steps.meta.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=sha-
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/backend/Dockerfile
+          target: runner
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ── Job 5: Deploy to Staging ──────────────────────────────────────────────
+  # Runs only on develop branch. Uses blue-green to avoid downtime.
+  deploy-staging:
+    name: Deploy → Staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [build]
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    # "environment" creates a GitHub Deployment record visible on the PR.
+    # Repo Settings → Environments → staging: add required reviewers if desired.
+    environment:
+      name: staging
+      url: https://staging.api.example.com
+
+    steps:
+      - name: Blue-green deploy
+        env:
+          DEPLOY_KEY: ${{ secrets.STAGING_DEPLOY_KEY }}
+          DEPLOY_HOST: ${{ secrets.STAGING_HOST }}
+          DEPLOY_USER: ${{ secrets.STAGING_USER }}
+          IMAGE_TAG: ${{ needs.build.outputs.image-tag }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          ssh -i ~/.ssh/deploy_key "$DEPLOY_USER@$DEPLOY_HOST" \
+            "IMAGE_TAG=$IMAGE_TAG bash /app/scripts/blue-green-deploy.sh"
+
+  # ── Job 6: Deploy to Production ───────────────────────────────────────────
+  # Main branch only. Requires manual approval via GitHub environment protection.
+  # Set up: Repo → Settings → Environments → production → Required reviewers.
+  # No reviewer = auto-deploys every main push. Add reviewer = manual gate.
+  deploy-production:
+    name: Deploy → Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: production
+      url: https://api.example.com
+
+    steps:
+      - name: Blue-green deploy
+        env:
+          DEPLOY_KEY: ${{ secrets.PRODUCTION_DEPLOY_KEY }}
+          DEPLOY_HOST: ${{ secrets.PRODUCTION_HOST }}
+          DEPLOY_USER: ${{ secrets.PRODUCTION_USER }}
+          IMAGE_TAG: ${{ needs.build.outputs.image-tag }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          ssh -i ~/.ssh/deploy_key "$DEPLOY_USER@$DEPLOY_HOST" \
+            "IMAGE_TAG=$IMAGE_TAG bash /app/scripts/blue-green-deploy.sh"
