@@ -43,6 +43,10 @@ enum OutboxEventStatus {
   FAILED
 }
 
+enum OAuthProvider {
+  GOOGLE
+}
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
@@ -55,7 +59,12 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  // 2FA (TOTP)
+  totpSecret    String?
+  totpEnabled   Boolean  @default(false)
+
   refreshTokens RefreshToken[]
+  oauthAccounts OAuthAccount[]
   cart          Cart?
   orders        Order[]
 
@@ -78,6 +87,42 @@ model RefreshToken {
 
   @@index([userId])
   @@index([token])
+}
+
+// Links a User to a third-party OAuth provider (Google, etc.).
+// A user can have multiple providers linked to the same account.
+model OAuthAccount {
+  id             String        @id @default(cuid())
+  userId         String
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider       OAuthProvider
+  providerUserId String
+  createdAt      DateTime      @default(now())
+
+  @@unique([provider, providerUserId])
+  @@index([userId])
+}
+
+// Append-only audit trail. PostgreSQL RULE blocks UPDATE and DELETE at the DB level
+// (see migration) so no application bug can tamper with it.
+model AuditLog {
+  id        String   @id @default(cuid())
+  timestamp DateTime @default(now())
+  userId    String?
+  userEmail String?
+  userRole  String?
+  action    String
+  entity    String?
+  entityId  String?
+  before    Json?
+  after     Json?
+  ipAddress String?
+  userAgent String?
+
+  @@index([userId])
+  @@index([action])
+  @@index([entity, entityId])
+  @@index([timestamp])
 }
 
 model Category {
@@ -120,6 +165,9 @@ model Product {
   orderItems  OrderItem[]
   variantTypes VariantType[]
   variants    ProductVariant[]
+  // Nullable until vendor module is built (expand-contract migration).
+  // Used by Row-Level Security policy: vendors only see their own products.
+  vendorId    String?
   isActive    Boolean        @default(true)
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
@@ -129,6 +177,7 @@ model Product {
 
   @@index([slug])
   @@index([categoryId])
+  @@index([vendorId])
   @@index([isActive])
   @@index([createdAt])
   @@index([price])

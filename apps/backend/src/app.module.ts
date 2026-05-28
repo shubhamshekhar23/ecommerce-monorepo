@@ -24,6 +24,7 @@ import { RateLimitGuard } from '@/modules/rate-limit/rate-limit.guard';
 import { JwtAuthGuard, RolesGuard } from '@/common/guards';
 import { HttpExceptionFilter } from '@/common/filters/http-exception.filter';
 import { CommonModule } from '@/common/common.module';
+import { AuditModule } from '@/modules/audit/audit.module';
 import { CorrelationIdMiddleware } from '@/common/middleware/correlation-id.middleware';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -33,6 +34,7 @@ import { AppService } from './app.service';
     ConfigModule.forRoot({ isGlobal: true, envFilePath: ['.env', '.env.local'] }),
     EventEmitterModule.forRoot({ wildcard: false }),
     CommonModule,
+    AuditModule,
     LoggerModule,
     PrismaModule,
     AuthModule,

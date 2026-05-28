@@ -8,6 +8,7 @@ import { calculatePagination, buildPaginationResponse } from '@/common/utils/pag
 import { PaginationDto } from '@/common/types/pagination.interface';
 import { OrderCreatedEvent, OrderStatusChangedEvent } from '@/modules/events/order.events';
 import { BusinessMetricsService } from '@/modules/metrics/business-metrics.service';
+import { AuditService } from '@/modules/audit/audit.service';
 
 // OrdersService is the public API for the orders domain.
 // Heavy lifting (locking, stock, outbox, saga) lives in OrderSagaService.
@@ -18,6 +19,7 @@ export class OrdersService {
     private readonly saga: OrderSagaService,
     private readonly eventEmitter: EventEmitter2,
     private readonly businessMetrics: BusinessMetricsService,
+    private readonly auditService: AuditService,
   ) {}
 
   async create(userId: string, cartId?: string): Promise<unknown> {
@@ -103,6 +105,14 @@ export class OrdersService {
       OrderStatusChangedEvent.EVENT_NAME,
       new OrderStatusChangedEvent(orderId, order.userId, order.status, status, updated.updatedAt),
     );
+    void this.auditService.log({
+      action: 'ORDER_STATUS_CHANGED',
+      userId: order.userId,
+      entity: 'Order',
+      entityId: orderId,
+      before: { status: order.status },
+      after: { status },
+    });
     return this.mapToResponse(updated);
   }
 
