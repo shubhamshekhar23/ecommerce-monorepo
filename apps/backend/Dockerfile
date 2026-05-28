@@ -13,7 +13,7 @@ RUN apk add --no-cache python3 make g++ libc6-compat openssl
 WORKDIR /app
 
 # Root manifests first — Docker caches this layer until package*.json changes
-COPY package*.json ./
+COPY package*.json .npmrc ./
 COPY apps/backend/package*.json ./apps/backend/
 # npm workspaces requires all workspace package.json files to be present for npm ci
 COPY apps/frontend/package*.json ./apps/frontend/
@@ -38,6 +38,7 @@ RUN apk add --no-cache openssl
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/apps/backend/node_modules ./apps/backend/node_modules
 COPY apps/backend ./apps/backend
 
 WORKDIR /app/apps/backend
@@ -63,8 +64,11 @@ COPY apps/backend/package*.json ./apps/backend/
 
 # Copy fully-installed node_modules from deps (includes compiled native binaries)
 COPY --from=deps /app/node_modules ./node_modules
+# Workspace-specific packages (Prisma client, OTel, etc.) live here — not in root node_modules
+COPY --from=deps /app/apps/backend/node_modules ./apps/backend/node_modules
 
-# Remove devDependencies — shrinks the image by ~60% without recompiling anything
+# Remove devDependencies from root — shrinks the image by ~60% without recompiling anything
+# Note: apps/backend/node_modules devDeps are small and not worth a second prune pass
 RUN npm prune --production
 
 # Copy compiled application from builder

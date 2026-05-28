@@ -4,6 +4,8 @@ import { Prisma, OrderStatus } from '@prisma/client';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 import { OutboxService } from '@/modules/outbox/outbox.service';
 import { CircuitBreakerService } from '@/modules/circuit-breaker/circuit-breaker.service';
+import { BusinessMetricsService } from '@/modules/metrics/business-metrics.service';
+import { CorrelationIdService } from '@/common/services/correlation-id.service';
 import type { NotificationJobPayload } from '@/modules/queue/dto/notification-job.dto';
 
 // Prisma payload types for full type-safety without `any`
@@ -29,6 +31,8 @@ export class OrderSagaService {
     private readonly prisma: PrismaService,
     private readonly outbox: OutboxService,
     private readonly circuitBreaker: CircuitBreakerService,
+    private readonly businessMetrics: BusinessMetricsService,
+    private readonly correlationId: CorrelationIdService,
   ) {}
 
   async execute(userId: string, cartId?: string): Promise<OrderWithItems> {
@@ -93,6 +97,7 @@ export class OrderSagaService {
     for (const item of cart.items) {
       const product = await tx.product.findUnique({ where: { id: item.productId } });
       if (!product || product.stock < item.quantity) {
+        this.businessMetrics.recordInventoryReservationFailure();
         throw new BadRequestException(
           `Insufficient stock for "${item.product?.name ?? item.productId}"`,
         );
@@ -162,6 +167,7 @@ export class OrderSagaService {
         price: parseFloat(String(i.product.price)),
       })),
       createdAt: order.createdAt.toISOString(),
+      correlationId: this.correlationId.get(),
     };
 
     await this.outbox.publish(tx, {

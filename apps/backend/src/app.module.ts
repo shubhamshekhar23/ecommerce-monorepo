@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { APP_GUARD, APP_FILTER } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
@@ -23,6 +23,8 @@ import { RateLimitModule } from '@/modules/rate-limit/rate-limit.module';
 import { RateLimitGuard } from '@/modules/rate-limit/rate-limit.guard';
 import { JwtAuthGuard, RolesGuard } from '@/common/guards';
 import { HttpExceptionFilter } from '@/common/filters/http-exception.filter';
+import { CommonModule } from '@/common/common.module';
+import { CorrelationIdMiddleware } from '@/common/middleware/correlation-id.middleware';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -30,6 +32,7 @@ import { AppService } from './app.service';
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: ['.env', '.env.local'] }),
     EventEmitterModule.forRoot({ wildcard: false }),
+    CommonModule,
     LoggerModule,
     PrismaModule,
     AuthModule,
@@ -58,4 +61,8 @@ import { AppService } from './app.service';
     { provide: APP_GUARD, useClass: RateLimitGuard },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(CorrelationIdMiddleware).forRoutes('*');
+  }
+}

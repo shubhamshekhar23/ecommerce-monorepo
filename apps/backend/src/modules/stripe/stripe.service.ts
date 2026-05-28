@@ -5,6 +5,7 @@ import Stripe from 'stripe';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 import { PaymentStatus } from '@prisma/client';
 import { PaymentConfirmedEvent } from '@/modules/events/order.events';
+import { BusinessMetricsService } from '@/modules/metrics/business-metrics.service';
 
 type StripeClient = InstanceType<typeof Stripe>;
 type StripePaymentIntent = Awaited<ReturnType<StripeClient['paymentIntents']['create']>>;
@@ -20,6 +21,7 @@ export class StripeService {
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly businessMetrics: BusinessMetricsService,
   ) {
     const stripeKey = this.configService.get<string>('STRIPE_SECRET_KEY');
     if (stripeKey && stripeKey.startsWith('sk_')) {
@@ -130,6 +132,7 @@ export class StripeService {
       data: { paymentStatus: PaymentStatus.SUCCEEDED, paidAt: new Date() },
     });
 
+    this.businessMetrics.recordPaymentEvent('succeeded');
     this.eventEmitter.emit(
       PaymentConfirmedEvent.EVENT_NAME,
       new PaymentConfirmedEvent(orderId, order.userId, paymentIntent.id, new Date()),
@@ -146,6 +149,7 @@ export class StripeService {
       data: { paymentStatus: PaymentStatus.FAILED },
     });
 
+    this.businessMetrics.recordPaymentEvent('failed');
     this.logger.warn(
       `Payment failed: orderId=${orderId}, paymentIntentId=${paymentIntent.id}, lastError=${paymentIntent.last_payment_error?.message || 'unknown'}`,
     );
@@ -163,6 +167,7 @@ export class StripeService {
       data: { paymentStatus: PaymentStatus.REFUNDED },
     });
 
+    this.businessMetrics.recordPaymentEvent('refunded');
     this.logger.log(
       `Refund processed: orderId=${order.id}, refundId=${refund.id}, amount=${refund.amount}`,
     );

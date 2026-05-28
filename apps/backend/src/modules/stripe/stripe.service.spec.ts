@@ -1,8 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { StripeService } from './stripe.service';
 import { PrismaService } from '@/modules/prisma/prisma.service';
+import { BusinessMetricsService } from '@/modules/metrics/business-metrics.service';
 
 // eslint-disable-next-line max-lines-per-function
 describe('StripeService', () => {
@@ -35,6 +37,14 @@ describe('StripeService', () => {
               updateMany: jest.fn(),
             },
           },
+        },
+        {
+          provide: BusinessMetricsService,
+          useValue: { recordPaymentEvent: jest.fn() },
+        },
+        {
+          provide: EventEmitter2,
+          useValue: { emit: jest.fn() },
         },
       ],
     }).compile();

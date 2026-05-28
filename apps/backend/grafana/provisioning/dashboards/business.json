@@ -1,0 +1,111 @@
+{
+  "uid": "ecommerce-business",
+  "title": "Business Dashboard",
+  "description": "Orders/hr, revenue, cart conversion, payment success — is the business working?",
+  "tags": ["ecommerce", "business"],
+  "timezone": "browser",
+  "refresh": "1m",
+  "schemaVersion": 38,
+  "panels": [
+    {
+      "id": 1,
+      "title": "Orders per Hour",
+      "description": "New PENDING orders created. A sudden drop means the checkout flow is broken.",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "expr": "sum(increase(orders_total{status=\"PENDING\"}[1h]))",
+          "legendFormat": "Orders/hr"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Payment Success Rate (%)",
+      "description": "payment_success_rate_percent gauge — updated whenever Stripe webhooks arrive.",
+      "type": "gauge",
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "expr": "payment_success_rate_percent",
+          "legendFormat": "Success Rate"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "steps": [
+              { "value": 0, "color": "red" },
+              { "value": 90, "color": "yellow" },
+              { "value": 95, "color": "green" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Cart → Order Conversion Rate (%)",
+      "description": "cart_to_order_conversion_rate — how many carts result in a placed order.",
+      "type": "gauge",
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "expr": "cart_to_order_conversion_rate",
+          "legendFormat": "Conversion Rate"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Inventory Reservation Failures/min",
+      "description": "Out-of-stock rejections at checkout. Spikes during flash sales are normal; sustained spikes indicate a bug.",
+      "type": "stat",
+      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "expr": "rate(inventory_reservation_failures_total[1m]) * 60",
+          "legendFormat": "Failures/min"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Order Status Breakdown",
+      "description": "Orders by lifecycle stage over time. CANCELLED spike alongside PENDING drop means payment is failing.",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "sum(increase(orders_total[10m])) by (status)",
+          "legendFormat": "{{ status }}"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Payment Events Over Time",
+      "description": "succeeded / failed / refunded. failed spike = Stripe issue. refunded spike = customer dissatisfaction.",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "sum(increase(payment_events_total[5m])) by (status)",
+          "legendFormat": "{{ status }}"
+        }
+      ]
+    }
+  ],
+  "overwrite": true
+}

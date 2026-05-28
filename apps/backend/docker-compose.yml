@@ -89,7 +89,7 @@ services:
   # ── Nginx ───────────────────────────────────────────────────────────────────
   # Reverse proxy: terminates HTTP, injects X-Request-ID, applies rate limits.
   # Access the app via http://localhost (port 80) to go through Nginx.
-  # You can also hit http://localhost:3000 directly (bypassing Nginx) for debugging.
+  # You can also hit http://localhost:4000 directly (bypassing Nginx) for debugging.
   nginx:
     image: nginx:alpine
     container_name: ecommerce_nginx
@@ -122,6 +122,7 @@ services:
       - JWT_SECRET=dev-secret-key-min-32-chars-do-not-use-in-production
       - JWT_REFRESH_SECRET=dev-refresh-secret-key-min-32-chars-do-not-use-in-production
       - CORS_ORIGIN=http://localhost,http://localhost:3000,http://localhost:3001,http://localhost:3002
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces
     ports:
       - '4000:4000' # direct access (bypasses Nginx) — useful for debugging
     depends_on:
@@ -129,9 +130,13 @@ services:
         condition: service_started
       redis:
         condition: service_healthy
+      jaeger:
+        condition: service_started
     volumes:
-      - .:/app
-      - /app/node_modules
+      - ../..:/app                          # mount monorepo root so node_modules structure matches deps stage
+      - /app/node_modules                   # protect root node_modules from host
+      - /app/apps/backend/node_modules      # protect backend-specific node_modules from host
+    working_dir: /app/apps/backend
     command: npm run start:dev
     networks:
       - ecommerce-network
@@ -154,6 +159,22 @@ services:
     networks:
       - ecommerce-network
 
+  # ── Jaeger ──────────────────────────────────────────────────────────────────
+  # Distributed tracing backend. The NestJS app sends OTLP spans here via
+  # OpenTelemetry SDK (src/tracing.ts). Open http://localhost:16686 to see
+  # request waterfalls: HTTP handler → service → Prisma queries → Redis calls.
+  # This is how senior devs find slow code: click a trace, see which span is fat.
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: ecommerce_jaeger
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - '16686:16686'  # Jaeger UI
+      - '4318:4318'    # OTLP HTTP receiver (app sends traces here)
+    networks:
+      - ecommerce-network
+
   # ── Prometheus ──────────────────────────────────────────────────────────────
   prometheus:
     image: prom/prometheus:latest
@@ -162,11 +183,13 @@ services:
       - '9090:9090'
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./alert_rules.yml:/etc/prometheus/alert_rules.yml
       - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
       - '--storage.tsdb.retention.time=7d'
+      - '--web.enable-lifecycle'
     networks:
       - ecommerce-network
     depends_on:

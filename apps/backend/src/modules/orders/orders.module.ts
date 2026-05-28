@@ -3,6 +3,7 @@ import { PrismaModule } from '@/modules/prisma/prisma.module';
 import { OutboxModule } from '@/modules/outbox/outbox.module';
 import { CircuitBreakerModule } from '@/modules/circuit-breaker/circuit-breaker.module';
 import { MailModule } from '@/modules/mail/mail.module';
+import { MetricsModule } from '@/modules/metrics/metrics.module';
 import { OrderSagaService } from './saga/order-saga.service';
 import { OrdersService } from './orders.service';
 import { OrdersController } from './orders.controller';
@@ -12,7 +13,7 @@ import { PaymentConfirmedHandler } from './handlers/payment-confirmed.handler';
 import { OrderNotificationHandler } from './handlers/order-notification.handler';
 
 @Module({
-  imports: [PrismaModule, OutboxModule, CircuitBreakerModule, MailModule],
+  imports: [PrismaModule, OutboxModule, CircuitBreakerModule, MailModule, MetricsModule],
   controllers: [OrdersController],
   providers: [
     OrdersService,

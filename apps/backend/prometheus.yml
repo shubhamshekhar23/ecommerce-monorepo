@@ -10,12 +10,13 @@ alerting:
         - targets: []
 
 rule_files:
-  # - "alert_rules.yml"
+  - 'alert_rules.yml'
 
 scrape_configs:
+  # "app" resolves via Docker Compose DNS. Port 4000 is the NestJS app.
   - job_name: 'ecommerce-backend'
     static_configs:
-      - targets: ['localhost:3000']
-    metrics_path: '/metrics'
+      - targets: ['app:4000']
+    metrics_path: '/api/metrics'
     scrape_interval: 10s
     scrape_timeout: 5s

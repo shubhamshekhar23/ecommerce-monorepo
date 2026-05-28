@@ -11,7 +11,9 @@
       "Bash(npx prisma *)",
       "Bash(node -e \"require\\('opossum'\\); console.log\\('ok'\\)\")",
       "Bash(awk -F'/' '{print $1}')",
-      "Bash(npm list *)"
+      "Bash(npm list *)",
+      "Bash(git stash *)",
+      "Bash(git checkout *)"
     ]
   }
 }

@@ -8,6 +8,8 @@ export interface OrderItemSnapshot {
 
 // Snapshot of all data the worker needs — avoids a second DB round-trip inside
 // the worker, and survives if the order is later mutated or soft-deleted.
+// correlationId: threads the X-Request-ID from the HTTP request into the
+// background job so every log line (HTTP + worker) shares one ID.
 export interface NotificationJobPayload {
   type: NotificationJobType;
   orderId: string;
@@ -19,4 +21,5 @@ export interface NotificationJobPayload {
   items: OrderItemSnapshot[];
   // ISO string; Dates are not serialisable across the Redis queue boundary
   createdAt: string;
+  correlationId?: string;
 }

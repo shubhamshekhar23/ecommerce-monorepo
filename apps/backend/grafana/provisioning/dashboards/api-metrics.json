@@ -1,64 +1,100 @@
 {
-  "dashboard": {
-    "title": "E-Commerce Backend Metrics",
-    "tags": ["ecommerce", "api", "prometheus"],
-    "timezone": "browser",
-    "panels": [
-      {
-        "title": "Request Rate (req/s)",
-        "targets": [
-          {
-            "expr": "rate(http_requests_total[1m])",
-            "legendFormat": "{{method}} {{route}}"
+  "uid": "ecommerce-red",
+  "title": "RED Dashboard — API Health",
+  "description": "Rate, Errors, Duration — the three numbers that tell you if the API is healthy right now.",
+  "tags": ["ecommerce", "red", "api"],
+  "timezone": "browser",
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "panels": [
+    {
+      "id": 1,
+      "title": "Request Rate (req/s)",
+      "description": "Total HTTP requests per second. A sudden drop can mean the app is down or traffic routing broke.",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 0, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "expr": "sum(rate(http_request_duration_seconds_count[1m])) by (method, route)",
+          "legendFormat": "{{ method }} {{ route }}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    },
+    {
+      "id": 2,
+      "title": "5xx Error Rate (%)",
+      "description": "Server-side errors as % of total traffic. Alert fires at >1% sustained for 5min.",
+      "type": "timeseries",
+      "gridPos": { "x": 8, "y": 0, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "expr": "sum(rate(http_request_duration_seconds_count{status=~\"5..\"}[1m])) / sum(rate(http_request_duration_seconds_count[1m])) * 100",
+          "legendFormat": "5xx Error Rate %"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "steps": [
+              { "value": 0, "color": "green" },
+              { "value": 1, "color": "red" }
+            ]
           }
-        ],
-        "type": "graph"
-      },
-      {
-        "title": "Error Rate (%)",
-        "targets": [
-          {
-            "expr": "rate(http_requests_total{status=~\"[45]..\"}[1m]) / rate(http_requests_total[1m]) * 100",
-            "legendFormat": "Error Rate"
-          }
-        ],
-        "type": "graph"
-      },
-      {
-        "title": "Response Time (ms)",
-        "targets": [
-          {
-            "expr": "histogram_quantile(0.95, http_request_duration_seconds_bucket)",
-            "legendFormat": "p95"
-          },
-          {
-            "expr": "histogram_quantile(0.99, http_request_duration_seconds_bucket)",
-            "legendFormat": "p99"
-          }
-        ],
-        "type": "graph"
-      },
-      {
-        "title": "Memory Usage",
-        "targets": [
-          {
-            "expr": "process_resident_memory_bytes / 1024 / 1024",
-            "legendFormat": "Memory (MB)"
-          }
-        ],
-        "type": "graph"
-      },
-      {
-        "title": "Active Connections",
-        "targets": [
-          {
-            "expr": "http_requests_in_flight",
-            "legendFormat": "Active"
-          }
-        ],
-        "type": "stat"
+        }
       }
-    ]
-  },
+    },
+    {
+      "id": 3,
+      "title": "Latency Percentiles (ms)",
+      "description": "P50/P95/P99 response times. P99 tells you the worst-case experience for 1% of users.",
+      "type": "timeseries",
+      "gridPos": { "x": 16, "y": 0, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket[1m])) by (le)) * 1000",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[1m])) by (le)) * 1000",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[1m])) by (le)) * 1000",
+          "legendFormat": "p99"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ms" } }
+    },
+    {
+      "id": 4,
+      "title": "Active In-Flight Requests",
+      "description": "Requests currently being processed. A sustained spike here means the app is backed up.",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 8, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "expr": "http_requests_in_flight",
+          "legendFormat": "In-Flight"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "P95 Latency by Route (ms)",
+      "description": "Which endpoints are slowest? Sort descending to find the bottleneck.",
+      "type": "table",
+      "gridPos": { "x": 6, "y": 8, "w": 18, "h": 8 },
+      "targets": [
+        {
+          "expr": "sort_desc(histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, route)) * 1000)",
+          "legendFormat": "{{ route }}",
+          "instant": true
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ms" } }
+    }
+  ],
   "overwrite": true
 }

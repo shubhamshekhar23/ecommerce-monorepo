@@ -7,6 +7,7 @@ import { OrderSagaService } from './saga/order-saga.service';
 import { calculatePagination, buildPaginationResponse } from '@/common/utils/pagination.util';
 import { PaginationDto } from '@/common/types/pagination.interface';
 import { OrderCreatedEvent, OrderStatusChangedEvent } from '@/modules/events/order.events';
+import { BusinessMetricsService } from '@/modules/metrics/business-metrics.service';
 
 // OrdersService is the public API for the orders domain.
 // Heavy lifting (locking, stock, outbox, saga) lives in OrderSagaService.
@@ -16,10 +17,12 @@ export class OrdersService {
     private readonly prisma: PrismaService,
     private readonly saga: OrderSagaService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly businessMetrics: BusinessMetricsService,
   ) {}
 
   async create(userId: string, cartId?: string): Promise<unknown> {
     const order = await this.saga.execute(userId, cartId);
+    this.businessMetrics.recordOrder('PENDING');
     this.eventEmitter.emit(
       OrderCreatedEvent.EVENT_NAME,
       new OrderCreatedEvent(order.id, order.userId, order.orderNumber, String(order.totalPrice), order.items.length, order.createdAt),
@@ -95,6 +98,7 @@ export class OrdersService {
       include: { items: { include: { product: true } } },
     });
 
+    this.businessMetrics.recordOrder(status);
     this.eventEmitter.emit(
       OrderStatusChangedEvent.EVENT_NAME,
       new OrderStatusChangedEvent(orderId, order.userId, order.status, status, updated.updatedAt),

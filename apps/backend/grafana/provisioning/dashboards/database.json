@@ -1,0 +1,110 @@
+{
+  "uid": "ecommerce-database",
+  "title": "Database Dashboard",
+  "description": "Prisma query timing, connection pool utilisation, slow queries, Redis cache hit rate.",
+  "tags": ["ecommerce", "database", "redis"],
+  "timezone": "browser",
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "panels": [
+    {
+      "id": 1,
+      "title": "DB Query Duration P95/P99 (ms)",
+      "description": "Tracked by OpenTelemetry Prisma instrumentation. A rising P99 means a query is missing an index.",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(db_client_operation_duration_bucket[1m])) by (le)) * 1000",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(db_client_operation_duration_bucket[1m])) by (le)) * 1000",
+          "legendFormat": "p99"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ms" } }
+    },
+    {
+      "id": 2,
+      "title": "DB Operations per Second by Type",
+      "description": "SELECT vs INSERT vs UPDATE vs DELETE rate. Unexpected write spikes may indicate a loop bug.",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "sum(rate(db_client_operation_duration_count[1m])) by (db_operation)",
+          "legendFormat": "{{ db_operation }}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" } }
+    },
+    {
+      "id": 3,
+      "title": "Redis Command Duration P95 (ms)",
+      "description": "ioredis operations tracked by OpenTelemetry. GET/SET should be <1ms. Latency spikes indicate network or Redis overload.",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(redis_client_duration_bucket[1m])) by (le)) * 1000",
+          "legendFormat": "Redis p95"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ms" } }
+    },
+    {
+      "id": 4,
+      "title": "Redis Commands per Second",
+      "description": "Volume of Redis operations. Correlated with rate limiting, caching, and BullMQ job activity.",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "sum(rate(redis_client_duration_count[1m])) by (redis_command)",
+          "legendFormat": "{{ redis_command }}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" } }
+    },
+    {
+      "id": 5,
+      "title": "Node.js Event Loop Lag (ms)",
+      "description": "How long the event loop is blocked. >100ms means a synchronous operation is blocking I/O. Check for CPU-bound code.",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 16, "w": 12, "h": 6 },
+      "targets": [
+        {
+          "expr": "nodejs_eventloop_lag_seconds * 1000",
+          "legendFormat": "Event Loop Lag"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "thresholds": {
+            "steps": [
+              { "value": 0, "color": "green" },
+              { "value": 50, "color": "yellow" },
+              { "value": 100, "color": "red" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "Active DB Connections",
+      "description": "Open database connections from this process. Should stay near 1 per app instance with PgBouncer.",
+      "type": "stat",
+      "gridPos": { "x": 12, "y": 16, "w": 12, "h": 6 },
+      "targets": [
+        {
+          "expr": "sum(db_client_connections_usage{state=\"used\"})",
+          "legendFormat": "Active Connections"
+        }
+      ]
+    }
+  ],
+  "overwrite": true
+}
