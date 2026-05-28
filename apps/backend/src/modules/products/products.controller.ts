@@ -9,9 +9,14 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiConsumes } from '@nestjs/swagger';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { ProductsService } from './products.service';
+import { CsvImportService } from './csv-import.service';
 import { CreateProductDto, UpdateProductDto } from './dto';
 import { Public, Roles } from '@/common/decorators';
 import { UserRole } from '@prisma/client';
@@ -21,7 +26,10 @@ import { CursorPageDto } from '@/common/types/cursor-pagination.interface';
 @ApiTags('products')
 @Controller('products')
 export class ProductsController {
-  constructor(private readonly productsService: ProductsService) {}
+  constructor(
+    private readonly productsService: ProductsService,
+    private readonly csvImportService: CsvImportService,
+  ) {}
 
   @Post()
   @Roles(UserRole.ADMIN)
@@ -121,5 +129,19 @@ export class ProductsController {
   @ApiOperation({ summary: 'Soft delete product' })
   async softDelete(@Param('id') id: string): Promise<void> {
     await this.productsService.softDelete(id);
+  }
+
+  // Bulk CSV import — stream processing + validation pipeline.
+  // Each row is validated before writing. Valid rows are inserted in batches of 100.
+  // Invalid rows are reported in the response without stopping the rest of the import.
+  @Post('import/csv')
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Bulk import products from CSV (admin only)' })
+  async importCsv(@UploadedFile() file: Express.Multer.File) {
+    if (!file) throw new Error('No file uploaded');
+    return this.csvImportService.importProducts(file.buffer);
   }
 }

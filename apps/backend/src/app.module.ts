@@ -25,6 +25,14 @@ import { JwtAuthGuard, RolesGuard } from '@/common/guards';
 import { HttpExceptionFilter } from '@/common/filters/http-exception.filter';
 import { CommonModule } from '@/common/common.module';
 import { AuditModule } from '@/modules/audit/audit.module';
+import { AddressesModule } from '@/modules/addresses/addresses.module';
+import { CouponsModule } from '@/modules/coupons/coupons.module';
+import { ReviewsModule } from '@/modules/reviews/reviews.module';
+import { StockAlertsModule } from '@/modules/stock-alerts/stock-alerts.module';
+import { ShippingModule } from '@/modules/shipping/shipping.module';
+import { TaxModule } from '@/modules/tax/tax.module';
+import { ReturnsModule } from '@/modules/returns/returns.module';
+import { InvoiceModule } from '@/modules/invoices/invoice.module';
 import { CorrelationIdMiddleware } from '@/common/middleware/correlation-id.middleware';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -36,6 +44,14 @@ import { AppService } from './app.service';
     CommonModule,
     AuditModule,
     LoggerModule,
+    AddressesModule,
+    CouponsModule,
+    ReviewsModule,
+    StockAlertsModule,
+    ShippingModule,
+    TaxModule,
+    ReturnsModule,
+    InvoiceModule,
     PrismaModule,
     AuthModule,
     UsersModule,

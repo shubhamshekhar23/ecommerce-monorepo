@@ -136,9 +136,9 @@ services:
       jaeger:
         condition: service_started
     volumes:
-      - ../..:/app                          # mount monorepo root so node_modules structure matches deps stage
-      - /app/node_modules                   # protect root node_modules from host
-      - /app/apps/backend/node_modules      # protect backend-specific node_modules from host
+      - ../..:/app                                    # mount monorepo root so source code is live-reloaded
+      - node_modules:/app/node_modules                # named volume — see "volumes:" at bottom of file
+      - backend_node_modules:/app/apps/backend/node_modules
     working_dir: /app/apps/backend
     command: npm run start:dev
     networks:
@@ -223,6 +223,11 @@ volumes:
   pgadmin_data:
   prometheus_data:
   grafana_data:
+  # node_modules volumes — named so "docker compose down -v" removes them predictably.
+  # Rule: whenever package.json changes, run the rebuild script (see below) instead of
+  # plain "docker compose up --build", which leaves these stale.
+  node_modules:
+  backend_node_modules:
 
 networks:
   ecommerce-network:

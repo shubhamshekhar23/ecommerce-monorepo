@@ -11,6 +11,7 @@ import { JwksController } from './jwks.controller';
 import { JwtStrategy, JwtRefreshStrategy } from './strategies';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { TotpService } from './totp.service';
+import { PasswordResetService } from './password-reset.service';
 
 // JwtModule is configured with the RS256 public key as the default verify key.
 // Individual sign calls pass privateKey explicitly (see auth.service.ts).
@@ -30,7 +31,7 @@ import { TotpService } from './totp.service';
     }),
   ],
   controllers: [AuthController, JwksController],
-  providers: [AuthService, TotpService, JwtStrategy, JwtRefreshStrategy, GoogleStrategy],
+  providers: [AuthService, TotpService, PasswordResetService, JwtStrategy, JwtRefreshStrategy, GoogleStrategy],
   exports: [AuthService, TotpService],
 })
 export class AuthModule {}

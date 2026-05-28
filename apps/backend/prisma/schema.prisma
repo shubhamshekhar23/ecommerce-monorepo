@@ -47,6 +47,24 @@ enum OAuthProvider {
   GOOGLE
 }
 
+enum CouponType {
+  PERCENTAGE
+  FIXED
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ReturnStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REFUNDED
+}
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
@@ -63,10 +81,15 @@ model User {
   totpSecret    String?
   totpEnabled   Boolean  @default(false)
 
-  refreshTokens RefreshToken[]
-  oauthAccounts OAuthAccount[]
-  cart          Cart?
-  orders        Order[]
+  refreshTokens       RefreshToken[]
+  oauthAccounts       OAuthAccount[]
+  addresses           Address[]
+  cart                Cart?
+  orders              Order[]
+  reviews             ProductReview[]
+  stockAlerts         StockAlert[]
+  passwordResetTokens PasswordResetToken[]
+  returnRequests      ReturnRequest[]
 
   @@index([email])
   @@index([role])
@@ -163,8 +186,11 @@ model Product {
   images      ProductImage[]
   cartItems   CartItem[]
   orderItems  OrderItem[]
-  variantTypes VariantType[]
-  variants    ProductVariant[]
+  variantTypes  VariantType[]
+  variants      ProductVariant[]
+  reviews       ProductReview[]
+  rating        ProductRating?
+  stockAlerts   StockAlert[]
   // Nullable until vendor module is built (expand-contract migration).
   // Used by Row-Level Security policy: vendors only see their own products.
   vendorId    String?
@@ -309,7 +335,20 @@ model Order {
   userId          String
   user            User          @relation(fields: [userId], references: [id], onDelete: Restrict)
   items           OrderItem[]
+  returnRequests  ReturnRequest[]
   totalPrice      Decimal       @db.Decimal(10, 2)
+  // Snapshot fields — stored at order time, never updated even if rates change later
+  subtotal        Decimal?      @db.Decimal(10, 2)
+  discountAmount  Decimal?      @db.Decimal(10, 2)
+  shippingCost    Decimal?      @db.Decimal(10, 2)
+  taxAmount       Decimal?      @db.Decimal(10, 2)
+  // Coupon: keep code + id as references (coupon may be deleted, code is human-readable)
+  couponId        String?
+  couponCode      String?
+  // Snapshot of the shipping address at order time — immutable after placement.
+  // Stored as JSON (not FK) so the order is preserved even if the user later
+  // edits or deletes their address. This is the canonical snapshot pattern.
+  shippingAddress Json?
   status          OrderStatus   @default(PENDING)
   paymentIntentId String?       @unique
   paymentStatus   PaymentStatus @default(PENDING)
@@ -365,18 +404,169 @@ model OutboxEvent {
 }
 
 model OrderItem {
-  id                String   @id @default(cuid())
+  id                String       @id @default(cuid())
   orderId           String
-  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order             Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId         String
-  product           Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  product           Product      @relation(fields: [productId], references: [id], onDelete: Restrict)
   quantity          Int
-  price             Decimal  @db.Decimal(10, 2)
-  // Snapshot of variant attributes at purchase time (e.g. {Size: "L", Color: "Red"}).
-  // Stored as JSON, NOT a FK — variants can be deleted but the order must remember
-  // what was purchased. This is the canonical pattern for order line items.
+  price             Decimal      @db.Decimal(10, 2)
   variantAttributes Json?
+  returnItems       ReturnItem[]
 
   @@index([orderId])
   @@index([productId])
+}
+
+// ── Phase 7: Core Feature Backfill ───────────────────────────────────────────
+
+// Snapshot pattern: address is copied to Order.shippingAddress at checkout.
+// The Address record can be edited/deleted without affecting past orders.
+model Address {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName  String
+  lastName   String
+  line1      String
+  line2      String?
+  city       String
+  state      String
+  country    String
+  postalCode String
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// Coupon: optimistic locking is applied at the DB level (atomic UPDATE with WHERE clause).
+// No SELECT-then-UPDATE — that's a TOCTOU race condition. See CouponService for the pattern.
+model Coupon {
+  id             String     @id @default(cuid())
+  code           String     @unique
+  type           CouponType
+  value          Decimal    @db.Decimal(10, 2)  // percentage (0-100) or fixed amount
+  minOrderAmount Decimal?   @db.Decimal(10, 2)
+  maxUses        Int?       // null = unlimited
+  usedCount      Int        @default(0)
+  expiresAt      DateTime?
+  isActive       Boolean    @default(true)
+  createdAt      DateTime   @default(now())
+  usages         CouponUsage[]
+
+  @@index([code])
+  @@index([isActive])
+}
+
+// One usage record per coupon per order — prevents double-applying on retries.
+model CouponUsage {
+  id       String   @id @default(cuid())
+  couponId String
+  coupon   Coupon   @relation(fields: [couponId], references: [id])
+  orderId  String
+  userId   String
+  usedAt   DateTime @default(now())
+
+  @@unique([couponId, orderId])
+  @@index([couponId])
+  @@index([userId])
+}
+
+// Product reviews with moderation. Rating is NOT stored on Product directly —
+// instead ProductRating is a materialized aggregate updated via events when
+// a review is approved. This keeps the Product table narrow and the aggregate
+// eventually consistent (acceptable for display, not for stock decisions).
+model ProductReview {
+  id        String       @id @default(cuid())
+  productId String
+  product   Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating    Int          // 1–5
+  title     String?
+  body      String?
+  status    ReviewStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@unique([productId, userId])
+  @@index([productId, status])
+  @@index([status])
+}
+
+// Materialized aggregate — recomputed whenever a review is approved or removed.
+// One row per product. Query is: SELECT avgRating, reviewCount FROM ProductRating WHERE productId = ?
+// instead of: SELECT AVG(rating) FROM ProductReview WHERE productId = ? AND status = 'APPROVED'
+model ProductRating {
+  productId   String  @id
+  product     Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  avgRating   Decimal @db.Decimal(3, 2)
+  reviewCount Int     @default(0)
+  updatedAt   DateTime @updatedAt
+}
+
+// Fan-out pattern: when a product comes back in stock, one event triggers
+// N notification jobs — one per subscribed user.
+model StockAlert {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  email     String
+  notified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@unique([productId, userId])
+  @@index([productId, notified])
+}
+
+// Secure token pattern: HMAC-signed, single-use, short TTL.
+// The token value stored here is a hash — the raw token is emailed and never persisted.
+// On reset: hash(receivedToken) == storedToken? → proceed and mark usedAt.
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique  // SHA-256(rawToken) — raw token is only in the email link
+  usedAt    DateTime?
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+// Return/refund workflow — state machine with compensating transactions.
+// ReturnRequest is created by the user, approved/rejected by admin,
+// then the Stripe refund is issued (compensating the original charge).
+model ReturnRequest {
+  id        String       @id @default(cuid())
+  orderId   String
+  order     Order        @relation(fields: [orderId], references: [id])
+  userId    String
+  user      User         @relation(fields: [userId], references: [id])
+  reason    String
+  status    ReturnStatus @default(PENDING)
+  items     ReturnItem[]
+  refundId  String?      // Stripe refund ID once issued
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([orderId])
+  @@index([userId])
+  @@index([status])
+}
+
+model ReturnItem {
+  id              String        @id @default(cuid())
+  returnRequestId String
+  returnRequest   ReturnRequest @relation(fields: [returnRequestId], references: [id], onDelete: Cascade)
+  orderItemId     String
+  orderItem       OrderItem     @relation(fields: [orderItemId], references: [id])
+  quantity        Int
+  reason          String?
+
+  @@index([returnRequestId])
 }

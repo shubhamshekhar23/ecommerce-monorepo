@@ -90,6 +90,30 @@ export class MailService {
     });
   }
 
+  async sendPasswordResetEmail(email: string, firstName: string, rawToken: string): Promise<void> {
+    const appUrl = this.configService.get<string>('APP_URL') ?? 'http://localhost:3000';
+    const resetUrl = `${appUrl}/reset-password?token=${rawToken}`;
+    await this.sendEmail(email, 'Reset your password', 'password-reset', {
+      firstName: firstName || 'User',
+      resetUrl,
+      expiresInHours: 1,
+    });
+  }
+
+  async sendStockAlertEmail(email: string, productName: string, productUrl: string): Promise<void> {
+    await this.sendEmail(email, `${productName} is back in stock!`, 'stock-alert', {
+      productName,
+      productUrl,
+    });
+  }
+
+  async sendAbandonedCartEmail(email: string, firstName: string, cartUrl: string): Promise<void> {
+    await this.sendEmail(email, 'You left something behind', 'abandoned-cart', {
+      firstName: firstName || 'User',
+      cartUrl,
+    });
+  }
+
   // eslint-disable-next-line max-lines-per-function
   private async sendEmail(
     to: string,

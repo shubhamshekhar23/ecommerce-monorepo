@@ -8,15 +8,20 @@ import type { RequestUser } from '@/common/types/request-user.interface';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
+import { PasswordResetService } from './password-reset.service';
 import { RegisterDto, LoginDto, AuthResponseDto, RefreshTokenDto } from './dto';
 import { TwoFactorVerifyDto, TwoFactorCodeDto } from './dto/two-factor-verify.dto';
+import { ForgotPasswordDto, ResetPasswordDto } from './dto/password-reset.dto';
 import { Public, CurrentUser } from '@/common/decorators';
 import { RateLimit } from '@/modules/rate-limit/rate-limit.decorator';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly passwordResetService: PasswordResetService,
+  ) {}
 
   // ── Registration / Login ──────────────────────────────────────────────────
 
@@ -62,6 +67,29 @@ export class AuthController {
     @Body() refreshTokenDto: RefreshTokenDto,
   ): Promise<void> {
     await this.authService.logout(user.id, refreshTokenDto.refreshToken);
+  }
+
+  // ── Password reset ────────────────────────────────────────────────────────
+  // Flow: POST /auth/forgot-password → email with token link
+  //       POST /auth/reset-password  → new password using that token
+
+  @Post('forgot-password')
+  @Public()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @RateLimit({ limit: 3, windowMs: 15 * 60 * 1000, keyStrategy: 'ip' })
+  @ApiOperation({ summary: 'Request a password reset email' })
+  async forgotPassword(@Body() dto: ForgotPasswordDto): Promise<void> {
+    // Always 204 — never reveal whether the email is registered
+    await this.passwordResetService.requestReset(dto.email);
+  }
+
+  @Post('reset-password')
+  @Public()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @RateLimit({ limit: 5, windowMs: 15 * 60 * 1000, keyStrategy: 'ip' })
+  @ApiOperation({ summary: 'Reset password using a token from email' })
+  async resetPassword(@Body() dto: ResetPasswordDto): Promise<void> {
+    await this.passwordResetService.resetPassword(dto.token, dto.newPassword);
   }
 
   // ── TOTP 2FA ──────────────────────────────────────────────────────────────
