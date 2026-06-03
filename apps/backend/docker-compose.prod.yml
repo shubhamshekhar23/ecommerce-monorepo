@@ -1,4 +1,23 @@
 # ── Production Stack ─────────────────────────────────────────────────────────
+#
+# WHY THIS FILE LIVES IN apps/backend/ AND NOT THE MONOREPO ROOT:
+#
+# The root docker-compose.yml is the canonical dev stack (all services).
+# This file intentionally stays here because:
+#   1. All its relative volume paths (nginx.conf, prometheus.yml, grafana/,
+#      scripts/backup.sh, ssl/) point to files in apps/backend/ — moving the
+#      file to root would require prefixing every path with ./apps/backend/.
+#   2. blue-green-deploy.sh derives its path from $SCRIPT_DIR, which is
+#      apps/backend/scripts/ — it expects the compose file to be one level up.
+#   3. CI workflow (.github/workflows/ci.yml) references it relative to /app,
+#      which maps to apps/backend/ on the production server.
+#
+# This file is also intentionally incomplete for the full monorepo: it covers
+# the backend service and its direct infrastructure (postgres, pgbouncer, redis,
+# rabbitmq, nginx, prometheus, grafana, backup, notification-service) but does
+# NOT include auth-service, search-service, gateway, or opensearch.
+# A complete root-level prod compose covering all services is a future task.
+#
 # Blue-green topology:
 #
 #   Browser → Nginx (:80/:443)
