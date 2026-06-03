@@ -1,7 +1,13 @@
 # Build context: monorepo root (so package-lock.json is accessible)
 # Set in docker-compose: context: ../..   dockerfile: apps/backend/Dockerfile
 
+
+
+
 # ─── Stage 1: deps ────────────────────────────────────────────────────────────
+# ───────────────────────────────────────────────────────────────
+# ───────────────────────────────────────────────────────────────
+# ───────────────────────────────────────────────────────────────
 # Install ALL dependencies with native compilation tools.
 # bcrypt and other packages with C++ bindings are compiled here.
 # node_modules are hoisted to /app/node_modules by npm workspaces.
@@ -36,7 +42,16 @@ RUN npm ci
 # Generate Prisma client — needed by the dev stage (no builder stage runs there)
 RUN cd apps/backend && npx prisma generate
 
+
+
+
+
+
 # ─── Stage 2: builder ─────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────
 # Compile TypeScript. No build tools needed — node_modules came from deps stage.
 FROM node:20-alpine AS builder
 
@@ -60,7 +75,15 @@ WORKDIR /app/apps/backend
 RUN npx prisma generate
 RUN npm run build
 
+
+
+
+
+
 # ─── Stage 3: runner ──────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────
 # Lean production image — no build tools (python3/make/g++) from the deps stage.
 FROM node:20-alpine AS runner
 
@@ -85,13 +108,17 @@ COPY --from=builder /app/packages/shared-types/package.json ./packages/shared-ty
 COPY --from=builder /app/packages/shared-types/dist ./packages/shared-types/dist
 COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
 
+# Create non-root user "nestjs" for security.
 RUN addgroup -g 1001 -S nodejs && adduser -S nestjs -u 1001
 USER nestjs
 
-ARG NODE_ENV=production
+# Build-time variable
+ARG NODE_ENV=production 
+
 ENV NODE_ENV=${NODE_ENV}
 ENV PORT=3000
 
+# Docker periodically verifies app health.
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3000/api/health/live',(r)=>{if(r.statusCode!==200)process.exit(1)}).on('error',()=>process.exit(1))"
 
@@ -99,5 +126,8 @@ EXPOSE 3000
 
 WORKDIR /app/apps/backend
 
+# Handles signals and graceful shutdown.
 ENTRYPOINT ["dumb-init", "--"]
+
+# Starts the NestJS application.
 CMD ["node", "dist/main.js"]

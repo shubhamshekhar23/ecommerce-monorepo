@@ -1,5 +1,0 @@
-; PgBouncer user list — format: "username" "password"
-; For auth_type=plain, the password is stored in plaintext here.
-; For auth_type=md5, store: "username" "md5<md5(password+username)>"
-; This file must be readable by the pgbouncer process (chmod 600 in production).
-"ecommerce_user" "ecommerce_password"
