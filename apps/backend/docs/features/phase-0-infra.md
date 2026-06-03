@@ -67,7 +67,7 @@ Without graceful shutdown: every deploy/restart drops in-flight requests and lea
 ## Key Files
 
 - `apps/backend/Dockerfile`
-- `apps/backend/docker-compose.yml`
+- `docker-compose.yml` (monorepo root — canonical dev stack)
 - `apps/backend/nginx.conf`
 - `apps/backend/src/main.ts`
 - `apps/backend/src/modules/health/health.controller.ts`

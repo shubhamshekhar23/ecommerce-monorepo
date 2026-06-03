@@ -117,7 +117,7 @@ bash scripts/create-partition.sh list     # list all partitions and their sizes
 
 ### 3. Streaming Replication — Read Replica
 
-`docker-compose.replica.yml` — compose override file (not active by default)
+`docker-compose.replica.yml` (monorepo root) — compose override file (not active by default)
 
 `docker/postgres-replica/init-primary.sh` — configures the primary on first start
 
@@ -126,6 +126,7 @@ bash scripts/create-partition.sh list     # list all partitions and their sizes
 **How to start with the replica:**
 
 ```bash
+# from monorepo root:
 docker compose -f docker-compose.yml -f docker-compose.replica.yml up -d
 ```
 
@@ -267,6 +268,7 @@ docker compose exec postgres psql -U ecommerce_user ecommerce_db -c \
 ### 5. Start the read replica (optional)
 
 ```bash
+# from monorepo root:
 docker compose -f docker-compose.yml -f docker-compose.replica.yml up -d
 
 # Check replication status after ~30 seconds:

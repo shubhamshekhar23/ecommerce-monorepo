@@ -1,6 +1,6 @@
 # Read Replica Add-On — Phase 10
 #
-# Usage:
+# Compose override for streaming replication. Run from the monorepo root:
 #   docker compose -f docker-compose.yml -f docker-compose.replica.yml up -d
 #
 # This file overrides the primary postgres service and adds a streaming replica.
@@ -22,27 +22,13 @@
 #             (sent_lsn - replay_lsn) AS lag_bytes
 #      FROM pg_stat_replication;"
 
-version: '3.8'
-
 services:
-  # Override primary: enable WAL settings required for replication
-  # -c wal_level=replica       — enables streaming replication (default 'minimal' is not enough)
-  # -c max_wal_senders=3       — max concurrent replica connections
-  # -c wal_keep_size=64        — keep 64MB of WAL so a slow replica can catch up
-  # -c hot_standby=on          — allow read queries on standby (required for replica to serve reads)
-  # -c pg_stat_statements.track=all — track all queries for pg_stat_statements (Phase 10 #1)
+  # Override primary: mount init script that creates the replication user on first start.
+  # The WAL flags are already set in docker-compose.yml postgres command block.
   postgres:
-    command: >
-      postgres
-      -c wal_level=replica
-      -c max_wal_senders=3
-      -c wal_keep_size=64
-      -c hot_standby=on
-      -c shared_preload_libraries=pg_stat_statements
-      -c pg_stat_statements.track=all
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./docker/postgres-replica/init-primary.sh:/docker-entrypoint-initdb.d/init-primary.sh:ro
+      - ./apps/backend/docker/postgres-replica/init-primary.sh:/docker-entrypoint-initdb.d/init-primary.sh:ro
 
   # Read replica — streams WAL from primary and serves read queries
   postgres-replica:
@@ -56,10 +42,10 @@ services:
       REPLICATION_PASSWORD: replicator_password
       PGDATA: /var/lib/postgresql/data
     ports:
-      - '5435:5432'   # external port 5435 — for direct replica access (psql, Prisma Studio)
+      - '5435:5432'  # external port 5435 — for direct replica access (psql, Prisma Studio)
     volumes:
       - postgres_replica_data:/var/lib/postgresql/data
-      - ./docker/postgres-replica/init-replica.sh:/init-replica.sh:ro
+      - ./apps/backend/docker/postgres-replica/init-replica.sh:/init-replica.sh:ro
     entrypoint: ['/bin/bash', '/init-replica.sh']
     command: >
       postgres

@@ -13,6 +13,13 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: ecommerce_db_dev
+    command: >
+      postgres
+      -c shared_preload_libraries=pg_stat_statements
+      -c pg_stat_statements.track=all
+      -c wal_level=replica
+      -c max_wal_senders=3
+      -c wal_keep_size=64
     environment:
       POSTGRES_USER: ecommerce_user
       POSTGRES_PASSWORD: ecommerce_password

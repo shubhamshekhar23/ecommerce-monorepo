@@ -1,17 +1,21 @@
 # Full stack — infrastructure + all application services.
+# Backend runs in dev mode (hot reload via volume mount). Other services build from Dockerfiles.
 # Build context is always the monorepo root so all Dockerfiles can access shared packages.
 #
 # Usage:
-#   docker compose up --build        # first time or after code changes
-#   docker compose up                # subsequent starts (uses cached images)
-#   docker compose down              # stop everything
-#   docker compose down -v           # stop and delete all data volumes
-#   docker compose logs -f gateway   # tail logs for a specific service
+#   docker compose up -d              # start everything
+#   docker compose up -d postgres redis rabbitmq pgbouncer  # infra only
+#   docker compose logs -f backend    # tail backend logs
+#   docker compose down               # stop everything
+#   docker compose down -v            # stop and delete all data volumes
+#
+# Read replica (optional, Phase 10):
+#   docker compose -f docker-compose.yml -f docker-compose.replica.yml up -d
 
 name: ecommerce
 
 # ── Shared env fragments ──────────────────────────────────────────────────────
-# YAML anchors let us define env vars once and reuse them across services.
+# YAML anchors — define once, merge into multiple services with <<:
 x-db-env: &db-env
   DATABASE_URL: postgresql://ecommerce_user:ecommerce_password@pgbouncer:6432/ecommerce_db?pgbouncer=true&connection_limit=1
   DIRECT_DATABASE_URL: postgresql://ecommerce_user:ecommerce_password@postgres:5432/ecommerce_db
@@ -29,15 +33,26 @@ services:
   # INFRASTRUCTURE
   # ════════════════════════════════════════════════════════════════════════════
 
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
   postgres:
     image: postgres:16-alpine
     container_name: ecommerce_postgres
+    # pg_stat_statements: tracks cumulative query execution stats (Phase 10 — slow query analysis).
+    # Must be in shared_preload_libraries at startup — cannot be loaded via SQL after boot.
+    # wal_level=replica + max_wal_senders: required for streaming replication (docker-compose.replica.yml).
+    command: >
+      postgres
+      -c shared_preload_libraries=pg_stat_statements
+      -c pg_stat_statements.track=all
+      -c wal_level=replica
+      -c max_wal_senders=3
+      -c wal_keep_size=64
     environment:
       POSTGRES_USER: ecommerce_user
       POSTGRES_PASSWORD: ecommerce_password
       POSTGRES_DB: ecommerce_db
     ports:
-      - '5434:5432'
+      - '5434:5432'  # exposed for direct access: psql, Prisma Studio, migrations
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -45,7 +60,20 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - ecommerce-network
 
+  # ── PgBouncer ───────────────────────────────────────────────────────────────
+  # Sits in front of Postgres and multiplexes app connections into a small pool
+  # of real Postgres server connections. App connects here (:6432), not Postgres directly.
+  #
+  # TRANSACTION mode: server connection returned to pool after each transaction.
+  # Required for Prisma — prepared statements are session-scoped and break in this mode,
+  # so Prisma URLs must include ?pgbouncer=true to disable them.
+  #
+  # Watch pooling in action during load test:
+  #   docker exec ecommerce_postgres psql -U ecommerce_user -c "SELECT count(*) FROM pg_stat_activity"
+  # You will see ~20 connections regardless of how many app requests are in flight.
   pgbouncer:
     image: edoburu/pgbouncer:latest
     container_name: ecommerce_pgbouncer
@@ -58,6 +86,8 @@ services:
       POOL_MODE: transaction
       MAX_CLIENT_CONN: 200
       DEFAULT_POOL_SIZE: 20
+      MIN_POOL_SIZE: 5
+      RESERVE_POOL_SIZE: 5
       IGNORE_STARTUP_PARAMETERS: extra_float_digits
       SERVER_RESET_QUERY: DISCARD ALL
       AUTH_TYPE: plain
@@ -67,11 +97,14 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    networks:
+      - ecommerce-network
 
+  # ── Redis ───────────────────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
     container_name: ecommerce_redis
-    command: redis-server
+    command: redis-server --appendonly yes --appendfsync everysec
     ports:
       - '6379:6379'
     volumes:
@@ -81,7 +114,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - ecommerce-network
 
+  # ── RabbitMQ ────────────────────────────────────────────────────────────────
   rabbitmq:
     image: rabbitmq:3.12-management
     container_name: ecommerce_rabbitmq
@@ -90,7 +126,7 @@ services:
       RABBITMQ_DEFAULT_PASS: guest
     ports:
       - '5672:5672'
-      - '15672:15672'
+      - '15672:15672'  # management UI: http://localhost:15672 (guest/guest)
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     healthcheck:
@@ -98,7 +134,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+    networks:
+      - ecommerce-network
 
+  # ── OpenSearch ──────────────────────────────────────────────────────────────
   opensearch:
     image: opensearchproject/opensearch:2.12.0
     container_name: ecommerce_opensearch
@@ -106,6 +145,8 @@ services:
       - discovery.type=single-node
       - DISABLE_SECURITY_PLUGIN=true
       - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
+      # Relax disk watermarks — Docker Desktop VM disk can appear "full" even with
+      # plenty of macOS host space. Prevents OpenSearch going read-only on dev machines.
       - cluster.routing.allocation.disk.watermark.low=99%
       - cluster.routing.allocation.disk.watermark.high=99.5%
       - cluster.routing.allocation.disk.watermark.flood_stage=99.9%
@@ -119,40 +160,136 @@ services:
       timeout: 10s
       retries: 10
       start_period: 30s
+    networks:
+      - ecommerce-network
 
+  # ── Mailpit ─────────────────────────────────────────────────────────────────
+  # Catches all outgoing SMTP — never actually sends emails. View at http://localhost:8025
   mailpit:
     image: axllent/mailpit:latest
     container_name: ecommerce_mailpit
     ports:
-      - '1025:1025'
-      - '8025:8025'
+      - '1025:1025'  # SMTP
+      - '8025:8025'  # web UI
+    networks:
+      - ecommerce-network
+
+  # ── Jaeger ──────────────────────────────────────────────────────────────────
+  # Distributed tracing. The NestJS app sends OTLP spans here via OpenTelemetry.
+  # Open http://localhost:16686 to see request waterfalls: HTTP → service → Prisma → Redis.
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: ecommerce_jaeger
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - '16686:16686'  # Jaeger UI
+      - '4318:4318'    # OTLP HTTP receiver (app sends traces here)
+    networks:
+      - ecommerce-network
+
+  # ── PgAdmin ─────────────────────────────────────────────────────────────────
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: ecommerce_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@ecommerce.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - '5050:80'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ecommerce-network
+
+  # ── Prometheus ──────────────────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ecommerce_prometheus
+    ports:
+      - '9090:9090'
+    volumes:
+      - ./apps/backend/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./apps/backend/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=7d'
+      - '--web.enable-lifecycle'
+    depends_on:
+      - backend
+    networks:
+      - ecommerce-network
+
+  # ── Grafana ─────────────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ecommerce_grafana
+    ports:
+      - '3001:3000'
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./apps/backend/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./apps/backend/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+    depends_on:
+      - prometheus
+    networks:
+      - ecommerce-network
 
   # ════════════════════════════════════════════════════════════════════════════
   # APPLICATION SERVICES
   # ════════════════════════════════════════════════════════════════════════════
 
+  # ── Backend (NestJS) ────────────────────────────────────────────────────────
+  # Runs in dev mode: source code is mounted, hot reload active.
+  # Uses the deps Dockerfile stage so devDependencies (@nestjs/cli) are available.
   backend:
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
+      target: deps
     container_name: ecommerce_backend
     environment:
       <<: [*db-env, *rabbitmq-env, *jwt-env]
-      NODE_ENV: production
-      PORT: 3001
+      NODE_ENV: development
+      PORT: 4000
       REDIS_URL: redis://redis:6379
+      CORS_ORIGIN: http://localhost,http://localhost:3000,http://localhost:3001,http://localhost:3002
       SMTP_HOST: mailpit
       SMTP_PORT: 1025
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318/v1/traces
+      JWT_SECRET: dev-secret-key-min-32-chars-do-not-use-in-production
+      JWT_REFRESH_SECRET: dev-refresh-secret-key-min-32-chars-do-not-use-in-production
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+      - backend_node_modules:/app/apps/backend/node_modules
+    working_dir: /app/apps/backend
+    command: npm run start:dev
+    ports:
+      - '4000:4000'  # direct access (bypasses gateway) — useful for debugging
     depends_on:
-      postgres:
-        condition: service_healthy
       pgbouncer:
         condition: service_started
       redis:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      jaeger:
+        condition: service_started
+    networks:
+      - ecommerce-network
 
+  # ── Auth Service ─────────────────────────────────────────────────────────────
   auth-service:
     build:
       context: .
@@ -161,13 +298,18 @@ services:
     environment:
       <<: [*db-env, *rabbitmq-env, *jwt-env]
       PORT: 3006
+      # Auth service connects to Postgres directly (not PgBouncer) — it uses
+      # session-level features incompatible with transaction pooling mode.
       DATABASE_URL: postgresql://ecommerce_user:ecommerce_password@postgres:5432/ecommerce_db
     depends_on:
       postgres:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+    networks:
+      - ecommerce-network
 
+  # ── Search Service ───────────────────────────────────────────────────────────
   search-service:
     build:
       context: .
@@ -182,7 +324,10 @@ services:
         condition: service_healthy
       opensearch:
         condition: service_healthy
+    networks:
+      - ecommerce-network
 
+  # ── Notification Service ─────────────────────────────────────────────────────
   notification-service:
     build:
       context: .
@@ -198,7 +343,10 @@ services:
         condition: service_healthy
       mailpit:
         condition: service_started
+    networks:
+      - ecommerce-network
 
+  # ── Gateway ──────────────────────────────────────────────────────────────────
   gateway:
     build:
       context: .
@@ -207,7 +355,7 @@ services:
     environment:
       <<: *jwt-env
       PORT: 3000
-      BACKEND_URL: http://backend:3001
+      BACKEND_URL: http://backend:4000
       AUTH_SERVICE_URL: http://auth-service:3006
       SEARCH_SERVICE_URL: http://search-service:3005
       NOTIFICATION_SERVICE_URL: http://notification-service:3004
@@ -218,9 +366,22 @@ services:
       - auth-service
       - search-service
       - notification-service
+    networks:
+      - ecommerce-network
 
 volumes:
   postgres_data:
   redis_data:
   rabbitmq_data:
   opensearch_data:
+  pgadmin_data:
+  prometheus_data:
+  grafana_data:
+  # node_modules volumes: named so "docker compose down -v" removes them cleanly.
+  # After any package.json change: docker compose build backend && docker compose up -d backend
+  node_modules:
+  backend_node_modules:
+
+networks:
+  ecommerce-network:
+    driver: bridge

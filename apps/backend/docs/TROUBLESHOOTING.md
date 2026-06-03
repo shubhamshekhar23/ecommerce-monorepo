@@ -364,7 +364,7 @@ The `RequestMetric` table is partitioned. Prisma's `migrate deploy` applies the 
 
 ### `GET /api/admin/db/replication/lag` → `replicaConnected: false`
 
-The replica is not running. This is expected when using only `docker-compose.yml`. Start the replica with:
+The replica is not running. This is expected when using only `docker-compose.yml`. Start the replica with (run from monorepo root):
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.replica.yml up -d
 ```
