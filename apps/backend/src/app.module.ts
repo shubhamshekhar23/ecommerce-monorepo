@@ -34,6 +34,8 @@ import { TaxModule } from '@/modules/tax/tax.module';
 import { ReturnsModule } from '@/modules/returns/returns.module';
 import { InvoiceModule } from '@/modules/invoices/invoice.module';
 import { CorrelationIdMiddleware } from '@/common/middleware/correlation-id.middleware';
+import { RequestMetricsMiddleware } from '@/common/middleware/request-metrics.middleware';
+import { DbAnalyticsModule } from '@/modules/db-analytics/db-analytics.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -69,6 +71,7 @@ import { AppService } from './app.service';
     AdminModule,
     CacheModule,
     RateLimitModule,
+    DbAnalyticsModule,
   ],
   controllers: [AppController],
   providers: [
@@ -82,5 +85,6 @@ import { AppService } from './app.service';
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
     consumer.apply(CorrelationIdMiddleware).forRoutes('*');
+    consumer.apply(RequestMetricsMiddleware).forRoutes('*');
   }
 }

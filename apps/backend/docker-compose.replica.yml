@@ -1,0 +1,81 @@
+# Read Replica Add-On — Phase 10
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.replica.yml up -d
+#
+# This file overrides the primary postgres service and adds a streaming replica.
+# The replica accepts read queries (SELECT) but rejects all writes.
+#
+# Connection strings:
+#   Primary (write):  postgresql://ecommerce_user:ecommerce_password@postgres:5432/ecommerce_db
+#   Replica (read):   postgresql://ecommerce_user:ecommerce_password@postgres-replica:5432/ecommerce_db
+#
+# What you will learn:
+#   1. How WAL-based streaming replication works (primary sends WAL bytes, replica replays them)
+#   2. Replication lag: SELECT now() - pg_last_xact_replay_timestamp() AS lag;
+#   3. Routing: analytics/reporting queries go to replica, writes stay on primary
+#   4. Hot standby: replica is readable even while applying WAL
+#
+# After starting, monitor lag from the primary:
+#   docker exec ecommerce_postgres psql -U ecommerce_user -c \
+#     "SELECT client_addr, state, sent_lsn, write_lsn, replay_lsn,
+#             (sent_lsn - replay_lsn) AS lag_bytes
+#      FROM pg_stat_replication;"
+
+version: '3.8'
+
+services:
+  # Override primary: enable WAL settings required for replication
+  # -c wal_level=replica       — enables streaming replication (default 'minimal' is not enough)
+  # -c max_wal_senders=3       — max concurrent replica connections
+  # -c wal_keep_size=64        — keep 64MB of WAL so a slow replica can catch up
+  # -c hot_standby=on          — allow read queries on standby (required for replica to serve reads)
+  # -c pg_stat_statements.track=all — track all queries for pg_stat_statements (Phase 10 #1)
+  postgres:
+    command: >
+      postgres
+      -c wal_level=replica
+      -c max_wal_senders=3
+      -c wal_keep_size=64
+      -c hot_standby=on
+      -c shared_preload_libraries=pg_stat_statements
+      -c pg_stat_statements.track=all
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres-replica/init-primary.sh:/docker-entrypoint-initdb.d/init-primary.sh:ro
+
+  # Read replica — streams WAL from primary and serves read queries
+  postgres-replica:
+    image: postgres:16-alpine
+    container_name: ecommerce_postgres_replica
+    environment:
+      POSTGRES_USER: ecommerce_user
+      POSTGRES_PASSWORD: ecommerce_password
+      POSTGRES_DB: ecommerce_db
+      PGUSER: ecommerce_user
+      REPLICATION_PASSWORD: replicator_password
+      PGDATA: /var/lib/postgresql/data
+    ports:
+      - '5435:5432'   # external port 5435 — for direct replica access (psql, Prisma Studio)
+    volumes:
+      - postgres_replica_data:/var/lib/postgresql/data
+      - ./docker/postgres-replica/init-replica.sh:/init-replica.sh:ro
+    entrypoint: ['/bin/bash', '/init-replica.sh']
+    command: >
+      postgres
+      -c hot_standby=on
+      -c shared_preload_libraries=pg_stat_statements
+      -c pg_stat_statements.track=all
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ecommerce_user']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - ecommerce-network
+
+volumes:
+  postgres_replica_data:

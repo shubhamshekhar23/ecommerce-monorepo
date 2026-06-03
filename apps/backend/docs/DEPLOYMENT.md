@@ -1,533 +1,391 @@
 # Deployment Guide
 
-This guide covers deploying the E-Commerce Backend application to production environments.
+This guide covers running and deploying the E-Commerce platform — both development and production.
 
-## Table of Contents
-
-- [Prerequisites](#prerequisites)
-- [Environment Setup](#environment-setup)
-- [Database Migrations](#database-migrations)
-- [Docker Deployment](#docker-deployment)
-- [Nginx Configuration](#nginx-configuration)
-- [SSL/TLS Setup](#ssltls-setup)
-- [Monitoring Setup](#monitoring-setup)
-- [Scaling](#scaling)
-- [Backup Strategy](#backup-strategy)
-- [Rollback Procedures](#rollback-procedures)
-- [Troubleshooting](#troubleshooting)
+---
 
 ## Prerequisites
 
-### Required Software
+- Docker Engine 20.10+ and Docker Compose 2.0+
+- Node.js 20+ (for local development outside Docker)
+- A Stripe account (test keys for dev, live keys for prod)
+- For production: a Linux server with a public IP and domain name
 
-- Docker Engine 20.10+
-- Docker Compose 2.0+
-- Node.js 20+ (for local development/CI)
-- PostgreSQL 16+ (if using external database)
-- Redis 7+ (if using external cache)
+---
 
-### Infrastructure Requirements
+## Development Setup
 
-- Linux server (Ubuntu 20.04 LTS or similar)
-- Minimum 4GB RAM
-- Minimum 20GB disk space
-- Public IP address with reverse DNS configured
-- Domain name with DNS configured
-
-### Credentials & Secrets
-
-- Stripe API keys (test and live)
-- SMTP server credentials
-- AWS S3 credentials (if using)
-- SSL certificates (self-signed or from CA)
-- Database backup encryption keys
-
-## Environment Setup
-
-### 1. Create Production .env File
+### 1. Clone and install dependencies
 
 ```bash
-cp .env.example .env.production
+git clone <repo>
+cd ecommerce-monorepo
+npm install
 ```
 
-Edit `.env.production` and set production values:
+### 2. Create environment files
+
+Each app has its own `.env`. Copy the examples:
+
+```bash
+cp apps/backend/.env.example apps/backend/.env
+cp apps/auth-service/.env.example apps/auth-service/.env
+cp apps/gateway/.env.example apps/gateway/.env
+cp apps/notification-service/.env.example apps/notification-service/.env
+cp apps/search-service/.env.example apps/search-service/.env
+```
+
+Minimum required values for `apps/backend/.env`:
 
 ```env
-# Database
-DATABASE_URL=postgresql://prod_user:strong_password@postgres:5432/ecommerce_prod
+# Database (PgBouncer pool in front of Postgres)
+DATABASE_URL=postgresql://ecommerce_user:ecommerce_password@localhost:6432/ecommerce_db?pgbouncer=true&connection_limit=1
 
-# Application
-NODE_ENV=production
+# Direct connection for migrations (bypasses PgBouncer — required for advisory locks)
+DIRECT_DATABASE_URL=postgresql://ecommerce_user:ecommerce_password@localhost:5434/ecommerce_db
+
+NODE_ENV=development
+PORT=4000
+
+# Redis
+REDIS_URL=redis://localhost:6379
+
+# JWT (public key — tokens are signed by auth-service, verified here)
+JWT_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----"
+
+# Stripe
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+
+# RabbitMQ
+RABBITMQ_URL=amqp://guest:guest@localhost:5672
+
+# CORS (frontend origin)
+CORS_ORIGIN=http://localhost:3000
+```
+
+Minimum for `apps/auth-service/.env`:
+
+```env
+DATABASE_URL=postgresql://ecommerce_user:ecommerce_password@localhost:5434/ecommerce_db
+PORT=3006
+RABBITMQ_URL=amqp://guest:guest@localhost:5672
+
+# RS256 key pair (generate once with: openssl genrsa -out private.pem 2048 && openssl rsa -in private.pem -pubout -out public.pem)
+JWT_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
+JWT_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----"
+
+# Google OAuth (get from Google Cloud Console)
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+GOOGLE_CALLBACK_URL=http://localhost:3006/api/auth/google/callback
+```
+
+Minimum for `apps/gateway/.env`:
+
+```env
 PORT=3000
-API_PREFIX=api
-LOG_LEVEL=info
-
-# JWT Secrets (use `openssl rand -base64 32` to generate)
-JWT_SECRET=your_32_char_secret_key_here
-JWT_REFRESH_SECRET=your_32_char_refresh_secret_here
-REDIS_PASSWORD=your_redis_password
-
-# Stripe (use live keys in production)
-STRIPE_SECRET_KEY=sk_live_xxx...
-STRIPE_WEBHOOK_SECRET=whsec_xxx...
-
-# Email
-SMTP_HOST=mail.example.com
-SMTP_PORT=587
-SMTP_SECURE=true
-SMTP_USER=noreply@example.com
-SMTP_PASSWORD=smtp_password
-SMTP_FROM=noreply@example.com
-
-# CORS
-CORS_ORIGIN=https://example.com,https://www.example.com
-
-# AWS S3 (optional)
-AWS_REGION=us-east-1
-AWS_ACCESS_KEY_ID=your_access_key
-AWS_SECRET_ACCESS_KEY=your_secret_key
-AWS_S3_BUCKET=ecommerce-prod
-
-# Grafana
-GRAFANA_PASSWORD=strong_grafana_password
+JWT_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----"
+BACKEND_URL=http://localhost:4000
+AUTH_SERVICE_URL=http://localhost:3006
+SEARCH_SERVICE_URL=http://localhost:3005
 ```
 
-### 2. Secure Secret Management
-
-Never commit `.env.production` to version control. Use one of:
-
-**Option A: Docker Secrets (Swarm)**
+### 3. Generate RSA key pair (one-time setup)
 
 ```bash
-echo "sk_live_xxx..." | docker secret create stripe_key -
+openssl genrsa -out private.pem 2048
+openssl rsa -in private.pem -pubout -out public.pem
 ```
 
-**Option B: Environment Variables**
+Copy `private.pem` content into `JWT_PRIVATE_KEY` in auth-service `.env`.
+Copy `public.pem` content into `JWT_PUBLIC_KEY` in backend, gateway, and search-service `.env`.
+
+### 4. Start infrastructure services
 
 ```bash
-export STRIPE_SECRET_KEY="sk_live_xxx..."
-export JWT_SECRET="..."
+cd apps/backend
+docker compose up -d
 ```
 
-**Option C: Secrets Manager (AWS Secrets Manager, HashiCorp Vault)**
-Integrate with your deployment tool to fetch secrets at runtime.
+This starts: Postgres (:5434), PgBouncer (:6432), Redis (:6379), RabbitMQ (:5672, :15672), Nginx (:80), Mailpit (:1025/:8025), Jaeger (:16686), Prometheus (:9090), Grafana (:3001), pgAdmin (:5050).
+
+Wait for Postgres to be ready:
+```bash
+docker compose logs -f postgres
+# Wait for: "database system is ready to accept connections"
+```
+
+### 5. Run database migrations
+
+```bash
+cd apps/backend
+npx prisma generate
+npx prisma migrate deploy
+
+cd ../auth-service
+npx prisma generate
+npx prisma migrate deploy
+```
+
+### 6. Start the applications
+
+Each app runs independently. Open separate terminals or use a process manager:
+
+```bash
+# Terminal 1 — Backend monolith (port 4000)
+cd apps/backend && npm run start:dev
+
+# Terminal 2 — Auth Service (port 3006)
+cd apps/auth-service && npm run start:dev
+
+# Terminal 3 — Notification Service (port 3004)
+cd apps/notification-service && npm run start:dev
+
+# Terminal 4 — Search Service (port 3005)
+cd apps/search-service && npm run start:dev
+
+# Terminal 5 — Gateway (port 3000, the public entry point)
+cd apps/gateway && node dist/main.js
+# (build first: cd apps/gateway && npx nest build)
+```
+
+### 7. Verify everything is running
+
+```bash
+# Gateway health (pings all upstream services)
+curl http://localhost:3000/health
+
+# Register a user
+curl -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"Password123!","firstName":"Test","lastName":"User"}'
+
+# Swagger UI for backend API (bypasses gateway — use for direct testing)
+open http://localhost:4000/api/docs
+```
+
+---
+
+## Service URLs (Development)
+
+- **API (via Gateway)**: http://localhost:3000
+- **Backend Swagger**: http://localhost:4000/api/docs
+- **Mailpit (email inbox)**: http://localhost:8025
+- **RabbitMQ Management**: http://localhost:15672 (guest/guest)
+- **Jaeger Tracing**: http://localhost:16686
+- **Prometheus**: http://localhost:9090
+- **Grafana**: http://localhost:3001 (admin/admin)
+- **pgAdmin**: http://localhost:5050
+
+---
 
 ## Database Migrations
 
-### 1. Initial Setup
+### Running migrations
+
+Always use `DIRECT_DATABASE_URL` for migrations (bypasses PgBouncer — advisory locks are session-scoped):
 
 ```bash
-# SSH into production server
-ssh user@prod-server
-
-# Navigate to application directory
-cd /app
-
-# Run Prisma migrations
-docker-compose -f docker-compose.prod.yml exec app npx prisma migrate deploy
+cd apps/backend
+npx prisma migrate deploy
 ```
 
-### 2. Backup Before Migration
+In CI/CD this runs automatically before the deploy step.
 
+### Before any migration in production
+
+1. Take a database backup:
 ```bash
-# Create database backup
-docker-compose -f docker-compose.prod.yml exec postgres pg_dump -U ecommerce_user -d ecommerce_db > backup_$(date +%Y%m%d_%H%M%S).sql
+docker compose exec -T postgres pg_dump -U ecommerce_user ecommerce_db | gzip > backup_$(date +%Y%m%d_%H%M%S).sql.gz
 ```
 
-### 3. Rolling Back Migrations
-
+2. Run the migration safety check (also runs in CI):
 ```bash
-# List migrations
-docker-compose -f docker-compose.prod.yml exec app npx prisma migrate status
-
-# Rollback to previous migration
-docker-compose -f docker-compose.prod.yml exec app npx prisma migrate resolve --rolled-back "migration_name"
+bash apps/backend/scripts/migration-safety-check.sh
 ```
 
-## Docker Deployment
+This fails if the migration contains destructive operations that could break the currently-running code.
 
-### 1. Build Docker Image
+### Expand-Contract pattern (zero-downtime schema changes)
+
+Never rename or drop a column in one step. The safe sequence:
+
+1. **Expand** — add the new column as nullable; deploy code that writes to both columns
+2. **Backfill** — migration populates the new column from old data
+3. **Contract** — make the column required and drop the old column (separate deploy, after old column is no longer referenced)
+
+This keeps old and new code working simultaneously during the rolling deploy window.
+
+---
+
+## Production Setup
+
+### Environment differences from development
+
+- `NODE_ENV=production`
+- All `STRIPE_SECRET_KEY` values are live keys (`sk_live_...`), not test
+- `JWT_PRIVATE_KEY` should be stored in a secrets manager (Docker Secrets, HashiCorp Vault), not in `.env` files
+- `CORS_ORIGIN` whitelisted to production domain(s) only
+- Redis and Postgres use strong passwords
+- Nginx terminates TLS (certificates from Let's Encrypt or a CA)
+
+### Docker image build
 
 ```bash
-# Build locally
+cd apps/backend
 docker build -t ecommerce-api:latest .
-docker tag ecommerce-api:latest ecommerce-api:1.0.0
-
-# Or use Docker Compose to build
-docker-compose -f docker-compose.prod.yml build
-```
-
-### 2. Push to Registry
-
-```bash
-# Login to registry
-docker login ghcr.io
-
-# Push image
+docker tag ecommerce-api:latest ghcr.io/your-org/ecommerce-api:$(git rev-parse --short HEAD)
 docker push ghcr.io/your-org/ecommerce-api:latest
-docker push ghcr.io/your-org/ecommerce-api:1.0.0
 ```
 
-### 3. Deploy with Docker Compose
+Each commit gets an immutable SHA-tagged image (`sha-abc1234`) for rollback plus a floating branch tag (`main`).
+
+### Zero-Downtime Blue-Green Deploy
+
+The deploy script handles the cutover automatically:
 
 ```bash
-# Create data directories
-mkdir -p ./volumes/postgres ./volumes/redis ./volumes/prometheus ./volumes/grafana
-
-# Start services
-docker-compose -f docker-compose.prod.yml up -d
-
-# Verify services are running
-docker-compose -f docker-compose.prod.yml ps
-
-# Check logs
-docker-compose -f docker-compose.prod.yml logs -f app
-
-# Stop services
-docker-compose -f docker-compose.prod.yml down
+bash apps/backend/scripts/blue-green-deploy.sh
 ```
 
-### 4. Verify Deployment
+What it does:
+1. Pulls the new Docker image from the registry
+2. Starts the "green" container
+3. Waits for `GET /health` to return 200 on green (60s timeout)
+4. Reloads Nginx upstream to point to green (zero-dropped-requests — Nginx finishes in-flight blue requests before cutting over)
+5. Drains the blue container (waits for connection count to reach 0)
+6. Stops blue
+
+If green's health check never passes, the script aborts. Blue continues serving.
+
+### CI/CD Pipeline
+
+GitHub Actions (`.github/workflows/ci.yml`) runs automatically on push:
+
+- Push to `develop` → deploys to staging after passing tests
+- Push to `main` → requires manual approval → deploys to production
+
+Pipeline steps:
+1. Lint + type check (parallel)
+2. Migration safety check (parallel)
+3. Tests against real Postgres + Redis (not mocks)
+4. Docker build + push to registry
+5. Blue-green deploy
+
+---
+
+## Monitoring
+
+### Grafana Dashboards
+
+Access at http://localhost:3001 (dev) or https://grafana.yourdomain.com (prod).
+
+Add Prometheus datasource if not auto-configured:
+- Datasource → New → Prometheus → URL: http://prometheus:9090
+
+Four dashboard types to import from `grafana/dashboards/`:
+- `red-dashboard.json` — Request Rate, Error Rate, Duration per endpoint
+- `business-dashboard.json` — orders/hr, revenue/hr, conversion rate
+- `database-dashboard.json` — query P95, pool utilisation
+- `infra-dashboard.json` — CPU, memory, disk per container
+
+### Alerting Rules
+
+Configure in Grafana → Alerting:
+
+- Error rate > 1% for 5 consecutive minutes
+- P95 latency > 500ms
+- PgBouncer pool > 90% saturated
+- Payment failure spike (> 0.1 events/s)
+- Disk space > 85%
+
+---
+
+## Backup & Restore
+
+### Automated backup
 
 ```bash
-# Check application health
-curl https://api.example.com/health
+# Daily at 2 AM (configured in crontab)
+bash apps/backend/scripts/backup.sh
 
-# Check database connection
-curl https://api.example.com/api/health/ready
-
-# Access API documentation
-open https://api.example.com/api/docs
+# Manually:
+docker compose exec -T postgres pg_dump -U ecommerce_user ecommerce_db | gzip > backup_$(date +%Y%m%d_%H%M%S).sql.gz
 ```
 
-## Nginx Configuration
+Backups are retained for 30 days. Files older than 30 days are auto-deleted.
 
-### 1. Deploy Nginx
-
-The `nginx.conf` is already configured in the repository. Key features:
-
-- **HTTP to HTTPS Redirect**: All HTTP traffic redirected to HTTPS
-- **Rate Limiting**: Auth endpoints limited to 5 req/min, API to 10 req/s
-- **Security Headers**: HSTS, X-Frame-Options, CSP, etc.
-- **Compression**: Gzip enabled for text/JSON responses
-- **Caching**: Static assets cached for 1 year
-
-### 2. Generate Self-Signed Certificate (Development)
+### Restore drill (run monthly)
 
 ```bash
-mkdir -p ssl
-openssl req -x509 -newkey rsa:4096 -keyout ssl/key.pem -out ssl/cert.pem -days 365 -nodes
+# Create a test database
+docker compose exec postgres createdb -U ecommerce_user ecommerce_db_test_restore
+
+# Restore
+gunzip -c backup_20260101_020000.sql.gz | docker compose exec -T postgres psql -U ecommerce_user ecommerce_db_test_restore
+
+# Verify row counts match
+docker compose exec postgres psql -U ecommerce_user ecommerce_db_test_restore -c "SELECT COUNT(*) FROM orders;"
 ```
 
-### 3. Use CA Certificate (Production)
+**Important:** backups you have never successfully restored do not actually exist. Run the restore drill monthly.
 
-```bash
-# Copy certificates to ssl directory
-cp /path/to/cert.pem ./ssl/cert.pem
-cp /path/to/key.pem ./ssl/key.pem
-
-# Verify certificate
-openssl x509 -in ssl/cert.pem -text -noout
-```
-
-### 4. Reload Nginx
-
-```bash
-# Reload configuration
-docker-compose -f docker-compose.prod.yml exec nginx nginx -s reload
-
-# Verify configuration
-docker-compose -f docker-compose.prod.yml exec nginx nginx -t
-```
-
-## SSL/TLS Setup
-
-### 1. Let's Encrypt with Certbot
-
-```bash
-# Install Certbot
-apt-get install certbot python3-certbot-nginx
-
-# Get certificate
-certbot certonly --standalone -d api.example.com -d example.com
-
-# Certificate location: /etc/letsencrypt/live/api.example.com/
-# Copy to application: cp -r /etc/letsencrypt/live/api.example.com/ ./ssl/
-```
-
-### 2. Auto-Renewal
-
-```bash
-# Certbot handles auto-renewal automatically
-# Verify renewal works
-certbot renew --dry-run
-
-# Check renewal timer
-systemctl list-timers
-```
-
-### 3. Update docker-compose.prod.yml
-
-```yaml
-volumes:
-  - /etc/letsencrypt/live/api.example.com/:/etc/nginx/ssl/:ro
-```
-
-## Monitoring Setup
-
-### 1. Access Grafana
-
-```bash
-# Grafana runs at port 3001
-# Default credentials: admin / (password from .env)
-# Login: https://api.example.com:3001
-```
-
-### 2. Configure Data Source
-
-- Datasource → New Data Source
-- Select Prometheus
-- URL: http://prometheus:9090
-- Save & Test
-
-### 3. Import Dashboards
-
-- Dashboards → Import
-- Upload JSON from `grafana/dashboards/api-metrics.json`
-
-### 4. Setup Alerts
-
-- Alerting → Alert rules
-- Configure thresholds for:
-  - High error rate (>5%)
-  - Database connection failures
-  - Memory usage (>80%)
-  - Disk space (>85%)
+---
 
 ## Scaling
 
-### 1. Horizontal Scaling (Multiple App Instances)
-
-Update `docker-compose.prod.yml`:
+### Horizontal app scaling
 
 ```yaml
+# docker-compose.prod.yml
 services:
   app:
     deploy:
-      replicas: 3 # Run 3 instances
+      replicas: 3
 ```
 
-### 2. Load Balancing
+Nginx load-balances across replicas. The app is stateless (no in-memory sessions — JWT only). PgBouncer pools connections from all replicas. BullMQ jobs are safe to process concurrently (jobs lock themselves via Redis).
 
-Nginx automatically load balances across instances using `least_conn` algorithm.
+### PgBouncer tuning
 
-### 3. Database Connection Pooling
+If connection pool becomes the bottleneck (watch `pgbouncer_pool_size` in Grafana):
 
-For multiple instances, use PgBouncer:
+```ini
+# pgbouncer.ini
+default_pool_size = 25    # increase from 20
+max_client_conn = 1000    # total app-side connections accepted
+```
+
+### Separate Redis instances
+
+Running BullMQ and caching on the same Redis instance is dangerous: `allkeys-lru` eviction can evict pending jobs. Run two Redis instances:
 
 ```yaml
-pgbouncer:
-  image: pgbouncer:latest
-  environment:
-    PGBOUNCER_DATABASES: ecommerce_db=host=postgres port=5432 user=ecommerce_user password=password
-    PGBOUNCER_POOL_MODE: transaction
-    PGBOUNCER_MAX_CLIENT_CONN: 1000
-    PGBOUNCER_DEFAULT_POOL_SIZE: 25
-```
-
-### 4. Redis Replication (Optional)
-
-For high-availability Redis:
-
-```yaml
-redis-master:
+redis-cache:
   image: redis:7-alpine
-  command: redis-server --requirepass password
+  command: redis-server --maxmemory-policy allkeys-lru --maxmemory 512mb
 
-redis-replica:
+redis-queue:
   image: redis:7-alpine
-  command: redis-server --slaveof redis-master 6379 --requirepass password
+  command: redis-server --maxmemory-policy noeviction
 ```
 
-## Backup Strategy
+Update `REDIS_URL` (cache) and `REDIS_QUEUE_URL` (BullMQ) in `.env`.
 
-### 1. Automated Database Backups
-
-```bash
-# Create backup script: backup.sh
-#!/bin/bash
-TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-BACKUP_DIR="/backups/postgres"
-
-mkdir -p $BACKUP_DIR
-
-docker-compose -f docker-compose.prod.yml exec -T postgres pg_dump \
-  -U ecommerce_user -d ecommerce_db | gzip > $BACKUP_DIR/db_$TIMESTAMP.sql.gz
-
-# Retain last 30 days
-find $BACKUP_DIR -type f -mtime +30 -delete
-
-echo "Backup completed: $BACKUP_DIR/db_$TIMESTAMP.sql.gz"
-
-# Schedule with cron
-0 2 * * * /app/backup.sh  # Daily at 2 AM
-```
-
-### 2. Backup Redis Data
-
-```bash
-# Enable Redis persistence
-redis-cli BGSAVE
-
-# Backup RDB file
-docker cp ecommerce_redis_prod:/data/dump.rdb ./backups/redis_$(date +%Y%m%d_%H%M%S).rdb
-```
-
-### 3. Restore from Backup
-
-```bash
-# Restore PostgreSQL
-gunzip < backup_20240101_020000.sql.gz | docker-compose -f docker-compose.prod.yml exec -T postgres psql -U ecommerce_user -d ecommerce_db
-
-# Restore Redis
-docker cp redis_20240101_020000.rdb ecommerce_redis_prod:/data/dump.rdb
-docker-compose -f docker-compose.prod.yml restart redis
-```
-
-### 4. Off-Site Backup
-
-```bash
-# Backup to S3
-aws s3 cp /backups/postgres/db_latest.sql.gz s3://backup-bucket/ecommerce/
-
-# Lifecycle policy: Archive after 30 days, delete after 90 days
-```
-
-## Rollback Procedures
-
-### 1. Rollback Docker Image
-
-```bash
-# If deployment fails, revert to previous image version
-docker-compose -f docker-compose.prod.yml pull
-docker-compose -f docker-compose.prod.yml down
-git checkout previous-commit
-docker-compose -f docker-compose.prod.yml up -d
-```
-
-### 2. Database Rollback
-
-```bash
-# If migration failed, restore from backup
-docker-compose -f docker-compose.prod.yml stop app
-gunzip < backup_pre_migration.sql.gz | docker-compose -f docker-compose.prod.yml exec -T postgres psql -U ecommerce_user -d ecommerce_db
-docker-compose -f docker-compose.prod.yml start app
-```
-
-### 3. Zero-Downtime Deployment
-
-```bash
-# Use rolling update strategy
-docker-compose -f docker-compose.prod.yml pull
-docker-compose -f docker-compose.prod.yml up -d --no-deps --scale app=3
-# Nginx automatically routes traffic only to healthy instances
-```
-
-## Troubleshooting
-
-### Application not starting
-
-```bash
-# Check logs
-docker-compose -f docker-compose.prod.yml logs app
-
-# Verify environment variables
-docker-compose -f docker-compose.prod.yml config | grep -E "JWT_|DATABASE"
-
-# Check database connection
-docker-compose -f docker-compose.prod.yml exec app npm run test:db
-```
-
-### High memory usage
-
-```bash
-# Check memory stats
-docker stats
-
-# Limit memory in docker-compose.prod.yml
-deploy:
-  resources:
-    limits:
-      memory: 512M
-```
-
-### Database connection errors
-
-```bash
-# Verify database is running
-docker-compose -f docker-compose.prod.yml ps postgres
-
-# Check connection string
-docker-compose -f docker-compose.prod.yml exec postgres psql -U ecommerce_user -d ecommerce_db -c "SELECT 1"
-
-# Check PgBouncer if using connection pooling
-docker-compose -f docker-compose.prod.yml logs pgbouncer
-```
-
-### SSL certificate issues
-
-```bash
-# Verify certificate validity
-openssl x509 -in ssl/cert.pem -text -noout
-
-# Check certificate dates
-openssl x509 -in ssl/cert.pem -noout -dates
-
-# Test SSL with curl
-curl -v --cacert ssl/cert.pem https://api.example.com/health
-```
-
-### Webhook delivery failures
-
-```bash
-# Check Stripe webhook endpoint
-stripe webhooks list
-
-# Verify webhook secret
-echo $STRIPE_WEBHOOK_SECRET
-
-# Test webhook delivery
-stripe trigger payment_intent.succeeded
-```
+---
 
 ## Security Checklist
 
-- [ ] All environment secrets set in production
-- [ ] Database backups configured and tested
-- [ ] SSL/TLS certificates installed and valid
-- [ ] Firewall rules configured (only 80, 443 open)
-- [ ] Database backups encrypted
-- [ ] Regular security updates scheduled
-- [ ] Monitoring and alerting configured
-- [ ] Logging enabled and centralized
-- [ ] Rate limiting configured
-- [ ] CORS origins whitelisted
-- [ ] Database password changed from default
-- [ ] Redis password set to secure value
-- [ ] SSH keys rotated
-- [ ] Stripe keys are live keys, not test keys
-- [ ] Email service credentials secured
-
-## Support & Monitoring
-
-### Monitoring URLs
-
-- **API Docs**: https://api.example.com/api/docs
-- **Health Check**: https://api.example.com/health
-- **Metrics**: https://api.example.com/api/metrics
-- **Prometheus**: https://prometheus.example.com:9090
-- **Grafana**: https://grafana.example.com:3001
-
-### Contact & Support
-
-For deployment issues, contact the DevOps team or create an issue in the repository.
+- [ ] RSA private key not committed to git (check with `git log --all -S "BEGIN RSA"`)
+- [ ] All `.env.*` files in `.gitignore`
+- [ ] Stripe live keys in production (not test keys)
+- [ ] Database password changed from default (`ecommerce_password`)
+- [ ] Redis password set (`requirepass` in redis.conf)
+- [ ] Nginx TLS configured (HTTPS only, HSTS header)
+- [ ] Firewall: only ports 80 and 443 open externally; all service ports internal only
+- [ ] RabbitMQ default credentials changed (not guest/guest)
+- [ ] Grafana password changed from default
+- [ ] Database backups tested (restore drill completed)
+- [ ] CORS `CORS_ORIGIN` set to production domain(s) only
+- [ ] `NODE_ENV=production` (disables Swagger UI, enables prod logging)

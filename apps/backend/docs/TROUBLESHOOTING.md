@@ -1,735 +1,414 @@
 # Troubleshooting Guide
 
-This guide helps resolve common issues when running the E-Commerce Backend application.
+Common issues and fixes when running the E-Commerce platform.
 
-## Common Issues & Solutions
+---
 
-### 1. npm or node Command Not Found
+## Quick Diagnostics
 
-**Problem:**
-
-```
-command not found: npm
-command not found: node
-```
-
-**Solution:**
-
-First, verify Node.js installation:
+Before diving into specific issues, run these to understand what is actually happening:
 
 ```bash
-# Check if Node.js is installed
-node --version
-npm --version
+# Are all infrastructure containers running?
+docker compose ps
 
-# If not found, install Node.js
-# macOS (using Homebrew)
-brew install node
+# Backend logs (main app, port 4000)
+docker compose logs -f app
 
-# Ubuntu/Debian
-sudo apt-get update
-sudo apt-get install nodejs npm
+# Any container crashing?
+docker compose logs --tail=50 postgres
+docker compose logs --tail=50 redis
+docker compose logs --tail=50 rabbitmq
 
-# Or use nvm (Node Version Manager) - recommended
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
-nvm install 20
-nvm use 20
-```
+# Is the gateway responding?
+curl http://localhost:3000/health
 
-**For shell PATH issues:**
-
-```bash
-# If npm is installed but not in PATH
-# Add Node to your shell profile
-# For bash (~/.bashrc or ~/.bash_profile)
-export PATH="/usr/local/bin:$PATH"
-
-# For zsh (~/.zshrc)
-export PATH="/usr/local/bin:$PATH"
-
-# Then reload your shell
-source ~/.bashrc
-# or
-source ~/.zshrc
+# Is the backend responding directly?
+curl http://localhost:4000/health
 ```
 
 ---
 
-### 2. Module Not Found / Dependency Errors
+## 1. Application Not Starting
 
-**Problem:**
-
-```
-Error: Cannot find module '@nestjs/common'
-```
-
-**Solution:**
+**Symptom:** `npm run start:dev` exits immediately or hangs.
 
 ```bash
-# Reinstall dependencies
-rm -rf node_modules package-lock.json
-npm install
+# Check environment file exists
+ls apps/backend/.env
 
-# Or use clean install (recommended for production)
-npm ci
+# Generate Prisma client (needed after fresh clone or schema change)
+cd apps/backend && npx prisma generate
+
+# Reinstall dependencies if modules are missing
+rm -rf node_modules && npm install
 ```
+
+**Missing env vars:** The app validates env on startup with `class-validator`. Check the error message — it will say exactly which var is missing. Copy `.env.example` and fill in values.
 
 ---
 
-### 3. ENOENT: Cannot Find Prisma Schema
+## 2. Database Connection Refused
 
-**Problem:**
-
-```
-Error: ENOENT: no such file or directory, open 'prisma/schema.prisma'
-```
-
-**Solution:**
+**Symptom:** `Can't reach database server at localhost:5434` or `connect ECONNREFUSED 127.0.0.1:5434`
 
 ```bash
-# Generate Prisma client
-npx prisma generate
-
-# Check schema exists
-ls -la prisma/schema.prisma
-
-# If schema doesn't exist, create it
-# Use: git checkout prisma/schema.prisma
-# Or restore from backup
-```
-
----
-
-### 4. Database Connection Failed
-
-**Problem:**
-
-```
-Error: Can't reach database server at `localhost:5432`
-```
-
-**Solution:**
-
-**Check PostgreSQL is running:**
-
-```bash
-# macOS
-brew services list | grep postgres
-
-# Ubuntu/Debian
-sudo systemctl status postgresql
-
-# Start if not running
-# macOS
-brew services start postgresql
-
-# Ubuntu/Debian
-sudo systemctl start postgresql
-```
-
-**Using Docker (Recommended):**
-
-```bash
-# Start development containers
-docker-compose up -d postgres redis
+# Start the database container
+cd apps/backend && docker compose up -d postgres pgbouncer
 
 # Verify containers are running
-docker-compose ps
+docker compose ps postgres pgbouncer
 
-# Check database is accessible
-docker-compose exec postgres psql -U ecommerce_user -d ecommerce_db -c "SELECT 1"
+# Test direct DB connection
+docker compose exec postgres psql -U ecommerce_user -d ecommerce_db -c "SELECT 1"
 ```
 
-**Check DATABASE_URL in .env:**
-
-```bash
-# Edit .env and ensure DATABASE_URL is correct
-# Development (local)
-DATABASE_URL=postgresql://ecommerce_user:ecommerce_password@localhost:5432/ecommerce_db
-
-# Development (Docker)
-DATABASE_URL=postgresql://ecommerce_user:ecommerce_password@postgres:5432/ecommerce_db
-```
-
----
-
-### 5. .env File Not Found
-
-**Problem:**
-
-```
-Error: Missing required environment variable: DATABASE_URL
-```
-
-**Solution:**
-
-```bash
-# Copy example environment file
-cp .env.example .env
-
-# Edit .env with your configuration
-nano .env
-# or
-vim .env
-```
-
-**Required environment variables:**
+**Wrong `DATABASE_URL`:** In development, the app connects through PgBouncer (port 6432), not Postgres directly (port 5434). Postgres external port is 5434 for tools like pgAdmin, but the app must use PgBouncer:
 
 ```env
-DATABASE_URL=postgresql://user:password@host:5432/db
-JWT_SECRET=your_32_char_secret_key_here
-JWT_REFRESH_SECRET=your_32_char_refresh_secret_here
-NODE_ENV=development
-PORT=3000
+# Correct for the NestJS app:
+DATABASE_URL=postgresql://ecommerce_user:ecommerce_password@localhost:6432/ecommerce_db?pgbouncer=true&connection_limit=1
+
+# Correct for migrations (bypasses PgBouncer):
+DIRECT_DATABASE_URL=postgresql://ecommerce_user:ecommerce_password@localhost:5434/ecommerce_db
 ```
+
+**Prisma migration error with PgBouncer:** If `prisma migrate deploy` fails with an advisory lock error, make sure you are using `DIRECT_DATABASE_URL` — migrations cannot use PgBouncer (advisory locks are session-scoped, incompatible with transaction pooling mode).
 
 ---
 
-### 6. TypeScript Compilation Errors
+## 3. Redis Connection Refused
 
-**Problem:**
-
-```
-error TS2304: Cannot find name 'RequestUser'
-```
-
-**Solution:**
+**Symptom:** `connect ECONNREFUSED 127.0.0.1:6379` on startup or during rate-limit/cache operations.
 
 ```bash
-# Generate Prisma types
-npx prisma generate
-
-# Type check
-npm run type-check
-
-# Fix type errors
-# Check src/common/types/ exist and exports are correct
-ls -la src/common/types/
-
-# Rebuild TypeScript
-npm run build
-```
-
----
-
-### 7. Nest Build Fails
-
-**Problem:**
-
-```
-Error: Cannot find source file src/main.ts
-```
-
-**Solution:**
-
-```bash
-# Verify project structure
-ls -la src/
-
-# File should exist: src/main.ts
-cat src/main.ts
-
-# Check tsconfig.json is valid
-cat tsconfig.json
-
-# Clean and rebuild
-rm -rf dist/
-npm run build
-```
-
----
-
-### 8. Port Already in Use
-
-**Problem:**
-
-```
-Error: listen EADDRINUSE: address already in use :::3000
-```
-
-**Solution:**
-
-```bash
-# Find process using port 3000
-lsof -i :3000
-# or
-netstat -tulpn | grep 3000
-
-# Kill process
-kill -9 <PID>
-
-# Or use different port
-PORT=3001 npm run start:dev
-```
-
----
-
-### 9. Redis Connection Failed
-
-**Problem:**
-
-```
-Error: connect ECONNREFUSED 127.0.0.1:6379
-```
-
-**Solution:**
-
-**Check Redis is running:**
-
-```bash
-# macOS
-brew services list | grep redis
-
-# Ubuntu/Debian
-sudo systemctl status redis-server
-
-# Start if not running
-# macOS
-brew services start redis
-
-# Ubuntu/Debian
-sudo systemctl start redis-server
-```
-
-**Using Docker:**
-
-```bash
-# Start Redis container
-docker-compose up -d redis
-
-# Verify
-docker-compose exec redis redis-cli ping
+docker compose up -d redis
+docker compose exec redis redis-cli ping
 # Should return: PONG
 ```
 
-**Disable Redis (optional):**
+Check `REDIS_URL=redis://localhost:6379` in `.env`.
 
-```env
-# Leave empty to disable caching
-REDIS_URL=
+**BullMQ jobs disappearing:** If you run BullMQ and caching on the same Redis instance with `allkeys-lru` eviction, Redis can evict pending jobs. The fix is two separate Redis instances — see DEPLOYMENT.md scaling section.
+
+---
+
+## 4. RabbitMQ Not Connecting
+
+**Symptom:** Notification Service crashes on startup with AMQP connection error, or emails are never delivered.
+
+```bash
+docker compose up -d rabbitmq
+
+# Wait ~10 seconds for RabbitMQ to initialize, then check:
+curl -u guest:guest http://localhost:15672/api/overview
+# Should return JSON with cluster info
+```
+
+Check that `RABBITMQ_URL=amqp://guest:guest@localhost:5672` is set in backend and notification-service `.env`.
+
+**Outbox events stuck at PENDING:** The Outbox Processor polls every 5 seconds and publishes to RabbitMQ. If RabbitMQ is down, events stay `PENDING`. Once RabbitMQ recovers, the processor retries automatically. Check `OutboxEvent` status in the DB:
+
+```sql
+SELECT status, COUNT(*) FROM "OutboxEvent" GROUP BY status;
 ```
 
 ---
 
-### 10. Prisma Migration Issues
+## 5. Port 3000 vs Port 4000
 
-**Problem:**
+This is a common confusion point. The port assignments:
 
+- **:3000** — Gateway (the public entry point, proxies to other services)
+- **:4000** — Backend monolith (internal, not intended to be hit directly in production)
+- **:3001** — Grafana
+- **:3004** — Notification Service
+- **:3005** — Search Service
+- **:3006** — Auth Service
+
+When testing locally without the gateway, hit `:4000` directly. Swagger UI is at `http://localhost:4000/api/docs`.
+
+When testing the full stack (including JWT verification and routing), use `:3000` via the gateway.
+
+---
+
+## 6. JWT Errors
+
+**Symptom:** 401 Unauthorized on every request, or "invalid signature" errors.
+
+This project uses **RS256 (asymmetric)** JWT, not HS256. There is no single `JWT_SECRET` — there is a private/public key pair.
+
+```bash
+# Generate keys (one-time setup):
+openssl genrsa -out private.pem 2048
+openssl rsa -in private.pem -pubout -out public.pem
+cat private.pem   # copy into JWT_PRIVATE_KEY in auth-service .env
+cat public.pem    # copy into JWT_PUBLIC_KEY in backend .env and gateway .env
 ```
-Error: Migration failed
+
+Keys must have `\n` line endings as a single string in `.env`, or use multi-line syntax:
+
+```env
+JWT_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqh...
+-----END PUBLIC KEY-----"
 ```
 
-**Solution:**
+**"TokenExpiredError":** Access tokens expire after 15 minutes. Use the refresh token to get a new one: `POST /api/auth/refresh`.
+
+---
+
+## 7. Gateway Returning 502 Bad Gateway
+
+The gateway proxies to upstream services. 502 means the upstream is not reachable.
+
+```bash
+# Which upstream is down?
+curl http://localhost:3000/health
+# Response lists each service status
+
+# Start whichever is missing
+cd apps/auth-service && npm run start:dev     # if /api/auth fails
+cd apps/backend && npm run start:dev           # if /api/* fails
+cd apps/search-service && npm run start:dev    # if /api/search fails
+```
+
+The backend must run on port 4000 (`PORT=4000` in its `.env`) when the gateway is active — the gateway is the one using port 3000.
+
+---
+
+## 8. Prisma Migration Issues
 
 ```bash
 # Check migration status
-npx prisma migrate status
+cd apps/backend && npx prisma migrate status
 
-# Reset database (WARNING: deletes all data)
-npx prisma migrate reset
-
-# Create new migration
-npx prisma migrate dev --name description
-
-# Deploy existing migrations
+# Apply pending migrations
 npx prisma migrate deploy
 
-# Rollback last migration
-npx prisma migrate resolve --rolled-back "migration_name"
+# Reset (WARNING: deletes all data — dev only)
+npx prisma migrate reset
+
+# Create a new migration after schema change
+npx prisma migrate dev --name describe_your_change
+```
+
+**Advisory lock error:** Use `DIRECT_DATABASE_URL` (port 5434, bypasses PgBouncer). See issue #2 above.
+
+**"Drift detected":** Prisma detected the DB schema differs from the migration history. This usually means someone ran raw SQL against the DB. Run `npx prisma migrate diff` to see what changed, then create a migration to reconcile.
+
+---
+
+## 9. Emails Not Being Delivered (Dev)
+
+In development, all emails are captured by **Mailpit** — a local SMTP server that never actually sends to real addresses.
+
+```bash
+# Check Mailpit is running
+docker compose ps mailpit
+
+# Open the inbox UI
+open http://localhost:8025
+```
+
+If no emails appear in Mailpit:
+1. Check notification-service is running and connected to RabbitMQ
+2. Check RabbitMQ management UI (http://localhost:15672) — are messages being consumed?
+3. Check notification-service logs: `cd apps/notification-service && npm run start:dev`
+
+**SMTP_HOST in notification-service `.env`** must point to `localhost:1025` (Mailpit) in development:
+
+```env
+SMTP_HOST=localhost
+SMTP_PORT=1025
+SMTP_SECURE=false
 ```
 
 ---
 
-### 11. Start Script Doesn't Work
+## 10. OpenSearch / Search Not Working
 
-**Problem:**
-
-```
-npm run start:dev
-# or
-npm start
-```
-
-**Solution:**
+**Symptom:** `GET /api/search?q=laptop` returns empty results or 503.
 
 ```bash
-# Check package.json scripts
-cat package.json | grep -A 10 '"scripts"'
+# Check OpenSearch is running
+docker compose ps opensearch
+curl http://localhost:9200/_cluster/health
 
-# Try running NestJS CLI directly
-npx nest start --watch
-# or
-npx nest start
+# Check search-service logs for indexing errors
+cd apps/search-service && npm run start:dev
+```
 
-# Verify @nestjs/cli is installed
-npm list @nestjs/cli
+OpenSearch takes ~30 seconds to start. The search service has built-in retry logic (8 attempts, 5-second intervals) but it must be running when it retries.
 
-# If not installed
-npm install --save-dev @nestjs/cli
+**Index empty after product creation:** Products are indexed via RabbitMQ events. Check:
+1. `OutboxEvent` table — are `product.created` events getting published? (`SELECT * FROM "OutboxEvent" WHERE "eventType" = 'product.created'`)
+2. RabbitMQ management — is the search-service queue consuming?
+3. OpenSearch directly: `curl 'http://localhost:9200/products/_count'`
+
+---
+
+## 11. TypeScript / Build Errors
+
+```bash
+# Type check without building (fastest)
+cd apps/backend && npm run type-check
+
+# Generate Prisma types first (often the fix)
+npx prisma generate
+
+# Full rebuild
+rm -rf dist && npm run build
+```
+
+**Gateway build:** The gateway uses `npx nest build` (not just `tsc`) because it needs the NestJS compiler for decorators:
+
+```bash
+cd apps/gateway && npx nest build
+node dist/main.js
 ```
 
 ---
 
-### 12. Tests Not Running
-
-**Problem:**
-
-```
-Error: Cannot find jest configuration
-```
-
-**Solution:**
+## 12. Tests Failing
 
 ```bash
-# Run tests
-npm run test
+# Run all unit tests
+cd apps/backend && npm run test
 
-# Run with coverage
+# Run with coverage report
 npm run test:cov
 
-# Run specific test file
-npm run test -- auth.service.spec.ts
+# Run a specific file
+npm run test -- orders.service.spec.ts
 
-# Run E2E tests
+# Run E2E tests (requires running DB + Redis)
 npm run test:e2e
-
-# Check jest.config.js exists
-ls -la jest.config.js
 ```
+
+Tests use a real Postgres and Redis (configured via `.env.test` or environment variables in CI). If the DB is not running, the integration tests will fail. There are intentionally no DB mocks — mocked tests gave false confidence when mock behaviour diverged from real DB behaviour.
 
 ---
 
-### 13. Linting Errors
-
-**Problem:**
-
-```
-error  Unexpected any  @typescript-eslint/no-explicit-any
-```
-
-**Solution:**
+## 13. Linting / Formatting Errors
 
 ```bash
-# Run linter
-npm run lint
-
-# Check ESLint config
-cat .eslintrc.js
+# Check (no writes)
+npm run lint:check
+npm run format:check
 
 # Fix auto-fixable issues
 npm run lint -- --fix
-
-# Check specific file
-npm run lint -- src/modules/auth/auth.service.ts
+npm run format
 ```
+
+Pre-commit hooks run lint + format + type-check automatically. If a commit fails, the hook output tells you exactly what to fix.
 
 ---
 
-### 14. Docker Compose Issues
-
-**Problem:**
-
-```
-Error response from daemon: invalid mount config
-```
-
-**Solution:**
+## 14. High Memory Usage
 
 ```bash
-# Validate docker-compose syntax
-docker-compose config
+# Check container memory
+docker stats
 
-# Check volumes
-docker-compose exec postgres ls -la /var/lib/postgresql/data
-
-# View logs for specific service
-docker-compose logs postgres
-docker-compose logs redis
-docker-compose logs app
-
-# Rebuild containers
-docker-compose down -v  # Remove volumes!
-docker-compose build
-docker-compose up -d
-
-# Check resource limits
-docker-compose exec app free -h  # Memory
-docker-compose exec app df -h   # Disk
-```
-
----
-
-### 15. Health Check Failing
-
-**Problem:**
-
-```
-HEALTHCHECK FAILED: failed to get response from 'http://localhost:3000/health'
-```
-
-**Solution:**
-
-```bash
-# Check if server is running
-curl http://localhost:3000/health
-
-# Check logs for errors
-npm run start:dev  # Watch output
-
-# Verify endpoint exists
-# src/app.controller.ts should have @Get('/health')
-
-# Check application started
-# Look for "NestApplication successfully started" in logs
-
-# Wait for application to fully initialize
-# Startup can take 5-10 seconds with Prisma migrations
-```
-
----
-
-### 16. JWT Token Errors
-
-**Problem:**
-
-```
-Error: JWT secret is not set
-Error: Invalid token signature
-```
-
-**Solution:**
-
-```bash
-# Generate secure JWT secrets
-openssl rand -base64 32
-
-# Update .env
-JWT_SECRET=<generated_value_32_chars>
-JWT_REFRESH_SECRET=<generated_value_32_chars>
-
-# Restart application
-npm run start:dev
-
-# Verify secrets are at least 32 characters
-cat .env | grep JWT_SECRET | wc -c  # Should be > 32
-```
-
----
-
-### 17. CORS Errors
-
-**Problem:**
-
-```
-Access to XMLHttpRequest blocked by CORS policy
-```
-
-**Solution:**
-
-```env
-# Update CORS_ORIGIN in .env
-# For development
-CORS_ORIGIN=http://localhost:3000,http://localhost:3001
-
-# For production
-CORS_ORIGIN=https://example.com,https://app.example.com
-```
-
-**Verify in code:**
-
-```bash
-# Check CORS configuration in src/main.ts
-grep -A 5 "cors:" src/main.ts
-
-# Check app.module.ts for ConfigModule
-grep -A 10 "cors" src/app.module.ts
-```
-
----
-
-### 18. Swagger/OpenAPI Not Loading
-
-**Problem:**
-
-```
-Cannot GET /api/docs
-```
-
-**Solution:**
-
-```bash
-# Check if Swagger is configured in main.ts
-grep -A 10 "SwaggerModule" src/main.ts
-
-# Verify @nestjs/swagger is installed
-npm list @nestjs/swagger
-
-# Access correct URL
-# http://localhost:3000/api/docs
-
-# Check route prefix
-# If API_PREFIX=api, then /api/docs
-# Otherwise check main.ts for prefix configuration
-```
-
----
-
-### 19. Memory Leaks / High Memory Usage
-
-**Problem:**
-
-```
-JavaScript heap out of memory
-FATAL ERROR: CALL_AND_RETRY_LAST Allocation failed - JavaScript heap out of memory
-```
-
-**Solution:**
-
-```bash
-# Increase Node.js memory limit
+# Increase Node.js heap if needed
 NODE_OPTIONS="--max-old-space-size=2048" npm run start:dev
-
-# Or edit package.json
-"start:dev": "NODE_OPTIONS=--max-old-space-size=2048 nest start --watch"
-
-# Check memory usage
-npm run start:dev
-# Monitor with: watch -n 1 'top -p <PID>'
 ```
+
+Common causes:
+- Pino logging in pretty mode (pino-pretty) uses more memory; switch to JSON format in production
+- Large Prisma result sets without `select` — always specify which fields you need
+- BullMQ job results accumulating in Redis — set `removeOnComplete: true` on jobs
 
 ---
 
-### 20. Unable to Connect to Stripe
+## 15. Circuit Breaker Open (Stripe 503 Errors)
 
-**Problem:**
+**Symptom:** All payment attempts return `503 Service Unavailable` even though Stripe is fine.
 
-```
-Error: Missing API Key. Provide your API key as an argument to Stripe()
-```
+The circuit breaker trips after 50% error rate over 5+ requests and stays open for 30 seconds before attempting a probe request. This is usually caused by a burst of failures (bad Stripe key, network blip).
 
-**Solution:**
+Check the backend logs for: `[CircuitBreaker] State changed: closed → open`
 
-```env
-# Add Stripe keys to .env
-STRIPE_SECRET_KEY=sk_test_your_test_key_here
-STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret_here
+Wait 30 seconds for the half-open probe. If Stripe responds successfully, the circuit closes automatically.
 
-# For production use live keys
-STRIPE_SECRET_KEY=sk_live_your_live_key_here
-```
+If the circuit is permanently open after Stripe recovers, restart the backend (the circuit state is in-memory, not persisted).
 
 ---
 
-### 21. Pino Logger Transport Error
+## 16. Phase 10 — DB Analytics Endpoints
 
-**Problem:**
+### `GET /api/admin/db/slow-queries` returns empty array
 
-```
-ERROR [ExceptionHandler] unable to determine transport target for "pino-pretty"
-Error: unable to determine transport target for "pino-pretty"
-```
+`pg_stat_statements` only tracks queries after the extension is loaded AND after queries have been run. Two possible causes:
 
-**Solution:**
+1. **Postgres was not started with `shared_preload_libraries=pg_stat_statements`.**
+   Check: `docker compose exec postgres psql -U ecommerce_user -d ecommerce_db -c "SHOW shared_preload_libraries;"`
+   If empty, postgres is running without the flag. The `docker-compose.yml` already sets this via `command: postgres -c shared_preload_libraries=...`. If you started postgres before this change was applied, restart it: `docker compose restart postgres`.
 
-This error occurs when the logger tries to use `pino-pretty` for pretty-printing logs but it's not installed. It's an optional development dependency.
+2. **No queries have been run since the last `pg_stat_statements_reset()`.**
+   Hit a few endpoints, then call the slow-queries API again.
 
-**Option A: Install pino-pretty (Recommended for development)**
+### `GET /api/admin/db/slow-queries` → 500 with "BigInt serialization"
 
+Any raw Postgres query that returns `bigint` (e.g. `COUNT(*)`, `pg_class.reltuples`, `pg_stat_statements.calls`) will cause `JSON.stringify` to throw `"Do not know how to serialize a BigInt"`. Fix in the service: either cast to `TEXT` in SQL (`calls::TEXT`) or convert in TypeScript (`Number(row.calls)`).
+
+### `POST /api/admin/db/reset-stats` → 500
+
+`pg_stat_statements_reset()` returns `void`. Using `prisma.$queryRaw` on a void-returning function causes a `PrismaClientKnownRequestError`. Use `prisma.$executeRaw` for any Postgres function or statement that returns no rows.
+
+### `GET /api/admin/db/partitions` → 500 on first deploy
+
+The `RequestMetric` table is partitioned. Prisma's `migrate deploy` applies the migration that creates the partitioned table, but if you run `prisma migrate deploy` against a fresh DB before restarting postgres with `shared_preload_libraries`, the `CREATE EXTENSION` migration fails. Fix: restart postgres first, then run migrations.
+
+### `GET /api/admin/db/replication/lag` → `replicaConnected: false`
+
+The replica is not running. This is expected when using only `docker-compose.yml`. Start the replica with:
 ```bash
-npm install --save-dev pino-pretty
-
-# Then enable it in src/modules/logger/logger.module.ts:
-# Uncomment the line with transport configuration
+docker compose -f docker-compose.yml -f docker-compose.replica.yml up -d
 ```
+Add `READ_REPLICA_DATABASE_URL=postgresql://ecommerce_user:ecommerce_password@localhost:5435/ecommerce_db` to `.env`. The `ReadReplicaService` falls back to the primary if this env var is not set.
 
-**Option B: Use without pino-pretty (Works fine as-is)**
-The application works perfectly with JSON format logs (the default). No additional setup needed:
+### RequestMetric table has 0 rows after many requests
 
+The middleware samples 10% of requests (by design). With low traffic, you may see 0 rows. Send 50+ requests to a non-health-check endpoint to get consistent samples:
 ```bash
-# Just run normally - logs will be in JSON format
-npm run start:dev
+for i in $(seq 1 50); do curl -s http://localhost:4000/api/products > /dev/null; done
 ```
 
-**Log format comparison:**
+If still 0 rows, check that the middleware is logging errors (look for `RequestMetric write failed` in the backend log). The most common cause is a fire-and-forget promise failing silently — the middleware now logs errors via `.catch()`.
 
-With pino-pretty (pretty, human-readable):
+### Partition "no partition found for row" error
 
+This appears in the backend log when a request timestamp falls outside all existing partitions. It happens if a new quarter starts before the next partition is created. Fix:
+```bash
+bash apps/backend/scripts/create-partition.sh
+# or via API:
+curl -X POST http://localhost:4000/api/admin/db/partitions/create-next -H "Authorization: Bearer $ADMIN_TOKEN"
 ```
-  10:30:00 AM POST /api/auth/login 200 (12ms)
-  User logged in successfully
-```
-
-Without pino-pretty (JSON, machine-readable, default):
-
-```json
-{ "level": 30, "time": "2024-01-15T10:30:00.000Z", "method": "POST", "msg": "User logged in" }
-```
-
-Both formats work equally well. JSON is actually preferred in production for log aggregation.
+Schedule `create-partition.sh` to run on the 25th of the last month of each quarter (March 25, June 25, September 25, December 25).
 
 ---
 
-## Development Server Setup Checklist
+## Development Checklist
 
-- [ ] Node.js 20+ installed (`node --version`)
-- [ ] npm installed (`npm --version`)
-- [ ] Dependencies installed (`npm install`)
-- [ ] .env file created (`cp .env.example .env`)
-- [ ] PostgreSQL running (Docker or local)
-- [ ] Redis running (Docker or local)
-- [ ] Prisma schema exists (`ls prisma/schema.prisma`)
-- [ ] Prisma client generated (`npx prisma generate`)
-- [ ] Database migrations run (`npx prisma migrate dev`)
-- [ ] JWT secrets configured (32+ characters)
-- [ ] Database URL correct in .env
-- [ ] All required env vars set (check .env.example)
+Before reporting a bug, verify:
+
+- [ ] `docker compose ps` — all infrastructure containers are `Up`
+- [ ] Backend is running on port **4000** (not 3000)
+- [ ] `apps/backend/.env` exists and has `DATABASE_URL`, `REDIS_URL`, `JWT_PUBLIC_KEY`
+- [ ] `npx prisma generate` has been run after any schema change
+- [ ] `npx prisma migrate deploy` has been run
+- [ ] Gateway is running on port 3000 (if testing through gateway)
+- [ ] Auth service is running on port 3006 (if testing auth endpoints)
 
 ---
 
 ## Getting Help
 
-If issues persist:
-
-1. **Check Documentation**
-   - README.md - General setup
-   - docs/ARCHITECTURE.md - System design
-   - docs/DEPLOYMENT.md - Production setup
-
-2. **Check Logs**
-   - Application logs (stdout/stderr)
-   - Database logs (`docker logs <container>`)
-   - System logs (`journalctl -u service-name`)
-
-3. **Debug Tips**
-   - Add console.log() for debugging
-   - Use VS Code debugger: `npm run start:debug`
-   - Check database directly: `npx prisma studio`
-   - Verify endpoints with curl: `curl http://localhost:3000/api/products`
-
-4. **Report Issues**
-   - GitHub Issues: https://github.com/your-org/ecommerce-backend/issues
-   - Provide full error message and steps to reproduce
-   - Include environment info (Node version, OS, Docker version)
-
----
-
-## Performance Tips
-
-```bash
-# Run in production mode
-npm run build
-npm run start:prod
-
-# Use load testing to identify bottlenecks
-npm run load:mixed
-
-# Monitor with Prometheus
-open http://localhost:9090
-
-# View dashboards with Grafana
-open http://localhost:3001
-```
-
----
-
-**Last Updated**: January 2024
+- Swagger UI (backend direct): http://localhost:4000/api/docs
+- RabbitMQ management: http://localhost:15672
+- Jaeger traces: http://localhost:16686
+- Mailpit inbox: http://localhost:8025
+- Prisma Studio (DB browser): `cd apps/backend && npx prisma studio`

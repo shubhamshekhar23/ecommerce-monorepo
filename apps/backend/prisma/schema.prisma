@@ -570,3 +570,30 @@ model ReturnItem {
 
   @@index([returnRequestId])
 }
+
+// ── Phase 10: Advanced Database ──────────────────────────────────────────────
+
+// RequestMetric: HTTP request timing data, stored in a range-partitioned table.
+//
+// Why a composite @@id([id, timestamp])?
+//   PostgreSQL requires the partition key to be part of any unique constraint.
+//   Since we partition by RANGE(timestamp), timestamp must be in the PK.
+//   The migration creates the table as PARTITION BY RANGE ("timestamp") —
+//   Prisma itself creates a regular table but the migration overrides this.
+//
+// Usage: findFirst({ where: { id } }) works via the index.
+// For true PK lookup: findFirst({ where: { id, timestamp } }).
+model RequestMetric {
+  id         BigInt   @default(autoincrement())
+  timestamp  DateTime @default(now()) @db.Timestamptz(3)
+  method     String   @db.Text
+  path       String   @db.Text
+  statusCode Int
+  durationMs Int
+  userId     String?  @db.Text
+
+  @@id([id, timestamp])
+  @@index([timestamp])
+  @@index([path, statusCode])
+  @@index([userId])
+}

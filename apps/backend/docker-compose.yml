@@ -17,6 +17,17 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: ecommerce_postgres
+    # Phase 10: shared_preload_libraries must be set at startup (not via SQL).
+    # pg_stat_statements tracks execution stats for all queries — required for
+    # GET /api/admin/db/slow-queries to return data.
+    # wal_level=replica enables streaming replication (used with docker-compose.replica.yml).
+    command: >
+      postgres
+      -c shared_preload_libraries=pg_stat_statements
+      -c pg_stat_statements.track=all
+      -c wal_level=replica
+      -c max_wal_senders=3
+      -c wal_keep_size=64
     environment:
       POSTGRES_USER: ecommerce_user
       POSTGRES_PASSWORD: ecommerce_password

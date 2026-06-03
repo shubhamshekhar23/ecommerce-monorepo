@@ -12,33 +12,45 @@ Track your progress against every concept a senior/staff backend engineer carrie
 ```
 DATABASE                    SYSTEM DESIGN               INFRA & OPS
 ─────────────────────────   ─────────────────────────   ─────────────────────
-□ Index types & when        □ Event-driven arch         □ Docker multi-stage
-□ EXPLAIN ANALYZE           □ CQRS                      □ Nginx reverse proxy
-□ Query planning            □ Event Sourcing             □ PgBouncer pooling
-□ Isolation levels          □ Saga pattern               □ CI/CD pipeline
-□ MVCC internals            □ Outbox pattern             □ Zero-downtime deploys
-□ SELECT FOR UPDATE         □ Idempotency                □ Blue-green strategy
-□ Connection pooling        □ Circuit Breaker            □ Secrets management
-□ Partitioning              □ Retry + jitter             □ Health checks
-□ Read replicas             □ Dead letter queues         □ Graceful shutdown
-□ Zero-downtime migration   □ Cache patterns (4 types)   □ Structured logging
-□ Full-text search          □ Rate limiting algorithms   □ Distributed tracing
-□ Materialized views        □ Distributed locks          □ Prometheus + Grafana
-□ Cursor pagination         □ Webhook reliability        □ Alerting rules
-□ N+1 detection             □ Fan-out pattern            □ Log correlation IDs
-□ VACUUM & bloat            □ Snapshot pattern           □ Backup + PITR
+✓ Index types & when        ✓ Event-driven arch         ✓ Docker multi-stage
+✓ EXPLAIN ANALYZE           ✓ CQRS                      ✓ Nginx reverse proxy
+✓ Query planning            □ Event Sourcing             ✓ PgBouncer pooling
+□ Isolation levels          ✓ Saga pattern               ✓ CI/CD pipeline
+✓ MVCC internals            ✓ Outbox pattern             ✓ Zero-downtime deploys
+✓ SELECT FOR UPDATE         ✓ Idempotency                ✓ Blue-green strategy
+✓ Connection pooling        ✓ Circuit Breaker            ✓ Secrets management
+✓ Partitioning              ✓ Retry + jitter             ✓ Health checks
+✓ Read replicas             ✓ Dead letter queues         ✓ Graceful shutdown
+✓ Zero-downtime migration   ✓ Cache patterns (4 types)   ✓ Structured logging
+✓ Full-text search          ✓ Rate limiting algorithms   ✓ Distributed tracing
+✓ Materialized views        ✓ Distributed locks          ✓ Prometheus + Grafana
+✓ Cursor pagination         ✓ Webhook reliability        ✓ Alerting rules
+✓ N+1 detection             ✓ Fan-out pattern            ✓ Log correlation IDs
+✓ VACUUM & bloat            ✓ Snapshot pattern           ✓ Backup + PITR
 
 SECURITY                    ARCHITECTURE                MICROSERVICES
 ─────────────────────────   ─────────────────────────   ─────────────────────
-□ JWT internals (RS256)     □ DDD bounded contexts      □ gRPC vs REST vs MQ
-□ OAuth2/OIDC + PKCE        □ Repository pattern        □ Strangler fig pattern
-□ 2FA TOTP algorithm        □ Aggregates                □ Service-to-service auth
-□ RBAC vs ABAC              □ Domain events             □ Token introspection
-□ OWASP Top 10              □ Hexagonal architecture    □ API Gateway pattern
-□ Audit trails              □ Strategy pattern          □ Service mesh concepts
-□ Row-level security        □ State machine pattern     □ Change data capture
-□ API key auth              □ Rules engine pattern      □ Event bus vs message bus
+✓ JWT internals (RS256)     □ DDD bounded contexts      ✓ gRPC vs REST vs MQ
+✓ OAuth2/OIDC + PKCE        ✓ Repository pattern        ✓ Strangler fig pattern
+✓ 2FA TOTP algorithm        □ Aggregates                ✓ Service-to-service auth
+✓ RBAC vs ABAC              ✓ Domain events             □ Token introspection
+✓ OWASP Top 10              □ Hexagonal architecture    ✓ API Gateway pattern
+✓ Audit trails              ✓ Strategy pattern          □ Service mesh concepts
+✓ Row-level security        ✓ State machine pattern     □ Change data capture
+□ API key auth              ✓ Rules engine pattern      ✓ Event bus vs message bus
 ```
+
+**Legend:** ✓ implemented in code · □ not yet built
+
+**Not built (honest accounting):**
+- *Event Sourcing* — documented in Phase 4 as a study concept; not implemented (complexity vs benefit trade-off at this scale)
+- *Isolation levels* — PgBouncer + Prisma transaction mode used throughout; explicit demo of READ COMMITTED vs SERIALIZABLE behaviours not written
+- *Token introspection* — chose self-validating RS256 JWT (0ms overhead) over introspection endpoint (20ms per request); trade-off documented in Phase 9 notes
+- *DDD bounded contexts / Aggregates / Hexagonal architecture* — architectural patterns applied informally; no explicit DDD modelling exercise
+- *Service mesh concepts* — Envoy/Linkerd sidecar proxies not deployed; concepts documented in Phase 9
+- *Change data capture* — WAL-based CDC documented in Phase 10 study notes; Debezium not wired up (Outbox pattern covers the same use case at this scale)
+- *API key auth* — not a project requirement; JWT covers all authentication needs
+
 
 ---
 

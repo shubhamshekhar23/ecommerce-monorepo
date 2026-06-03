@@ -1,688 +1,269 @@
 # Architecture Overview
 
-This document describes the architecture and design of the E-Commerce Backend application.
+This document describes the current architecture of the E-Commerce platform. The system started as a modular NestJS monolith and has been incrementally extended with extracted microservices (Phase 9 pattern: Strangler Fig).
 
-## Table of Contents
+---
 
-- [System Overview](#system-overview)
-- [Technology Stack](#technology-stack)
-- [Project Structure](#project-structure)
-- [Core Components](#core-components)
-- [Data Flow](#data-flow)
-- [Database Schema](#database-schema)
-- [Authentication & Authorization](#authentication--authorization)
-- [API Design](#api-design)
-- [Caching Strategy](#caching-strategy)
-- [Error Handling](#error-handling)
-- [Deployment Architecture](#deployment-architecture)
-
-## System Overview
-
-The E-Commerce Backend is a production-ready REST API built with NestJS, PostgreSQL, and Stripe integration. It provides complete e-commerce functionality including user management, products, shopping cart, orders, and payments.
-
-### Key Features
-
-- **Authentication**: JWT-based with refresh tokens
-- **Authorization**: Role-based access control (RBAC)
-- **Products**: Catalog with categories, search, and filtering
-- **Cart**: Shopping cart with persistent storage
-- **Orders**: Order management and history
-- **Payments**: Stripe integration with webhook handling
-- **Email**: Transactional email notifications
-- **Files**: File upload and storage
-- **Monitoring**: Structured logging, health checks, metrics
-
-## Technology Stack
-
-```
-┌─────────────────────────────────────────────┐
-│          Application Layer (NestJS)         │
-│  Controllers • Services • Guards • Filters  │
-└────────────────────┬────────────────────────┘
-                     │
-        ┌────────────┼────────────┐
-        │            │            │
-   ┌────▼──┐    ┌───▼─┐    ┌────▼──┐
-   │Database│   │Cache│    │ Queue │
-   │PgSQL   │   │Redis│    │  Bull │
-   │Prisma  │   │     │    │       │
-   └────────┘   └─────┘    └───────┘
-        │            │
-        └────────────┼────────────┐
-                     │            │
-            ┌────────▼┐    ┌──────▼────┐
-            │Monitoring     │ External  │
-            │Prometheus    │  Services │
-            │Grafana       │ Stripe,S3 │
-            │Logs          │ SMTP      │
-            └───────────────────────────┘
-```
-
-### Core Technologies
-
-| Component      | Technology         | Purpose                |
-| -------------- | ------------------ | ---------------------- |
-| Framework      | NestJS 10          | Web framework          |
-| Language       | TypeScript         | Type safety            |
-| Database       | PostgreSQL 16      | Relational data        |
-| ORM            | Prisma             | Database access        |
-| Cache          | Redis 7            | Session, rate limiting |
-| Authentication | Passport.js        | JWT strategies         |
-| API Docs       | Swagger/OpenAPI    | Interactive docs       |
-| Logging        | Pino               | Structured logging     |
-| Monitoring     | Prometheus/Grafana | Metrics & dashboards   |
-| Container      | Docker             | Application packaging  |
-| Orchestration  | Docker Compose     | Local development      |
-
-## Project Structure
-
-```
-ecommerce-backend/
-├── src/
-│   ├── common/
-│   │   ├── decorators/      # Custom decorators (@Public, @Roles, @CurrentUser)
-│   │   ├── filters/         # Exception filters (HttpExceptionFilter)
-│   │   ├── guards/          # Authentication/Authorization guards
-│   │   ├── middleware/      # HTTP middleware
-│   │   ├── pipes/           # Validation pipes
-│   │   ├── utils/           # Utility functions (password hashing, etc.)
-│   │   └── types/           # TypeScript interfaces/types
-│   │
-│   ├── config/
-│   │   ├── database.config.ts
-│   │   ├── jwt.config.ts
-│   │   └── env.validation.ts
-│   │
-│   ├── modules/             # Feature modules
-│   │   ├── auth/
-│   │   │   ├── auth.controller.ts
-│   │   │   ├── auth.service.ts
-│   │   │   ├── auth.module.ts
-│   │   │   ├── strategies/  # JWT strategies
-│   │   │   ├── dto/         # Data Transfer Objects
-│   │   │   └── auth.service.spec.ts
-│   │   │
-│   │   ├── users/
-│   │   ├── products/
-│   │   ├── categories/
-│   │   ├── cart/
-│   │   ├── orders/
-│   │   ├── stripe/
-│   │   ├── mail/
-│   │   ├── upload/
-│   │   ├── health/
-│   │   ├── metrics/
-│   │   └── prisma/
-│   │
-│   ├── app.module.ts        # Root module
-│   ├── app.controller.ts    # Root controller
-│   └── main.ts              # Application entry point
-│
-├── prisma/
-│   ├── schema.prisma        # Database schema
-│   └── migrations/          # Database migrations
-│
-├── test/
-│   ├── jest-e2e.json       # E2E test config
-│   └── app.e2e-spec.ts     # E2E tests
-│
-├── docs/
-│   ├── DEPLOYMENT.md
-│   ├── ARCHITECTURE.md
-│   └── API.md
-│
-├── .github/
-│   └── workflows/
-│       └── ci.yml          # GitHub Actions CI/CD
-│
-├── docker-compose.yml       # Development composition
-├── docker-compose.prod.yml  # Production composition
-├── Dockerfile              # Multi-stage build
-├── nginx.conf              # Reverse proxy config
-├── .env.example            # Environment template
-├── package.json
-├── tsconfig.json
-├── jest.config.js
-└── README.md
-```
-
-## Core Components
-
-### 1. Authentication Module
-
-**Flow:**
-
-```
-User Request
-    │
-    ▼
-JWT Guard (validates token)
-    │
-    ├─► Valid → Extract user → Pass to route
-    │
-    └─► Invalid → 401 Unauthorized
-```
-
-**Key Files:**
-
-- `auth.controller.ts` - POST /auth/register, /auth/login, /auth/refresh
-- `auth.service.ts` - JWT generation, validation, token storage
-- `jwt.strategy.ts` - Token extraction and validation
-- `jwt-auth.guard.ts` - Global authentication guard
-
-**Token Strategy:**
-
-- Access token: 15 minutes (short-lived)
-- Refresh token: 7 days (long-lived)
-- Stored in PostgreSQL for revocation support
-- Support for multiple concurrent tokens per user
-
-### 2. Database Layer (Prisma)
-
-**Architecture:**
-
-```
-Application
-    │
-    ▼
-NestJS Service
-    │
-    ▼
-PrismaService
-    │
-    ▼
-PostgreSQL Database
-```
-
-**Database Features:**
-
-- Type-safe database queries
-- Automatic migrations
-- Connection pooling
-- Transaction support for complex operations
-
-**Key Models:**
-
-- User, RefreshToken (authentication)
-- Product, Category, ProductImage (catalog)
-- Cart, CartItem (shopping)
-- Order, OrderItem, Address (orders)
-- Payment (payment tracking)
-
-### 3. API Layer (Controllers)
-
-**Pattern:** REST with resource-based URLs
-
-```
-POST   /api/auth/register              # Create account
-POST   /api/auth/login                 # Authenticate
-POST   /api/auth/refresh               # Refresh tokens
-POST   /api/auth/logout                # Revoke tokens
-
-GET    /api/users/me                   # Current user profile
-PATCH  /api/users/me                   # Update profile
-
-GET    /api/products                   # List products (with filters)
-GET    /api/products/:id               # Get product details
-POST   /api/products                   # Create (Admin only)
-PATCH  /api/products/:id               # Update (Admin only)
-DELETE /api/products/:id               # Delete (Admin only)
-
-GET    /api/cart                       # Get cart
-POST   /api/cart/items                 # Add to cart
-PATCH  /api/cart/items/:id             # Update quantity
-DELETE /api/cart/items/:id             # Remove item
-DELETE /api/cart                       # Clear cart
-
-POST   /api/orders                     # Create order
-GET    /api/orders                     # List user orders
-GET    /api/orders/:id                 # Get order details
-PATCH  /api/orders/:id/cancel          # Cancel order
-
-POST   /api/stripe/create-payment-intent     # Create payment intent
-POST   /api/stripe/webhook              # Stripe webhooks
-
-POST   /api/upload/single               # Upload single file
-POST   /api/upload/products             # Upload multiple files
-DELETE /api/upload/:filepath            # Delete file
-
-GET    /health                          # Health check
-GET    /api/health/ready                # Readiness probe
-GET    /api/health/live                 # Liveness probe
-GET    /api/metrics                     # Prometheus metrics
-```
-
-### 4. Service Layer
-
-Each module has a service containing business logic:
-
-**Pattern:**
-
-```typescript
-@Injectable()
-export class ProductsService {
-  constructor(private prisma: PrismaService) {}
-
-  async create(dto: CreateProductDto): Promise<Product> {
-    // Business logic
-  }
-
-  async findAll(filters: ProductFilters): Promise<Product[]> {
-    // Complex queries, filtering, pagination
-  }
-}
-```
-
-**Responsibilities:**
-
-- Database operations
-- Business rule validation
-- Error handling
-- Service-to-service communication
-
-### 5. Guards & Decorators
-
-**Authentication Guard:**
-
-```typescript
-@UseGuards(JwtAuthGuard)
-@Get('/protected')
-protectedRoute() { }
-
-@Public()  // Bypass auth
-@Get('/public')
-publicRoute() { }
-```
-
-**Authorization Guard:**
-
-```typescript
-@Roles(UserRole.ADMIN)
-@Delete('/:id')
-deleteProduct() { }
-```
-
-**Current User Decorator:**
-
-```typescript
-@Get('/me')
-getProfile(@CurrentUser() user: User) { }
-```
-
-## Data Flow
-
-### Complete Order Flow
-
-```
-1. User Registration
-   Register → Hash password → Store in DB → Return tokens
-
-2. Browse Products
-   GET /products?category=electronics&priceMax=1000
-   → Filter & paginate → Return ProductResponseDtos
-
-3. Add to Cart
-   POST /cart/items { productId, quantity }
-   → Get or create cart → Validate stock → Add item
-   → Calculate total → Return CartResponseDto
-
-4. Checkout
-   POST /orders { cartId, shippingAddress }
-   → Create order from cart items → Create payment intent
-   → Reserve stock → Return order with payment details
-
-5. Payment Processing
-   Frontend: Submit payment with client_secret to Stripe
-   → Stripe: Process payment
-   → Webhook: POST /stripe/webhook
-   → Backend: Update order status to PAID
-   → Email: Send order confirmation
-   → Return: 200 OK
-
-6. Order Management
-   GET /orders/:id
-   → Fetch order with items
-   → Fetch payment status
-   → Return OrderResponseDto
-```
-
-## Database Schema
-
-### Core Tables
-
-```sql
--- Users
-User {
-  id UUID PRIMARY KEY
-  email String UNIQUE
-  password String (hashed)
-  firstName String
-  lastName String
-  role UserRole (USER, ADMIN)
-  isActive Boolean
-  createdAt DateTime
-  updatedAt DateTime
-}
-
--- Authentication Tokens
-RefreshToken {
-  id UUID PRIMARY KEY
-  userId UUID (FK)
-  token String UNIQUE
-  isRevoked Boolean
-  expiresAt DateTime
-  createdAt DateTime
-}
-
--- Products Catalog
-Category {
-  id UUID PRIMARY KEY
-  name String UNIQUE
-  slug String UNIQUE
-  description String
-  parentId UUID (self-relation, nullable)
-  isActive Boolean
-  createdAt DateTime
-  updatedAt DateTime
-}
-
-Product {
-  id UUID PRIMARY KEY
-  name String
-  slug String
-  description String
-  price Decimal(10,2)
-  compareAtPrice Decimal(10,2)
-  categoryId UUID (FK)
-  sku String UNIQUE
-  stockQuantity Int
-  isActive Boolean
-  createdAt DateTime
-  updatedAt DateTime
-}
-
--- Shopping Cart
-Cart {
-  id UUID PRIMARY KEY
-  userId UUID (FK)
-  createdAt DateTime
-  updatedAt DateTime
-}
-
-CartItem {
-  id UUID PRIMARY KEY
-  cartId UUID (FK)
-  productId UUID (FK)
-  quantity Int
-  price Decimal(10,2)
-  createdAt DateTime
-  updatedAt DateTime
-}
-
--- Orders
-Order {
-  id UUID PRIMARY KEY
-  userId UUID (FK)
-  orderNumber String UNIQUE
-  status OrderStatus (PENDING, PAID, PROCESSING, SHIPPED, DELIVERED, CANCELLED)
-  subtotal Decimal(10,2)
-  tax Decimal(10,2)
-  shipping Decimal(10,2)
-  total Decimal(10,2)
-  paymentIntentId String (unique)
-  paymentStatus PaymentStatus
-  paidAt DateTime (nullable)
-  shippingAddressId UUID (FK)
-  billingAddressId UUID (FK)
-  createdAt DateTime
-  updatedAt DateTime
-}
-
-OrderItem {
-  id UUID PRIMARY KEY
-  orderId UUID (FK)
-  productId UUID (FK)
-  quantity Int
-  price Decimal(10,2)
-  productSnapshot JSON
-  createdAt DateTime
-}
-
--- Shipping Addresses
-Address {
-  id UUID PRIMARY KEY
-  userId UUID (FK)
-  type AddressType (SHIPPING, BILLING)
-  firstName String
-  lastName String
-  addressLine1 String
-  addressLine2 String (nullable)
-  city String
-  state String
-  postalCode String
-  country String
-  phone String
-  isDefault Boolean
-  createdAt DateTime
-  updatedAt DateTime
-}
-```
-
-## Authentication & Authorization
-
-### JWT Implementation
-
-**Access Token (15 minutes):**
-
-```json
-{
-  "sub": "user-id",
-  "email": "user@example.com",
-  "role": "user",
-  "type": "access",
-  "iat": 1704067200,
-  "exp": 1704068100
-}
-```
-
-**Refresh Token (7 days):**
-
-```json
-{
-  "sub": "user-id",
-  "type": "refresh",
-  "iat": 1704067200,
-  "exp": 1704672000
-}
-```
-
-### Token Rotation
-
-```
-1. Client: POST /auth/refresh { refreshToken }
-2. Server: Validate refresh token signature & DB status
-3. Server: Generate new access & refresh tokens
-4. Server: Revoke old refresh token (isRevoked = true)
-5. Server: Return new token pair
-6. Client: Store new tokens
-```
-
-### Role-Based Access Control
-
-```typescript
-enum UserRole {
-  USER = 'user',      // Normal customer
-  ADMIN = 'admin',    // Full system access
-}
-
-// Usage
-@Roles(UserRole.ADMIN)
-@Delete('/:id')
-deleteProduct(@Param('id') id: string) { }
-```
-
-## API Design
-
-### Response Format
-
-**Success Response:**
-
-```json
-{
-  "data": {
-    /* ... */
-  },
-  "statusCode": 200,
-  "message": "Success"
-}
-```
-
-**Error Response:**
-
-```json
-{
-  "statusCode": 400,
-  "message": "Validation failed",
-  "error": "BadRequest",
-  "details": [{ "field": "email", "message": "Invalid email format" }]
-}
-```
-
-### Pagination
-
-```typescript
-GET /api/products?page=1&limit=20&sort=price:asc
-
-{
-  "data": [ /* 20 items */ ],
-  "pagination": {
-    "total": 150,
-    "page": 1,
-    "limit": 20,
-    "totalPages": 8
-  }
-}
-```
-
-### Filtering
-
-```typescript
-GET /api/products?category=electronics&minPrice=100&maxPrice=1000&search=laptop
-
-// Implemented in service layer
-// Generates efficient SQL with proper indexes
-```
-
-## Caching Strategy
-
-### Redis Caching Layers
-
-1. **Session Caching**: User sessions, active tokens
-2. **Data Caching**: Product lists, categories (TTL: 1 hour)
-3. **Rate Limiting**: Request count per IP (TTL: 1 minute)
-4. **Temporary Data**: Cart (TTL: 24 hours)
-
-### Cache Invalidation
-
-- **Time-based**: Automatic expiry (TTL)
-- **Event-based**: Invalidate on updates
-  - Product updated → Invalidate product cache
-  - Category updated → Invalidate category cache
-
-## Error Handling
-
-### Exception Hierarchy
-
-```
-HttpException
-├── BadRequestException (400)
-├── UnauthorizedException (401)
-├── ForbiddenException (403)
-├── NotFoundException (404)
-├── ConflictException (409)
-└── InternalServerErrorException (500)
-```
-
-### Global Exception Filter
-
-All exceptions are caught and formatted by `HttpExceptionFilter`:
-
-```json
-{
-  "statusCode": 400,
-  "message": "Invalid email format",
-  "error": "BadRequest",
-  "timestamp": "2024-01-01T12:00:00Z",
-  "path": "/api/users"
-}
-```
-
-## Deployment Architecture
-
-### Development
-
-```
-Developer Machine
-  ├── NestJS app (npm run start:dev)
-  ├── PostgreSQL (Docker)
-  ├── Redis (Docker)
-  └── Swagger UI (http://localhost:3000/api/docs)
-```
-
-### Production
+## System Topology
 
 ```
 Internet
   │
   ▼
-Load Balancer / DNS
-  │
+Nginx (:80)
+  │  X-Request-ID injection, rate-limit headers, upstream keepalive
   ▼
-Docker Swarm / Kubernetes
-  ├── App (×2-3 replicas)
-  ├── PostgreSQL (×1, with backups)
-  ├── Redis (×1, with replication)
-  ├── Prometheus (monitoring)
-  └── Grafana (dashboards)
+Gateway (:3000)
+  │  JWT verification (RS256), X-User-Id + X-User-Email header inject
+  │
+  ├─► /api/auth/**   ──► Auth Service        (:3006)
+  ├─► /api/search**  ──► Search Service      (:3005)
+  └─► /api/**        ──► Backend monolith    (:4000)
+                               │
+                    ┌──────────┼──────────────┐
+                    │          │              │
+               PostgreSQL   Redis        RabbitMQ
+               (:5434 ext)  (:6379)       (:5672)
+               (:6432 PgBouncer)            │
+                                            │
+                                   Notification Service
+                                        (:3004)
+                                   (RabbitMQ consumer,
+                                    no HTTP API)
 
-Reverse Proxy (Nginx)
-  ├── SSL/TLS termination
-  ├── Rate limiting
-  ├── Load balancing
-  └── Static file serving
+OpenSearch (:9200) ◄── Search Service indexes
+Mailpit    (:1025) ◄── Notification Service sends
+Jaeger     (:16686) ◄── OpenTelemetry traces
+Prometheus (:9090) ◄── /api/metrics scrape
+Grafana    (:3001) ◄── Prometheus datasource
 ```
-
-### High Availability
-
-- **Database**: Master-replica setup, automated backups
-- **Cache**: Redis with replication
-- **App Servers**: Multiple replicas with health checks
-- **Health Checks**: Liveness and readiness probes
-- **Monitoring**: Real-time alerts and dashboards
-
-## Security Layers
-
-1. **Network**: Firewall, VPC, rate limiting
-2. **Transport**: HTTPS/TLS, HSTS headers
-3. **Authentication**: JWT with short expiry
-4. **Authorization**: Role-based access control
-5. **Input Validation**: DTO validation, sanitization
-6. **Data**: Encrypted at rest (optional), in transit
-7. **Monitoring**: Structured logs, audit trails
-
-## Scalability Considerations
-
-- **Stateless Design**: No server-side sessions (JWT)
-- **Database Scaling**: Connection pooling, read replicas
-- **Caching**: Redis for hot data
-- **Horizontal Scaling**: Docker-based deployment
-- **Asynchronous Jobs**: Background processing (Bull)
-- **CDN**: Static assets and uploads (CloudFront/S3)
 
 ---
 
-For more details, see:
+## Technology Stack
 
-- [DEPLOYMENT.md](./DEPLOYMENT.md) - Deployment procedures
-- [README.md](../README.md) - Project overview
-- [API.md](./API.md) - API endpoints documentation
+**Backend monolith**
+
+- NestJS 10, TypeScript (strict mode)
+- Prisma ORM → PostgreSQL 16
+- BullMQ → Redis 7
+- EventEmitter2 (domain events, in-process)
+- OpenTelemetry auto-instrumentation
+- Pino structured logging
+- `@nestjs/terminus` health checks
+
+**Microservices**
+
+- `apps/auth-service` — NestJS, Prisma, Passport, otplib
+- `apps/search-service` — NestJS, OpenSearch client
+- `apps/notification-service` — NestJS, `@golevelup/nestjs-rabbitmq`, Nodemailer/Handlebars
+- `apps/gateway` — NestJS, `http-proxy-middleware`, `jsonwebtoken`
+
+**Infrastructure**
+
+- Docker + Docker Compose (self-hosted, no cloud PaaS)
+- Nginx reverse proxy
+- PgBouncer (transaction pooling mode)
+- RabbitMQ (durable queues, dead-letter exchanges)
+- OpenSearch (product search index)
+- Prometheus + Grafana (metrics)
+- Jaeger (distributed tracing via OTLP)
+
+---
+
+## Backend Module Map
+
+28 modules under `apps/backend/src/modules/`:
+
+**Auth & Users**
+- `auth/` — JWT strategy, login/register/refresh/logout, password reset
+- `users/` — profile management (`GET /users/me`, `PATCH`)
+
+**Product Catalog**
+- `products/` — product CRUD, CSV import, FTS search, cursor pagination
+- `categories/` — hierarchical categories (self-referential FK)
+- `reviews/` — moderated product reviews, `ProductRating` aggregate maintenance
+- `stock-alerts/` — back-in-stock subscriptions (fan-out pattern)
+
+**Commerce**
+- `cart/` — shopping cart (persistent, one per user)
+- `orders/` — order creation (saga), status state machine, admin management
+- `stripe/` — Stripe payment intents, webhook handler, refunds
+- `coupons/` — discount codes (optimistic locking)
+- `addresses/` — saved shipping addresses (snapshot pattern on checkout)
+- `shipping/` — shipping cost calculation (strategy pattern)
+- `tax/` — tax rules engine
+- `returns/` — return/refund workflow (state machine)
+- `invoices/` — PDF invoice generation (background job)
+
+**Infrastructure**
+- `prisma/` — PrismaService singleton
+- `cache/` — Redis cache-aside service
+- `queue/` — BullMQ queue registration
+- `outbox/` — Outbox pattern processor (polls DB → publishes to RabbitMQ)
+- `events/` — domain event class definitions
+- `circuit-breaker/` — opossum wrapper for external calls (Stripe)
+- `rate-limit/` — Redis-backed rate limiting guard + decorator
+- `audit/` — append-only audit log service
+- `metrics/` — Prometheus metrics endpoint
+- `logger/` — Pino logger module
+- `mail/` — Mailer module (templates, SMTP)
+- `upload/` — File uploads (multer)
+- `health/` — Terminus health controller
+- `admin/` — Admin-only stats and management endpoints
+
+---
+
+## Database Schema (Key Models)
+
+Full schema: `apps/backend/prisma/schema.prisma`
+
+**Auth**
+- `User` — id (UUID), email, password (bcrypt), firstName, lastName, role (USER/ADMIN/VENDOR), totpSecret, totpEnabled, emailVerified
+- `RefreshToken` — token, userId FK, expiresAt, revokedAt
+- `OAuthAccount` — provider (GOOGLE), providerUserId, userId FK
+
+**Product Catalog**
+- `Product` — id, name, slug, description, searchVector (generated tsvector, GIN-indexed), categoryId, vendorId (nullable, marketplace prep), isActive
+- `ProductVariant` — id, productId, sku (unique), price, cost, stock, isActive
+- `VariantType` — id, productId, name (e.g. "Size")
+- `VariantOption` — id, variantTypeId, value (e.g. "L")
+- `VariantAttributeValue` — (variantId, optionId) composite PK
+- `VariantImage` — variantId, url, isMain, order
+- `Category` — id, name, slug, parentId (self-referential)
+- `ProductRating` — productId (PK), avgRating, reviewCount (CQRS read model)
+- `ProductReview` — id, productId, userId, rating, title, body, status (PENDING/APPROVED/REJECTED)
+
+**Commerce**
+- `Cart` — userId (unique — one cart per user)
+- `CartItem` — cartId, productId, variantId (nullable, expand-contract), quantity
+- `Order` — id, orderNumber (unique), userId, status (PENDING/CONFIRMED/PROCESSING/SHIPPED/DELIVERED/CANCELLED/REFUNDED), shippingAddress (JSONB snapshot), subtotal, discountAmount, shippingCost, taxAmount, total, couponId, paymentIntentId, paymentStatus
+- `OrderItem` — orderId, productId, quantity, price, variantAttributes (JSONB snapshot)
+- `Address` — userId, line1/line2/city/state/country/postalCode, isDefault
+- `Coupon` — code (unique), type (PERCENTAGE/FIXED), value, minOrderAmount, maxUses, usedCount, expiresAt
+- `CouponUsage` — (couponId, userId) unique — prevents double-use
+- `ReturnRequest` — orderId, userId, reason, status (PENDING/APPROVED/REJECTED/REFUNDED), refundId (Stripe)
+- `StockAlert` — productId, userId, email, notified
+
+**Reliability**
+- `OutboxEvent` — aggregateId, eventType, payload (JSONB), status (PENDING/PROCESSING/PROCESSED/FAILED), attempts (max 5)
+- `IdempotencyKey` — (userId, key) unique composite, statusCode, responseBody (JSONB), processedAt
+
+**Audit & Compliance**
+- `AuditLog` — userId, userEmail, userRole, action, entity, entityId, before (JSONB), after (JSONB), ipAddress, userAgent. Protected by PostgreSQL RULE (no UPDATE/DELETE allowed at DB level)
+
+---
+
+## Auth Flow (RS256 JWT)
+
+```
+Client
+  │
+  ├── POST /api/auth/register
+  │     └── Auth Service creates User in Postgres
+  │     └── Publishes user.registered to RabbitMQ
+  │     └── Returns { accessToken (RS256), refreshToken }
+  │
+  └── POST /api/auth/login
+        └── [optional] 2FA TOTP verification
+        └── Returns { accessToken, refreshToken }
+
+Subsequent requests:
+  Client → Gateway → verifies JWT with public key → injects X-User-Id header → Backend
+  Backend trusts X-User-Id (never re-verifies the JWT)
+```
+
+Access token: 15-minute expiry, RS256 signed
+Refresh token: 7-day expiry, stored in DB, rotated on each use
+
+---
+
+## Event Flow (Outbox → RabbitMQ)
+
+```
+OrdersService.create()
+  └── Prisma transaction:
+        INSERT INTO orders ...
+        INSERT INTO outbox_events (eventType: 'order.placed', status: 'PENDING')
+
+OutboxProcessor (every 5s)
+  └── SELECT * FROM outbox_events WHERE status = 'PENDING' FOR UPDATE SKIP LOCKED
+  └── Publish to RabbitMQ ORDERS exchange (routing key: order.placed)
+  └── UPDATE status = 'PROCESSED'
+
+RabbitMQ
+  └── Routes to notification-service queue
+
+Notification Service
+  └── OrderConsumer.onOrderPlaced() → sends order confirmation email
+```
+
+---
+
+## Request Lifecycle
+
+```
+1. Client sends: POST /api/orders
+   Authorization: Bearer <jwt>
+   Idempotency-Key: <uuid>
+
+2. Nginx: injects X-Request-ID, applies rate-limit zone
+
+3. Gateway:
+   - Verifies JWT (RS256, public key)
+   - Injects X-User-Id + X-User-Email headers
+   - Proxies to Backend :4000
+
+4. Backend:
+   a. JwtAuthGuard: trusts X-User-Id (no token re-verification)
+   b. RolesGuard: checks UserRole from JWT payload
+   c. IdempotencyInterceptor: checks IdempotencyKey table
+   d. CorrelationIdMiddleware: reads X-Request-ID, attaches to Pino logger
+   e. OrdersController.create()
+   f. OrdersService.create():
+      - SELECT FOR UPDATE on ProductVariant (stock reservation)
+      - Prisma transaction: INSERT order + INSERT outbox_event
+      - CircuitBreakerService.callStripe() → create payment intent
+   g. IdempotencyInterceptor: caches response in IdempotencyKey
+
+5. Background:
+   - OutboxProcessor publishes order.placed → RabbitMQ
+   - Notification Service sends email
+   - OpenTelemetry spans exported to Jaeger
+```
+
+---
+
+## Security Layers
+
+- **Network**: Nginx rate limiting, firewall (only 80/443 open externally)
+- **Transport**: HTTPS/TLS via Nginx
+- **Authentication**: RS256 JWT (15min expiry), refresh token rotation
+- **Authorization**: RBAC (`@Roles()` guard) + ABAC checks in service layer
+- **Input validation**: `class-validator` on all DTOs, `class-transformer` strips unknown fields
+- **Audit trail**: append-only `AuditLog` table, protected by Postgres RULE
+- **Idempotency**: deduplication at the API layer (prevents double-charges)
+- **Circuit breaker**: fast-fail on Stripe outages
+- **Rate limiting**: per-IP and per-user, Redis-backed
+
+---
+
+## Deployment Architecture
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for full procedures.
+
+```
+Development (docker-compose.yml):
+  All services in one compose file on one machine.
+  NestJS runs with hot-reload (source-mounted volume).
+
+Production (docker-compose.prod.yml):
+  Same topology, separate machines possible.
+  NestJS runs from built dist/ in production Docker image.
+  Blue-green swap via blue-green-deploy.sh.
+  CI/CD via GitHub Actions (see .github/workflows/ci.yml).
+```
+
+---
+
+For detailed implementation notes on each feature, see [docs/features/index.md](./features/index.md).
