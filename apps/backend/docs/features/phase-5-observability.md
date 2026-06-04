@@ -97,11 +97,60 @@ In production: JSON format. In development: `pino-pretty` (install as devDepende
 
 ---
 
+### Loki Log Aggregation
+
+`apps/backend/loki-config.yml`, `apps/backend/promtail-config.yml`
+
+By default, Docker and Kubernetes write container logs to the host filesystem — they are lost when a container restarts and have no search capability. Loki + Promtail solve this:
+
+```
+Container stdout/stderr
+       ↓
+   Promtail (tails log files, labels by service/pod)
+       ↓
+   Loki (stores and indexes log streams)
+       ↓
+   Grafana (query logs alongside metrics in the same UI)
+```
+
+**How Promtail discovers containers:**
+
+- **Docker Compose**: reads from the Docker socket (`/var/run/docker.sock`), discovers all containers automatically, attaches `service` and `container` labels from Docker Compose metadata.
+- **Kubernetes**: runs as a DaemonSet (one Pod per node), reads `/var/log/pods/` from the host filesystem, uses the K8s API to label each log stream with `namespace`, `pod`, `container`, and `app`.
+
+**Querying logs in Grafana** (`http://localhost:3001`):
+
+Open Explore → select Loki datasource → run a LogQL query:
+
+```logql
+# All backend logs
+{service="backend"}
+
+# Errors only
+{service="backend"} |= "error"
+
+# A specific request by correlation ID
+{service="backend"} |= "abc-123-correlation-id"
+
+# Payment failures across all services
+{app=~"backend|gateway"} |= "payment" |= "failed"
+```
+
+**The key insight:** Pino still writes JSON to stdout — nothing about the application changed. Promtail tails the same stdout that `docker compose logs` shows, parses each line, and ships it to Loki. You get searchable, persistent logs with zero application code changes.
+
+**Log-trace correlation (what's still missing):** To click from a Jaeger span directly to the Loki log lines for that exact request, you'd add OpenTelemetry's Log Bridge API to inject `trace_id` and `span_id` into each Pino log line. That would make the three pillars fully cross-linked.
+
+---
+
 ## The Three Pillars
 
-- **Logs** — what happened (Pino + correlation ID)
-- **Metrics** — how much / how often (Prometheus + Grafana)
-- **Traces** — how long each step took (OpenTelemetry + Jaeger)
+| Pillar | Tool | What it answers | Storage |
+|--------|------|-----------------|---------|
+| **Logs** | Pino → Promtail → **Loki** | What happened, in what order | Loki (persistent, searchable) |
+| **Metrics** | prom-client → Prometheus → Grafana | How much / how often | Prometheus TSDB |
+| **Traces** | OpenTelemetry → **Jaeger** | How long each step took | Jaeger in-memory / Badger |
+
+All three are visible in Grafana. Switch between dashboards (metrics), Explore with Loki datasource (logs), and the Jaeger datasource (traces) without leaving the same UI.
 
 You need all three. Logs without traces: you know something failed but cannot find where in the call stack. Metrics without logs: you see error rate spike but cannot find the specific request that triggered it. Traces without metrics: you can debug one request but cannot see patterns across thousands.
 
@@ -123,5 +172,10 @@ Configured in Grafana alert rules:
 - `src/common/middleware/correlation-id.middleware.ts`
 - `src/modules/metrics/metrics.module.ts`
 - `src/modules/logger/logger.module.ts`
-- `apps/backend/src/main.ts` (OpenTelemetry setup)
-- `docker-compose.yml` (Jaeger, Prometheus, Grafana services)
+- `apps/backend/src/tracing.ts` (OpenTelemetry setup)
+- `apps/backend/loki-config.yml` (Loki single-node config)
+- `apps/backend/promtail-config.yml` (Docker Compose log collection)
+- `apps/backend/grafana/provisioning/datasources/loki.yml` (Grafana Loki datasource)
+- `docker-compose.yml` (Jaeger, Prometheus, Grafana, Loki, Promtail services)
+- `k8s/base/monitoring/loki-statefulset.yaml` (K8s Loki StatefulSet + Service)
+- `k8s/base/monitoring/promtail-daemonset.yaml` (K8s Promtail DaemonSet + ClusterRole)

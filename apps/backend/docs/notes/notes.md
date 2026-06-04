@@ -14,4 +14,11 @@
   - Uses upstream.conf for defining where to redirect to the backend
   - We currently have only one instances of blue app running and that is being used by nginx to send traffic to.
 - docker-compose.prod.yml file is only for production; It has blue green apps container that will be switched using nginx;
--
+- Graceful shotdown handling in nestjsapp;
+- Checking health of the app; endpoint to ping in app for readiness and healthiness; check health.controller.ts
+- main.ts: Create Nest App, Stripe Webhook Support, Helmet Security, Compression, CORS, Validation Pipes, Swagger Docs, Static Files, Graceful Shutdown, Shutdown Hooks, Start HTTP Server
+- Metrics and Logs:
+  `NestJS Logger` : Creates log messages; `Loki` :Stores logs
+  `Prometheus` :Stores metrics
+  `OpenTelemetry` :Creates traces; `Jaeger` :Stores traces
+  `Grafana` : Displays everything

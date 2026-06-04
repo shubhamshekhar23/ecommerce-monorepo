@@ -242,6 +242,38 @@ services:
       - ./apps/backend/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
     depends_on:
       - prometheus
+      - loki
+    networks:
+      - ecommerce-network
+
+  # ── Loki ─────────────────────────────────────────────────────────────────────
+  # Log aggregation backend. Stores and indexes logs shipped by Promtail.
+  # Query logs in Grafana: select "Loki" datasource, filter by {service="backend"}.
+  loki:
+    image: grafana/loki:3.0.0
+    container_name: ecommerce_loki
+    ports:
+      - '3100:3100'
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./apps/backend/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki_data:/loki
+    networks:
+      - ecommerce-network
+
+  # ── Promtail ──────────────────────────────────────────────────────────────
+  # Log collector. Tails every container's stdout/stderr via Docker socket
+  # and ships log lines to Loki. No app code changes needed — it discovers
+  # containers automatically and labels logs by service name.
+  promtail:
+    image: grafana/promtail:3.0.0
+    container_name: ecommerce_promtail
+    command: -config.file=/etc/promtail/config.yml
+    volumes:
+      - ./apps/backend/promtail-config.yml:/etc/promtail/config.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - loki
     networks:
       - ecommerce-network
 
@@ -377,6 +409,7 @@ volumes:
   pgadmin_data:
   prometheus_data:
   grafana_data:
+  loki_data:
   # node_modules volumes: named so "docker compose down -v" removes them cleanly.
   # After any package.json change: docker compose build backend && docker compose up -d backend
   node_modules:

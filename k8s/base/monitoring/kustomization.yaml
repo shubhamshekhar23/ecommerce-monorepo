@@ -4,6 +4,8 @@ kind: Kustomization
 resources:
   - prometheus-deployment.yaml
   - grafana-deployment.yaml
+  - loki-statefulset.yaml
+  - promtail-daemonset.yaml
 
 # ConfigMapGenerator loads the actual config files from disk — no content duplication.
 # Kustomize appends a hash suffix to the ConfigMap name and updates all references automatically.
@@ -18,6 +20,7 @@ configMapGenerator:
   - name: grafana-datasources
     files:
       - prometheus.yml=../../../apps/backend/grafana/provisioning/datasources/prometheus.yml
+      - loki.yml=../../../apps/backend/grafana/provisioning/datasources/loki.yml
   - name: grafana-dashboards-config
     files:
       - dashboards.yml=../../../apps/backend/grafana/provisioning/dashboards/dashboards.yml

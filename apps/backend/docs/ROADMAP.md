@@ -27,6 +27,7 @@ DATABASE                    SYSTEM DESIGN               INFRA & OPS
 ✓ Cursor pagination         ✓ Webhook reliability        ✓ Alerting rules
 ✓ N+1 detection             ✓ Fan-out pattern            ✓ Log correlation IDs
 ✓ VACUUM & bloat            ✓ Snapshot pattern           ✓ Backup + PITR
+                                                         ✓ Log aggregation (Loki)
                                                          ✓ Kubernetes (K8s)
                                                          ✓ Rolling updates / HPA
                                                          ✓ Ingress + StatefulSets
