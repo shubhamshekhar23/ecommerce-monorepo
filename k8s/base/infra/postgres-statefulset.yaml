@@ -1,0 +1,101 @@
+# StatefulSet vs Deployment: StatefulSets give Pods stable, predictable names (postgres-0)
+# and per-Pod PVCs via volumeClaimTemplates. This is required for postgres because the
+# data directory must follow the same Pod across reschedules (no split-brain).
+#
+# PRODUCTION NOTE: In a real production environment, replace this StatefulSet with
+# a managed service (AWS RDS, Google Cloud SQL) via an ExternalName Service.
+# See k8s/overlays/production/patches/external-services.yaml for the pattern.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: ecommerce
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          # pg_stat_statements must be in shared_preload_libraries at startup.
+          # wal_level=replica + max_wal_senders enable streaming replication (Phase 10).
+          command:
+            - postgres
+            - -c
+            - shared_preload_libraries=pg_stat_statements
+            - -c
+            - pg_stat_statements.track=all
+            - -c
+            - wal_level=replica
+            - -c
+            - max_wal_senders=3
+            - -c
+            - wal_keep_size=64
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secrets
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secrets
+                  key: POSTGRES_DB
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+          livenessProbe:
+            exec:
+              command: ['pg_isready', '-U', '$(POSTGRES_USER)']
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 5
+          readinessProbe:
+            exec:
+              command: ['pg_isready', '-U', '$(POSTGRES_USER)']
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 5
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "2000m"
+              memory: "2Gi"
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: ecommerce
+spec:
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+  clusterIP: None  # headless — Pod DNS: postgres-0.postgres.ecommerce.svc.cluster.local

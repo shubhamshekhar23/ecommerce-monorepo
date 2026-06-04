@@ -1,0 +1,18 @@
+# Non-sensitive configuration shared across all services.
+# Credentials, DB URLs, and JWT keys go into Secrets (see k8s/scripts/create-dev-secrets.sh).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: ecommerce
+data:
+  NODE_ENV: "production"
+  # Service discovery — K8s DNS resolves these to ClusterIP Services within the namespace.
+  # Same naming pattern as Docker Compose (short service name = hostname).
+  BACKEND_URL: "http://backend:4000"
+  AUTH_SERVICE_URL: "http://auth-service:3006"
+  SEARCH_SERVICE_URL: "http://search-service:3005"
+  NOTIFICATION_SERVICE_URL: "http://notification-service:3004"
+  OPENSEARCH_URL: "http://opensearch:9200"
+  # Jaeger OTLP endpoint — overridden to external tracing service in production.
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4318/v1/traces"

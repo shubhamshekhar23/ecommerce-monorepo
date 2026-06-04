@@ -1,0 +1,35 @@
+# ExternalName Services — app code connects to the same K8s DNS name (postgres:5432)
+# but in production that name resolves to a managed cloud service endpoint.
+# No app code changes needed between staging (StatefulSet) and production (managed service).
+#
+# Fill in your actual managed service hostnames before applying to production.
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: ecommerce
+spec:
+  type: ExternalName
+  # Replace with your RDS endpoint:
+  # e.g. mydb.abcdefghij.us-east-1.rds.amazonaws.com
+  externalName: YOUR_RDS_ENDPOINT.rds.amazonaws.com
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: ecommerce
+spec:
+  type: ExternalName
+  # Replace with your ElastiCache endpoint:
+  externalName: YOUR_ELASTICACHE_ENDPOINT.cache.amazonaws.com
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq
+  namespace: ecommerce
+spec:
+  type: ExternalName
+  # Replace with your CloudAMQP or managed RabbitMQ endpoint:
+  externalName: YOUR_RABBITMQ_ENDPOINT

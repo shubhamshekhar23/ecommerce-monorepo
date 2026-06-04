@@ -1,0 +1,8 @@
+# Strategic merge patch — only overrides `replicas`.
+# All other fields (env, resources, probes) are inherited from base unchanged.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: placeholder  # overridden by the target selector in kustomization.yaml
+spec:
+  replicas: 1

@@ -1,0 +1,151 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: ecommerce
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+  # Rolling update with maxUnavailable: 0 — K8s never drops below 2 healthy Pods.
+  # This is what blue-green-deploy.sh was doing manually (130 lines → 5 lines of config).
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      # preStop: give load balancer time to stop sending traffic before SIGTERM.
+      # terminationGracePeriodSeconds: NestJS graceful shutdown drains in-flight requests.
+      terminationGracePeriodSeconds: 30
+      # Init containers run to completion before the main container starts.
+      # Equivalent to docker-compose depends_on: condition: service_healthy.
+      initContainers:
+        - name: wait-for-pgbouncer
+          image: busybox:1.36
+          command: ['sh', '-c', 'until nc -z pgbouncer 6432; do echo waiting for pgbouncer; sleep 2; done']
+        - name: wait-for-redis
+          image: busybox:1.36
+          command: ['sh', '-c', 'until nc -z redis 6379; do echo waiting for redis; sleep 2; done']
+        - name: wait-for-rabbitmq
+          image: busybox:1.36
+          command: ['sh', '-c', 'until nc -z rabbitmq 5672; do echo waiting for rabbitmq; sleep 2; done']
+      containers:
+        - name: backend
+          # Image tag is overridden per-overlay by kustomize edit set image in CI.
+          image: ghcr.io/shubhamshekhar23/ecommerce-monorepo/backend:latest
+          ports:
+            - containerPort: 4000
+          # Non-sensitive config from shared ConfigMap (NODE_ENV, service URLs, OTEL endpoint).
+          envFrom:
+            - configMapRef:
+                name: app-config
+          env:
+            - name: PORT
+              value: "4000"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: DATABASE_URL
+            - name: DIRECT_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: DIRECT_DATABASE_URL
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: REDIS_URL
+            - name: RABBITMQ_URL
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: RABBITMQ_URL
+            - name: JWT_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: JWT_PRIVATE_KEY
+            - name: JWT_PUBLIC_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: JWT_PUBLIC_KEY
+            - name: STRIPE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: STRIPE_SECRET_KEY
+            - name: STRIPE_WEBHOOK_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: STRIPE_WEBHOOK_SECRET
+            - name: SMTP_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: SMTP_HOST
+            - name: SMTP_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: SMTP_PORT
+            - name: SMTP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: SMTP_USER
+            - name: SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: SMTP_PASSWORD
+            - name: SMTP_FROM
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: SMTP_FROM
+            - name: CORS_ORIGIN
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: CORS_ORIGIN
+          # liveness: is the process alive? Restart if failing.
+          # readiness: is it ready for traffic? (checks DB + Redis + disk)
+          # These endpoints were built for exactly this in Phase 0.
+          livenessProbe:
+            httpGet:
+              path: /api/health/live
+              port: 4000
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/health/ready
+              port: 4000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec:
+                command: ['/bin/sh', '-c', 'sleep 5']
+          # Resource limits from docker-compose.prod.yml (cpus: '1', memory: 512M).
+          # requests: what the scheduler guarantees on a Node.
+          # limits: cgroup ceiling — OOMKilled if exceeded.
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "512Mi"

@@ -27,6 +27,9 @@ DATABASE                    SYSTEM DESIGN               INFRA & OPS
 ✓ Cursor pagination         ✓ Webhook reliability        ✓ Alerting rules
 ✓ N+1 detection             ✓ Fan-out pattern            ✓ Log correlation IDs
 ✓ VACUUM & bloat            ✓ Snapshot pattern           ✓ Backup + PITR
+                                                         ✓ Kubernetes (K8s)
+                                                         ✓ Rolling updates / HPA
+                                                         ✓ Ingress + StatefulSets
 
 SECURITY                    ARCHITECTURE                MICROSERVICES
 ─────────────────────────   ─────────────────────────   ─────────────────────
@@ -58,8 +61,44 @@ SECURITY                    ARCHITECTURE                MICROSERVICES
 
 ```
 Phase 0 → Phase 1 → Phase 2 → Phase 3 → Phase 5 (parallel with 3)
-→ Phase 4 → Phase 6 → Phase 7 → Phase 8 → Phase 9 → Phase 10
+→ Phase 4 → Phase 6 → Phase 7 → Phase 8 → Phase 9 → Phase 10 → Phase 11
 ```
+
+---
+
+## Phase 11: Kubernetes
+
+**~3 weeks | You currently know: Docker Compose orchestration | You'll gain: declarative cluster orchestration**
+
+### What to Build
+
+- `k8s/base/` — Deployments, Services, StatefulSets, HPA, Ingress, Jobs for all 5 services + infra
+- `k8s/overlays/{local,staging,production}/` — Kustomize environment overlays
+- Rolling updates replacing `blue-green-deploy.sh`
+- Prisma migration as a K8s Job (not an initContainer)
+- ConfigMaps + Secrets separation pattern
+- CI/CD: replace SSH + bash deploy with `kubectl apply -k`
+
+### Core Concepts
+
+**Rolling updates replace the blue-green script**
+`maxUnavailable: 0` + `maxSurge: 1` + readiness probe + `preStop` hook is exactly what the 130-line bash script was doing manually.
+
+**Liveness vs readiness probes**
+Liveness failure → restart. Readiness failure → remove from Service endpoints (no traffic), don't restart. The backend already separates these (`/api/health/live` vs `/api/health/ready`).
+
+**StatefulSets for databases**
+Pods get stable names (`postgres-0`), stable PVCs, and sequential startup. In production, swap them for managed services (RDS, ElastiCache) via ExternalName Services — app code connects to the same hostname.
+
+**K8s Secrets are base64, not encrypted**
+For production: Sealed Secrets (encrypted, safe to commit) or External Secrets Operator (pulls from AWS Secrets Manager / Vault).
+
+**Kustomize overlays (not Helm)**
+Plain YAML + thin overlay system. No templating language. One base, environment patches only override what differs.
+
+### The Aha Moment
+
+Watch a rolling deploy with `kubectl rollout status deployment/backend -n ecommerce`. Then read `apps/backend/scripts/blue-green-deploy.sh` side-by-side. Everything the bash script did manually — health polling, nginx reload, drain sleep, container stop — K8s does automatically via the control loop.
 
 ---
 

@@ -1,0 +1,38 @@
+# The Ingress object is a routing rule — it is NOT a running Pod.
+# The Ingress Controller (ingress-nginx) watches for Ingress objects and
+# dynamically reconfigures itself. This replaces the nginx container +
+# conf.d/upstream.conf pattern from docker-compose.prod.yml.
+#
+# Install ingress-nginx (local kind):
+#   kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/kind/deploy.yaml
+#
+# Install ingress-nginx (cloud):
+#   helm install ingress-nginx ingress-nginx/ingress-nginx --namespace ingress-nginx --create-namespace
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ecommerce-ingress
+  namespace: ecommerce
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    # Coarse-grained rate limiting — matches the limit_req_zone in the old nginx.conf.
+    # Fine-grained per-route limits: create separate Ingress objects per path.
+    nginx.ingress.kubernetes.io/limit-rps: "30"
+    nginx.ingress.kubernetes.io/limit-connections: "20"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+spec:
+  ingressClassName: nginx
+  rules:
+    # Local dev: add "127.0.0.1 api.ecommerce.local" to /etc/hosts
+    # Staging/prod: replace with your actual domain
+    - host: api.ecommerce.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gateway
+                port:
+                  number: 3000

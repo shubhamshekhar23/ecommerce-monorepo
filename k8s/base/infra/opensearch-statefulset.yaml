@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: opensearch
+  namespace: ecommerce
+spec:
+  serviceName: opensearch
+  replicas: 1
+  selector:
+    matchLabels:
+      app: opensearch
+  template:
+    metadata:
+      labels:
+        app: opensearch
+    spec:
+      # OpenSearch needs vm.max_map_count=262144 on the host for production.
+      # This init container sets it (requires privileged — acceptable for single-node dev).
+      initContainers:
+        - name: sysctl
+          image: busybox:1.36
+          securityContext:
+            privileged: true
+          command: ['sysctl', '-w', 'vm.max_map_count=262144']
+      containers:
+        - name: opensearch
+          image: opensearchproject/opensearch:2.12.0
+          env:
+            - name: discovery.type
+              value: single-node
+            - name: DISABLE_SECURITY_PLUGIN
+              value: "true"
+            - name: OPENSEARCH_JAVA_OPTS
+              value: "-Xms512m -Xmx512m"
+            # Relax disk watermarks — prevents OpenSearch going read-only when
+            # the local volume appears "full" on dev machines.
+            - name: cluster.routing.allocation.disk.watermark.low
+              value: "99%"
+            - name: cluster.routing.allocation.disk.watermark.high
+              value: "99.5%"
+            - name: cluster.routing.allocation.disk.watermark.flood_stage
+              value: "99.9%"
+          ports:
+            - containerPort: 9200
+          volumeMounts:
+            - name: opensearch-data
+              mountPath: /usr/share/opensearch/data
+          livenessProbe:
+            httpGet:
+              path: /_cluster/health
+              port: 9200
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /_cluster/health?wait_for_status=yellow&timeout=5s
+              port: 9200
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 5
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "1Gi"
+            limits:
+              cpu: "1000m"
+              memory: "2Gi"
+  volumeClaimTemplates:
+    - metadata:
+        name: opensearch-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: opensearch
+  namespace: ecommerce
+spec:
+  selector:
+    app: opensearch
+  ports:
+    - port: 9200
+      targetPort: 9200

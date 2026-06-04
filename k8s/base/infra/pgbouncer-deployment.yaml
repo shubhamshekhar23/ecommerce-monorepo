@@ -1,0 +1,81 @@
+# PgBouncer is stateless (no persistent data) so a Deployment is correct here.
+# It multiplexes app connections into a small pool of real Postgres connections.
+# Pool mode: transaction — a server connection is held only during a transaction.
+# Prisma URLs must include ?pgbouncer=true to disable prepared statements (session-scoped).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pgbouncer
+  namespace: ecommerce
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pgbouncer
+  template:
+    metadata:
+      labels:
+        app: pgbouncer
+    spec:
+      containers:
+        - name: pgbouncer
+          image: edoburu/pgbouncer:latest
+          env:
+            - name: DB_HOST
+              value: postgres
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secrets
+                  key: POSTGRES_DB
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secrets
+                  key: POSTGRES_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secrets
+                  key: POSTGRES_PASSWORD
+            - name: POOL_MODE
+              value: transaction
+            - name: MAX_CLIENT_CONN
+              value: "200"
+            - name: DEFAULT_POOL_SIZE
+              value: "20"
+            - name: MIN_POOL_SIZE
+              value: "5"
+            - name: RESERVE_POOL_SIZE
+              value: "5"
+            - name: IGNORE_STARTUP_PARAMETERS
+              value: extra_float_digits
+            - name: SERVER_RESET_QUERY
+              value: DISCARD ALL
+            - name: AUTH_TYPE
+              value: plain
+            - name: LISTEN_PORT
+              value: "6432"
+          ports:
+            - containerPort: 6432
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "64Mi"
+            limits:
+              cpu: "500m"
+              memory: "128Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pgbouncer
+  namespace: ecommerce
+spec:
+  selector:
+    app: pgbouncer
+  ports:
+    - port: 6432
+      targetPort: 6432

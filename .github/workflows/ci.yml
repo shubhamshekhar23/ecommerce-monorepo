@@ -207,38 +207,70 @@ jobs:
           cache-to: type=gha,mode=max
 
   # ── Job 5: Deploy to Staging ──────────────────────────────────────────────
-  # Runs only on develop branch. Uses blue-green to avoid downtime.
+  # Runs only on develop branch.
+  # Phase 11: replaced SSH + blue-green-deploy.sh with kubectl apply -k.
+  # Rolling updates (maxUnavailable: 0 + maxSurge: 1) replace the bash script natively:
+  #   - New Pods start → readiness probe gates traffic → old Pods drain → old Pods stop.
+  # Requires: KUBECONFIG_STAGING secret (base64-encoded kubeconfig for a service account
+  # with edit permissions in the ecommerce namespace only).
   deploy-staging:
     name: Deploy → Staging
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: [build]
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
-    # "environment" creates a GitHub Deployment record visible on the PR.
-    # Repo Settings → Environments → staging: add required reviewers if desired.
     environment:
       name: staging
       url: https://staging.api.example.com
 
     steps:
-      - name: Blue-green deploy
-        env:
-          DEPLOY_KEY: ${{ secrets.STAGING_DEPLOY_KEY }}
-          DEPLOY_HOST: ${{ secrets.STAGING_HOST }}
-          DEPLOY_USER: ${{ secrets.STAGING_USER }}
-          IMAGE_TAG: ${{ needs.build.outputs.image-tag }}
+      - uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'v1.29.0'
+
+      - name: Configure kubeconfig
         run: |
-          mkdir -p ~/.ssh
-          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
-          ssh -i ~/.ssh/deploy_key "$DEPLOY_USER@$DEPLOY_HOST" \
-            "IMAGE_TAG=$IMAGE_TAG bash /app/scripts/blue-green-deploy.sh"
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_STAGING }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Run database migration
+        # Prisma migrate runs as a one-shot Job BEFORE the Deployment rollout.
+        # This enforces the expand/contract pattern: new schema is applied while
+        # old app version is still running, then new app version rolls out.
+        run: |
+          JOB_NAME="prisma-migrate-${GITHUB_SHA::8}"
+          kubectl create job "${JOB_NAME}" \
+            --image="ghcr.io/${{ github.repository }}/backend:${{ needs.build.outputs.image-tag }}" \
+            --namespace=ecommerce \
+            -- npx prisma migrate deploy
+          kubectl patch job "${JOB_NAME}" -n ecommerce \
+            --type=json \
+            -p='[{"op":"add","path":"/spec/template/spec/containers/0/env","value":[{"name":"DIRECT_DATABASE_URL","valueFrom":{"secretKeyRef":{"name":"backend-secrets","key":"DIRECT_DATABASE_URL"}}}]}]'
+          kubectl wait "job/${JOB_NAME}" --for=condition=complete --timeout=120s -n ecommerce
+
+      - name: Update image tags
+        # kustomize edit set image pins the exact SHA tag in the overlay before applying.
+        # This ensures staging always runs the image built from this exact commit.
+        run: |
+          cd k8s/overlays/staging
+          kustomize edit set image \
+            ghcr.io/shubhamshekhar23/ecommerce-monorepo/backend=ghcr.io/${{ github.repository }}/backend:${{ needs.build.outputs.image-tag }}
+
+      - name: Apply manifests
+        run: kubectl apply -k k8s/overlays/staging
+
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/backend -n ecommerce --timeout=300s
+          kubectl rollout status deployment/gateway -n ecommerce --timeout=300s
 
   # ── Job 6: Deploy to Production ───────────────────────────────────────────
   # Main branch only. Requires manual approval via GitHub environment protection.
   # Set up: Repo → Settings → Environments → production → Required reviewers.
-  # No reviewer = auto-deploys every main push. Add reviewer = manual gate.
   deploy-production:
     name: Deploy → Production
     runs-on: ubuntu-latest
@@ -250,16 +282,42 @@ jobs:
       url: https://api.example.com
 
     steps:
-      - name: Blue-green deploy
-        env:
-          DEPLOY_KEY: ${{ secrets.PRODUCTION_DEPLOY_KEY }}
-          DEPLOY_HOST: ${{ secrets.PRODUCTION_HOST }}
-          DEPLOY_USER: ${{ secrets.PRODUCTION_USER }}
-          IMAGE_TAG: ${{ needs.build.outputs.image-tag }}
+      - uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'v1.29.0'
+
+      - name: Configure kubeconfig
         run: |
-          mkdir -p ~/.ssh
-          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
-          ssh -i ~/.ssh/deploy_key "$DEPLOY_USER@$DEPLOY_HOST" \
-            "IMAGE_TAG=$IMAGE_TAG bash /app/scripts/blue-green-deploy.sh"
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_PRODUCTION }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Run database migration
+        run: |
+          JOB_NAME="prisma-migrate-${GITHUB_SHA::8}"
+          kubectl create job "${JOB_NAME}" \
+            --image="ghcr.io/${{ github.repository }}/backend:${{ needs.build.outputs.image-tag }}" \
+            --namespace=ecommerce \
+            -- npx prisma migrate deploy
+          kubectl patch job "${JOB_NAME}" -n ecommerce \
+            --type=json \
+            -p='[{"op":"add","path":"/spec/template/spec/containers/0/env","value":[{"name":"DIRECT_DATABASE_URL","valueFrom":{"secretKeyRef":{"name":"backend-secrets","key":"DIRECT_DATABASE_URL"}}}]}]'
+          kubectl wait "job/${JOB_NAME}" --for=condition=complete --timeout=120s -n ecommerce
+
+      - name: Update image tags
+        run: |
+          cd k8s/overlays/production
+          kustomize edit set image \
+            ghcr.io/shubhamshekhar23/ecommerce-monorepo/backend=ghcr.io/${{ github.repository }}/backend:${{ needs.build.outputs.image-tag }}
+
+      - name: Apply manifests
+        run: kubectl apply -k k8s/overlays/production
+
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/backend -n ecommerce --timeout=300s
+          kubectl rollout status deployment/gateway -n ecommerce --timeout=300s
+          kubectl rollout status deployment/auth-service -n ecommerce --timeout=300s

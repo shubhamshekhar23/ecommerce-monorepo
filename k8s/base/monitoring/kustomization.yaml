@@ -1,0 +1,29 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - prometheus-deployment.yaml
+  - grafana-deployment.yaml
+
+# ConfigMapGenerator loads the actual config files from disk — no content duplication.
+# Kustomize appends a hash suffix to the ConfigMap name and updates all references automatically.
+# When you change prometheus.yml, kustomize detects it and triggers a rolling restart of Prometheus.
+configMapGenerator:
+  - name: prometheus-config
+    files:
+      # K8s-specific prometheus config (scrapes backend:4000, not app:4000).
+      # Docker Compose still uses apps/backend/prometheus.yml with app:4000.
+      - prometheus.yml=prometheus.yml
+      - alert_rules.yml=../../../apps/backend/alert_rules.yml
+  - name: grafana-datasources
+    files:
+      - prometheus.yml=../../../apps/backend/grafana/provisioning/datasources/prometheus.yml
+  - name: grafana-dashboards-config
+    files:
+      - dashboards.yml=../../../apps/backend/grafana/provisioning/dashboards/dashboards.yml
+  - name: grafana-dashboards
+    files:
+      - api-metrics.json=../../../apps/backend/grafana/provisioning/dashboards/api-metrics.json
+      - business.json=../../../apps/backend/grafana/provisioning/dashboards/business.json
+      - database.json=../../../apps/backend/grafana/provisioning/dashboards/database.json
+      - infrastructure.json=../../../apps/backend/grafana/provisioning/dashboards/infrastructure.json
