@@ -25,24 +25,32 @@ import {
 import { PaginationDto } from '@/common/types/pagination.interface';
 import { CursorPageDto } from '@/common/types/cursor-pagination.interface';
 
-const PRODUCT_DETAIL_TTL = 300; // 5 min — individual products change infrequently
-const PRODUCT_LIST_TTL = 60;   // 1 min — list/search results can be slightly stale
+const PRODUCT_DETAIL_TTL = 300;
+const PRODUCT_LIST_TTL = 60;
 
-// Raw FTS row shape returned by $queryRaw
+// FTS row no longer includes price/cost/stock — those live on ProductVariant.
+// min/max price is derived from a subquery over active variants.
 interface ProductFtsRow {
   id: string;
   name: string;
   slug: string;
   description: string | null;
-  price: Decimal;
-  cost: Decimal;
-  stock: number;
   categoryId: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+  minPrice: Decimal | null;
+  maxPrice: Decimal | null;
   rank: number;
 }
+
+const VARIANT_INCLUDE = {
+  where: { isActive: true },
+  include: {
+    images: true,
+    attributeValues: { include: { option: { include: { variantType: true } } } },
+  },
+} as const;
 
 @Injectable()
 export class ProductsService {
@@ -54,8 +62,6 @@ export class ProductsService {
     private readonly amqp: AmqpConnection,
   ) {}
 
-  // Cache-aside: check cache → on miss, fetch from DB → populate cache → return.
-  // fetchFn errors (e.g. NotFoundException) propagate naturally; cache.set is never called.
   private async withCache<T>(key: string, ttl: number, fetchFn: () => Promise<T>): Promise<T> {
     const cached = await this.cache.get<T>(key);
     if (cached !== null) return cached;
@@ -64,34 +70,21 @@ export class ProductsService {
     return value;
   }
 
-  // Invalidate all product caches on any mutation.
-  // Using a wildcard pattern is aggressive but safe; a production system would
-  // invalidate more selectively (e.g. only the affected product's detail key + all list keys).
   private async invalidateProducts(): Promise<void> {
     await this.cache.invalidateByPattern('products:*');
   }
 
   // eslint-disable-next-line max-lines-per-function
   async create(createProductDto: CreateProductDto): Promise<any> {
-    const { categoryId, images, ...productData } = createProductDto;
+    const { categoryId, images, price, cost, stock, ...productData } = createProductDto;
 
     await this.validateCategoryExists(categoryId);
 
-    const existing = await this.prisma.product.findFirst({
-      where: { OR: [{ slug: productData.slug }] },
-    });
-
-    if (existing) {
-      throw new ConflictException('Product slug already exists');
-    }
+    const existing = await this.prisma.product.findFirst({ where: { slug: productData.slug } });
+    if (existing) throw new ConflictException('Product slug already exists');
 
     const product = await this.prisma.product.create({
-      data: {
-        ...productData,
-        price: new Decimal(String(productData.price)),
-        cost: new Decimal(String(productData.cost)),
-        categoryId,
-      },
+      data: { ...productData, categoryId },
       include: { images: true },
     });
 
@@ -99,54 +92,54 @@ export class ProductsService {
       await this.addImages(product.id, images);
     }
 
+    // Create a default "base" variant from the price/cost/stock passed at product creation.
+    // Subsequent variant management goes through the variants API.
+    await this.prisma.productVariant.create({
+      data: {
+        productId: product.id,
+        sku: `${product.id.slice(-8).toUpperCase()}-DEFAULT`,
+        price: new Decimal(String(price)),
+        cost: new Decimal(String(cost)),
+        stock: stock ?? 0,
+      },
+    });
+
     this.logger.log(`Product created: id=${product.id}, name=${product.name}`);
     await this.invalidateProducts();
+
     const event: ProductCreatedEvent = {
       productId: product.id,
       name: product.name,
       description: product.description,
-      price: Number(product.price),
+      price: Number(price),
       categoryId: product.categoryId,
       slug: product.slug,
     };
     await this.amqp.publish(EXCHANGES.PRODUCT, ROUTING_KEYS.PRODUCT.CREATED, event);
-    return this.mapToResponse(product);
+
+    return this.fetchById(product.id);
   }
 
   async update(id: string, updateProductDto: UpdateProductDto): Promise<any> {
     const product = await this.prisma.product.findUnique({ where: { id } });
-
-    if (!product) {
-      throw new NotFoundException(`Product with ID ${id} not found`);
-    }
+    if (!product) throw new NotFoundException(`Product with ID ${id} not found`);
 
     if (updateProductDto.slug && updateProductDto.slug !== product.slug) {
-      const existing = await this.prisma.product.findFirst({
-        where: { slug: updateProductDto.slug },
-      });
-      if (existing) {
-        throw new ConflictException('Product slug already exists');
-      }
+      const existing = await this.prisma.product.findFirst({ where: { slug: updateProductDto.slug } });
+      if (existing) throw new ConflictException('Product slug already exists');
     }
 
     if (updateProductDto.categoryId) {
       await this.validateCategoryExists(updateProductDto.categoryId);
     }
 
-    const { images, ...productData } = updateProductDto;
-
-    const updateData: any = { ...productData };
-
-    if (productData.price !== undefined) {
-      updateData.price = new Decimal(String(productData.price));
-    }
-    if (productData.cost !== undefined) {
-      updateData.cost = new Decimal(String(productData.cost));
-    }
+    // price/cost/stock are no longer Product fields — strip them from the update.
+    // Use the variants API to change pricing/stock on specific variants.
+    const { images, price: _p, cost: _c, stock: _s, ...productData } = updateProductDto;
 
     const updated = await this.prisma.product.update({
       where: { id },
-      data: updateData,
+      data: productData,
       include: { images: true },
     });
 
@@ -156,21 +149,20 @@ export class ProductsService {
 
     this.logger.log(`Product updated: id=${updated.id}, name=${updated.name}`);
     await this.invalidateProducts();
+
+    const defaultVariant = await this.prisma.productVariant.findFirst({ where: { productId: id } });
     const event: ProductUpdatedEvent = {
       productId: updated.id,
       name: updated.name,
       description: updated.description,
-      price: Number(updated.price),
+      price: defaultVariant ? Number(defaultVariant.price) : 0,
       categoryId: updated.categoryId,
       slug: updated.slug,
     };
     await this.amqp.publish(EXCHANGES.PRODUCT, ROUTING_KEYS.PRODUCT.UPDATED, event);
-    return this.mapToResponse(updated);
+    return this.fetchById(id);
   }
 
-  // Cursor-based pagination — O(log n) regardless of depth via index seek.
-  // Contrast with offset: at page=2500 (skip=50000), Postgres must scan and discard
-  // 50 000 rows before returning 20. Run EXPLAIN ANALYZE on both to see it.
   // eslint-disable-next-line max-lines-per-function
   async findAllCursor(limit = DEFAULT_CURSOR_LIMIT, cursor?: string): Promise<CursorPageDto<any>> {
     const cacheKey = `products:cursor:${limit}:${cursor ?? ''}`;
@@ -184,6 +176,7 @@ export class ProductsService {
         include: {
           images: { where: { isMain: true } },
           category: { select: { name: true } },
+          variants: { where: { isActive: true }, select: { price: true }, orderBy: { price: 'asc' } },
         },
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       });
@@ -194,17 +187,7 @@ export class ProductsService {
     });
   }
 
-  // Full-text search using Postgres built-in tsvector + GIN index.
-  // searchVector is a GENERATED ALWAYS AS column (see migration) — Postgres maintains it.
-  // @@ operator: match. plainto_tsquery: parse natural language (no special syntax needed).
-  // ts_rank: relevance score so better matches come first.
-  // Prisma.sql tag: safe parameterisation without string interpolation (SQL injection safe).
-  // eslint-disable-next-line max-lines-per-function
-  async search(
-    term: string,
-    limit = DEFAULT_CURSOR_LIMIT,
-    cursor?: string,
-  ): Promise<CursorPageDto<any>> {
+  async search(term: string, limit = DEFAULT_CURSOR_LIMIT, cursor?: string): Promise<CursorPageDto<any>> {
     const cacheKey = `products:search:${term}:${limit}:${cursor ?? ''}`;
     return this.withCache(cacheKey, PRODUCT_LIST_TTL, () => this.runSearch(term, limit, cursor));
   }
@@ -216,43 +199,46 @@ export class ProductsService {
     const cursorClause = cursor
       ? (() => {
           const { id, createdAt } = decodeCursor(cursor);
-          return Prisma.sql`AND ("createdAt" < ${new Date(createdAt)} OR ("createdAt" = ${new Date(createdAt)} AND id < ${id}))`;
+          return Prisma.sql`AND (p."createdAt" < ${new Date(createdAt)} OR (p."createdAt" = ${new Date(createdAt)} AND p.id < ${id}))`;
         })()
       : Prisma.sql``;
 
     const rows = await this.prisma.$queryRaw<ProductFtsRow[]>(Prisma.sql`
       SELECT
-        id, name, slug, description, price, cost, stock,
-        "categoryId", "isActive", "createdAt", "updatedAt",
-        ts_rank("searchVector", plainto_tsquery('english', ${term})) AS rank
-      FROM "Product"
+        p.id, p.name, p.slug, p.description,
+        p."categoryId", p."isActive", p."createdAt", p."updatedAt",
+        MIN(v.price) AS "minPrice",
+        MAX(v.price) AS "maxPrice",
+        ts_rank(p."searchVector", plainto_tsquery('english', ${term})) AS rank
+      FROM "Product" p
+      LEFT JOIN "ProductVariant" v ON v."productId" = p.id AND v."isActive" = true
       WHERE
-        "isActive" = true
-        AND "searchVector" @@ plainto_tsquery('english', ${term})
+        p."isActive" = true
+        AND p."searchVector" @@ plainto_tsquery('english', ${term})
         ${cursorClause}
-      ORDER BY rank DESC, "createdAt" DESC, id DESC
+      GROUP BY p.id, p.name, p.slug, p.description, p."categoryId", p."isActive", p."createdAt", p."updatedAt"
+      ORDER BY rank DESC, p."createdAt" DESC, p.id DESC
       LIMIT ${take + 1}
     `);
 
     const hasMore = rows.length > take;
     const items = (hasMore ? rows.slice(0, take) : rows).map((row) => ({
       id: row.id, name: row.name, slug: row.slug, description: row.description,
-      price: row.price, cost: row.cost, stock: row.stock, categoryId: row.categoryId,
-      isActive: row.isActive, createdAt: row.createdAt, updatedAt: row.updatedAt,
+      categoryId: row.categoryId, isActive: row.isActive,
+      createdAt: row.createdAt, updatedAt: row.updatedAt,
+      priceRange: { min: row.minPrice ? Number(row.minPrice) : null, max: row.maxPrice ? Number(row.maxPrice) : null },
       searchRank: row.rank,
     }));
 
     return buildCursorResponse(items as any, take, hasMore);
   }
 
-  // Legacy offset pagination — kept for backward compat. Prefer findAllCursor.
   // eslint-disable-next-line max-lines-per-function
   async findAll(page = 1, limit = 20, text?: string): Promise<PaginationDto<any>> {
     const cacheKey = `products:list:${page}:${limit}:${text ?? ''}`;
     return this.withCache(cacheKey, PRODUCT_LIST_TTL, () => this.runFindAll(page, limit, text));
   }
 
-  // eslint-disable-next-line max-lines-per-function
   private async runFindAll(page: number, limit: number, text?: string): Promise<PaginationDto<any>> {
     const validPage = Math.max(page, 1);
     const validLimit = Math.min(Math.max(limit, 1), 100);
@@ -271,7 +257,11 @@ export class ProductsService {
     const [products, total] = await Promise.all([
       this.prisma.product.findMany({
         where, skip, take: validLimit,
-        include: { images: { where: { isMain: true } }, category: { select: { name: true } } },
+        include: {
+          images: { where: { isMain: true } },
+          category: { select: { name: true } },
+          variants: { where: { isActive: true }, select: { price: true }, orderBy: { price: 'asc' } },
+        },
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.product.count({ where }),
@@ -287,13 +277,7 @@ export class ProductsService {
   private async fetchById(id: string): Promise<any> {
     const product = await this.prisma.product.findUnique({
       where: { id },
-      include: {
-        images: true, category: true,
-        variants: {
-          where: { isActive: true },
-          include: { images: true, attributeValues: { include: { option: { include: { variantType: true } } } } },
-        },
-      },
+      include: { images: true, category: true, variants: VARIANT_INCLUDE },
     });
     if (!product) throw new NotFoundException(`Product with ID ${id} not found`);
     return this.mapToResponse(product);
@@ -306,50 +290,10 @@ export class ProductsService {
   private async fetchBySlug(slug: string): Promise<any> {
     const product = await this.prisma.product.findUnique({
       where: { slug },
-      include: {
-        images: true, category: true,
-        variants: {
-          where: { isActive: true },
-          include: { images: true, attributeValues: { include: { option: { include: { variantType: true } } } } },
-        },
-      },
+      include: { images: true, category: true, variants: VARIANT_INCLUDE },
     });
     if (!product) throw new NotFoundException(`Product with slug ${slug} not found`);
     return this.mapToResponse(product);
-  }
-
-  async updateStock(id: string, quantity: number): Promise<void> {
-    if (quantity < 0) {
-      throw new BadRequestException('Stock quantity cannot be negative');
-    }
-
-    const product = await this.prisma.product.findUnique({ where: { id } });
-    if (!product) {
-      throw new NotFoundException(`Product with ID ${id} not found`);
-    }
-
-    await this.prisma.product.update({
-      where: { id },
-      data: { stock: quantity },
-    });
-    await this.invalidateProducts();
-  }
-
-  async deductStock(productId: string, quantity: number): Promise<void> {
-    const product = await this.prisma.product.findUnique({ where: { id: productId } });
-    if (!product) {
-      throw new NotFoundException(`Product with ID ${productId} not found`);
-    }
-
-    if (product.stock < quantity) {
-      throw new BadRequestException('Insufficient stock available');
-    }
-
-    await this.prisma.product.update({
-      where: { id: productId },
-      data: { stock: { decrement: quantity } },
-    });
-    await this.invalidateProducts();
   }
 
   async addImages(productId: string, images: ProductImageDto[]): Promise<void> {
@@ -370,51 +314,44 @@ export class ProductsService {
 
   async removeImage(imageId: string): Promise<void> {
     const image = await this.prisma.productImage.findUnique({ where: { id: imageId } });
-    if (!image) {
-      throw new NotFoundException(`Image with ID ${imageId} not found`);
-    }
-
+    if (!image) throw new NotFoundException(`Image with ID ${imageId} not found`);
     await this.prisma.productImage.delete({ where: { id: imageId } });
   }
 
   async softDelete(id: string): Promise<void> {
     const product = await this.prisma.product.findUnique({ where: { id } });
-    if (!product) {
-      throw new NotFoundException(`Product with ID ${id} not found`);
-    }
+    if (!product) throw new NotFoundException(`Product with ID ${id} not found`);
 
-    await this.prisma.product.update({
-      where: { id },
-      data: { isActive: false },
-    });
+    await this.prisma.product.update({ where: { id }, data: { isActive: false } });
     await this.invalidateProducts();
     const event: ProductDeletedEvent = { productId: id };
     await this.amqp.publish(EXCHANGES.PRODUCT, ROUTING_KEYS.PRODUCT.DELETED, event);
   }
 
   private async validateCategoryExists(categoryId: string): Promise<void> {
-    const category = await this.prisma.category.findUnique({
-      where: { id: categoryId },
-    });
-
+    const category = await this.prisma.category.findUnique({ where: { id: categoryId } });
     if (!category || !category.isActive) {
       throw new BadRequestException(`Category ${categoryId} does not exist or is inactive`);
     }
   }
 
   private mapToResponse(product: any): any {
+    const variants: any[] = product.variants ?? [];
+    const prices = variants.map((v) => parseFloat(String(v.price)));
+    const priceRange = prices.length > 0
+      ? { min: Math.min(...prices), max: Math.max(...prices) }
+      : { min: null, max: null };
+
     return {
       id: product.id,
       name: product.name,
       slug: product.slug,
       description: product.description,
-      price: product.price,
-      cost: product.cost,
-      stock: product.stock,
+      priceRange,
       categoryId: product.categoryId,
       categoryName: product.category?.name ?? null,
-      images: product.images || [],
-      variants: product.variants || [],
+      images: product.images ?? [],
+      variants,
       isActive: product.isActive,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,

@@ -177,10 +177,6 @@ model Product {
   name        String
   slug        String         @unique
   description String?
-  // Kept for backward compat (expand step) — move to ProductVariant in contract step
-  price       Decimal        @db.Decimal(10, 2)
-  cost        Decimal        @db.Decimal(10, 2)
-  stock       Int            @default(0)
   categoryId  String
   category    Category       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   images      ProductImage[]
@@ -206,7 +202,6 @@ model Product {
   @@index([vendorId])
   @@index([isActive])
   @@index([createdAt])
-  @@index([price])
   @@index([isActive, createdAt])
 }
 
@@ -309,21 +304,21 @@ model Cart {
   @@index([userId])
 }
 
-// Expand step: variantId is nullable — existing items continue to reference Product.
-// Contract step (future): make variantId required, drop productId + update unique constraint.
+// Contract step complete: variantId is required. Unique constraint is now per variant
+// (allows two different variants of the same product in the same cart).
 model CartItem {
-  id        String          @id @default(cuid())
+  id        String         @id @default(cuid())
   cartId    String
-  cart      Cart            @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  cart      Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
   productId String
-  product   Product         @relation(fields: [productId], references: [id], onDelete: Restrict)
-  variantId String?
-  variant   ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  product   Product        @relation(fields: [productId], references: [id], onDelete: Restrict)
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
   quantity  Int
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 
-  @@unique([cartId, productId])
+  @@unique([cartId, variantId])
   @@index([cartId])
   @@index([productId])
   @@index([variantId])

@@ -12,14 +12,31 @@ async function main() {
 
   // Clear existing data (optional - remove if you want to preserve data)
   console.log('🗑️  Clearing existing data...');
-  await prisma.cartItem.deleteMany();
-  await prisma.cart.deleteMany();
+  await prisma.auditLog.deleteMany();
+  await prisma.outboxEvent.deleteMany();
+  await prisma.returnItem.deleteMany();
+  await prisma.returnRequest.deleteMany();
+  await prisma.couponUsage.deleteMany();
   await prisma.orderItem.deleteMany();
   await prisma.order.deleteMany();
+  await prisma.cartItem.deleteMany();
+  await prisma.cart.deleteMany();
+  await prisma.stockAlert.deleteMany();
+  await prisma.productRating.deleteMany();
+  await prisma.productReview.deleteMany();
+  await prisma.variantAttributeValue.deleteMany();
+  await prisma.variantImage.deleteMany();
+  await prisma.productVariant.deleteMany();
+  await prisma.variantOption.deleteMany();
+  await prisma.variantType.deleteMany();
   await prisma.productImage.deleteMany();
   await prisma.product.deleteMany();
   await prisma.category.deleteMany();
+  await prisma.coupon.deleteMany();
+  await prisma.address.deleteMany();
+  await prisma.passwordResetToken.deleteMany();
   await prisma.refreshToken.deleteMany();
+  await prisma.oAuthAccount.deleteMany();
   await prisma.user.deleteMany();
 
   // Hash password helper
@@ -371,20 +388,38 @@ async function main() {
 
   const products = await Promise.all(
     productData.map(async (data) => {
-      const { images, ...productInput } = data;
-      return prisma.product.create({
+      const { images, price, cost, stock, ...productInput } = data;
+      const product = await prisma.product.create({
         data: {
           ...productInput,
-          images: {
-            create: images,
-          },
+          images: { create: images },
         },
         include: { images: true },
       });
+
+      // price/cost/stock now live on ProductVariant, not Product
+      await prisma.productVariant.create({
+        data: {
+          productId: product.id,
+          sku: `${product.id.slice(-8).toUpperCase()}-DEFAULT`,
+          price: parseFloat(String(price)),
+          cost: parseFloat(String(cost)),
+          stock: stock ?? 0,
+        },
+      });
+
+      return product;
     }),
   );
 
   console.log(`✅ Created ${products.length} products with images\n`);
+
+  // Fetch the default variant for each product (needed for CartItem.variantId)
+  const variantByProduct = new Map<string, string>();
+  for (const product of products) {
+    const variant = await prisma.productVariant.findFirst({ where: { productId: product.id } });
+    if (variant) variantByProduct.set(product.id, variant.id);
+  }
 
   // Create Carts with Items
   console.log('🛒 Creating shopping carts...');
@@ -395,10 +430,12 @@ async function main() {
         create: [
           {
             productId: products[2].id, // Wireless Mouse
+            variantId: variantByProduct.get(products[2].id)!,
             quantity: 1,
           },
           {
             productId: products[3].id, // Mechanical Keyboard
+            variantId: variantByProduct.get(products[3].id)!,
             quantity: 2,
           },
         ],
@@ -413,10 +450,12 @@ async function main() {
         create: [
           {
             productId: products[0].id, // MacBook Pro
+            variantId: variantByProduct.get(products[0].id)!,
             quantity: 1,
           },
           {
             productId: products[4].id, // USB-C Hub
+            variantId: variantByProduct.get(products[4].id)!,
             quantity: 3,
           },
         ],
@@ -431,6 +470,7 @@ async function main() {
         create: [
           {
             productId: products[6].id, // Blue T-Shirt
+            variantId: variantByProduct.get(products[6].id)!,
             quantity: 2,
           },
         ],

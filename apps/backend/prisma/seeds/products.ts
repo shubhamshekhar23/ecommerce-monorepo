@@ -161,14 +161,12 @@ export async function seedProducts(
       const price = parseFloat(faker.commerce.price({ min: 10, max: 2000 }));
       const imageCount = faker.number.int({ min: 1, max: 4 });
 
+      // price/cost/stock no longer exist on Product — they live on ProductVariant
       const product = await prisma.product.create({
         data: {
           name,
           slug,
           description: faker.commerce.productDescription(),
-          price,
-          cost: parseFloat((price * 0.5).toFixed(2)),
-          stock: faker.number.int({ min: 0, max: 500 }),
           categoryId: category.id,
           isActive: faker.datatype.boolean({ probability: 0.9 }),
           createdAt: faker.date.past({ years: 2 }),

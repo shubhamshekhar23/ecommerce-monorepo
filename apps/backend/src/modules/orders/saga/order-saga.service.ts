@@ -8,9 +8,8 @@ import { BusinessMetricsService } from '@/modules/metrics/business-metrics.servi
 import { CorrelationIdService } from '@/common/services/correlation-id.service';
 import type { NotificationJobPayload } from '@/modules/queue/dto/notification-job.dto';
 
-// Prisma payload types for full type-safety without `any`
 type CartWithItems = Prisma.CartGetPayload<{
-  include: { items: { include: { product: true } } };
+  include: { items: { include: { product: true; variant: true } } };
 }>;
 type OrderWithItems = Prisma.OrderGetPayload<{
   include: { items: { include: { product: true } } };
@@ -58,9 +57,6 @@ export class OrderSagaService {
     return order;
   }
 
-  // Step 1: everything that must be atomic with the DB state change.
-  // The outbox event is written here so it is guaranteed to exist
-  // even if the app crashes between this commit and the Stripe call.
   private async runOrderTransaction(
     userId: string,
     cart: CartWithItems,
@@ -68,7 +64,7 @@ export class OrderSagaService {
   ): Promise<OrderWithItems> {
     return this.prisma.$transaction(
       async (tx) => {
-        await this.acquireProductLocks(tx, cart);
+        await this.acquireVariantLocks(tx, cart);
         await this.validateStock(tx, cart);
         const order = await this.createOrderRecord(tx, userId, cart);
         await this.decrementStock(tx, cart);
@@ -80,13 +76,14 @@ export class OrderSagaService {
     );
   }
 
-  private async acquireProductLocks(
+  private async acquireVariantLocks(
     tx: Prisma.TransactionClient,
     cart: CartWithItems,
   ): Promise<void> {
-    const ids = [...new Set(cart.items.map((i) => i.productId))].sort();
+    // Lock variant rows in a deterministic order to prevent deadlocks
+    const ids = [...new Set(cart.items.map((i) => i.variantId).filter(Boolean))].sort();
     for (const id of ids) {
-      await tx.$queryRaw(Prisma.sql`SELECT id FROM "Product" WHERE id = ${id} FOR UPDATE`);
+      await tx.$queryRaw(Prisma.sql`SELECT id FROM "ProductVariant" WHERE id = ${id} FOR UPDATE`);
     }
   }
 
@@ -95,11 +92,11 @@ export class OrderSagaService {
     cart: CartWithItems,
   ): Promise<void> {
     for (const item of cart.items) {
-      const product = await tx.product.findUnique({ where: { id: item.productId } });
-      if (!product || product.stock < item.quantity) {
+      const variant = await tx.productVariant.findUnique({ where: { id: item.variantId! } });
+      if (!variant || variant.stock < item.quantity) {
         this.businessMetrics.recordInventoryReservationFailure();
         throw new BadRequestException(
-          `Insufficient stock for "${item.product?.name ?? item.productId}"`,
+          `Insufficient stock for "${item.product?.name ?? item.variantId}"`,
         );
       }
     }
@@ -111,7 +108,7 @@ export class OrderSagaService {
     cart: CartWithItems,
   ): Promise<OrderWithItems> {
     const totalPrice = cart.items.reduce(
-      (sum, item) => sum + parseFloat(String(item.product.price)) * item.quantity,
+      (sum, item) => sum + parseFloat(String(item.variant!.price)) * item.quantity,
       0,
     );
 
@@ -126,7 +123,9 @@ export class OrderSagaService {
             data: cart.items.map((item) => ({
               productId: item.productId,
               quantity: item.quantity,
-              price: item.product.price,
+              price: item.variant!.price,
+              // Snapshot variant attributes at purchase time — immutable after order placed
+              variantAttributes: this.buildAttributeSnapshot(item.variant),
             })),
           },
         },
@@ -135,13 +134,22 @@ export class OrderSagaService {
     });
   }
 
+  private buildAttributeSnapshot(variant: any): Record<string, string> {
+    const attrs: Record<string, string> = {};
+    for (const av of variant?.attributeValues ?? []) {
+      const typeName = av.option?.variantType?.name ?? 'Attribute';
+      attrs[typeName] = av.option?.value ?? '';
+    }
+    return attrs;
+  }
+
   private async decrementStock(
     tx: Prisma.TransactionClient,
     cart: CartWithItems,
   ): Promise<void> {
     for (const item of cart.items) {
-      await tx.product.update({
-        where: { id: item.productId },
+      await tx.productVariant.update({
+        where: { id: item.variantId! },
         data: { stock: { decrement: item.quantity } },
       });
     }
@@ -164,7 +172,7 @@ export class OrderSagaService {
       items: cart.items.map((i) => ({
         productName: i.product.name,
         quantity: i.quantity,
-        price: parseFloat(String(i.product.price)),
+        price: parseFloat(String(i.variant!.price)),
       })),
       createdAt: order.createdAt.toISOString(),
       correlationId: this.correlationId.get(),
@@ -178,11 +186,7 @@ export class OrderSagaService {
     });
   }
 
-  // Compensating transaction: undoes the DB changes when the Stripe call fails.
-  // This runs OUTSIDE the original transaction (which has already committed),
-  // so we open a new transaction for the rollback. If compensation itself fails,
-  // we log the error and let an operator resolve it — the outbox table shows
-  // the ORDER_CREATED event without a matching payment, which is visible for audit.
+  // Compensating transaction: restores variant stock when the Stripe call fails.
   private async compensate(order: OrderWithItems): Promise<void> {
     this.logger.warn(`Compensating order ${order.id} — Stripe charge failed`);
 
@@ -194,8 +198,9 @@ export class OrderSagaService {
         });
 
         for (const item of order.items) {
-          await tx.product.update({
-            where: { id: item.productId },
+          // Restore via productId — find the variant that was decremented from the snapshot
+          await tx.productVariant.updateMany({
+            where: { productId: item.productId },
             data: { stock: { increment: item.quantity } },
           });
         }
@@ -218,7 +223,18 @@ export class OrderSagaService {
     const where = cartId ? { id: cartId } : { userId };
     const cart = await this.prisma.cart.findUnique({
       where,
-      include: { items: { include: { product: true } } },
+      include: {
+        items: {
+          include: {
+            product: true,
+            variant: {
+              include: {
+                attributeValues: { include: { option: { include: { variantType: true } } } },
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!cart) throw new BadRequestException('Cart not found');

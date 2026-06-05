@@ -137,8 +137,8 @@ export class OrdersService {
     }
 
     for (const item of order.items) {
-      await this.prisma.product.update({
-        where: { id: item.productId },
+      await this.prisma.productVariant.updateMany({
+        where: { productId: item.productId },
         data: { stock: { increment: item.quantity } },
       });
     }

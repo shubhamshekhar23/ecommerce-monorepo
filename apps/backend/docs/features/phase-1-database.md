@@ -122,3 +122,37 @@ EXPLAIN ANALYZE SELECT * FROM "Product" WHERE id > '...' ORDER BY id LIMIT 20;
 ```
 
 This is the single most common pagination mistake in production — offset gets slower with every page.
+
+---
+
+## Contract Step (completed)
+
+Migration: `prisma/migrations/20260605000000_phase1_contract/migration.sql`
+
+### What changed
+
+**App code** — all reads of `Product.price/cost/stock` replaced with `ProductVariant` equivalents:
+
+| File | Change |
+|---|---|
+| `cart.service.ts` | `addItem` now requires `variantId`; price/stock from `ProductVariant`; unique lookup is `cartId_variantId` |
+| `cart.controller.ts` | `POST /cart/items` body now accepts `variantId` |
+| `order-saga.service.ts` | Locks `ProductVariant` rows; checks `ProductVariant.stock`; snapshots variant price + attributes on `OrderItem` |
+| `products.service.ts` | `create` makes a default `ProductVariant`; listing returns `priceRange {min, max}`; FTS query joins variants for price |
+| `csv-import.service.ts` | Upserts `ProductVariant` with price/cost/stock instead of writing to `Product` |
+| `orders.service.ts` | Order cancellation restores `ProductVariant.stock` |
+| `returns.service.ts` | Return approval restores `ProductVariant.stock` |
+
+**Contract migration**:
+```sql
+ALTER TABLE "Product" DROP COLUMN "price";
+ALTER TABLE "Product" DROP COLUMN "cost";
+ALTER TABLE "Product" DROP COLUMN "stock";
+
+DELETE FROM "CartItem" WHERE "variantId" IS NULL;
+ALTER TABLE "CartItem" ALTER COLUMN "variantId" SET NOT NULL;
+ALTER TABLE "CartItem" DROP CONSTRAINT "CartItem_cartId_productId_key";
+ALTER TABLE "CartItem" ADD CONSTRAINT "CartItem_cartId_variantId_key" UNIQUE ("cartId", "variantId");
+```
+
+The expand-contract pattern is now fully complete. `Product` is metadata-only (name, slug, description, category). All pricing and inventory live exclusively on `ProductVariant`.

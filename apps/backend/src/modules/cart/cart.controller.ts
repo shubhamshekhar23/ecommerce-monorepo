@@ -32,9 +32,9 @@ export class CartController {
   @ApiResponse({ status: 201 })
   async addItem(
     @CurrentUser() user: RequestUser,
-    @Body() { productId, quantity }: any,
+    @Body() { productId, variantId, quantity }: any,
   ): Promise<any> {
-    return this.cartService.addItem(user.id, productId, quantity);
+    return this.cartService.addItem(user.id, productId, variantId, quantity);
   }
 
   @Patch('items/:itemId')

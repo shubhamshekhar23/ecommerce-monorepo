@@ -96,8 +96,8 @@ export class ReturnsService {
       // Restock each returned item
       ...request.items.map((item: { orderItemId: string; quantity: number }) => {
         const orderItem = request.order.items.find((oi: { id: string; productId: string }) => oi.id === item.orderItemId);
-        return this.prisma.product.update({
-          where: { id: orderItem?.productId ?? '' },
+        return this.prisma.productVariant.updateMany({
+          where: { productId: orderItem?.productId ?? '' },
           data: { stock: { increment: item.quantity } },
         });
       }),

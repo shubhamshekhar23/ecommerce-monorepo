@@ -70,7 +70,6 @@ export class CsvImportService {
       }
     }
 
-    // Batch write in chunks of BATCH_SIZE
     for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
       const batch = validRows.slice(i, i + BATCH_SIZE);
       await this.writeBatch(batch);
@@ -100,29 +99,43 @@ export class CsvImportService {
   }
 
   private async writeBatch(rows: CsvRow[]): Promise<void> {
-    await this.prisma.$transaction(
-      rows.map((row) =>
-        this.prisma.product.upsert({
+    // Each CSV row upserts the Product (by slug), then upserts a default ProductVariant.
+    // price/cost/stock belong to ProductVariant — Product is now metadata-only.
+    for (const row of rows) {
+      await this.prisma.$transaction(async (tx) => {
+        const product = await tx.product.upsert({
           where: { slug: row.slug },
           create: {
             id: crypto.randomUUID(),
             name: row.name,
             slug: row.slug,
             description: row.description ?? null,
-            price: parseFloat(row.price),
-            cost: parseFloat(row.cost),
-            stock: parseInt(row.stock, 10),
             categoryId: row.categoryId,
           },
           update: {
             name: row.name,
             description: row.description ?? null,
+          },
+        });
+
+        const defaultSku = `${product.id.slice(-8).toUpperCase()}-DEFAULT`;
+
+        await tx.productVariant.upsert({
+          where: { sku: defaultSku },
+          create: {
+            productId: product.id,
+            sku: defaultSku,
             price: parseFloat(row.price),
             cost: parseFloat(row.cost),
             stock: parseInt(row.stock, 10),
           },
-        }),
-      ),
-    );
+          update: {
+            price: parseFloat(row.price),
+            cost: parseFloat(row.cost),
+            stock: parseInt(row.stock, 10),
+          },
+        });
+      });
+    }
   }
 }
