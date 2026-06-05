@@ -24,6 +24,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "prisma db seed",
+    "prisma:seed:extensive": "DIRECT_DATABASE_URL=postgresql://ecommerce_user:ecommerce_password@localhost:5434/ecommerce_db ts-node prisma/seed.extensive.ts",
     "prisma:studio": "prisma studio",
     "load:setup": "ts-node test/load/scripts/setup-test-data.ts",
     "load:clean": "ts-node test/load/scripts/cleanup-test-data.ts",
@@ -87,6 +88,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^2.1.0",
     "@eslint/js": "^8.56.0",
+    "@faker-js/faker": "^10.4.0",
     "@nestjs/cli": "^10.3.0",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.3.0",

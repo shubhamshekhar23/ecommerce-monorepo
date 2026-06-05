@@ -1,0 +1,39 @@
+export const COUNTS = {
+  USERS: 200,
+  PRODUCTS_PER_LEAF_CATEGORY: 15,
+  MAX_VARIANTS_PER_PRODUCT: 12,
+  ORDERS_PER_USER: 4,
+  REVIEWS_PER_PRODUCT: 8,
+  COUPONS: 20,
+  ADDRESSES_PER_USER: 2,
+};
+
+export const ORDER_STATUSES = [
+  'PENDING',
+  'CONFIRMED',
+  'PROCESSING',
+  'SHIPPED',
+  'DELIVERED',
+  'CANCELLED',
+  'REFUNDED',
+] as const;
+
+export const PAYMENT_STATUSES = [
+  'PENDING',
+  'PROCESSING',
+  'SUCCEEDED',
+  'FAILED',
+  'REFUNDED',
+  'CANCELED',
+] as const;
+
+// Maps order status → realistic payment status
+export const PAYMENT_STATUS_MAP: Record<string, string> = {
+  PENDING: 'PENDING',
+  CONFIRMED: 'SUCCEEDED',
+  PROCESSING: 'SUCCEEDED',
+  SHIPPED: 'SUCCEEDED',
+  DELIVERED: 'SUCCEEDED',
+  CANCELLED: 'FAILED',
+  REFUNDED: 'REFUNDED',
+};
