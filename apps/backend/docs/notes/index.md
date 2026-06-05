@@ -12,7 +12,7 @@
 - health check
 - Observability :
   - opentelemetry, traces, spans
-  - loki
+  - nestjs-logger, nestjs-pino, loki
   - promtail
   - jaeger
   - prometheus

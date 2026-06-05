@@ -16,7 +16,14 @@ scrape_configs:
   # "app" resolves via Docker Compose DNS. Port 4000 is the NestJS app.
   - job_name: 'ecommerce-backend'
     static_configs:
-      - targets: ['app:4000']
+      - targets: ['backend:4000']
     metrics_path: '/api/metrics'
     scrape_interval: 10s
     scrape_timeout: 5s
+
+  # PgBouncer pool stats: client_active, client_waiting, server_idle, total_requests.
+  # Use these to alert when pool is saturated (client_waiting > 0 sustained).
+  - job_name: 'pgbouncer'
+    static_configs:
+      - targets: ['pgbouncer-exporter:9127']
+    scrape_interval: 15s

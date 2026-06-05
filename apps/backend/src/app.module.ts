@@ -1,5 +1,5 @@
 import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
-import { APP_GUARD, APP_FILTER } from '@nestjs/core';
+import { APP_GUARD, APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { PrismaModule } from '@/modules/prisma/prisma.module';
@@ -22,6 +22,7 @@ import { CacheModule } from '@/modules/cache/cache.module';
 import { RateLimitModule } from '@/modules/rate-limit/rate-limit.module';
 import { RateLimitGuard } from '@/modules/rate-limit/rate-limit.guard';
 import { JwtAuthGuard, RolesGuard } from '@/common/guards';
+import { HttpMetricsInterceptor } from '@/modules/metrics/http-metrics.interceptor';
 import { HttpExceptionFilter } from '@/common/filters/http-exception.filter';
 import { CommonModule } from '@/common/common.module';
 import { AuditModule } from '@/modules/audit/audit.module';
@@ -77,6 +78,7 @@ import { AppService } from './app.service';
   providers: [
     AppService,
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
+    { provide: APP_INTERCEPTOR, useClass: HttpMetricsInterceptor },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_GUARD, useClass: RateLimitGuard },

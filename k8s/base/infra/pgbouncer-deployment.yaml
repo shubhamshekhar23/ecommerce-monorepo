@@ -58,6 +58,11 @@ spec:
               value: plain
             - name: LISTEN_PORT
               value: "6432"
+            - name: STATS_USERS
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secrets
+                  key: POSTGRES_USER
           ports:
             - containerPort: 6432
           resources:
@@ -67,6 +72,33 @@ spec:
             limits:
               cpu: "500m"
               memory: "128Mi"
+        # Sidecar: exposes PgBouncer pool stats as Prometheus metrics on :9127.
+        # Connects to PgBouncer's virtual admin database using the same credentials.
+        - name: pgbouncer-exporter
+          image: prometheuscommunity/pgbouncer-exporter:v0.7.0
+          env:
+            - name: PGBOUNCER_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secrets
+                  key: POSTGRES_USER
+            - name: PGBOUNCER_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secrets
+                  key: POSTGRES_PASSWORD
+          args:
+            - --pgBouncer.connectionString=postgresql://$(PGBOUNCER_USER):$(PGBOUNCER_PASS)@localhost:6432/pgbouncer?sslmode=disable
+          ports:
+            - containerPort: 9127
+              name: metrics
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "32Mi"
+            limits:
+              cpu: "100m"
+              memory: "64Mi"
 ---
 apiVersion: v1
 kind: Service
@@ -77,5 +109,9 @@ spec:
   selector:
     app: pgbouncer
   ports:
-    - port: 6432
+    - name: pgbouncer
+      port: 6432
       targetPort: 6432
+    - name: metrics
+      port: 9127
+      targetPort: 9127

@@ -51,6 +51,70 @@ POST /orders (450ms)
 
 This is how senior devs find slow code in production without guessing. The waterfall view shows exactly which operation is the bottleneck.
 
+### HTTP Metrics (Request Rate, Latency, Error Rate)
+
+`src/modules/metrics/http-metrics.interceptor.ts`
+
+A NestJS interceptor wraps every request and records its duration into a Prometheus histogram:
+
+```typescript
+// Records: method, route pattern, status code, duration
+histogram.labels('POST', '/api/orders', '201').observe(312)
+```
+
+The critical detail is using `req.route.path` (the NestJS route pattern) instead of `req.url`:
+
+```
+req.url   → /api/products/550e8400-e29b-41d4-a716-446655440000  ← bad: one series per product
+req.route → /api/products/:id                                    ← good: one series per route
+```
+
+Using the raw URL creates one Prometheus time series per entity ID. A 50k-product catalog would create 50k time series and OOM Prometheus within hours. Route patterns keep cardinality bounded.
+
+**PromQL queries this unlocks:**
+
+```promql
+# Request rate (req/sec) per route
+rate(http_request_duration_ms_count[5m])
+
+# P95 latency per route
+histogram_quantile(0.95, rate(http_request_duration_ms_bucket[5m]))
+
+# Error rate (% of 5xx responses)
+rate(http_request_duration_ms_count{status_code=~"5.."}[5m])
+/ rate(http_request_duration_ms_count[5m])
+```
+
+---
+
+### Database Metrics (PgBouncer Pool)
+
+`docker-compose.yml` (`pgbouncer-exporter` service), `k8s/base/infra/pgbouncer-deployment.yaml` (sidecar)
+
+`prometheuscommunity/pgbouncer-exporter` connects to PgBouncer's internal admin database (`pgbouncer` virtual db) and exposes pool statistics. Requires `STATS_USERS` to be set on the PgBouncer container so the app user can query the admin interface.
+
+**Key metrics exposed:**
+
+| Metric | What it means |
+|---|---|
+| `pgbouncer_pools_client_active` | Connections currently executing a query |
+| `pgbouncer_pools_client_waiting` | Connections queued waiting for a free server slot |
+| `pgbouncer_pools_server_idle` | Server connections open but not in use |
+| `pgbouncer_stats_total_requests` | Cumulative requests processed |
+
+**The alert that matters:**
+
+```promql
+# Pool saturation: clients waiting for a slot > 0 for more than 30s
+pgbouncer_pools_client_waiting > 0
+```
+
+When `client_waiting` is non-zero, your app has more concurrent DB requests than PgBouncer's `DEFAULT_POOL_SIZE` (20). Responses are queuing. Either increase the pool size or scale the app down. This is the metric that tells you PgBouncer is the bottleneck — without it you'd see slow API responses but no obvious cause.
+
+In Kubernetes the exporter runs as a sidecar container in the same Pod as PgBouncer, connecting to `localhost:6432`.
+
+---
+
 ### Prometheus Metrics
 
 `src/modules/metrics/metrics.module.ts` exposes `GET /api/metrics` in Prometheus format.
@@ -173,6 +237,7 @@ Configured in Grafana alert rules:
 - `src/modules/metrics/metrics.module.ts`
 - `src/modules/logger/logger.module.ts`
 - `apps/backend/src/tracing.ts` (OpenTelemetry setup)
+- `src/modules/metrics/http-metrics.interceptor.ts` (HTTP duration histogram)
 - `apps/backend/loki-config.yml` (Loki single-node config)
 - `apps/backend/promtail-config.yml` (Docker Compose log collection)
 - `apps/backend/grafana/provisioning/datasources/loki.yml` (Grafana Loki datasource)

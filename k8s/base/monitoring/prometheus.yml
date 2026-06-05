@@ -21,3 +21,10 @@ scrape_configs:
     metrics_path: '/api/metrics'
     scrape_interval: 10s
     scrape_timeout: 5s
+
+  # PgBouncer exporter runs as a sidecar in the pgbouncer Pod.
+  # Port 9127 is exposed via the pgbouncer Service.
+  - job_name: 'pgbouncer'
+    static_configs:
+      - targets: ['pgbouncer:9127']
+    scrape_interval: 15s

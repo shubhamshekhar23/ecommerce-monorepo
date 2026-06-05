@@ -34,8 +34,10 @@ Gateway (:3000)
 OpenSearch (:9200) ◄── Search Service indexes
 Mailpit    (:1025) ◄── Notification Service sends
 Jaeger     (:16686) ◄── OpenTelemetry traces
-Prometheus (:9090) ◄── /api/metrics scrape
-Grafana    (:3001) ◄── Prometheus datasource
+Prometheus (:9090) ◄── /api/metrics scrape + pgbouncer-exporter:9127
+Grafana    (:3001) ◄── Prometheus + Loki datasources
+Loki       (:3100) ◄── Promtail log shipping
+Promtail           ──► tails container logs → Loki
 ```
 
 ---
@@ -66,8 +68,9 @@ Grafana    (:3001) ◄── Prometheus datasource
 - PgBouncer (transaction pooling mode)
 - RabbitMQ (durable queues, dead-letter exchanges)
 - OpenSearch (product search index)
-- Prometheus + Grafana (metrics)
+- Prometheus + Grafana (metrics — HTTP histogram, business metrics, PgBouncer pool stats)
 - Jaeger (distributed tracing via OTLP)
+- Loki + Promtail (log aggregation)
 
 ---
 

@@ -108,7 +108,7 @@ cd apps/backend
 docker compose up -d
 ```
 
-This starts: Postgres (:5434), PgBouncer (:6432), Redis (:6379), RabbitMQ (:5672, :15672), Nginx (:80), Mailpit (:1025/:8025), Jaeger (:16686), Prometheus (:9090), Grafana (:3001), pgAdmin (:5050).
+This starts: Postgres (:5434), PgBouncer (:6432), Redis (:6379), RabbitMQ (:5672, :15672), Nginx (:80), Mailpit (:1025/:8025), Jaeger (:16686), Prometheus (:9090), Grafana (:3001), Loki (:3100), Promtail, pgAdmin (:5050), PgBouncer exporter (:9127).
 
 Wait for Postgres to be ready:
 ```bash
@@ -175,7 +175,8 @@ open http://localhost:4000/api/docs
 - **RabbitMQ Management**: http://localhost:15672 (guest/guest)
 - **Jaeger Tracing**: http://localhost:16686
 - **Prometheus**: http://localhost:9090
-- **Grafana**: http://localhost:3001 (admin/admin)
+- **Grafana**: http://localhost:3001 (admin/admin) — metrics + logs (Loki datasource)
+- **Loki**: http://localhost:3100 (API only, query via Grafana Explore)
 - **pgAdmin**: http://localhost:5050
 
 ---

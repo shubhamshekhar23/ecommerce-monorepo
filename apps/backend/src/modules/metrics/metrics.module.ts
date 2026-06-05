@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
-import { PrometheusModule, makeCounterProvider, makeGaugeProvider } from '@willsoto/nestjs-prometheus';
+import { PrometheusModule, makeCounterProvider, makeGaugeProvider, makeHistogramProvider } from '@willsoto/nestjs-prometheus';
 import { MetricsController } from './metrics.controller';
 import { BusinessMetricsService } from './business-metrics.service';
+import { HttpMetricsInterceptor } from './http-metrics.interceptor';
 
 // Why separate business metrics from default metrics?
 // Default metrics (CPU, memory, GC, event loop lag) tell you if the server is alive.
@@ -27,7 +28,14 @@ import { BusinessMetricsService } from './business-metrics.service';
     makeGaugeProvider({ name: 'payment_success_rate_percent', help: 'Payment success rate (0-100)' }),
     makeGaugeProvider({ name: 'cart_to_order_conversion_rate', help: 'Cart to order conversion rate (0-100)' }),
     makeCounterProvider({ name: 'inventory_reservation_failures_total', help: 'Inventory reservation failures' }),
+    makeHistogramProvider({
+      name: 'http_request_duration_ms',
+      help: 'HTTP request duration in milliseconds',
+      labelNames: ['method', 'route', 'status_code'],
+      buckets: [10, 50, 100, 200, 500, 1000, 2000],
+    }),
+    HttpMetricsInterceptor,
   ],
-  exports: [BusinessMetricsService],
+  exports: [BusinessMetricsService, HttpMetricsInterceptor, 'PROM_METRIC_HTTP_REQUEST_DURATION_MS'],
 })
 export class MetricsModule {}

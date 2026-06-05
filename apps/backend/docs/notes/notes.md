@@ -19,7 +19,11 @@
   - pinged by docker, nginx, kubernetes
 - main.ts: Create Nest App, Stripe Webhook Support, Helmet Security, Compression, CORS, Validation Pipes, Swagger Docs, Static Files, Graceful Shutdown, Shutdown Hooks, Start HTTP Server
 - Metrics and Logs:
-  `NestJS Logger` : Creates log messages; `Loki` :Stores logs
+  `All running containers` : Creates log messages; e.g nestjs app using this.logger.log();
+  `nestjs-pino`: converts that into props json and stdout; whioch docker constiner stores internally
+  `promtail` reads logs from every running container using docker socket and batches them in memory buffer before making http post request to `Loki` and clears the memory;
+  `Loki`: Receives request from promtail and Stores logs;
+  `OpenTelemetry`: Uses otel sdk and tracing.ts that patches around the libs like redis, stripe etc.; Creates traces with spans in them, and periodically makes http request to Jaeger;
+  `Jaeger`: Stores traces in memory (with current setup, although when restarted container all traces would be gone; so we can use elastic search/ opensearch along with it to persist data);
   `Prometheus` :Stores metrics
-  `OpenTelemetry` :Creates traces; `Jaeger` :Stores traces
-  `Grafana` : Displays everything
+  `Grafana` : Gets info from jaeger, prometheus and Loki and Displays

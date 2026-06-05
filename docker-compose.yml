@@ -92,11 +92,28 @@ services:
       SERVER_RESET_QUERY: DISCARD ALL
       AUTH_TYPE: plain
       LISTEN_PORT: 6432
+      STATS_USERS: ecommerce_user
     ports:
       - '6432:6432'
     depends_on:
       postgres:
         condition: service_healthy
+    networks:
+      - ecommerce-network
+
+  # ── PgBouncer Exporter ───────────────────────────────────────────────────────
+  # Connects to PgBouncer's admin database (virtual "pgbouncer" db) and exposes
+  # pool stats as Prometheus metrics. Scraped by Prometheus at :9127/metrics.
+  # Key metrics: client_active, client_waiting, server_idle, total_requests.
+  pgbouncer-exporter:
+    image: prometheuscommunity/pgbouncer-exporter:v0.7.0
+    container_name: ecommerce_pgbouncer_exporter
+    command:
+      - --pgBouncer.connectionString=postgresql://ecommerce_user:ecommerce_password@pgbouncer:6432/pgbouncer?sslmode=disable
+    ports:
+      - '9127:9127'
+    depends_on:
+      - pgbouncer
     networks:
       - ecommerce-network
 
