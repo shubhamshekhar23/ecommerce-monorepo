@@ -1,0 +1,20 @@
+- nestjs
+- monorepo, workspace, node_modules hoisting
+- microservice
+- swagger docs
+- prisma, migrate, deploy
+- postgresql
+- pgbouncer, connection pooling
+- nginx, ssl termination,gzip etc
+- blue green deployment
+- docker, dockerfile, docker-compose, container, image, volume, multi-stage build
+- graceful shutdown
+- health check
+- Observability :
+  - opentelemetry, traces, spans
+  - loki
+  - promtail
+  - jaeger
+  - prometheus
+  - grafana
+  - kubernetes
