@@ -24,6 +24,8 @@
   `promtail` reads logs from every running container using docker socket and batches them in memory buffer before making http post request to `Loki` and clears the memory;
   `Loki`: Receives request from promtail and Stores logs;
   `OpenTelemetry`: Uses otel sdk and tracing.ts that patches around the libs like redis, stripe etc.; Creates traces with spans in them, and periodically makes http request to Jaeger;
-  `Jaeger`: Stores traces in memory (with current setup, although when restarted container all traces would be gone; so we can use elastic search/ opensearch along with it to persist data);
-  `Prometheus` :Stores metrics
-  `Grafana` : Gets info from jaeger, prometheus and Loki and Displays
+  `Jaeger`: Stores traces in memory (with current setup, although when restarted container all traces would be gone; so we can use elastic search/ opensearch along with it to persist data); It has its own UI
+  `promclient`: stores all the metrics related info in process memory of nestjs app;
+  `pgbouncer exporter`: queries the pg bouncer and stores the metrics again in ram
+  `Prometheus`: makes http request to nestjs app and pgbouncer exporter and gets the metrics data and stores it; tracking runtime metrics(cpu, memory, event loop); http metrics(request duration); db metrics(query duration), buisness metrics (orders_total, payment_success_rate_percent)
+  `Grafana` : Gets info from prometheus and Loki and Displays (it doesnt connect with jaeger as later has its own ui)
