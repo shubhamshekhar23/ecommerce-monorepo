@@ -1,3 +1,74 @@
+# Phase 1
+
+- Db migration for products; Normalized design for tables; Expand - Deploy - Backfill - Contract
+  - Add nullable column/table
+  - Deploy application that reads/writes both old and new schema
+  - Backfill existing data
+  - Switch reads to new schema
+  - Make column `NOT NULL`
+  - Remove old column/table
+  - Zero-downtime migration strategy
+
+- Product Variants
+  - Normalized schema instead of storing size/color directly on product
+  - `Product`, `ProductVariant`, `Attribute`, `AttributeOption`, `VariantAttributeValue`
+  - Composite primary key (`variantId`, `optionId`)
+  - Variant owns stock and price
+  - Product owns shared information (name, description, brand, etc.)
+  - JSONB snapshot for order items to preserve historical purchase data
+
+- Cursor based pagination vs Offset
+  - Offset: `LIMIT 20 OFFSET 50000`
+  - Database must scan/discard previous rows
+  - Cursor: `WHERE id > cursor`
+  - Uses index efficiently
+  - Stable under inserts/deletes
+  - Encode/decode cursor token
+  - Keyset pagination
+
+- PostgreSQL Full Text Search (FTS)
+  - PostgreSQL built-in search engine
+  - Often sufficient before introducing Elasticsearch
+  - `tsvector`, `tsquery`, `plainto_tsquery`
+  - SearchVector generated stored column
+  - Read-only/generated automatically by Postgres
+  - Generated whenever row is inserted/updated
+  - GIN index on search vector
+  - Search weights (A, B, C, D)
+  - Ranking via `ts_rank`
+  - Stemming
+    - running → run
+    - shoes → shoe
+
+  - Query normalization
+    - "nike running shoes"
+    - becomes roughly: nike, run, shoe
+
+  - `to_tsvector()` converts text into searchable lexemes
+  - `plainto_tsquery()` converts user search text into search query
+  - Lexemes = stripped important words
+  - `$queryRaw` for advanced FTS queries
+  - Full-text index ≠ normal B-tree index
+
+- Inventory Reservation / Stock Management
+  - Race condition during concurrent checkout
+  - Pessimistic locking
+  - `SELECT ... FOR UPDATE`
+  - Row-level lock
+  - Lock acquired inside transaction
+  - Other transactions block until lock released
+  - Prevents overselling inventory
+  - Conditional update: `stock >= qty`
+  - Prevents negative inventory
+  - Prisma interactive transaction: `await prisma.$transaction(async (tx) => {});`
+  - Prisma internally handles:
+    - `BEGIN`
+    - `COMMIT`
+    - `ROLLBACK`
+  - Lock lives until commit/rollback
+  - Atomic stock reservation workflow
+  - Transaction, Commit, Rollback, Row Lock, Blocking, Atomicity, Race Condition
+
 # Phase 0
 
 - Monorepo, root package.json and workspace
