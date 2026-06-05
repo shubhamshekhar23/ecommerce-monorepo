@@ -11,10 +11,8 @@
 - graceful shutdown
 - health check
 - Observability :
-  - opentelemetry, traces, spans
-  - nestjs-logger, nestjs-pino, loki
-  - promtail
-  - jaeger
-  - prometheus
+  - nestjs-logger, nestjs-pino, promtail (docker socket), loki
+  - opentelemetry, traces, spans, jaeger (currently in memory storage; should be copuled with elastic/opensearch)
+  - prometheus, promclient, pgbouncer-exporter, node metrics, business metrics, http metrics, p95
   - grafana
-  - kubernetes
+-
