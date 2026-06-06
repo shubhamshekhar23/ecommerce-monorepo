@@ -15,6 +15,14 @@
   - after 5 failures marks `FAILED` in db (dead letter) for further investigation by some developer;
   - Fetches up to 50 `PENDING` events with `FOR UPDATE SKIP LOCKED` (multiple workers can run safely)
 
+- Saga pattern for order placement
+  - there are some db updates that need to be done in an atomic manner like stock change, checking cart; acquiring locks;
+  - we put them into a transaction that all succceeds or all fails
+  - also we create an event in table for sending emails; which is a part of outbox pattern above
+  - then we try for stripe payment, if it succeed or fails, based on which we undo all above or let it proceed
+  - We use circuit breaker that wraps around calling of stripe payment api, that lets app know whats the success rate; state are closed, half open, open;
+  - payment api is usually very fragile and often unreliable thats why we use circuit breaker pattern, to know before hand how the past payemnts behaved.
+
 # Phase 1
 
 - Db migration for products; Normalized design for tables; Expand - Deploy - Backfill - Contract

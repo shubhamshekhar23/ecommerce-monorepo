@@ -80,7 +80,14 @@ BullMQ is built on Redis data structures:
 - Active jobs → Redis Hash
 - Failed jobs → Redis Sorted Set (dead letter queue)
 
-The `NOTIFICATIONS` queue is registered for background jobs (invoice generation, abandoned cart, stock alerts). After Phase 9, notification delivery itself moved to the standalone notification-service, but the queue module remains for compute-intensive background tasks.
+Active queues as of Phase 9:
+- `stock-alerts` — sends back-in-stock emails when a product is restocked
+- `cart-recovery` — sends abandoned cart reminders 1 hour after the user stops activity
+- `invoices` — generates PDF invoices asynchronously via pdfkit
+
+The `notifications` queue was removed after Phase 9 — notification delivery moved to the standalone notification-service and no background tasks remained on that queue. The `queue.module.ts` now only sets up the Redis connection; each feature module registers its own queue via `BullModule.registerQueue`.
+
+Admin endpoints (`GET /admin/queue/stats`, `GET /admin/queue/dlq`) monitor the live queues directly.
 
 Retry config: exponential backoff with jitter:
 ```typescript

@@ -1,18 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
-import { Queue, Worker, Job } from 'bullmq';
+import { Queue } from 'bullmq';
 import { Response } from 'express';
-import PDFDocument from 'pdfkit';
+import { createReadStream } from 'fs';
+import { access } from 'fs/promises';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 import { QUEUE_NAMES } from '@/modules/queue/queue.constants';
+import { getInvoicePath } from './invoice.utils';
 
-// PDF generation pattern: NEVER generate in the HTTP request handler.
-// A 1000-order invoice could take 30 seconds. The HTTP client would time out.
-// Pattern: POST /orders/:id/invoice → 202 Accepted (job enqueued)
-//          GET  /orders/:id/invoice → stream PDF if ready, or 202 if still generating
-//
-// For simplicity here, we stream synchronously on GET (acceptable for small invoices).
-// In production: enqueue on POST, store in S3, redirect to signed URL on GET.
 @Injectable()
 export class InvoiceService {
   constructor(
@@ -20,48 +15,43 @@ export class InvoiceService {
     @InjectQueue(QUEUE_NAMES.INVOICES) private readonly invoiceQueue: Queue,
   ) {}
 
+  // Idempotent: calling this twice for the same order is safe.
+  // If the PDF is already on disk the job is not re-enqueued.
+  // jobId deduplicates within BullMQ in case of rapid double-POSTs.
   async enqueueGeneration(orderId: string): Promise<void> {
-    await this.invoiceQueue.add('generate-invoice', { orderId }, {
-      jobId: `invoice:${orderId}`,
-      removeOnComplete: 100,
-    });
+    const filePath = getInvoicePath(orderId);
+    const already = await access(filePath).then(() => true).catch(() => false);
+    if (already) return;
+
+    await this.invoiceQueue.add(
+      'generate-invoice',
+      { orderId },
+      { jobId: `invoice:${orderId}`, removeOnComplete: 50 },
+    );
   }
 
-  // Stream the PDF directly to the HTTP response.
-  // Uses Node.js streams — the PDF is piped to res as it's generated,
-  // not buffered in memory. Critical for large invoices.
+  // Returns 202 if the PDF is not ready yet so the client knows to retry.
+  // Streams directly from the filesystem once the processor has written it —
+  // no buffering in memory, safe for large files.
   async streamInvoice(orderId: string, userId: string, res: Response): Promise<void> {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
-      include: { items: { include: { product: true } }, user: true },
+      select: { userId: true, orderNumber: true },
     });
 
     if (!order) throw new NotFoundException('Order not found');
     if (order.userId !== userId) throw new NotFoundException('Order not found');
 
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="invoice-${order.orderNumber}.pdf"`);
+    const filePath = getInvoicePath(orderId);
+    const ready = await access(filePath).then(() => true).catch(() => false);
 
-    const doc = new PDFDocument({ margin: 50 });
-    doc.pipe(res);
-
-    this.renderInvoice(doc, order);
-    doc.end();
-  }
-
-  private renderInvoice(doc: PDFKit.PDFDocument, order: { orderNumber: string; createdAt: Date; totalPrice: unknown; items: Array<{ product: { name: string } | null; quantity: number; price: unknown }> }): void {
-    doc.fontSize(20).text('Invoice', { align: 'center' });
-    doc.moveDown();
-    doc.fontSize(12).text(`Order: ${order.orderNumber}`);
-    doc.text(`Date: ${order.createdAt.toLocaleDateString()}`);
-    doc.moveDown();
-
-    doc.text('Items:', { underline: true });
-    for (const item of order.items) {
-      doc.text(`  ${item.product?.name ?? 'Unknown'} × ${item.quantity}  $${item.price}`);
+    if (!ready) {
+      res.status(202).json({ message: 'Invoice is being generated, try again in a few seconds' });
+      return;
     }
 
-    doc.moveDown();
-    doc.fontSize(14).text(`Total: $${order.totalPrice}`, { align: 'right' });
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="invoice-${order.orderNumber}.pdf"`);
+    createReadStream(filePath).pipe(res);
   }
 }

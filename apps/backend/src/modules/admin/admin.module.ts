@@ -1,9 +1,15 @@
 import { Module } from '@nestjs/common';
-import { QueueModule } from '@/modules/queue/queue.module';
+import { BullModule } from '@nestjs/bullmq';
+import { QUEUE_NAMES } from '@/modules/queue/queue.constants';
 import { AdminController } from './admin.controller';
 
 @Module({
-  imports: [QueueModule],
+  imports: [
+    BullModule.registerQueue(
+      { name: QUEUE_NAMES.STOCK_ALERTS },
+      { name: QUEUE_NAMES.CART_RECOVERY },
+    ),
+  ],
   controllers: [AdminController],
 })
 export class AdminModule {}

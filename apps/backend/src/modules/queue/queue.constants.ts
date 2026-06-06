@@ -1,5 +1,4 @@
 export const QUEUE_NAMES = {
-  NOTIFICATIONS: 'notifications',
   CART_RECOVERY: 'cart-recovery',
   INVOICES: 'invoices',
   STOCK_ALERTS: 'stock-alerts',

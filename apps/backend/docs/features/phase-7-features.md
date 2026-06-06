@@ -75,7 +75,8 @@ The `ProductRating` row is the CQRS read model (also implemented in Phase 4). Pr
 
 ### Back-in-Stock Alerts — Fan-Out Pattern
 
-`src/modules/stock-alerts/stock-alerts.service.ts`
+`src/modules/stock-alerts/stock-alerts.service.ts`  
+`src/modules/stock-alerts/stock-alert.processor.ts`
 
 Users can subscribe to a product variant. When stock is replenished (admin updates stock or a return is approved), one event fans out to all subscribers:
 
@@ -87,6 +88,8 @@ Users can subscribe to a product variant. When stock is replenished (admin updat
 ```
 
 The fan-out is intentionally async (via BullMQ) so restocking 10,000 subscribers does not block the HTTP response.
+
+The job payload is a complete snapshot — `alertId`, `email`, `productName`, and `productSlug` are all captured at enqueue time. The processor never needs to query the DB to build the email or the product URL. This matters if the product is renamed or deleted between enqueue and delivery.
 
 ### Return/Refund Workflow — State Machine
 
@@ -108,19 +111,86 @@ Each state transition creates an `AuditLog` entry.
 
 ### PDF Invoice Generation — Background Job Pattern
 
-`src/modules/invoices/invoices.service.ts`
+`src/modules/invoices/invoice.service.ts`  
+`src/modules/invoices/invoice.processor.ts`  
+`src/modules/invoices/invoice.utils.ts`
 
-PDF generation is CPU-intensive (pdfkit renders fonts, lays out tables). It should never block an HTTP response.
+PDF generation is CPU-intensive (pdfkit renders fonts, lays out text). It should never block an HTTP response.
 
-`GET /api/invoices/:orderId` enqueues a BullMQ job and returns a 202 Accepted with a job ID. The job generates the PDF and stores it. The client polls `GET /api/invoices/:orderId/status` until ready, then downloads.
+The pattern separates enqueueing from delivery:
 
-This is the pattern for any slow operation (report generation, CSV export, image resizing): always move it off the HTTP thread.
+- `POST /api/invoices/:orderId` — enqueues a BullMQ job (`jobId: invoice:<orderId>` deduplicates rapid double-POSTs). If the PDF already exists on disk the job is not re-enqueued. Returns 201.
+- `InvoiceProcessor` (concurrency 2) — picks up the job, queries the full order with line items, renders a PDF via pdfkit, and writes it to `uploads/invoices/invoice-<orderId>.pdf`.
+- `GET /api/invoices/:orderId` — checks whether the file exists. If not yet ready, returns 202 so the client knows to retry. Once ready, streams from disk via `createReadStream(...).pipe(res)` — no memory buffering, safe for large files.
+
+Idempotency: calling POST twice for the same order is safe. The processor uses exponential backoff (5 s base, 3 attempts) so transient DB failures retry automatically.
+
+This is the pattern for any slow operation (report generation, CSV export, image resizing): move it off the HTTP thread and let the client poll.
 
 ### Vendor Schema Preparation
 
 `prisma/schema.prisma` — `User.role` includes `VENDOR` and `Product.vendorId` is a nullable FK.
 
 This is an **expand step** in the expand-contract pattern: the schema supports vendor data now even though the full vendor marketplace features are not built yet. Existing records have `vendorId = null` (B2C model). When marketplace features are built, the column is already there and indexed, migration costs nothing.
+
+---
+
+### BullMQ Processors — Consumer Implementation
+
+`src/modules/stock-alerts/stock-alert.processor.ts`  
+`src/modules/cart/cart-recovery.processor.ts`
+
+A BullMQ queue has two sides: a producer (adds jobs) and a processor (consumes jobs). Both queues previously had only producers — jobs were written to Redis but nothing read them.
+
+**How a processor is wired**
+
+```typescript
+@Processor(QUEUE_NAMES.STOCK_ALERTS, { concurrency: 5 })
+export class StockAlertProcessor extends WorkerHost {
+  async process(job: Job<StockAlertJobData>): Promise<void> {
+    await this.mailService.sendStockAlertEmail(...);
+  }
+}
+```
+
+`@Processor` registers the class as a BullMQ `Worker` bound to the named queue. NestJS's DI wires the dependencies. `WorkerHost` provides the lifecycle (start/stop on module init/destroy). `concurrency: 5` means up to 5 jobs run in parallel — each email send is an SMTP call, so they can overlap without blocking each other.
+
+**Retry with exponential backoff + jitter**
+
+Both processors use `backoff: { type: 'custom' }` in `defaultJobOptions` and define a `backoffStrategy` function on the worker:
+
+```typescript
+function backoffWithJitter(attemptsMade: number): number {
+  const delay = Math.min(BASE_DELAY_MS * 2 ** attemptsMade, MAX_DELAY_MS);
+  return Math.floor(delay + delay * Math.random() * 0.3);
+}
+```
+
+- Attempt 1 → ~2s delay
+- Attempt 2 → ~4s delay
+- Attempt 3 → ~8s delay (capped at 30s)
+
+The `Math.random() * 0.3` adds up to 30% jitter. Without jitter, if 1000 email jobs all fail at the same time (SMTP server down), they all retry at exactly the same moment and hammer the server again in a synchronized wave. With jitter, the retries spread out across a window, giving the SMTP server time to recover.
+
+**Cart recovery idempotency**
+
+The cart recovery processor checks before sending:
+
+```typescript
+if (!cart || cart.items.length === 0) return;  // user already checked out
+```
+
+The job fires 1 hour after the user added to cart. If they checked out in that window, the cart is empty. The processor silently skips — no email, no retry. This makes the job naturally idempotent: running it twice (e.g. after a restart) produces the same outcome.
+
+**Process model — same process vs. separate worker**
+
+All processors run inside the same Node.js process as the HTTP server. When NestJS instantiates a `@Processor` class, `WorkerHost` creates a BullMQ `Worker` that opens a Redis connection and starts polling — no threads, no child processes. The `concurrency` setting controls how many Promises are in-flight at once, not how many OS threads are used.
+
+Consequence: CPU-intensive processors (e.g. `InvoiceProcessor` rendering a PDF) block the event loop and can slow down HTTP responses while they run.
+
+In production, the fix is a dedicated worker container — a separate Docker service that boots the NestJS app with only processor modules loaded and never starts the HTTP listener. HTTP containers have no `@Processor` classes registered. Both containers share the same Redis, so job handoff is automatic.
+
+The current single-process setup is correct for development — it's simpler to run and reason about.
 
 ---
 
@@ -201,7 +271,11 @@ For operations that are both (parse then DB write), split them: worker handles t
 - `src/modules/reviews/reviews.service.ts`
 - `src/modules/stock-alerts/stock-alerts.service.ts`
 - `src/modules/returns/returns.service.ts`
-- `src/modules/invoices/invoices.service.ts`
+- `src/modules/invoices/invoice.service.ts` — enqueues generation, streams PDF or returns 202
+- `src/modules/invoices/invoice.processor.ts` — BullMQ consumer, writes PDF to filesystem
+- `src/modules/invoices/invoice.utils.ts` — shared path helper
+- `src/modules/stock-alerts/stock-alert.processor.ts` — BullMQ consumer, sends stock alert emails
+- `src/modules/cart/cart-recovery.processor.ts` — BullMQ consumer, sends abandoned cart emails
 - `src/modules/products/csv-import.service.ts` — spawns worker, owns DB writes
 - `src/modules/products/workers/csv-parser.worker.ts` — CPU-bound parse + validate
 - `src/modules/products/workers/csv-worker.types.ts` — shared interfaces

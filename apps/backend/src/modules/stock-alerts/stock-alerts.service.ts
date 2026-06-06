@@ -39,14 +39,17 @@ export class StockAlertsService {
   async handleRestock(payload: { productId: string; productName: string }): Promise<void> {
     const alerts = await this.prisma.stockAlert.findMany({
       where: { productId: payload.productId, notified: false },
+      include: { product: { select: { slug: true } } },
     });
 
-    // Enqueue one job per subscriber — each job sends one email
+    // Enqueue one job per subscriber — snapshot all worker-needed data so the
+    // processor never needs a DB round-trip just to construct the product URL.
     for (const alert of alerts) {
       await this.alertsQueue.add('send-stock-alert', {
         alertId: alert.id,
         email: alert.email,
         productName: payload.productName,
+        productSlug: alert.product.slug,
       });
     }
 

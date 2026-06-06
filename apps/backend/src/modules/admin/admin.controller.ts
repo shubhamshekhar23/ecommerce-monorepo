@@ -3,51 +3,52 @@ import {
   Get,
   Post,
   Param,
+  Query,
   NotFoundException,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { Roles } from '@/common/decorators';
 import { UserRole } from '@prisma/client';
 import { QUEUE_NAMES } from '@/modules/queue/queue.constants';
-import type { NotificationJobPayload } from '@/modules/queue/dto/notification-job.dto';
 
-// Why expose a DLQ admin endpoint?
-// When a notification job exhausts all BullMQ retry attempts, it lands in the
-// "failed" set (our Dead Letter Queue).  Without visibility, those jobs are
-// silently lost.  This endpoint lets on-call engineers inspect and replay them
-// without touching Redis directly or redeploying the app.
+const ACTIVE_QUEUES = [QUEUE_NAMES.STOCK_ALERTS, QUEUE_NAMES.CART_RECOVERY] as const;
+
 @ApiTags('admin')
 @ApiBearerAuth()
 @Roles(UserRole.ADMIN)
 @Controller('admin/queue')
 export class AdminController {
   constructor(
-    @InjectQueue(QUEUE_NAMES.NOTIFICATIONS)
-    private readonly notificationsQueue: Queue<NotificationJobPayload>,
+    @InjectQueue(QUEUE_NAMES.STOCK_ALERTS) private readonly stockAlertsQueue: Queue,
+    @InjectQueue(QUEUE_NAMES.CART_RECOVERY) private readonly cartRecoveryQueue: Queue,
   ) {}
 
   @Get('stats')
-  @ApiOperation({ summary: 'Get notifications queue stats' })
-  async getStats(): Promise<Record<string, number>> {
-    const counts = await this.notificationsQueue.getJobCounts(
-      'waiting',
-      'active',
-      'completed',
-      'failed',
-      'delayed',
-    );
-    return counts;
+  @ApiOperation({ summary: 'Get job counts for all active queues' })
+  async getStats(): Promise<Record<string, Record<string, number>>> {
+    const [stockAlerts, cartRecovery] = await Promise.all([
+      this.stockAlertsQueue.getJobCounts('waiting', 'active', 'completed', 'failed', 'delayed'),
+      this.cartRecoveryQueue.getJobCounts('waiting', 'active', 'completed', 'failed', 'delayed'),
+    ]);
+    return {
+      [QUEUE_NAMES.STOCK_ALERTS]: stockAlerts,
+      [QUEUE_NAMES.CART_RECOVERY]: cartRecovery,
+    };
   }
 
   @Get('dlq')
-  @ApiOperation({ summary: 'List failed notification jobs (DLQ)' })
-  async getDlq(): Promise<{ jobs: unknown[] }> {
-    const jobs = await this.notificationsQueue.getFailed(0, 49);
-    const mapped = jobs.map((j) => ({
+  @ApiOperation({ summary: 'List failed jobs across all active queues' })
+  @ApiQuery({ name: 'queue', enum: ACTIVE_QUEUES, required: false })
+  async getDlq(@Query('queue') queueName?: string): Promise<{ jobs: unknown[] }> {
+    const queue = this.resolveQueue(queueName);
+    const queues = queue ? [queue] : [this.stockAlertsQueue, this.cartRecoveryQueue];
+
+    const results = await Promise.all(queues.map((q) => q.getFailed(0, 49)));
+    const jobs = results.flat().map((j) => ({
       id: j.id,
       name: j.name,
       data: j.data,
@@ -55,18 +56,23 @@ export class AdminController {
       attemptsMade: j.attemptsMade,
       timestamp: j.timestamp,
     }));
-    return { jobs: mapped };
+
+    return { jobs };
   }
 
   @Post('dlq/:jobId/retry')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Retry a failed job from the DLQ' })
-  async retryJob(@Param('jobId') jobId: string): Promise<{ success: boolean }> {
-    const job = await this.notificationsQueue.getJob(jobId);
+  @ApiOperation({ summary: 'Retry a failed job' })
+  @ApiQuery({ name: 'queue', enum: ACTIVE_QUEUES, required: true })
+  async retryJob(
+    @Param('jobId') jobId: string,
+    @Query('queue') queueName: string,
+  ): Promise<{ success: boolean }> {
+    const queue = this.resolveQueue(queueName);
+    if (!queue) throw new NotFoundException('Unknown queue');
 
-    if (!job) {
-      throw new NotFoundException(`Job ${jobId} not found in DLQ`);
-    }
+    const job = await queue.getJob(jobId);
+    if (!job) throw new NotFoundException(`Job ${jobId} not found`);
 
     await job.retry();
     return { success: true };
@@ -74,10 +80,20 @@ export class AdminController {
 
   @Post('dlq/clear')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Clear all failed jobs from the DLQ' })
-  async clearDlq(): Promise<{ removed: number }> {
-    const jobs = await this.notificationsQueue.getFailed(0, 999);
+  @ApiOperation({ summary: 'Clear failed jobs from a queue' })
+  @ApiQuery({ name: 'queue', enum: ACTIVE_QUEUES, required: true })
+  async clearDlq(@Query('queue') queueName: string): Promise<{ removed: number }> {
+    const queue = this.resolveQueue(queueName);
+    if (!queue) throw new NotFoundException('Unknown queue');
+
+    const jobs = await queue.getFailed(0, 999);
     await Promise.all(jobs.map((j) => j.remove()));
     return { removed: jobs.length };
+  }
+
+  private resolveQueue(name?: string): Queue | null {
+    if (name === QUEUE_NAMES.STOCK_ALERTS) return this.stockAlertsQueue;
+    if (name === QUEUE_NAMES.CART_RECOVERY) return this.cartRecoveryQueue;
+    return null;
   }
 }

@@ -1,11 +1,10 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { QUEUE_NAMES } from './queue.constants';
 
-// NotificationWorker removed — notifications are now handled by the standalone
-// notification-service which consumes from RabbitMQ. BullMQ is kept here for
-// other background jobs (stock alerts, abandoned cart, invoice generation).
+// Configures the shared Redis connection for all BullMQ queues in the app.
+// Individual queue registrations live in their own feature modules.
+// Notifications moved to RabbitMQ + notification-service in Phase 9.
 @Module({
   imports: [
     BullModule.forRootAsync({
@@ -22,7 +21,6 @@ import { QUEUE_NAMES } from './queue.constants';
         };
       },
     }),
-    BullModule.registerQueue({ name: QUEUE_NAMES.NOTIFICATIONS }),
   ],
   exports: [BullModule],
 })
