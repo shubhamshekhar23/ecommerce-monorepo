@@ -1,254 +1,223 @@
-# E-Commerce Backend - NestJS + PostgreSQL
+# E-Commerce Backend — NestJS + PostgreSQL
 
-A production-ready e-commerce backend application built with NestJS, PostgreSQL, and Prisma.
+A production-grade e-commerce backend built across 10 learning phases, covering
+database design, reliability patterns, caching, event-driven architecture,
+observability, security, and microservices.
 
-## Project Overview
-
-This is a comprehensive e-commerce backend system that includes:
-
-- RESTful API with Swagger documentation
-- JWT authentication with refresh tokens
-- PostgreSQL database with Prisma ORM
-- Docker containerization
-- Comprehensive logging and monitoring
-- Extensive testing (unit, integration, E2E, load tests)
+---
 
 ## Tech Stack
 
-- **Framework:** NestJS with TypeScript
-- **Database:** PostgreSQL with Prisma ORM
-- **Authentication:** JWT with refresh tokens
-- **API:** REST with Swagger/OpenAPI
-- **Containerization:** Docker + Docker Compose
-- **Linting:** ESLint
-- **Formatting:** Prettier
-- **Testing:** Jest, Supertest
-- **Logging:** Pino (structured logging)
+- **Framework:** NestJS with TypeScript (strict mode)
+- **Database:** PostgreSQL 16 with Prisma ORM
+- **Cache:** Redis 7
+- **Message broker:** RabbitMQ 3.12
+- **Auth:** RS256 JWT (access + refresh tokens), TOTP 2FA, OAuth
+- **Payments:** Stripe
+- **Search:** PostgreSQL FTS (built-in) + OpenSearch (microservice)
+- **Observability:** Pino logging, Prometheus metrics, Grafana dashboards, Jaeger tracing, Loki log aggregation
+- **Containerisation:** Docker + Docker Compose
+
+---
 
 ## Prerequisites
 
-- Node.js v20+
-- npm v10+
-- Docker & Docker Compose
-- PostgreSQL 16+ (or use Docker Compose)
+- Docker Desktop
+- Node.js v20+ and npm v10+ (for local editor tooling only — the app runs in Docker)
+
+---
 
 ## Getting Started
 
-### 1. Installation
+### 1. Environment
 
 ```bash
-# Install dependencies
-npm install
-
-# Generate Prisma Client
-npm run prisma:generate
+cp apps/backend/.env.example apps/backend/.env
+# Fill in JWT_PRIVATE_KEY and JWT_PUBLIC_KEY (see docs/TROUBLESHOOTING.md #6)
 ```
 
-### 2. Environment Setup
-
-Copy `.env.example` to `.env` and update the values:
+### 2. Start everything
 
 ```bash
-cp .env.example .env
+# From the monorepo root
+docker compose up -d
 ```
 
-### 3. Database Setup
+This starts: PostgreSQL, PgBouncer, Redis, RabbitMQ, OpenSearch, Mailpit,
+Jaeger, Prometheus, Grafana, Loki, Promtail, the NestJS backend, Auth Service,
+Search Service, Notification Service, and the Gateway.
 
-**Option A: Using Docker Compose (Recommended)**
+### 3. Run migrations
 
 ```bash
-# Start all services (PostgreSQL, Redis, PgAdmin, NestJS app)
-docker-compose up
-
-# In another terminal, run migrations
-docker-compose exec app npm run prisma:migrate
+docker compose exec backend npx prisma migrate deploy
 ```
 
-**Option B: Local PostgreSQL**
+### 4. Seed the database (optional)
 
 ```bash
-# Update DATABASE_URL in .env to your PostgreSQL connection
+# Minimal seed (~10 records per table)
+docker compose exec backend npm run prisma:seed
 
-# Run migrations
-npm run prisma:migrate
+# Extensive seed (realistic volumes with faker.js)
+docker compose exec backend npm run prisma:seed:extensive
 ```
 
-### 4. Start Development Server
+### 5. Access the services
 
-```bash
-npm run start:dev
-```
+- **API (via gateway)** — http://localhost:3000
+- **Swagger UI (backend direct)** — http://localhost:4000/api/docs
+- **Grafana** — http://localhost:3001 (admin / admin)
+- **RabbitMQ management** — http://localhost:15672 (guest / guest)
+- **Mailpit (email inbox)** — http://localhost:8025
+- **Jaeger tracing** — http://localhost:16686
+- **PgAdmin** — http://localhost:5050 (admin@ecommerce.com / admin)
+- **Prometheus** — http://localhost:9090
 
-The application will be available at `http://localhost:3000`
-API documentation: `http://localhost:3000/api/docs`
+---
+
+## Ports
+
+- **:3000** — Gateway (public entry point, routes to all services)
+- **:4000** — Backend (internal; hit directly for debugging or Swagger)
+- **:3006** — Auth Service
+- **:3005** — Search Service
+- **:3004** — Notification Service
+- **:5434** — PostgreSQL (direct, for migrations and Prisma Studio)
+- **:6432** — PgBouncer (connection pooler — what the app connects to)
+- **:6379** — Redis
+- **:5672** — RabbitMQ AMQP
+
+---
 
 ## Available Scripts
 
+Run these inside the container (`docker compose exec backend <cmd>`) or locally
+if you have Node installed:
+
 ```bash
-# Development
-npm run start:dev        # Start with hot reload
-npm run start:debug      # Start with debugger
-
-# Production
-npm run build            # Build for production
-npm run start:prod       # Start production build
-
-# Linting & Formatting
-npm run lint             # Run ESLint with fixes
-npm run lint:check       # Check without fixing
-npm run format           # Format with Prettier
-npm run format:check     # Check without formatting
-
-# Type Checking
-npm run type-check       # Check TypeScript without building
-
-# Testing
-npm run test             # Run unit tests
-npm run test:watch       # Watch mode
-npm run test:cov         # Coverage report
-npm run test:e2e         # E2E tests
-npm run test:debug       # Debug tests
-
-# Database
-npm run prisma:generate  # Generate Prisma Client
-npm run prisma:migrate   # Run migrations
-npm run prisma:studio    # Open Prisma Studio (database GUI)
+npm run start:dev          # Dev server with hot reload (already running in Docker)
+npm run build              # Production build
+npm run type-check         # TypeScript check without building
+npm run lint               # ESLint with auto-fix
+npm run format             # Prettier
+npm run test               # Unit tests
+npm run test:cov           # Unit tests with coverage
+npm run test:e2e           # End-to-end tests
+npm run prisma:generate    # Regenerate Prisma client
+npm run prisma:migrate     # Run pending migrations
+npm run prisma:studio      # Prisma Studio (DB browser) on :5555
+npm run prisma:seed        # Minimal seed
+npm run prisma:seed:extensive  # Full faker.js seed
 ```
+
+---
 
 ## Project Structure
 
 ```
-src/
-├── common/              # Shared utilities
-│   ├── decorators/      # Custom decorators (@Public, @Roles, etc.)
-│   ├── filters/         # Exception filters
-│   ├── guards/          # Authorization guards
-│   ├── interceptors/    # Request/response interceptors
-│   ├── exceptions/      # Custom exceptions
-│   ├── pipes/           # Validation pipes
-│   ├── types/           # Shared types
-│   └── utils/           # Utility functions
-├── config/              # Configuration modules
-├── modules/             # Feature modules (auth, users, products, etc.)
-├── app.module.ts        # Root module
-├── app.controller.ts    # Root controller
-├── app.service.ts       # Root service
-└── main.ts              # Application entry point
-
-prisma/
-├── schema.prisma        # Database schema
-└── migrations/          # Database migrations
-
-test/
-├── integration/         # Integration tests
-├── e2e/                 # End-to-end tests
-└── load/                # Load/performance tests
+apps/backend/
+├── prisma/
+│   ├── schema.prisma          # Single source of truth for the DB schema
+│   ├── migrations/            # Migration history (SQL files)
+│   └── seeds/                 # Modular seed files per domain
+├── src/
+│   ├── common/                # Guards, interceptors, pipes, decorators, utils
+│   ├── config/                # Env validation and typed config
+│   └── modules/
+│       ├── auth/              # JWT, OAuth, TOTP 2FA, password reset
+│       ├── users/
+│       ├── products/          # Products, variants, FTS, CSV import
+│       ├── categories/
+│       ├── cart/
+│       ├── orders/            # Saga, CQRS read model, outbox
+│       ├── stripe/            # Payment intents, webhooks
+│       ├── returns/
+│       ├── coupons/
+│       ├── invoices/
+│       ├── reviews/
+│       ├── upload/            # S3-compatible file upload
+│       ├── mail/
+│       ├── cache/             # Redis wrapper
+│       ├── metrics/           # Prometheus business metrics
+│       ├── audit/             # Append-only audit log
+│       ├── db-analytics/      # Slow queries, partitions, replication lag
+│       └── prisma/            # PrismaService (singleton)
+├── docs/
+│   ├── ARCHITECTURE.md
+│   ├── DOCKER_WORKFLOW.md     # What to run when files change in Docker
+│   ├── TROUBLESHOOTING.md
+│   └── features/             # Per-phase deep-dives
+└── test/
+    ├── integration/
+    ├── e2e/
+    └── load/                  # k6 load tests
 ```
-
-## Coding Standards
-
-See [claude.md](./claude.md) for comprehensive coding standards including:
-
-- File & function size limits
-- Naming conventions
-- Code organization
-- TypeScript best practices
-- NestJS patterns
-- Security guidelines
-- Performance optimization
-- Testing standards
-
-### Quick References
-
-**File Size Limits:**
-
-- Max 200 lines per file
-- Max 20 lines per function
-- Max 5 parameters per function
-
-**Naming:**
-
-- Classes: PascalCase (`UserService`)
-- Functions: camelCase (`getUserById`)
-- Constants: UPPER_SNAKE_CASE (`MAX_RETRY_ATTEMPTS`)
-- Files: kebab-case (`user.service.ts`)
-
-**Pre-commit Hooks:**
-The project uses Husky for pre-commit hooks that automatically:
-
-- Run ESLint
-- Check Prettier formatting
-- Type check with TypeScript
-
-## Docker Compose Services
-
-- **PostgreSQL** (Port 5432) - Main database
-- **Redis** (Port 6379) - Caching & sessions
-- **PgAdmin** (Port 5050) - Database management GUI (admin@ecommerce.local / admin)
-- **NestJS App** (Port 3000) - Application server
-
-## Database (Prisma)
-
-### Current Models
-
-- **User** - User accounts with roles (USER, ADMIN, VENDOR)
-- **RefreshToken** - JWT refresh token management
-
-### Run Migrations
-
-```bash
-# Create new migration
-npm run prisma:migrate
-
-# View database in Prisma Studio
-npm run prisma:studio
-```
-
-## API Documentation
-
-Swagger/OpenAPI documentation is available at `/api/docs` when running the application.
-
-## Testing
-
-```bash
-# Unit tests with coverage
-npm run test:cov
-
-# E2E tests
-npm run test:e2e
-
-# Watch mode for development
-npm run test:watch
-```
-
-## Phase Breakdown
-
-The project is organized into 8 implementation phases:
-
-1. **Phase 1** - Foundation ✓ (Current)
-2. **Phase 2** - Authentication & Authorization
-3. **Phase 3** - Core E-Commerce Features
-4. **Phase 4** - Payment Integration (Stripe)
-5. **Phase 5** - Email & File Upload
-6. **Phase 6** - Monitoring & Observability
-7. **Phase 7** - Testing & Quality Assurance
-8. **Phase 8** - Documentation & Deployment
-
-See [Plan](/.claude/plans/sparkling-floating-lecun.md) for detailed phase information.
-
-## Contributing
-
-Please follow the coding standards in [claude.md](./claude.md) for all contributions.
-
-## License
-
-UNLICENSED - Private project
-
-## Support
-
-For questions or issues, please contact the development team.
 
 ---
 
-**Last Updated:** February 5, 2026
-**Phase:** Phase 1 - Foundation Complete
+## Docker Workflow
+
+When you change certain files, you need to take explicit action because the
+container's `node_modules` is a named Docker volume, separate from the host.
+
+**Source files (`.ts`)** — nothing, hot reload handles it.
+
+**`schema.prisma`** — run inside the container:
+```bash
+docker compose exec backend npx prisma migrate dev --name your_change
+```
+
+**`package.json`** — rebuild the image:
+```bash
+docker compose build backend && docker compose up -d backend
+```
+
+**`Dockerfile` or `docker-compose.yml`** — rebuild and recreate:
+```bash
+docker compose build backend && docker compose up -d backend
+```
+
+See [docs/DOCKER_WORKFLOW.md](docs/DOCKER_WORKFLOW.md) for the full breakdown.
+
+---
+
+## Phase Roadmap
+
+- **Phase 0** — Infrastructure: Docker, PgBouncer, Redis, RabbitMQ ✅
+- **Phase 1** — Database: variants schema, FTS, pessimistic locking, expand-contract migrations ✅
+- **Phase 2** — Reliability: circuit breaker, outbox pattern, idempotency, order saga ✅
+- **Phase 3** — Caching: Redis, cache-aside, invalidation, CQRS read model ✅
+- **Phase 4** — Event-driven: RabbitMQ, OpenSearch sync, notifications ✅
+- **Phase 5** — Observability: Pino, Prometheus, Grafana, Jaeger tracing, Loki ✅
+- **Phase 6** — Security: TOTP 2FA, OAuth, rate limiting, append-only audit log ✅
+- **Phase 7** — Features: coupons, returns, invoices, CSV import, reviews ✅
+- **Phase 8** — CI/CD 🔲
+- **Phase 9** — Microservices: Gateway, Auth Service, Search Service 🔲
+- **Phase 10** — Advanced DB: table partitioning, read replica, pg_stat_statements ✅
+
+See [docs/ROADMAP.md](docs/ROADMAP.md) for detailed phase notes.
+
+---
+
+## Coding Standards
+
+See [CLAUDE.md](./CLAUDE.md) — enforced via ESLint, Prettier, and pre-commit hooks.
+
+Key rules: 200 lines per file, 20 lines per function, no `any`, no `unknown` on
+public service methods.
+
+---
+
+## Troubleshooting
+
+See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
+
+Common fixes:
+- DB connection refused → `docker compose up -d postgres pgbouncer`
+- Prisma type errors after schema change → `docker compose exec backend npx prisma generate && docker compose restart backend`
+- JWT errors → check RS256 key pair setup in TROUBLESHOOTING.md #6
+
+---
+
+**Last Updated:** June 2026
