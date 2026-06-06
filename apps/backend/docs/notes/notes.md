@@ -69,6 +69,11 @@
   - Atomic stock reservation workflow
   - Transaction, Commit, Rollback, Row Lock, Blocking, Atomicity, Race Condition
 
+- Indexing
+  - B-tree, Composite B-tree, Partial index, Gin index
+  - createdAt, productId, isActive, emailId, status
+  -
+
 # Phase 0
 
 - Monorepo, root package.json and workspace

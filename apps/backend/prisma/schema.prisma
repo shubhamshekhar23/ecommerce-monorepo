@@ -91,9 +91,9 @@ model User {
   passwordResetTokens PasswordResetToken[]
   returnRequests      ReturnRequest[]
 
+  // Partial index (role, createdAt DESC) WHERE isActive = true is managed by raw SQL migration.
   @@index([email])
   @@index([role])
-  @@index([isActive])
   @@index([createdAt])
   @@index([emailVerified])
   @@index([role, isActive])
@@ -196,11 +196,12 @@ model Product {
 
   // searchVector (tsvector GENERATED column) is managed by raw SQL migration — not
   // declared here so Prisma does not try to ORM-manage it. Use prisma.$queryRaw for FTS.
+  // Partial indexes (categoryId, createdAt) and (createdAt) WHERE isActive = true are
+  // managed by raw SQL migration for the same reason.
 
   @@index([slug])
   @@index([categoryId])
   @@index([vendorId])
-  @@index([isActive])
   @@index([createdAt])
   @@index([isActive, createdAt])
 }
@@ -261,9 +262,9 @@ model ProductVariant {
   createdAt       DateTime                @default(now())
   updatedAt       DateTime                @updatedAt
 
+  // Partial index (productId) WHERE isActive = true is managed by raw SQL migration.
   @@index([productId])
   @@index([sku])
-  @@index([isActive])
   @@index([productId, isActive])
 }
 
@@ -451,8 +452,8 @@ model Coupon {
   createdAt      DateTime   @default(now())
   usages         CouponUsage[]
 
+  // Partial index (code) WHERE isActive = true is managed by raw SQL migration.
   @@index([code])
-  @@index([isActive])
 }
 
 // One usage record per coupon per order — prevents double-applying on retries.

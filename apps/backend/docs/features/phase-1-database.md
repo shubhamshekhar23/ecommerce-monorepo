@@ -23,6 +23,7 @@ ProductVariant (the actual sellable SKU)
 ```
 
 Key decisions:
+
 - `VariantAttributeValue` has a **composite primary key** (`variantId, optionId`) — enforces that a variant cannot have two options of the same type (e.g. Size=S AND Size=M at once)
 - `OrderItem.variantAttributes` is a **JSONB snapshot** of attributes at purchase time, not a FK — a variant can be deleted or repriced after the order and the order still remembers exactly what was sold
 - `CartItem.variantId` was added as nullable first (expand step) — this is the expand-contract migration pattern in action
@@ -95,6 +96,81 @@ Example: `CartItem.variantId` was introduced nullable. Old code that doesn't kno
 
 - B-tree indexes on `Product(slug)`, `Product(categoryId)`, `Order(userId)`, `User(email)` — equality and range lookups
 - GIN index on `Product(searchVector)` — full-text search
+- Partial indexes for active-only queries (`prisma/migrations/20260606000000_partial_indexes/migration.sql`)
+
+**Why not `@@index([isActive])`?**
+
+A plain boolean index on a 90%-true column is ignored by the Postgres planner — it estimates a sequential scan is cheaper than the index lookup plus random heap fetch. These indexes wasted storage and were never used.
+
+A partial index (with `WHERE isActive = true`) only indexes the rows that match the predicate. It is:
+- ~90% smaller than a full-table index
+- More likely to fit in `shared_buffers` (stays cached between requests)
+- Always chosen by the planner for any query that filters `isActive = true`
+
+```sql
+-- Product: browse by category, sorted by recency (cursor pagination hot path)
+CREATE INDEX "Product_active_categoryId_createdAt_idx"
+  ON "Product"("categoryId", "createdAt" DESC) WHERE "isActive" = true;
+
+-- ProductVariant: active variants for a product page
+CREATE INDEX "ProductVariant_active_productId_idx"
+  ON "ProductVariant"("productId") WHERE "isActive" = true;
+
+-- Category: active category tree (navigation — runs on every page request)
+CREATE INDEX "Category_active_parentId_idx"
+  ON "Category"("parentId") WHERE "isActive" = true;
+
+-- Coupon: code lookup at checkout
+CREATE INDEX "Coupon_active_code_idx"
+  ON "Coupon"("code") WHERE "isActive" = true;
+
+-- User: admin panel role filter
+CREATE INDEX "User_active_role_createdAt_idx"
+  ON "User"("role", "createdAt" DESC) WHERE "isActive" = true;
+```
+
+These are managed by raw SQL migration (same pattern as `searchVector`) because Prisma's `@@index` does not support a `WHERE` clause for PostgreSQL. The plain `@@index([isActive])` entries were removed from `schema.prisma`.
+
+---
+
+## Contract Step (completed)
+
+Migration: `prisma/migrations/20260605000000_phase1_contract/migration.sql`
+
+### What changed
+
+**App code** — all reads of `Product.price/cost/stock` replaced with `ProductVariant` equivalents:
+
+- `cart.service.ts` — `addItem` now requires `variantId`; price/stock from `ProductVariant`; unique lookup is `cartId_variantId`
+- `cart.controller.ts` — `POST /cart/items` body now accepts `variantId`
+- `order-saga.service.ts` — Locks `ProductVariant` rows; checks `ProductVariant.stock`; snapshots variant price + attributes on `OrderItem`
+- `products.service.ts` — `create` makes a default `ProductVariant`; listing returns `priceRange {min, max}`; FTS query joins variants for price
+- `csv-import.service.ts` — Upserts `ProductVariant` with price/cost/stock instead of writing to `Product`
+- `orders.service.ts` — Order cancellation restores `ProductVariant.stock`
+- `returns.service.ts` — Return approval restores `ProductVariant.stock`
+  |
+
+**Contract migration**:
+
+```sql
+ALTER TABLE "Product" DROP COLUMN "price";
+ALTER TABLE "Product" DROP COLUMN "cost";
+ALTER TABLE "Product" DROP COLUMN "stock";
+
+DELETE FROM "CartItem" WHERE "variantId" IS NULL;
+ALTER TABLE "CartItem" ALTER COLUMN "variantId" SET NOT NULL;
+ALTER TABLE "CartItem" DROP CONSTRAINT "CartItem_cartId_productId_key";
+ALTER TABLE "CartItem" ADD CONSTRAINT "CartItem_cartId_variantId_key" UNIQUE ("cartId", "variantId");
+```
+
+The expand-contract pattern is now fully complete. `Product` is metadata-only (name, slug, description, category). All pricing and inventory live exclusively on `ProductVariant`.
+
+### Indexes
+
+`prisma/migrations/20260224185818_add_indexes_user_product_order/migration.sql` and the phase 1 migration add:
+
+- B-tree indexes on `Product(slug)`, `Product(categoryId)`, `Order(userId)`, `User(email)` — equality and range lookups
+- GIN index on `Product(searchVector)` — full-text search
 - Partial indexes for active-only queries (only index rows where `isActive = true`)
 
 ---
@@ -124,35 +200,3 @@ EXPLAIN ANALYZE SELECT * FROM "Product" WHERE id > '...' ORDER BY id LIMIT 20;
 This is the single most common pagination mistake in production — offset gets slower with every page.
 
 ---
-
-## Contract Step (completed)
-
-Migration: `prisma/migrations/20260605000000_phase1_contract/migration.sql`
-
-### What changed
-
-**App code** — all reads of `Product.price/cost/stock` replaced with `ProductVariant` equivalents:
-
-| File | Change |
-|---|---|
-| `cart.service.ts` | `addItem` now requires `variantId`; price/stock from `ProductVariant`; unique lookup is `cartId_variantId` |
-| `cart.controller.ts` | `POST /cart/items` body now accepts `variantId` |
-| `order-saga.service.ts` | Locks `ProductVariant` rows; checks `ProductVariant.stock`; snapshots variant price + attributes on `OrderItem` |
-| `products.service.ts` | `create` makes a default `ProductVariant`; listing returns `priceRange {min, max}`; FTS query joins variants for price |
-| `csv-import.service.ts` | Upserts `ProductVariant` with price/cost/stock instead of writing to `Product` |
-| `orders.service.ts` | Order cancellation restores `ProductVariant.stock` |
-| `returns.service.ts` | Return approval restores `ProductVariant.stock` |
-
-**Contract migration**:
-```sql
-ALTER TABLE "Product" DROP COLUMN "price";
-ALTER TABLE "Product" DROP COLUMN "cost";
-ALTER TABLE "Product" DROP COLUMN "stock";
-
-DELETE FROM "CartItem" WHERE "variantId" IS NULL;
-ALTER TABLE "CartItem" ALTER COLUMN "variantId" SET NOT NULL;
-ALTER TABLE "CartItem" DROP CONSTRAINT "CartItem_cartId_productId_key";
-ALTER TABLE "CartItem" ADD CONSTRAINT "CartItem_cartId_variantId_key" UNIQUE ("cartId", "variantId");
-```
-
-The expand-contract pattern is now fully complete. `Product` is metadata-only (name, slug, description, category). All pricing and inventory live exclusively on `ProductVariant`.
