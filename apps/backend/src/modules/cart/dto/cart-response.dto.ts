@@ -1,83 +1,131 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+export class CartItemProductImageDto {
+  @ApiProperty({ example: 'climg123' })
+  id!: string;
+
+  @ApiProperty({ example: 'https://picsum.photos/seed/abc/800/600' })
+  url!: string;
+
+  @ApiProperty({ example: 'Blue Shirt - image 1', nullable: true })
+  altText!: string | null;
+
+  @ApiProperty({ example: true })
+  isMain!: boolean;
+}
+
+export class CartItemProductDto {
+  @ApiProperty({ example: 'clprod456' })
+  id!: string;
+
+  @ApiProperty({ example: 'Slim Fit Shirt' })
+  name!: string;
+
+  @ApiProperty({ example: 'slim-fit-shirt' })
+  slug!: string;
+
+  @ApiProperty({ type: [CartItemProductImageDto] })
+  images!: CartItemProductImageDto[];
+}
+
+export class CartItemVariantTypeDto {
+  @ApiProperty({ example: 'clvtype1' })
+  id!: string;
+
+  @ApiProperty({ example: 'Size' })
+  name!: string;
+}
+
+export class CartItemVariantOptionDto {
+  @ApiProperty({ example: 'clvopt1' })
+  id!: string;
+
+  @ApiProperty({ example: 'M' })
+  value!: string;
+
+  @ApiProperty({ type: () => CartItemVariantTypeDto })
+  variantType!: CartItemVariantTypeDto;
+}
+
+export class CartItemVariantAttributeValueDto {
+  @ApiProperty({ example: 'clvar1' })
+  variantId!: string;
+
+  @ApiProperty({ example: 'clvopt1' })
+  optionId!: string;
+
+  @ApiProperty({ type: () => CartItemVariantOptionDto })
+  option!: CartItemVariantOptionDto;
+}
+
+export class CartItemVariantDto {
+  @ApiProperty({ example: 'clvar1' })
+  id!: string;
+
+  @ApiProperty({ example: 'clprod456' })
+  productId!: string;
+
+  @ApiProperty({ example: 'ABC123-M-WHITE' })
+  sku!: string;
+
+  @ApiProperty({ example: '74.99' })
+  price!: string;
+
+  @ApiProperty({ example: 100 })
+  stock!: number;
+
+  @ApiProperty({ example: true })
+  isActive!: boolean;
+
+  @ApiProperty({ type: [CartItemVariantAttributeValueDto] })
+  attributeValues!: CartItemVariantAttributeValueDto[];
+}
+
 export class CartItemResponseDto {
-  @ApiProperty({
-    description: 'Cart item ID',
-    example: '550e8400-e29b-41d4-a716-446655440000',
-  })
-  id?: string;
+  @ApiProperty({ example: 'clitem789' })
+  id!: string;
 
-  @ApiProperty({
-    description: 'Product ID',
-    example: '550e8400-e29b-41d4-a716-446655440001',
-  })
-  productId?: string;
+  @ApiProperty({ example: 'clprod456' })
+  productId!: string;
 
-  @ApiProperty({
-    description: 'Product name',
-    example: 'Wireless Headphones',
-  })
-  productName?: string;
+  @ApiProperty({ example: 'clvar1' })
+  variantId!: string;
 
-  @ApiProperty({
-    description: 'Quantity of items',
-    example: 2,
-  })
-  quantity?: number;
+  @ApiProperty({ type: () => CartItemProductDto })
+  product!: CartItemProductDto;
 
-  @ApiProperty({
-    description: 'Unit price',
-    example: 99.99,
-  })
-  price?: number;
+  @ApiProperty({ type: () => CartItemVariantDto })
+  variant!: CartItemVariantDto;
 
-  @ApiProperty({
-    description: 'Subtotal (price × quantity)',
-    example: 199.98,
-  })
-  subtotal?: number;
+  @ApiProperty({ example: 2 })
+  quantity!: number;
+
+  @ApiProperty({ example: 74.99 })
+  unitPrice!: number;
+
+  @ApiProperty({ example: 149.98 })
+  subtotal!: number;
 }
 
 export class CartResponseDto {
-  @ApiProperty({
-    description: 'Cart ID',
-    example: '550e8400-e29b-41d4-a716-446655440000',
-  })
-  id?: string;
+  @ApiProperty({ example: 'clcart123' })
+  id!: string;
 
-  @ApiProperty({
-    description: 'User ID',
-    example: '550e8400-e29b-41d4-a716-446655440001',
-  })
-  userId?: string;
+  @ApiProperty({ example: 'cluser456' })
+  userId!: string;
 
-  @ApiProperty({
-    description: 'Items in cart',
-    type: [CartItemResponseDto],
-  })
-  items?: CartItemResponseDto[];
+  @ApiProperty({ type: [CartItemResponseDto] })
+  items!: CartItemResponseDto[];
 
-  @ApiProperty({
-    description: 'Total price of all items',
-    example: 299.97,
-  })
-  totalPrice?: number;
+  @ApiProperty({ example: 3 })
+  itemCount!: number;
 
-  @ApiProperty({
-    description: 'Number of items in cart',
-    example: 3,
-  })
-  itemCount?: number;
+  @ApiProperty({ example: 224.97 })
+  totalPrice!: number;
 
-  @ApiProperty({
-    description: 'Cart creation timestamp',
-    example: '2024-01-15T10:30:00Z',
-  })
-  createdAt?: Date;
+  @ApiProperty({ example: '2026-06-06T10:00:00.000Z' })
+  createdAt!: Date;
 
-  @ApiProperty({
-    description: 'Last update timestamp',
-    example: '2024-01-15T11:45:00Z',
-  })
-  updatedAt?: Date;
+  @ApiProperty({ example: '2026-06-06T10:05:00.000Z' })
+  updatedAt!: Date;
 }

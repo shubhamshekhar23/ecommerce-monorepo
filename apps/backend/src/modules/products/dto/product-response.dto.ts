@@ -1,110 +1,102 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class ProductImageResponseDto {
-  @ApiProperty({
-    description: 'Image ID',
-    example: '550e8400-e29b-41d4-a716-446655440000',
-  })
-  id?: string;
+  @ApiProperty({ example: 'climg123' })
+  id!: string;
 
-  @ApiProperty({
-    description: 'Image URL',
-    example: '/uploads/products/2024/01/abc123-product.jpg',
-  })
-  url?: string;
+  @ApiProperty({ example: 'https://picsum.photos/seed/abc/800/600' })
+  url!: string;
 
-  @ApiProperty({
-    description: 'Alternative text for accessibility',
-    example: 'Wireless Headphones Product Image',
-    required: false,
-  })
-  altText?: string;
+  @ApiProperty({ example: 'Wireless Headphones - image 1', nullable: true })
+  altText!: string | null;
+
+  @ApiProperty({ example: true })
+  isMain!: boolean;
+
+  @ApiProperty({ example: 0 })
+  order!: number;
+}
+
+export class ProductPriceRangeDto {
+  @ApiProperty({ example: 74.99, nullable: true })
+  min!: number | null;
+
+  @ApiProperty({ example: 149.99, nullable: true })
+  max!: number | null;
+}
+
+export class ProductVariantSummaryDto {
+  @ApiProperty({ example: '74.99' })
+  price!: string;
 }
 
 export class ProductResponseDto {
-  @ApiProperty({
-    description: 'Product ID',
-    example: '550e8400-e29b-41d4-a716-446655440000',
-  })
-  id?: string;
+  @ApiProperty({ example: 'clprod456' })
+  id!: string;
 
-  @ApiProperty({
-    description: 'Product name',
-    example: 'Wireless Headphones',
-  })
-  name?: string;
+  @ApiProperty({ example: 'Wireless Headphones' })
+  name!: string;
 
-  @ApiProperty({
-    description: 'URL-friendly product name',
-    example: 'wireless-headphones',
-  })
-  slug?: string;
+  @ApiProperty({ example: 'wireless-headphones' })
+  slug!: string;
 
-  @ApiProperty({
-    description: 'Detailed product description',
-    example: 'Premium wireless headphones with noise cancellation',
-  })
-  description?: string;
+  @ApiProperty({ example: 'Premium wireless headphones with noise cancellation', nullable: true })
+  description!: string | null;
 
-  @ApiProperty({
-    description: 'Current product price',
-    example: 99.99,
-  })
-  price?: number;
+  @ApiProperty({ type: () => ProductPriceRangeDto })
+  priceRange!: ProductPriceRangeDto;
 
-  @ApiProperty({
-    description: 'Original price before discount',
-    example: 149.99,
-    required: false,
-  })
-  compareAtPrice?: number;
+  @ApiProperty({ example: 'clcat789' })
+  categoryId!: string;
 
-  @ApiProperty({
-    description: 'Category ID',
-    example: '550e8400-e29b-41d4-a716-446655440001',
-  })
-  categoryId?: string;
+  @ApiProperty({ example: 'Electronics', nullable: true })
+  categoryName!: string | null;
 
-  @ApiProperty({
-    description: 'Category name',
-    example: 'Electronics',
-    required: false,
-  })
-  categoryName?: string;
+  @ApiProperty({ type: [ProductImageResponseDto] })
+  images!: ProductImageResponseDto[];
 
-  @ApiProperty({
-    description: 'Stock keeping unit (SKU)',
-    example: 'WH-BT-001',
-  })
-  sku?: string;
+  @ApiProperty({ type: [ProductVariantSummaryDto] })
+  variants!: ProductVariantSummaryDto[];
 
-  @ApiProperty({
-    description: 'Current stock quantity',
-    example: 150,
-  })
-  stock?: number;
+  @ApiProperty({ example: true })
+  isActive!: boolean;
 
-  @ApiProperty({
-    description: 'Whether product is active',
-    example: true,
-  })
-  isActive?: boolean;
+  @ApiProperty({ example: '2026-06-06T10:00:00.000Z' })
+  createdAt!: Date;
 
-  @ApiProperty({
-    description: 'Product images',
-    type: [ProductImageResponseDto],
-  })
-  images?: ProductImageResponseDto[];
+  @ApiProperty({ example: '2026-06-06T10:05:00.000Z' })
+  updatedAt!: Date;
+}
 
-  @ApiProperty({
-    description: 'Product creation timestamp',
-    example: '2024-01-10T08:00:00Z',
-  })
-  createdAt?: Date;
+// FTS path returns a leaner shape — no images/variants array, adds searchRank
+export class ProductSearchResponseDto {
+  @ApiProperty({ example: 'clprod456' })
+  id!: string;
 
-  @ApiProperty({
-    description: 'Last update timestamp',
-    example: '2024-01-15T10:30:00Z',
-  })
-  updatedAt?: Date;
+  @ApiProperty({ example: 'Wireless Headphones' })
+  name!: string;
+
+  @ApiProperty({ example: 'wireless-headphones' })
+  slug!: string;
+
+  @ApiProperty({ example: 'Premium wireless headphones', nullable: true })
+  description!: string | null;
+
+  @ApiProperty({ example: 'clcat789' })
+  categoryId!: string;
+
+  @ApiProperty({ example: true })
+  isActive!: boolean;
+
+  @ApiProperty({ type: () => ProductPriceRangeDto })
+  priceRange!: ProductPriceRangeDto;
+
+  @ApiProperty({ example: 0.9876, description: 'ts_rank score from PostgreSQL FTS' })
+  searchRank!: number;
+
+  @ApiProperty({ example: '2026-06-06T10:00:00.000Z' })
+  createdAt!: Date;
+
+  @ApiProperty({ example: '2026-06-06T10:05:00.000Z' })
+  updatedAt!: Date;
 }

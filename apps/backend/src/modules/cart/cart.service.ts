@@ -1,5 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '@/modules/prisma/prisma.service';
+import { CartResponseDto, CartItemResponseDto } from './dto/cart-response.dto';
 
 const CART_INCLUDE = {
   items: {
@@ -10,13 +12,15 @@ const CART_INCLUDE = {
   },
 } as const;
 
+type CartWithItems = Prisma.CartGetPayload<{ include: typeof CART_INCLUDE }>;
+
 @Injectable()
 export class CartService {
   private readonly logger = new Logger(CartService.name);
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async getOrCreateCart(userId: string): Promise<any> {
+  async getOrCreateCart(userId: string): Promise<CartResponseDto> {
     let cart = await this.prisma.cart.findUnique({ where: { userId }, include: CART_INCLUDE });
 
     if (!cart) {
@@ -27,13 +31,13 @@ export class CartService {
     return this.mapToResponse(cart);
   }
 
-  async getCart(userId: string): Promise<any> {
+  async getCart(userId: string): Promise<CartResponseDto | null> {
     const cart = await this.prisma.cart.findUnique({ where: { userId }, include: CART_INCLUDE });
     return cart ? this.mapToResponse(cart) : null;
   }
 
   // eslint-disable-next-line max-lines-per-function
-  async addItem(userId: string, productId: string, variantId: string, quantity: number): Promise<any> {
+  async addItem(userId: string, productId: string, variantId: string, quantity: number): Promise<CartResponseDto | null> {
     if (quantity < 1 || quantity > 999) {
       throw new BadRequestException('Quantity must be between 1 and 999');
     }
@@ -76,7 +80,7 @@ export class CartService {
     return this.getCart(userId);
   }
 
-  async updateItem(userId: string, cartItemId: string, quantity: number): Promise<any> {
+  async updateItem(userId: string, cartItemId: string, quantity: number): Promise<CartResponseDto | null> {
     const cartItem = await this.prisma.cartItem.findUnique({
       where: { id: cartItemId },
       include: { cart: true },
@@ -97,7 +101,7 @@ export class CartService {
     return this.getCart(userId);
   }
 
-  async removeItem(userId: string, cartItemId: string): Promise<any> {
+  async removeItem(userId: string, cartItemId: string): Promise<CartResponseDto | null> {
     const cartItem = await this.prisma.cartItem.findUnique({
       where: { id: cartItemId },
       include: { cart: true },
@@ -118,22 +122,30 @@ export class CartService {
     }
   }
 
-  private mapToResponse(cart: any): any {
+  private mapToResponse(cart: CartWithItems): CartResponseDto {
     const items = cart.items ?? [];
     const totalPrice = items.reduce(
-      (sum: number, item: any) => sum + parseFloat(String(item.variant.price)) * item.quantity,
+      (sum, item) => sum + parseFloat(String(item.variant.price)) * item.quantity,
       0,
     );
 
     return {
       id: cart.id,
       userId: cart.userId,
-      items: items.map((item: any) => ({
+      items: items.map((item): CartItemResponseDto => ({
         id: item.id,
         productId: item.productId,
         variantId: item.variantId,
         product: item.product,
-        variant: item.variant,
+        variant: {
+          id: item.variant.id,
+          productId: item.variant.productId,
+          sku: item.variant.sku,
+          price: String(item.variant.price),
+          stock: item.variant.stock,
+          isActive: item.variant.isActive,
+          attributeValues: item.variant.attributeValues,
+        },
         quantity: item.quantity,
         unitPrice: parseFloat(String(item.variant.price)),
         subtotal: parseFloat(String(item.variant.price)) * item.quantity,

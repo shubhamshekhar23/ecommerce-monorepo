@@ -14,6 +14,7 @@ import { CacheService } from '@/modules/cache/cache.service';
 import { EXCHANGES, ROUTING_KEYS } from '@ecommerce/shared-types';
 import type { ProductCreatedEvent, ProductUpdatedEvent, ProductDeletedEvent } from '@ecommerce/shared-types';
 import { CreateProductDto, UpdateProductDto, ProductImageDto } from './dto';
+import { ProductResponseDto, ProductSearchResponseDto } from './dto/product-response.dto';
 import { buildPaginationResponse } from '@/common/utils/pagination.util';
 import {
   buildCursorWhere,
@@ -42,6 +43,21 @@ interface ProductFtsRow {
   minPrice: Decimal | null;
   maxPrice: Decimal | null;
   rank: number;
+}
+
+// Minimum shape required by mapToResponse — satisfied by both list and detail includes.
+interface ProductForResponse {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  categoryId: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  category?: { name: string } | null;
+  images?: { id: string; url: string; altText: string | null; isMain: boolean; order: number }[];
+  variants?: { price: { toString(): string } }[];
 }
 
 const VARIANT_INCLUDE = {
@@ -75,7 +91,7 @@ export class ProductsService {
   }
 
   // eslint-disable-next-line max-lines-per-function
-  async create(createProductDto: CreateProductDto): Promise<any> {
+  async create(createProductDto: CreateProductDto): Promise<ProductResponseDto> {
     const { categoryId, images, price, cost, stock, ...productData } = createProductDto;
 
     await this.validateCategoryExists(categoryId);
@@ -120,7 +136,7 @@ export class ProductsService {
     return this.fetchById(product.id);
   }
 
-  async update(id: string, updateProductDto: UpdateProductDto): Promise<any> {
+  async update(id: string, updateProductDto: UpdateProductDto): Promise<ProductResponseDto> {
     const product = await this.prisma.product.findUnique({ where: { id } });
     if (!product) throw new NotFoundException(`Product with ID ${id} not found`);
 
@@ -164,7 +180,7 @@ export class ProductsService {
   }
 
   // eslint-disable-next-line max-lines-per-function
-  async findAllCursor(limit = DEFAULT_CURSOR_LIMIT, cursor?: string): Promise<CursorPageDto<any>> {
+  async findAllCursor(limit = DEFAULT_CURSOR_LIMIT, cursor?: string): Promise<CursorPageDto<ProductResponseDto>> {
     const cacheKey = `products:cursor:${limit}:${cursor ?? ''}`;
     return this.withCache(cacheKey, PRODUCT_LIST_TTL, async () => {
       const take = Math.min(Math.max(limit, 1), MAX_CURSOR_LIMIT);
@@ -187,13 +203,13 @@ export class ProductsService {
     });
   }
 
-  async search(term: string, limit = DEFAULT_CURSOR_LIMIT, cursor?: string): Promise<CursorPageDto<any>> {
+  async search(term: string, limit = DEFAULT_CURSOR_LIMIT, cursor?: string): Promise<CursorPageDto<ProductSearchResponseDto>> {
     const cacheKey = `products:search:${term}:${limit}:${cursor ?? ''}`;
     return this.withCache(cacheKey, PRODUCT_LIST_TTL, () => this.runSearch(term, limit, cursor));
   }
 
   // eslint-disable-next-line max-lines-per-function
-  private async runSearch(term: string, limit: number, cursor?: string): Promise<CursorPageDto<any>> {
+  private async runSearch(term: string, limit: number, cursor?: string): Promise<CursorPageDto<ProductSearchResponseDto>> {
     const take = Math.min(Math.max(limit, 1), MAX_CURSOR_LIMIT);
 
     const cursorClause = cursor
@@ -230,16 +246,16 @@ export class ProductsService {
       searchRank: row.rank,
     }));
 
-    return buildCursorResponse(items as any, take, hasMore);
+    return buildCursorResponse(items as ProductSearchResponseDto[], take, hasMore);
   }
 
   // eslint-disable-next-line max-lines-per-function
-  async findAll(page = 1, limit = 20, text?: string): Promise<PaginationDto<any>> {
+  async findAll(page = 1, limit = 20, text?: string): Promise<PaginationDto<ProductResponseDto>> {
     const cacheKey = `products:list:${page}:${limit}:${text ?? ''}`;
     return this.withCache(cacheKey, PRODUCT_LIST_TTL, () => this.runFindAll(page, limit, text));
   }
 
-  private async runFindAll(page: number, limit: number, text?: string): Promise<PaginationDto<any>> {
+  private async runFindAll(page: number, limit: number, text?: string): Promise<PaginationDto<ProductResponseDto>> {
     const validPage = Math.max(page, 1);
     const validLimit = Math.min(Math.max(limit, 1), 100);
     const skip = (validPage - 1) * validLimit;
@@ -270,11 +286,11 @@ export class ProductsService {
     return buildPaginationResponse(products.map((p) => this.mapToResponse(p)), total, validPage, validLimit);
   }
 
-  async findById(id: string): Promise<any> {
+  async findById(id: string): Promise<ProductResponseDto> {
     return this.withCache(`products:detail:id:${id}`, PRODUCT_DETAIL_TTL, () => this.fetchById(id));
   }
 
-  private async fetchById(id: string): Promise<any> {
+  private async fetchById(id: string): Promise<ProductResponseDto> {
     const product = await this.prisma.product.findUnique({
       where: { id },
       include: { images: true, category: true, variants: VARIANT_INCLUDE },
@@ -283,11 +299,11 @@ export class ProductsService {
     return this.mapToResponse(product);
   }
 
-  async findBySlug(slug: string): Promise<any> {
+  async findBySlug(slug: string): Promise<ProductResponseDto> {
     return this.withCache(`products:detail:slug:${slug}`, PRODUCT_DETAIL_TTL, () => this.fetchBySlug(slug));
   }
 
-  private async fetchBySlug(slug: string): Promise<any> {
+  private async fetchBySlug(slug: string): Promise<ProductResponseDto> {
     const product = await this.prisma.product.findUnique({
       where: { slug },
       include: { images: true, category: true, variants: VARIANT_INCLUDE },
@@ -335,9 +351,9 @@ export class ProductsService {
     }
   }
 
-  private mapToResponse(product: any): any {
-    const variants: any[] = product.variants ?? [];
-    const prices = variants.map((v) => parseFloat(String(v.price)));
+  private mapToResponse(product: ProductForResponse): ProductResponseDto {
+    const variants = product.variants ?? [];
+    const prices = variants.map((v) => parseFloat(v.price.toString()));
     const priceRange = prices.length > 0
       ? { min: Math.min(...prices), max: Math.max(...prices) }
       : { min: null, max: null };
@@ -350,8 +366,14 @@ export class ProductsService {
       priceRange,
       categoryId: product.categoryId,
       categoryName: product.category?.name ?? null,
-      images: product.images ?? [],
-      variants,
+      images: (product.images ?? []).map((img) => ({
+        id: img.id,
+        url: img.url,
+        altText: img.altText,
+        isMain: img.isMain,
+        order: img.order,
+      })),
+      variants: variants.map((v) => ({ price: v.price.toString() })),
       isActive: product.isActive,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,

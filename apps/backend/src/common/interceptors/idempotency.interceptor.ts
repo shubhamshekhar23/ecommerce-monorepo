@@ -8,7 +8,7 @@ import {
 import { Observable, throwError, from } from 'rxjs';
 import { concatMap, catchError, map } from 'rxjs/operators';
 import type { Request, Response } from 'express';
-import type { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 import type { RequestUser } from '@/common/types/request-user.interface';
 
@@ -53,11 +53,26 @@ export class IdempotencyInterceptor implements NestInterceptor {
     );
   }
 
+  // Attempt INSERT first — the unique constraint is the atomic gatekeeper.
+  // If two requests arrive simultaneously both skip the findUnique race and
+  // only one INSERT wins; the loser gets P2002 and reads the existing row.
   private async checkAndReserveKey(
     context: ExecutionContext,
     key: string,
     userId: string,
   ): Promise<unknown | null> {
+    try {
+      await this.prisma.idempotencyKey.create({
+        data: { userId, key, statusCode: 201, responseBody: {} },
+      });
+      return null; // new key — let the handler run
+    } catch (e) {
+      if (!(e instanceof Prisma.PrismaClientKnownRequestError) || e.code !== 'P2002') {
+        throw e;
+      }
+    }
+
+    // Key already exists (either in-flight or completed). Re-fetch to check state.
     const existing = await this.prisma.idempotencyKey.findUnique({
       where: { userId_key: { userId, key } },
     });
@@ -68,15 +83,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
       return existing.responseBody;
     }
 
-    if (existing) {
-      throw new ConflictException('This request is already being processed');
-    }
-
-    await this.prisma.idempotencyKey.create({
-      data: { userId, key, statusCode: 201, responseBody: {} },
-    });
-
-    return null;
+    throw new ConflictException('This request is already being processed');
   }
 
   private async cacheResponse(userId: string, key: string, body: unknown): Promise<void> {

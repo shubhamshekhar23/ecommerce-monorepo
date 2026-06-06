@@ -1,7 +1,7 @@
 /* eslint-disable max-lines */
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { OrderStatus } from '@prisma/client';
+import { OrderStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 import { OrderSagaService } from './saga/order-saga.service';
 import { calculatePagination, buildPaginationResponse } from '@/common/utils/pagination.util';
@@ -9,6 +9,11 @@ import { PaginationDto } from '@/common/types/pagination.interface';
 import { OrderCreatedEvent, OrderStatusChangedEvent } from '@/modules/events/order.events';
 import { BusinessMetricsService } from '@/modules/metrics/business-metrics.service';
 import { AuditService } from '@/modules/audit/audit.service';
+import { OrderResponseDto, OrderItemResponseDto } from './dto/order-response.dto';
+
+type OrderWithItems = Prisma.OrderGetPayload<{
+  include: { items: { include: { product: true } } };
+}>;
 
 // OrdersService is the public API for the orders domain.
 // Heavy lifting (locking, stock, outbox, saga) lives in OrderSagaService.
@@ -22,7 +27,7 @@ export class OrdersService {
     private readonly auditService: AuditService,
   ) {}
 
-  async create(userId: string, cartId?: string): Promise<unknown> {
+  async create(userId: string, cartId?: string): Promise<OrderResponseDto> {
     const order = await this.saga.execute(userId, cartId);
     this.businessMetrics.recordOrder('PENDING');
     this.eventEmitter.emit(
@@ -32,7 +37,7 @@ export class OrdersService {
     return this.mapToResponse(order);
   }
 
-  async findById(orderId: string): Promise<unknown> {
+  async findById(orderId: string): Promise<OrderResponseDto> {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
       include: { items: { include: { product: true } }, user: true },
@@ -42,7 +47,7 @@ export class OrdersService {
     return this.mapToResponse(order);
   }
 
-  async listUserOrders(userId: string, page = 1, limit = 20): Promise<PaginationDto<unknown>> {
+  async listUserOrders(userId: string, page = 1, limit = 20): Promise<PaginationDto<OrderResponseDto>> {
     const { skip, take } = calculatePagination(page, limit);
 
     const [orders, total] = await Promise.all([
@@ -59,7 +64,7 @@ export class OrdersService {
     return buildPaginationResponse(orders.map((o) => this.mapToResponse(o)), total, page, limit);
   }
 
-  async listAllOrders(page = 1, limit = 20): Promise<PaginationDto<unknown>> {
+  async listAllOrders(page = 1, limit = 20): Promise<PaginationDto<OrderResponseDto>> {
     const { skip, take } = calculatePagination(page, limit);
 
     const [orders, total] = await Promise.all([
@@ -76,7 +81,7 @@ export class OrdersService {
   }
 
   // eslint-disable-next-line max-lines-per-function
-  async updateStatus(orderId: string, status: OrderStatus): Promise<unknown> {
+  async updateStatus(orderId: string, status: OrderStatus): Promise<OrderResponseDto> {
     const order = await this.prisma.order.findUnique({ where: { id: orderId } });
     if (!order) throw new NotFoundException(`Order ${orderId} not found`);
 
@@ -117,7 +122,7 @@ export class OrdersService {
   }
 
   // eslint-disable-next-line max-lines-per-function
-  async cancelOrder(orderId: string, userId: string): Promise<unknown> {
+  async cancelOrder(orderId: string, userId: string): Promise<OrderResponseDto> {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
       include: { items: true },
@@ -157,25 +162,25 @@ export class OrdersService {
   }
 
   // eslint-disable-next-line max-lines-per-function
-  private mapToResponse(order: Record<string, unknown> & { items?: unknown[] }): unknown {
+  private mapToResponse(order: OrderWithItems): OrderResponseDto {
     return {
-      id: order['id'],
-      orderNumber: order['orderNumber'],
-      userId: order['userId'],
-      items: ((order['items'] ?? []) as Array<Record<string, unknown>>).map((item) => ({
-        id: item['id'],
-        productId: item['productId'],
-        productName: (item['product'] as Record<string, unknown>)?.['name'],
-        quantity: item['quantity'],
-        price: item['price'],
-        variantAttributes: item['variantAttributes'],
-        subtotal: parseFloat(String(item['price'])) * (item['quantity'] as number),
+      id: order.id,
+      orderNumber: order.orderNumber,
+      userId: order.userId,
+      items: order.items.map((item): OrderItemResponseDto => ({
+        id: item.id,
+        productId: item.productId,
+        productName: item.product?.name ?? null,
+        quantity: item.quantity,
+        price: String(item.price),
+        variantAttributes: item.variantAttributes as Record<string, string> | null,
+        subtotal: parseFloat(String(item.price)) * item.quantity,
       })),
-      totalPrice: order['totalPrice'],
-      status: order['status'],
-      notes: order['notes'],
-      createdAt: order['createdAt'],
-      updatedAt: order['updatedAt'],
+      totalPrice: String(order.totalPrice),
+      status: order.status,
+      notes: order.notes,
+      createdAt: order.createdAt,
+      updatedAt: order.updatedAt,
     };
   }
 }

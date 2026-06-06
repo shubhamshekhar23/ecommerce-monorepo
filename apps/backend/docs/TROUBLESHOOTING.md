@@ -199,6 +199,49 @@ npx prisma migrate dev --name describe_your_change
 
 ---
 
+### Schema changes in Docker — what to run and when
+
+The backend container mounts source code from the host but keeps `node_modules` in a **separate named Docker volume** (`node_modules:/app/node_modules`). This means running `npx prisma generate` on the host does **not** update the client the container uses.
+
+#### Normal flow (schema.prisma change → auto-generated migration)
+
+```bash
+# 1. Edit schema.prisma on the host, then run inside the container:
+docker compose exec backend npx prisma migrate dev --name your_change_name
+# This does three things automatically:
+#   a) generates the migration SQL
+#   b) applies it to the DB
+#   c) regenerates the Prisma client inside the container
+```
+
+#### Manual migration flow (raw SQL + migrate resolve)
+
+Used when Prisma can't express the change (GENERATED columns, partial indexes, custom constraints):
+
+```bash
+# 1. Write migration SQL in prisma/migrations/<timestamp>_name/migration.sql
+# 2. Apply it directly to the DB:
+psql "$DIRECT_DATABASE_URL" -f prisma/migrations/<timestamp>_name/migration.sql
+# 3. Register it in Prisma's history:
+docker compose exec backend npx prisma migrate resolve --applied <timestamp>_name
+# 4. Regenerate the client — NOT automatic in this flow:
+docker compose exec backend npx prisma generate
+# 5. Restart so NestJS picks up the new types:
+docker compose restart backend
+```
+
+#### Why running on the host doesn't help
+
+```
+Host:      node_modules/.prisma/client   ← updated by host-side prisma generate ✓
+Container: Docker volume node_modules    ← completely separate, still has old types ✗
+```
+
+Running `npx prisma generate` from `apps/backend` on the host only updates the host copy.
+The container never sees it.
+
+---
+
 ## 9. Emails Not Being Delivered (Dev)
 
 In development, all emails are captured by **Mailpit** — a local SMTP server that never actually sends to real addresses.
@@ -254,11 +297,21 @@ OpenSearch takes ~30 seconds to start. The search service has built-in retry log
 # Type check without building (fastest)
 cd apps/backend && npm run type-check
 
-# Generate Prisma types first (often the fix)
-npx prisma generate
-
 # Full rebuild
 rm -rf dist && npm run build
+```
+
+**Prisma type errors after a schema change** (e.g. `Property 'price' is missing in type`):
+The Prisma client types are stale. If running in Docker, regenerate inside the container — not on the host:
+
+```bash
+docker compose exec backend npx prisma generate
+docker compose restart backend
+```
+
+If running locally (not Docker):
+```bash
+cd apps/backend && npx prisma generate
 ```
 
 **Gateway build:** The gateway uses `npx nest build` (not just `tsc`) because it needs the NestJS compiler for decorators:
@@ -398,8 +451,8 @@ Before reporting a bug, verify:
 - [ ] `docker compose ps` — all infrastructure containers are `Up`
 - [ ] Backend is running on port **4000** (not 3000)
 - [ ] `apps/backend/.env` exists and has `DATABASE_URL`, `REDIS_URL`, `JWT_PUBLIC_KEY`
-- [ ] `npx prisma generate` has been run after any schema change
-- [ ] `npx prisma migrate deploy` has been run
+- [ ] Schema changed? Run `docker compose exec backend npx prisma generate` (not on host) then `docker compose restart backend`
+- [ ] `npx prisma migrate deploy` has been run (or `migrate dev` for dev)
 - [ ] Gateway is running on port 3000 (if testing through gateway)
 - [ ] Auth service is running on port 3006 (if testing auth endpoints)
 

@@ -1,112 +1,58 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { OrderStatus, PaymentStatus } from '@prisma/client';
+import { OrderStatus } from '@prisma/client';
 
 export class OrderItemResponseDto {
-  @ApiProperty({
-    description: 'Order item ID',
-    example: '550e8400-e29b-41d4-a716-446655440000',
-  })
-  id?: string;
+  @ApiProperty({ example: 'clxyz123' })
+  id!: string;
+
+  @ApiProperty({ example: 'clprod456' })
+  productId!: string;
+
+  @ApiProperty({ example: 'Slim Fit Shirt', nullable: true })
+  productName!: string | null;
+
+  @ApiProperty({ example: 2 })
+  quantity!: number;
+
+  @ApiProperty({ description: 'Unit price at time of order', example: '74.99' })
+  price!: string;
 
   @ApiProperty({
-    description: 'Product ID',
-    example: '550e8400-e29b-41d4-a716-446655440001',
+    description: 'Variant attributes snapshot at order time',
+    example: { Size: 'M', Color: 'White' },
+    nullable: true,
   })
-  productId?: string;
+  variantAttributes!: Record<string, string> | null;
 
-  @ApiProperty({
-    description: 'Product name',
-    example: 'Wireless Mouse',
-  })
-  productName?: string;
-
-  @ApiProperty({
-    description: 'Quantity ordered',
-    example: 1,
-  })
-  quantity?: number;
-
-  @ApiProperty({
-    description: 'Unit price at time of order',
-    example: 49.99,
-  })
-  price?: number;
-
-  @ApiProperty({
-    description: 'Item subtotal',
-    example: 49.99,
-  })
-  subtotal?: number;
+  @ApiProperty({ example: 149.98 })
+  subtotal!: number;
 }
 
 export class OrderResponseDto {
-  @ApiProperty({
-    description: 'Order ID',
-    example: '550e8400-e29b-41d4-a716-446655440000',
-  })
-  id?: string;
+  @ApiProperty({ example: 'clxyz123' })
+  id!: string;
 
-  @ApiProperty({
-    description: 'Unique order number',
-    example: 'ORD-20240115-ABC123',
-  })
-  orderNumber?: string;
+  @ApiProperty({ example: 'ORD-00042' })
+  orderNumber!: string;
 
-  @ApiProperty({
-    description: 'User ID',
-    example: '550e8400-e29b-41d4-a716-446655440001',
-  })
-  userId?: string;
+  @ApiProperty({ example: 'cluser456' })
+  userId!: string;
 
-  @ApiProperty({
-    description: 'Order items',
-    type: [OrderItemResponseDto],
-  })
-  items?: OrderItemResponseDto[];
+  @ApiProperty({ type: [OrderItemResponseDto] })
+  items!: OrderItemResponseDto[];
 
-  @ApiProperty({
-    description: 'Total order amount',
-    example: 299.97,
-  })
-  totalPrice?: number;
+  @ApiProperty({ example: '149.99' })
+  totalPrice!: string;
 
-  @ApiProperty({
-    description: 'Order status',
-    enum: OrderStatus,
-    example: OrderStatus.PENDING,
-  })
-  status?: OrderStatus;
+  @ApiProperty({ enum: OrderStatus, example: OrderStatus.PENDING })
+  status!: OrderStatus;
 
-  @ApiProperty({
-    description: 'Payment status',
-    enum: PaymentStatus,
-    example: PaymentStatus.PENDING,
-  })
-  paymentStatus?: PaymentStatus;
+  @ApiProperty({ example: 'Please leave at the door', nullable: true })
+  notes!: string | null;
 
-  @ApiProperty({
-    description: 'Stripe payment intent ID',
-    example: 'pi_1234567890abcdef',
-    required: false,
-  })
-  paymentIntentId?: string;
+  @ApiProperty({ example: '2026-06-06T10:00:00.000Z' })
+  createdAt!: Date;
 
-  @ApiProperty({
-    description: 'Payment completion timestamp',
-    example: '2024-01-15T10:35:00Z',
-    required: false,
-  })
-  paidAt?: Date;
-
-  @ApiProperty({
-    description: 'Order creation timestamp',
-    example: '2024-01-15T10:30:00Z',
-  })
-  createdAt?: Date;
-
-  @ApiProperty({
-    description: 'Last update timestamp',
-    example: '2024-01-15T10:35:00Z',
-  })
-  updatedAt?: Date;
+  @ApiProperty({ example: '2026-06-06T10:05:00.000Z' })
+  updatedAt!: Date;
 }

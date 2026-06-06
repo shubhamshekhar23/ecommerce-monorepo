@@ -1,3 +1,12 @@
+# Phase 2 (reliability)
+
+- Idempotency key :
+  - a uuid is sent from client side per single order request; if user clicks place order button multiple times, always the same uuid will be sent
+  - this is stored in db table along with userid and the status of the order; and the order details as json in a table column as well
+  - when a duplicate request arrives, it checks the idemp key and status of order, and based on that returns the response;
+  - It is written as an interceptor which can be injected with order service (in futire payment as well etc.)
+  - when 2 requests arrive at the same time, that is also handled, keeping atomicity in place.
+
 # Phase 1
 
 - Db migration for products; Normalized design for tables; Expand - Deploy - Backfill - Contract
