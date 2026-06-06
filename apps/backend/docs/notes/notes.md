@@ -7,6 +7,14 @@
   - It is written as an interceptor which can be injected with order service (in futire payment as well etc.)
   - when 2 requests arrive at the same time, that is also handled, keeping atomicity in place.
 
+- Outbox Pattern
+  - can use cron job (from nestjs sceduler lib) or a simple setinterval
+  - Solves the dual write problem; one db transaction cant handle publishing message event inside itself
+  - saving events in table with status, then outbox processor runs every 5sec to pull, check the status and tries to publish the event again;
+  - Works even if server crashes, next start would again start the outbox processor
+  - after 5 failures marks `FAILED` in db (dead letter) for further investigation by some developer;
+  - Fetches up to 50 `PENDING` events with `FOR UPDATE SKIP LOCKED` (multiple workers can run safely)
+
 # Phase 1
 
 - Db migration for products; Normalized design for tables; Expand - Deploy - Backfill - Contract

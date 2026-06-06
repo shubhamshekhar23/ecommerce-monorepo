@@ -1,18 +1,8 @@
-/* eslint-disable max-lines */
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { Readable } from 'stream';
-import { parse } from 'csv-parse';
+import { Injectable } from '@nestjs/common';
+import { Worker } from 'worker_threads';
+import * as path from 'path';
 import { PrismaService } from '@/modules/prisma/prisma.service';
-
-interface CsvRow {
-  name: string;
-  slug: string;
-  price: string;
-  cost: string;
-  stock: string;
-  categoryId: string;
-  description?: string;
-}
+import type { CsvRow, WorkerResult } from './workers/csv-worker.types';
 
 export interface ImportResult {
   imported: number;
@@ -20,55 +10,23 @@ export interface ImportResult {
   errors: Array<{ row: number; field: string; message: string }>;
 }
 
-// Stream processing pattern: process the CSV row-by-row instead of loading
-// it all into memory. A 100,000-row CSV at 500 bytes/row = 50MB. Loading it
-// all into memory then processing blocks the event loop and risks OOM.
+// Stream processing pattern: csv-parse streams the buffer row-by-row inside a worker thread.
+// Parse + validation are CPU-bound and run off the main event loop. DB writes (I/O-bound)
+// stay on the main thread — Prisma connections cannot cross thread boundaries.
 //
-// Stream pipeline:
-//   multer (upload buffer) → Readable → csv-parse → validate → batch DB write
-//
-// Batching: we collect 100 rows then INSERT them all in one query.
-// Why batch? One INSERT per row = N round-trips to Postgres. One batch INSERT = 1 round-trip.
-// At 10ms per round-trip, 1000 rows × 10ms = 10s. With batches of 100: 10 × 10ms = 100ms.
+// Buffer transfer: buffer.buffer.slice(...) produces a detached ArrayBuffer sent zero-copy
+// via transferList. The worker owns the memory; the main thread cannot read it after transfer.
 
 const BATCH_SIZE = 100;
-const REQUIRED_FIELDS: (keyof CsvRow)[] = ['name', 'slug', 'price', 'cost', 'stock', 'categoryId'];
+const WORKER_PATH = path.join(__dirname, 'workers', 'csv-parser.worker.js');
 
 @Injectable()
 export class CsvImportService {
   constructor(private readonly prisma: PrismaService) {}
 
   async importProducts(buffer: Buffer): Promise<ImportResult> {
-    const rows = await this.parseStream(buffer);
-    return this.processRows(rows);
-  }
-
-  private parseStream(buffer: Buffer): Promise<Array<{ row: CsvRow; lineNumber: number }>> {
-    return new Promise((resolve, reject) => {
-      const results: Array<{ row: CsvRow; lineNumber: number }> = [];
-      let lineNumber = 0;
-
-      Readable.from(buffer)
-        .pipe(parse({ columns: true, skip_empty_lines: true, trim: true }))
-        .on('data', (row: CsvRow) => { lineNumber++; results.push({ row, lineNumber }); })
-        .on('end', () => resolve(results))
-        .on('error', reject);
-    });
-  }
-
-  private async processRows(rows: Array<{ row: CsvRow; lineNumber: number }>): Promise<ImportResult> {
-    const result: ImportResult = { imported: 0, skipped: 0, errors: [] };
-    const validRows: CsvRow[] = [];
-
-    for (const { row, lineNumber } of rows) {
-      const rowErrors = this.validateRow(row, lineNumber);
-      if (rowErrors.length > 0) {
-        result.errors.push(...rowErrors);
-        result.skipped++;
-      } else {
-        validRows.push(row);
-      }
-    }
+    const { validRows, errors, skipped } = await this.runWorker(buffer);
+    const result: ImportResult = { imported: 0, skipped, errors };
 
     for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
       const batch = validRows.slice(i, i + BATCH_SIZE);
@@ -79,28 +37,25 @@ export class CsvImportService {
     return result;
   }
 
-  private validateRow(row: CsvRow, lineNumber: number): ImportResult['errors'] {
-    const errors: ImportResult['errors'] = [];
-
-    for (const field of REQUIRED_FIELDS) {
-      if (!row[field]) {
-        errors.push({ row: lineNumber, field, message: `${field} is required` });
-      }
-    }
-
-    if (row.price && isNaN(parseFloat(row.price))) {
-      errors.push({ row: lineNumber, field: 'price', message: 'price must be a number' });
-    }
-    if (row.stock && isNaN(parseInt(row.stock, 10))) {
-      errors.push({ row: lineNumber, field: 'stock', message: 'stock must be an integer' });
-    }
-
-    return errors;
+  private runWorker(buffer: Buffer): Promise<WorkerResult> {
+    return new Promise((resolve, reject) => {
+      const arrayBuffer = (buffer.buffer as ArrayBuffer).slice(
+        buffer.byteOffset,
+        buffer.byteOffset + buffer.byteLength,
+      );
+      const worker = new Worker(WORKER_PATH, {
+        workerData: { buffer: arrayBuffer },
+        transferList: [arrayBuffer],
+      });
+      worker.on('message', (result: WorkerResult) => resolve(result));
+      worker.on('error', reject);
+      worker.on('exit', (code) => {
+        if (code !== 0) reject(new Error(`CSV worker exited with code ${code}`));
+      });
+    });
   }
 
   private async writeBatch(rows: CsvRow[]): Promise<void> {
-    // Each CSV row upserts the Product (by slug), then upserts a default ProductVariant.
-    // price/cost/stock belong to ProductVariant — Product is now metadata-only.
     for (const row of rows) {
       await this.prisma.$transaction(async (tx) => {
         const product = await tx.product.upsert({
