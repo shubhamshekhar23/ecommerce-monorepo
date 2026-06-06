@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import type { OutboxEvent, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+import type { OutboxEvent } from '@prisma/client';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 import { EXCHANGES, ROUTING_KEYS } from '@ecommerce/shared-types';
 import type { OrderPlacedEvent } from '@ecommerce/shared-types';
@@ -32,12 +33,7 @@ export class OutboxService {
   }
 
   async processPendingBatch(): Promise<void> {
-    const events = await this.prisma.outboxEvent.findMany({
-      where: { status: 'PENDING', attempts: { lt: MAX_ATTEMPTS } },
-      orderBy: { createdAt: 'asc' },
-      take: BATCH_SIZE,
-    });
-
+    const events = await this.claimPendingEvents();
     if (events.length === 0) return;
 
     this.logger.log(`Processing ${events.length} outbox event(s)`);
@@ -46,13 +42,37 @@ export class OutboxService {
     }
   }
 
-  private async dispatchEvent(event: OutboxEvent): Promise<void> {
-    try {
-      await this.prisma.outboxEvent.update({
-        where: { id: event.id },
+  // Atomically claims up to BATCH_SIZE PENDING events.
+  // FOR UPDATE SKIP LOCKED ensures concurrent replicas never claim the same row:
+  // each replica locks the rows it selects and skips rows already locked by others.
+  // The lock is released the moment the transaction commits (after the status update).
+  private async claimPendingEvents(): Promise<OutboxEvent[]> {
+    return this.prisma.$transaction(async (tx) => {
+      const pending = await tx.$queryRaw<OutboxEvent[]>(
+        Prisma.sql`
+          SELECT * FROM "OutboxEvent"
+          WHERE status = 'PENDING'::"OutboxEventStatus"
+          AND attempts < ${MAX_ATTEMPTS}
+          ORDER BY "createdAt" ASC
+          LIMIT ${BATCH_SIZE}
+          FOR UPDATE SKIP LOCKED
+        `,
+      );
+
+      if (pending.length === 0) return [];
+
+      await tx.outboxEvent.updateMany({
+        where: { id: { in: pending.map((e) => e.id) } },
         data: { status: 'PROCESSING', attempts: { increment: 1 } },
       });
 
+      return pending;
+    });
+  }
+
+  private async dispatchEvent(event: OutboxEvent): Promise<void> {
+    try {
+      // Status set to PROCESSING and attempts incremented atomically in claimPendingEvents.
       await this.publishToRabbitMQ(event);
 
       await this.prisma.outboxEvent.update({
