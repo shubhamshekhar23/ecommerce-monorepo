@@ -79,11 +79,7 @@ export class ProductsService {
   ) {}
 
   private async withCache<T>(key: string, ttl: number, fetchFn: () => Promise<T>): Promise<T> {
-    const cached = await this.cache.get<T>(key);
-    if (cached !== null) return cached;
-    const value = await fetchFn();
-    await this.cache.set(key, value, ttl);
-    return value;
+    return this.cache.getOrSet(key, ttl, fetchFn);
   }
 
   private async invalidateProducts(): Promise<void> {

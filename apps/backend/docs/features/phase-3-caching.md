@@ -36,6 +36,28 @@ await cache.invalidateByPattern('products:*');
 
 SCAN is used instead of `KEYS *` to avoid blocking the Redis event loop on large keyspaces — it iterates the keyspace in chunks of 100 keys per call.
 
+### Cache Stampede Prevention
+
+When a popular key expires, all concurrent requests miss simultaneously and pile onto the database. This is the cache stampede (thundering herd).
+
+Prevention via a Redis mutex lock in `CacheService.getOrSet`:
+
+```
+1. get(key)                    → miss
+2. SET lock:key token NX PX 5000  → only one caller gets 'OK'
+3. winner: re-check get(key), fetch DB, set cache, release lock
+4. losers: poll every 50ms up to 10 times waiting for the winner
+5. if lock expires before winner finishes → fall back to direct DB fetch
+```
+
+Key details:
+- `NX` (set-if-not-exists) makes the lock acquisition atomic — no race between check and set
+- `PX 5000` auto-expires the lock after 5 s so a crashed process can't hold it forever
+- Lock release uses a Lua script that checks the caller's token before deleting, so a slow caller can't accidentally release a lock acquired by someone else
+- The re-check after acquiring the lock (double-checked locking) handles the case where the previous winner finished while we were waiting for the lock
+
+All callers of `withCache` in `ProductsService` get stampede protection automatically — no changes needed at call sites.
+
 ### Rate Limiting
 
 `src/modules/rate-limit/`
@@ -107,7 +129,7 @@ A drop below ~70% on `products` means either invalidation is too aggressive or a
 ## Key Files
 
 - `src/modules/cache/redis.service.ts` — Redis connection management
-- `src/modules/cache/cache.service.ts` — cache-aside logic (get/set/del/invalidateByPattern)
+- `src/modules/cache/cache.service.ts` — cache-aside logic (get/set/del/invalidateByPattern/getOrSet with stampede lock)
 - `src/modules/cache/cache.module.ts` — global module, exports both services
 - `src/modules/rate-limit/rate-limiter.service.ts` — sliding window Lua script
 - `src/modules/rate-limit/rate-limit.guard.ts` — canActivate + key strategy

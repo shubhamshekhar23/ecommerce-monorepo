@@ -3,6 +3,22 @@ import { InjectMetric } from '@willsoto/nestjs-prometheus';
 import { Counter } from 'prom-client';
 import { RedisService } from './redis.service';
 
+const LOCK_TTL_MS = 5000;
+const LOCK_RETRY_MS = 50;
+const LOCK_MAX_RETRIES = 10;
+
+/*
+ - Atomically releases a lock only if the caller still owns it (token matches).
+ - Without this, a slow lock-holder could release a lock acquired by a later caller.
+ */
+const RELEASE_LOCK_LUA = `
+  if redis.call('get', KEYS[1]) == ARGV[1] then
+    return redis.call('del', KEYS[1])
+  else
+    return 0
+  end
+`;
+
 @Injectable()
 export class CacheService {
   private readonly logger = new Logger(CacheService.name);
@@ -51,5 +67,48 @@ export class CacheService {
     } catch (err) {
       this.logger.warn(`Cache invalidation failed pattern=${pattern}: ${(err as Error).message}`);
     }
+  }
+
+  /*
+   - Cache-aside with stampede prevention: the first caller on a miss acquires a Redis lock
+   - (SET NX PX), fetches from the source, and populates the cache. Concurrent misses poll
+   - until the winner populates the key. We re-check after acquiring the lock in case the
+   - previous winner already finished. Falls back to a direct fetch if the lock expires.
+   */
+  async getOrSet<T>(key: string, ttlSeconds: number, fetchFn: () => Promise<T>): Promise<T> {
+    const cached = await this.get<T>(key);
+    if (cached !== null) return cached;
+    const token = await this.acquireLock(key);
+    if (token) {
+      try {
+        const doubleCheck = await this.get<T>(key);
+        if (doubleCheck !== null) return doubleCheck;
+        const value = await fetchFn();
+        await this.set(key, value, ttlSeconds);
+        return value;
+      } finally {
+        await this.releaseLock(key, token);
+      }
+    }
+    return (await this.pollUntilCached<T>(key)) ?? fetchFn();
+  }
+
+  private async acquireLock(key: string): Promise<string | null> {
+    const token = `${Date.now()}-${Math.random()}`;
+    const result = await this.redis.getClient().set(`lock:${key}`, token, 'PX', LOCK_TTL_MS, 'NX');
+    return result === 'OK' ? token : null;
+  }
+
+  private async releaseLock(key: string, token: string): Promise<void> {
+    await this.redis.getClient().eval(RELEASE_LOCK_LUA, 1, `lock:${key}`, token);
+  }
+
+  private async pollUntilCached<T>(key: string): Promise<T | null> {
+    for (let i = 0; i < LOCK_MAX_RETRIES; i++) {
+      await new Promise((r) => setTimeout(r, LOCK_RETRY_MS));
+      const cached = await this.get<T>(key);
+      if (cached !== null) return cached;
+    }
+    return null;
   }
 }

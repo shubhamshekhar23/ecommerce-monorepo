@@ -1,3 +1,15 @@
+# Phase 3 (Caching)
+
+- using redis as a cache storage
+- storing key value, and there are different data structures
+- caching prodyct detail, product lists as cache, Cache-Aside (Lazy Loading) is used
+- cache invalidation using scan instead of keys for performance
+- when product is updated all the products:\* is invaluidated
+- produyct detail has ttl 300, and product list has 60;
+- Measuring hits and misses count per key types; we want almost 70% hits; if it goes below that we need to revisit our invalidation stratgey;
+- to prevent cache stampede, we have used locking mechansim using nx-px when miss has happened;
+- we always want noeviction for bullmq jobs;
+
 # Phase 2 (reliability)
 
 - Idempotency key :
