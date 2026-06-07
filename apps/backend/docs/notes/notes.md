@@ -36,6 +36,11 @@
   - It uses opossum lib to implement above; wraps around stripe payment calls;
   - the styates are closed, open, half open; retries after 30sec
 
+- Stripe
+  - Webhook used, to avoid duplication webhookevent table used to store the events
+  - post request /webhook called by stripe to our backend api and we do all the subsequent steps
+  - Signature verification done by stripe sdk once the request arrives
+
 # Phase 1
 
 - Db migration for products; Normalized design for tables; Expand - Deploy - Backfill - Contract
