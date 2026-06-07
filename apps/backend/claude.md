@@ -19,7 +19,20 @@ This document outlines the coding standards and best practices for the e-commerc
   - Use early returns and guard clauses
   - Extract nested logic into helper functions
 
-## 2. Naming Conventions
+## 2. Comments
+
+Always write comments as block comments using the following format:
+
+```typescript
+/*
+ - first line
+ - second line
+ */
+```
+
+Never use `//` line comments or `/** */` JSDoc-style block comments.
+
+## 3. Naming Conventions
 
 **Classes & Interfaces:**
 
@@ -41,7 +54,7 @@ This document outlines the coding standards and best practices for the e-commerc
 - kebab-case: `user.service.ts`, `create-order.dto.ts`
 - Test files: `*.spec.ts` or `*.e2e-spec.ts`
 
-## 3. Code Organization
+## 4. Code Organization
 
 **Module Structure:**
 
@@ -64,14 +77,14 @@ modules/users/
 3. Internal absolute imports (`@/*`)
 4. Relative imports (`./`, `../`)
 
-## 4. TypeScript Best Practices
+## 5. TypeScript Best Practices
 
 - Strict mode enabled in `tsconfig.json`
 - No `any` type → Use `unknown` or proper types
 - Explicit return types for all functions
 - Prefer `interface` over `type` for objects
 
-## 5. NestJS-Specific Standards
+## 6. NestJS-Specific Standards
 
 **Controllers:**
 
@@ -91,14 +104,14 @@ modules/users/
 - One DTO per operation
 - Use `@ApiProperty()` for Swagger
 
-## 6. Error Handling
+## 7. Error Handling
 
 - Use NestJS built-in exceptions
 - Custom exceptions extend `HttpException`
 - Include error codes for client handling
 - Log all errors with context
 
-## 7. Testing Standards
+## 8. Testing Standards
 
 **Coverage Requirements:**
 
@@ -110,21 +123,21 @@ modules/users/
 - Use Arrange-Act-Assert (AAA) pattern
 - Descriptive test names
 
-## 8. Security Best Practices
+## 9. Security Best Practices
 
 - Validate ALL inputs with DTOs
 - Never store plain passwords (use bcrypt)
 - JWT with short expiry (15min access, 7d refresh)
 - No secrets in code → Use environment variables
 
-## 9. Database Optimization
+## 10. Database Optimization
 
 - Use `select` to fetch only needed fields
 - Avoid N+1 queries (use `include`)
 - Add indexes on frequently queried columns
 - Implement pagination (default: 20 items)
 
-## 10. Git & Version Control
+## 11. Git & Version Control
 
 **Commit Messages:**
 
@@ -137,7 +150,7 @@ modules/users/
 - Format: `type/description`
 - Examples: `feature/stripe-integration`, `fix/cart-total-calculation`
 
-## 11. Code Review Checklist
+## 12. Code Review Checklist
 
 - [ ] Follows coding standards (file/function size)
 - [ ] Proper error handling
@@ -148,7 +161,7 @@ modules/users/
 - [ ] Meaningful variable names
 - [ ] DRY principle followed
 
-## 12. Automated Enforcement
+## 13. Automated Enforcement
 
 **ESLint Rules Applied:**
 

@@ -18,6 +18,7 @@ Idempotency-Key: 550e8400-e29b-41d4-a716-446655440000
 ```
 
 The interceptor:
+
 1. Checks the `IdempotencyKey` table for this `(userId, key)` pair
 2. If found and `COMPLETED` → returns the cached response immediately (no DB write, no charge)
 3. If found and `PROCESSING` → returns 409 Conflict (another request is in-flight)
@@ -46,6 +47,7 @@ await outboxService.publish(tx, {
 ```
 
 `OutboxProcessor` runs every 5 seconds:
+
 1. Fetches up to 50 `PENDING` events with `FOR UPDATE SKIP LOCKED` (multiple workers can run safely)
 2. Publishes each event to RabbitMQ
 3. On success: marks `PROCESSED`
@@ -75,12 +77,14 @@ Each step runs inside the same Prisma transaction where possible (inventory + or
 `src/modules/queue/queue.module.ts`
 
 BullMQ is built on Redis data structures:
+
 - Pending jobs → Redis List (`LPUSH` / `BRPOP`)
 - Delayed jobs → Redis Sorted Set (score = execute_at timestamp)
 - Active jobs → Redis Hash
 - Failed jobs → Redis Sorted Set (dead letter queue)
 
 Active queues as of Phase 9:
+
 - `stock-alerts` — sends back-in-stock emails when a product is restocked
 - `cart-recovery` — sends abandoned cart reminders 1 hour after the user stops activity
 - `invoices` — generates PDF invoices asynchronously via pdfkit
@@ -90,10 +94,12 @@ The `notifications` queue was removed after Phase 9 — notification delivery mo
 Admin endpoints (`GET /admin/queue/stats`, `GET /admin/queue/dlq`) monitor the live queues directly.
 
 Retry config: exponential backoff with jitter:
+
 ```typescript
 const delay = Math.min(baseDelay * 2 ** attempt, maxDelay);
 const jitter = delay * Math.random() * 0.3; // ±30%
 ```
+
 Jitter prevents the thundering herd: 1000 failed jobs retrying at exactly the same interval would simultaneously hammer the downstream service.
 
 ### Circuit Breaker
@@ -103,6 +109,7 @@ Jitter prevents the thundering herd: 1000 failed jobs retrying at exactly the sa
 Uses `opossum` library. Wraps every Stripe API call.
 
 State machine:
+
 - **Closed** (normal) — all requests pass through
 - **Open** (tripped) — all requests fail immediately with `ServiceUnavailableException` (no network call)
 - **Half-Open** (recovery probe) — one request allowed; if it succeeds, closes the circuit

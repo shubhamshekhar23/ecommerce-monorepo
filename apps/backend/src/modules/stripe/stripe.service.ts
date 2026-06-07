@@ -121,6 +121,21 @@ export class StripeService {
     }
   }
 
+  async deduplicateEvent(eventId: string, eventType: string): Promise<boolean> {
+    /*
+     - $executeRaw used intentionally: Prisma's create() throws on duplicate (P2002) and
+     - createMany() with skipDuplicates is semantically odd for a single row.
+     - ON CONFLICT DO NOTHING is the atomic check-and-insert — returns 1 if this is the
+     - first delivery, 0 if Stripe already retried this event ID.
+     */
+    const inserted = await this.prisma.$executeRaw`
+      INSERT INTO "StripeWebhookEvent" ("id", "type")
+      VALUES (${eventId}, ${eventType})
+      ON CONFLICT ("id") DO NOTHING
+    `;
+    return inserted === 1;
+  }
+
   async handlePaymentSuccess(paymentIntent: StripePaymentIntent): Promise<void> {
     const orderId = paymentIntent.metadata?.orderId as string;
     if (!orderId) {

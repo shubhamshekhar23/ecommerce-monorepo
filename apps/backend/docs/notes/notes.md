@@ -24,7 +24,17 @@
   - payment api is usually very fragile and often unreliable thats why we use circuit breaker pattern, to know before hand how the past payemnts behaved.
 
 - BullMq
-  - pushing message event using bullmq lib into redis; using bullmq workers that also run in the same node process keep connecting with redis for the new events, and porcess them. e.g invoice processor
+  - pushing message event using bullmq lib into redis; using bullmq processors that also run in the same node process keep connecting with redis for the new events, and porcess them. e.g invoice processor
+  - cart-recovery, invoice generation and stock alerts are being used for publishing events in queue and subscribing.
+  - bullmq is also able to send a scheduled task in redis as well, e.g cart-recovery, it should be run after 30min.
+  - ordercreated event is emitted and cart-recover listens and discard the cart-recovery job;
+  - stock alerts also uses PRODUCT_RESTOCKED_EVENT event and listens and adds job in queue and process them
+  - For retries : using jitter in case of email, because email server can be down often; and exponential backoff
+
+- Circuit Breaker pattern
+  - this pattern is used in case of stripe payment calls
+  - It uses opossum lib to implement above; wraps around stripe payment calls;
+  - the styates are closed, open, half open; retries after 30sec
 
 # Phase 1
 

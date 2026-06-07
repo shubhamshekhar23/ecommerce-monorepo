@@ -48,6 +48,9 @@ export class StripeController {
   }
 
   private async processWebhookEvent(event: StripeWebhookEvent): Promise<void> {
+    const isNew = await this.stripeService.deduplicateEvent(event.id, event.type);
+    if (!isNew) return;
+
     switch (event.type) {
       case 'payment_intent.succeeded':
         await this.stripeService.handlePaymentSuccess(event.data.object as StripePaymentIntent);
