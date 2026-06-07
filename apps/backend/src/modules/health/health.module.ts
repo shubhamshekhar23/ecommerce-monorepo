@@ -13,9 +13,10 @@ import { PrismaModule } from '@/modules/prisma/prisma.module';
     RedisHealthIndicator,
     {
       provide: 'REDIS_CLIENT',
-      // A dedicated ioredis connection just for health checks.
-      // Phase 3 (caching) will introduce a shared RedisModule — at that point
-      // this provider can be replaced with an injection from that module.
+      /*
+       - Dedicated ioredis connection for health checks only.
+       - Kept separate from RedisService so a hung app connection doesn't mask a healthy Redis.
+       */
       useFactory: (): Redis => new Redis(process.env.REDIS_URL ?? 'redis://localhost:6379'),
     },
   ],

@@ -1,7 +1,7 @@
 import { Injectable, CanActivate, ExecutionContext, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
-import { CacheService } from '@/modules/cache/cache.service';
+import { RateLimiterService } from './rate-limiter.service';
 import { RATE_LIMIT_KEY, RateLimitOptions } from './rate-limit.decorator';
 
 // Sliding window counter algorithm:
@@ -29,7 +29,7 @@ export class RateLimitGuard implements CanActivate {
 
   constructor(
     private readonly reflector: Reflector,
-    private readonly cache: CacheService,
+    private readonly rateLimiter: RateLimiterService,
   ) {}
 
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
@@ -41,7 +41,7 @@ export class RateLimitGuard implements CanActivate {
 
     const req = ctx.switchToHttp().getRequest<AuthenticatedRequest>();
     const bucketKey = this.buildKey(req, ctx, options);
-    const count = await this.cache.slidingWindowIncrement(bucketKey, options.windowMs);
+    const count = await this.rateLimiter.slidingWindowIncrement(bucketKey, options.windowMs);
 
     if (count > options.limit) {
       this.logger.warn(`Rate limit exceeded: key=${bucketKey} count=${count} limit=${options.limit}`);

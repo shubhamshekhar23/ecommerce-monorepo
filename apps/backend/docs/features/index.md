@@ -16,7 +16,7 @@ All phases have been implemented. Each phase targets a specific cluster of backe
   Idempotency interceptor (`X-Idempotency-Key`), Outbox pattern (atomic event publishing), Saga for order placement, BullMQ job queue, circuit breaker (opossum), retry with exponential backoff + jitter, dead letter queue.
 
 - **[Phase 3 — Caching & Performance](./phase-3-caching.md)** ✅
-  Cache-aside via Redis, tag-based cache invalidation, rate limiting (`@RateLimit()` decorator, Redis-backed), cache stampede prevention (SET NX lock), Redis Sorted Sets for bestseller rankings.
+  Cache-aside via Redis, pattern-based cache invalidation (SCAN + glob), rate limiting (`@RateLimit()` decorator, Redis sorted set + Lua sliding window), Prometheus hit/miss metrics.
 
 - **[Phase 4 — Event-Driven Architecture](./phase-4-events.md)** ✅
   Domain events with EventEmitter2 (`order.created`, `payment.confirmed`), CQRS read model (`ProductRating` materialized aggregate), order state machine with validated transitions.

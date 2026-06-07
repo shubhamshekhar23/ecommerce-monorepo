@@ -24,55 +24,42 @@ PUT /products/:id
   2. DEL the Redis key (invalidation)
 ```
 
-Used for product detail pages and category trees. The product list cache is tag-based (see below).
+Used for product detail pages and order read models.
 
-### Tag-Based Cache Invalidation
+### Pattern-Based Cache Invalidation
 
-The category tree is expensive to rebuild — it requires a recursive query. It's cached for 30 minutes. When any category is mutated, the cache is invalidated by tag rather than by knowing every individual key.
+When a product is mutated, all related cache entries are swept using a Redis SCAN with a glob pattern:
 
-Implementation: when caching a value, also add its key to a Redis Set keyed by tag (`cache:tag:categories`). On mutation, fetch all keys from the tag set and delete them all. This keeps invalidation logic in one place even when cached keys change.
+```typescript
+await cache.invalidateByPattern('products:*');
+```
+
+SCAN is used instead of `KEYS *` to avoid blocking the Redis event loop on large keyspaces — it iterates the keyspace in chunks of 100 keys per call.
 
 ### Rate Limiting
 
-`src/modules/rate-limit/` + `src/common/guards/rate-limit.guard.ts`
+`src/modules/rate-limit/`
 
 The `@RateLimit()` decorator is applied at the controller or method level:
 
 ```typescript
-@RateLimit({ window: 15 * 60, limit: 10, keyStrategy: 'ip' })
+@RateLimit({ windowMs: 15 * 60 * 1000, limit: 10, keyStrategy: 'ip' })
 @Post('/login')
 async login(...) {}
 ```
 
-Under the hood: each request increments a Redis counter keyed by `(IP or userId):endpoint`. If the counter exceeds the limit within the window, the guard returns 429. The counter TTL equals the window, so it auto-resets.
+Under the hood: a Redis sorted set per bucket key holds timestamps of past requests. On each request, expired entries are pruned, the current timestamp is added, and the count is compared against the limit. If over the limit, the guard returns 429.
 
-Two strategies:
-- `keyStrategy: 'ip'` — limits by IP address (unauthenticated endpoints like login/register)
-- `keyStrategy: 'user'` — limits by userId (authenticated endpoints like order placement)
+A Lua script makes the three Redis operations (ZREMRANGEBYSCORE + ZADD + ZCARD) atomic — without it, concurrent requests could read a stale count between operations.
 
-NestJS Throttler (the library this wraps) uses the same sliding window algorithm.
+Three key strategies:
+- `keyStrategy: 'ip'` — one bucket per client IP (unauthenticated endpoints like login/register)
+- `keyStrategy: 'user'` — one bucket per authenticated user across all routes
+- `keyStrategy: 'user-per-route'` — one bucket per user per endpoint (most granular)
 
-### Cache Stampede Prevention
+### Why Sliding Window Over Fixed Window
 
-When a popular product's cache expires, thousands of concurrent requests all miss and simultaneously query Postgres. This is the cache stampede (also called "thundering herd").
-
-Prevention: use a Redis lock (`SET NX PX`) on cache misses. The first miss acquires the lock, fetches from DB, populates the cache, releases the lock. Other misses wait for the lock with a short sleep, then retry and get a cache hit.
-
-### Redis Data Structures for Business Logic
-
-`src/modules/products/products.service.ts` (bestsellers) and `src/modules/cache/cache.service.ts`:
-
-```typescript
-// Sorted Set for bestsellers — score = total units sold
-await redis.zincrby('bestsellers:weekly', quantity, `product:${id}`);
-const top10 = await redis.zrevrange('bestsellers:weekly', 0, 9);
-
-// Sorted Set for recently viewed — score = timestamp, cap at 20
-await redis.zadd(`user:${userId}:viewed`, Date.now(), `product:${id}`);
-await redis.zremrangebyrank(`user:${userId}:viewed`, 0, -21);
-```
-
-Using the right Redis data structure matters: `ZINCRBY` is O(log N), atomic, and requires zero application logic to maintain sorted order.
+Fixed window resets at wall-clock boundaries (e.g. every minute at :00). A burst of 10 requests at :59 and 10 more at :01 = 20 in 2 seconds, but both pass a limit-10 fixed window. Sliding window counts only the rolling last `windowMs` — no boundary attack possible.
 
 ---
 
@@ -119,8 +106,9 @@ A drop below ~70% on `products` means either invalidation is too aggressive or a
 
 ## Key Files
 
-- `src/modules/cache/cache.service.ts`
-- `src/modules/cache/cache.module.ts`
-- `src/modules/rate-limit/rate-limit.guard.ts`
-- `src/common/guards/rate-limit.guard.ts`
-- `src/common/decorators/rate-limit.decorator.ts`
+- `src/modules/cache/redis.service.ts` — Redis connection management
+- `src/modules/cache/cache.service.ts` — cache-aside logic (get/set/del/invalidateByPattern)
+- `src/modules/cache/cache.module.ts` — global module, exports both services
+- `src/modules/rate-limit/rate-limiter.service.ts` — sliding window Lua script
+- `src/modules/rate-limit/rate-limit.guard.ts` — canActivate + key strategy
+- `src/modules/rate-limit/rate-limit.decorator.ts` — @RateLimit() decorator

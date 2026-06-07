@@ -1,9 +1,12 @@
 import { Module } from '@nestjs/common';
 import { RateLimitGuard } from './rate-limit.guard';
+import { RateLimiterService } from './rate-limiter.service';
 
-// CacheModule is @Global() — CacheService is injected here without an explicit import.
+/*
+ - CacheModule is @Global() — RedisService is available here without an explicit import.
+ */
 @Module({
-  providers: [RateLimitGuard],
+  providers: [RateLimitGuard, RateLimiterService],
   exports: [RateLimitGuard],
 })
 export class RateLimitModule {}
