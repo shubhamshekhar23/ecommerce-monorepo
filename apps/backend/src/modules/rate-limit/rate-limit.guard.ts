@@ -41,7 +41,7 @@ export class RateLimitGuard implements CanActivate {
 
     const req = ctx.switchToHttp().getRequest<AuthenticatedRequest>();
     const bucketKey = this.buildKey(req, ctx, options);
-    const count = await this.rateLimiter.slidingWindowIncrement(bucketKey, options.windowMs);
+    const count = await this.rateLimiter.addAndCountInWindow(bucketKey, options.windowMs);
 
     if (count > options.limit) {
       this.logger.warn(`Rate limit exceeded: key=${bucketKey} count=${count} limit=${options.limit}`);

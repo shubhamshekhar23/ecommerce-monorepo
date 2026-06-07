@@ -25,7 +25,7 @@ export class RateLimiterService {
    - Returns the number of requests in the current sliding window after recording this one.
    - Caller compares count against the configured limit.
    */
-  async slidingWindowIncrement(key: string, windowMs: number): Promise<number> {
+  async addAndCountInWindow(key: string, windowMs: number): Promise<number> {
     const now = Date.now();
     const member = `${now}-${Math.random()}`;
     const count = await this.redis

@@ -10,6 +10,9 @@
 - to prevent cache stampede, we have used locking mechansim using nx-px when miss has happened;
 - we always want noeviction for bullmq jobs;
 
+- Rate-Limiter
+  - using slidig window timelines;
+
 # Phase 2 (reliability)
 
 - Idempotency key :
