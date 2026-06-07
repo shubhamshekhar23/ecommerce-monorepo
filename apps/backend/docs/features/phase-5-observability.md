@@ -127,6 +127,11 @@ ordersTotal      → Counter, labels: status (created, cancelled, completed)
 paymentEvents    → Counter, labels: status (succeeded, failed)
 inventoryFailures → Counter — how often checkout fails due to out-of-stock
 httpDuration     → Histogram — P50/P95/P99 request latency per route
+
+// Cache health
+cacheOperationsTotal → Counter, labels: result (hit|miss), namespace (products|read|rl)
+// hit rate = hit / (hit + miss) per namespace
+// a sudden drop in hit rate signals over-aggressive invalidation, a stampede, or Redis restart
 ```
 
 The HTTP duration histogram is the most important: it lets you compute P95 latency per endpoint and set SLO-based alerts.

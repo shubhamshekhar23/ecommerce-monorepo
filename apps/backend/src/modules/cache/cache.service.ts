@@ -1,5 +1,7 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectMetric } from '@willsoto/nestjs-prometheus';
+import { Counter } from 'prom-client';
 import Redis from 'ioredis';
 
 // Sliding window counter: atomically remove expired entries, add current, return count.
@@ -22,7 +24,10 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(CacheService.name);
   private redis!: Redis;
 
-  constructor(private readonly config: ConfigService) {}
+  constructor(
+    private readonly config: ConfigService,
+    @InjectMetric('cache_operations_total') private readonly cacheOps: Counter<string>,
+  ) {}
 
   onModuleInit(): void {
     const url = this.config.get<string>('REDIS_URL') ?? 'redis://localhost:6379';
@@ -37,6 +42,8 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
   async get<T>(key: string): Promise<T | null> {
     try {
       const raw = await this.redis.get(key);
+      const namespace = key.split(':')[0];
+      this.cacheOps.labels({ result: raw ? 'hit' : 'miss', namespace }).inc();
       return raw ? (JSON.parse(raw) as T) : null;
     } catch {
       return null;

@@ -93,9 +93,34 @@ Correct setup: run a **separate Redis instance** for queues with `noeviction` po
 
 ---
 
+## Cache Metrics
+
+`src/modules/cache/cache.service.ts` + `src/modules/cache/cache.module.ts`
+
+Every `cache.get()` call increments a `cache_operations_total` Prometheus counter:
+
+```
+cache_operations_total{result="hit",  namespace="products"} 142
+cache_operations_total{result="miss", namespace="products"}  31
+```
+
+The `namespace` label is derived from the first segment of the cache key (`products:detail:id:abc` → `products`), so no call sites need to pass anything extra.
+
+**PromQL to compute hit rate per namespace:**
+```promql
+rate(cache_operations_total{result="hit"}[5m])
+/
+rate(cache_operations_total[5m])
+```
+
+A drop below ~70% on `products` means either invalidation is too aggressive or a stampede is happening.
+
+---
+
 ## Key Files
 
 - `src/modules/cache/cache.service.ts`
+- `src/modules/cache/cache.module.ts`
 - `src/modules/rate-limit/rate-limit.guard.ts`
 - `src/common/guards/rate-limit.guard.ts`
 - `src/common/decorators/rate-limit.decorator.ts`
