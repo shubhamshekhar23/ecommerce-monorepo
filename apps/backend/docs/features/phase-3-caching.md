@@ -26,7 +26,7 @@ PUT /products/:id
 
 Used for product detail pages and order read models.
 
-### Pattern-Based Cache Invalidation
+#### Pattern-Based Cache Invalidation
 
 When a product is mutated, all related cache entries are swept using a Redis SCAN with a glob pattern:
 
@@ -36,7 +36,7 @@ await cache.invalidateByPattern('products:*');
 
 SCAN is used instead of `KEYS *` to avoid blocking the Redis event loop on large keyspaces — it iterates the keyspace in chunks of 100 keys per call.
 
-### Cache Stampede Prevention
+#### Cache Stampede Prevention
 
 When a popular key expires, all concurrent requests miss simultaneously and pile onto the database. This is the cache stampede (thundering herd).
 
@@ -51,12 +51,15 @@ Prevention via a Redis mutex lock in `CacheService.getOrSet`:
 ```
 
 Key details:
+
 - `NX` (set-if-not-exists) makes the lock acquisition atomic — no race between check and set
 - `PX 5000` auto-expires the lock after 5 s so a crashed process can't hold it forever
 - Lock release uses a Lua script that checks the caller's token before deleting, so a slow caller can't accidentally release a lock acquired by someone else
 - The re-check after acquiring the lock (double-checked locking) handles the case where the previous winner finished while we were waiting for the lock
 
 All callers of `withCache` in `ProductsService` get stampede protection automatically — no changes needed at call sites.
+
+---
 
 ### Rate Limiting
 
@@ -75,11 +78,12 @@ Under the hood: a Redis sorted set per bucket key holds timestamps of past reque
 A Lua script makes the three Redis operations (ZREMRANGEBYSCORE + ZADD + ZCARD) atomic — without it, concurrent requests could read a stale count between operations.
 
 Three key strategies:
+
 - `keyStrategy: 'ip'` — one bucket per client IP (unauthenticated endpoints like login/register)
 - `keyStrategy: 'user'` — one bucket per authenticated user across all routes
 - `keyStrategy: 'user-per-route'` — one bucket per user per endpoint (most granular)
 
-### Why Sliding Window Over Fixed Window
+#### Why Sliding Window Over Fixed Window
 
 Fixed window resets at wall-clock boundaries (e.g. every minute at :00). A burst of 10 requests at :59 and 10 more at :01 = 20 in 2 seconds, but both pass a limit-10 fixed window. Sliding window counts only the rolling last `windowMs` — no boundary attack possible.
 
@@ -116,6 +120,7 @@ cache_operations_total{result="miss", namespace="products"}  31
 The `namespace` label is derived from the first segment of the cache key (`products:detail:id:abc` → `products`), so no call sites need to pass anything extra.
 
 **PromQL to compute hit rate per namespace:**
+
 ```promql
 rate(cache_operations_total{result="hit"}[5m])
 /

@@ -11,7 +11,8 @@
 - we always want noeviction for bullmq jobs;
 
 - Rate-Limiter
-  - using slidig window timelines;
+  - using slidig window timelines; used for many routes like auth
+  - uses canActivate from rate-limit guard;andn then uses LUA script to call redis and increment the request count and also get the count of requests in interval of sliding window.
 
 # Phase 2 (reliability)
 
