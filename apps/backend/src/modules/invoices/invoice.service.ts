@@ -1,11 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
+import { OnEvent } from '@nestjs/event-emitter';
+import { OrderStatus } from '@prisma/client';
 import { Queue } from 'bullmq';
 import { Response } from 'express';
 import { createReadStream } from 'fs';
 import { access } from 'fs/promises';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 import { QUEUE_NAMES } from '@/modules/queue/queue.constants';
+import { OrderStatusChangedEvent } from '@/modules/events/order.events';
 import { getInvoicePath } from './invoice.utils';
 
 @Injectable()
@@ -14,6 +17,13 @@ export class InvoiceService {
     private readonly prisma: PrismaService,
     @InjectQueue(QUEUE_NAMES.INVOICES) private readonly invoiceQueue: Queue,
   ) {}
+
+  @OnEvent(OrderStatusChangedEvent.EVENT_NAME)
+  async handleOrderConfirmed(event: OrderStatusChangedEvent): Promise<void> {
+    if (event.newStatus === OrderStatus.CONFIRMED) {
+      await this.enqueueGeneration(event.orderId);
+    }
+  }
 
   // Idempotent: calling this twice for the same order is safe.
   // If the PDF is already on disk the job is not re-enqueued.

@@ -78,7 +78,7 @@ The `ProductRating` row is the CQRS read model (also implemented in Phase 4). Pr
 `src/modules/stock-alerts/stock-alerts.service.ts`  
 `src/modules/stock-alerts/stock-alert.processor.ts`
 
-Users can subscribe to a product variant. When stock is replenished (admin updates stock or a return is approved), one event fans out to all subscribers:
+Users can subscribe to a product variant. When an admin updates a variant's stock via `PATCH /products/:productId/variants/:variantId/stock` and the stock transitions from 0 to a positive value, `VariantsService` emits `product.restocked`. `StockAlertsService` listens via `@OnEvent` and fans out to all subscribers:
 
 ```
 1 StockReplenished event
@@ -119,11 +119,12 @@ PDF generation is CPU-intensive (pdfkit renders fonts, lays out text). It should
 
 The pattern separates enqueueing from delivery:
 
-- `POST /api/invoices/:orderId` — enqueues a BullMQ job (`jobId: invoice:<orderId>` deduplicates rapid double-POSTs). If the PDF already exists on disk the job is not re-enqueued. Returns 201.
+- **Auto-trigger** — `InvoiceService` listens for `OrderStatusChangedEvent` via `@OnEvent`. When an order transitions to `CONFIRMED` (either via admin or after Stripe payment), a PDF job is enqueued automatically. No manual HTTP call needed.
+- `POST /api/orders/:orderId/invoice` — manual enqueue endpoint, useful for re-generating a lost invoice. Idempotent: if the PDF already exists on disk the job is not re-enqueued.
 - `InvoiceProcessor` (concurrency 2) — picks up the job, queries the full order with line items, renders a PDF via pdfkit, and writes it to `uploads/invoices/invoice-<orderId>.pdf`.
-- `GET /api/invoices/:orderId` — checks whether the file exists. If not yet ready, returns 202 so the client knows to retry. Once ready, streams from disk via `createReadStream(...).pipe(res)` — no memory buffering, safe for large files.
+- `GET /api/orders/:orderId/invoice` — checks whether the file exists. If not yet ready, returns 202 so the client knows to retry. Once ready, streams from disk via `createReadStream(...).pipe(res)` — no memory buffering, safe for large files.
 
-Idempotency: calling POST twice for the same order is safe. The processor uses exponential backoff (5 s base, 3 attempts) so transient DB failures retry automatically.
+Idempotency: the `jobId: invoice:<orderId>` deduplicates rapid double-enqueues. The processor uses exponential backoff (5 s base, 3 attempts) so transient DB failures retry automatically.
 
 This is the pattern for any slow operation (report generation, CSV export, image resizing): move it off the HTTP thread and let the client poll.
 
@@ -140,7 +141,7 @@ This is an **expand step** in the expand-contract pattern: the schema supports v
 `src/modules/stock-alerts/stock-alert.processor.ts`  
 `src/modules/cart/cart-recovery.processor.ts`
 
-A BullMQ queue has two sides: a producer (adds jobs) and a processor (consumes jobs). Both queues previously had only producers — jobs were written to Redis but nothing read them.
+A BullMQ queue has two sides: a producer (adds jobs) and a processor (consumes jobs). All three queues are fully wired — producers enqueue jobs from real business events and processors consume them.
 
 **How a processor is wired**
 
@@ -172,15 +173,19 @@ function backoffWithJitter(attemptsMade: number): number {
 
 The `Math.random() * 0.3` adds up to 30% jitter. Without jitter, if 1000 email jobs all fail at the same time (SMTP server down), they all retry at exactly the same moment and hammer the server again in a synchronized wave. With jitter, the retries spread out across a window, giving the SMTP server time to recover.
 
-**Cart recovery idempotency**
+**Cart recovery — trigger and cancel**
 
-The cart recovery processor checks before sending:
+`CartService.addItem` calls `CartRecoveryService.scheduleCheck(userId, cartId)` after every successful add. The job uses `jobId: cart-recovery:<userId>` so re-scheduling replaces the previous job — if the user keeps adding items, the 1-hour clock resets each time.
+
+`CartRecoveryService` listens for `OrderCreatedEvent` via `@OnEvent`. When the user places an order, `cancelCheck(userId)` removes the pending delayed job from Redis before it fires.
+
+The processor also has an idempotency check as a safety net:
 
 ```typescript
 if (!cart || cart.items.length === 0) return;  // user already checked out
 ```
 
-The job fires 1 hour after the user added to cart. If they checked out in that window, the cart is empty. The processor silently skips — no email, no retry. This makes the job naturally idempotent: running it twice (e.g. after a restart) produces the same outcome.
+If the job fires but the cart is already empty (e.g. cancellation raced with job removal), it silently skips — no email, no retry.
 
 **Process model — same process vs. separate worker**
 

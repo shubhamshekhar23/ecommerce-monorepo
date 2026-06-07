@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
+import { OnEvent } from '@nestjs/event-emitter';
 import { Queue } from 'bullmq';
 import { QUEUE_NAMES } from '@/modules/queue/queue.constants';
+import { OrderCreatedEvent } from '@/modules/events/order.events';
 
 // Delayed jobs — the BullMQ pattern for time-triggered workflows.
 //
@@ -43,7 +45,11 @@ export class CartRecoveryService {
     );
   }
 
-  // Cancel the pending check when the user places an order
+  @OnEvent(OrderCreatedEvent.EVENT_NAME)
+  async handleOrderCreated(event: OrderCreatedEvent): Promise<void> {
+    await this.cancelCheck(event.userId);
+  }
+
   async cancelCheck(userId: string): Promise<void> {
     const job = await this.recoveryQueue.getJob(`cart-recovery:${userId}`);
     await job?.remove();

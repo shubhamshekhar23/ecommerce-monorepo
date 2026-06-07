@@ -6,14 +6,19 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '@/modules/prisma/prisma.service';
+import { PRODUCT_RESTOCKED_EVENT } from '@/modules/stock-alerts/stock-alerts.service';
 import { CreateVariantTypeDto, CreateVariantDto, UpdateVariantStockDto } from './dto';
 
 @Injectable()
 export class VariantsService {
   private readonly logger = new Logger(VariantsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
   async createVariantType(productId: string, dto: CreateVariantTypeDto): Promise<any> {
     await this.assertProductExists(productId);
@@ -83,13 +88,27 @@ export class VariantsService {
   }
 
   async updateVariantStock(variantId: string, dto: UpdateVariantStockDto): Promise<any> {
-    const variant = await this.prisma.productVariant.findUnique({ where: { id: variantId } });
+    const variant = await this.prisma.productVariant.findUnique({
+      where: { id: variantId },
+      include: { product: { select: { id: true, name: true } } },
+    });
     if (!variant) throw new NotFoundException(`Variant ${variantId} not found`);
 
-    return this.prisma.productVariant.update({
+    const wasOutOfStock = variant.stock === 0 && dto.stock > 0;
+
+    const updated = await this.prisma.productVariant.update({
       where: { id: variantId },
       data: { stock: dto.stock },
     });
+
+    if (wasOutOfStock) {
+      this.eventEmitter.emit(PRODUCT_RESTOCKED_EVENT, {
+        productId: variant.product.id,
+        productName: variant.product.name,
+      });
+    }
+
+    return updated;
   }
 
   async listVariants(productId: string): Promise<any[]> {

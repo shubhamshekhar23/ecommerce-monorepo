@@ -23,6 +23,9 @@
   - We use circuit breaker that wraps around calling of stripe payment api, that lets app know whats the success rate; state are closed, half open, open;
   - payment api is usually very fragile and often unreliable thats why we use circuit breaker pattern, to know before hand how the past payemnts behaved.
 
+- BullMq
+  - pushing message event using bullmq lib into redis; using bullmq workers that also run in the same node process keep connecting with redis for the new events, and porcess them. e.g invoice processor
+
 # Phase 1
 
 - Db migration for products; Normalized design for tables; Expand - Deploy - Backfill - Contract

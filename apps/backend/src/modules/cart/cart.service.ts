@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '@/modules/prisma/prisma.service';
+import { CartRecoveryService } from './cart-recovery.service';
 import { CartResponseDto, CartItemResponseDto } from './dto/cart-response.dto';
 
 const CART_INCLUDE = {
@@ -18,7 +19,10 @@ type CartWithItems = Prisma.CartGetPayload<{ include: typeof CART_INCLUDE }>;
 export class CartService {
   private readonly logger = new Logger(CartService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cartRecovery: CartRecoveryService,
+  ) {}
 
   async getOrCreateCart(userId: string): Promise<CartResponseDto> {
     let cart = await this.prisma.cart.findUnique({ where: { userId }, include: CART_INCLUDE });
@@ -77,6 +81,7 @@ export class CartService {
     }
 
     this.logger.log(`Item added: userId=${userId} variantId=${variantId} qty=${quantity}`);
+    void this.cartRecovery.scheduleCheck(userId, cart.id);
     return this.getCart(userId);
   }
 
