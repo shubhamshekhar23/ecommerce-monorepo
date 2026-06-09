@@ -151,7 +151,7 @@ apps/backend/
 └── test/
     ├── integration/
     ├── e2e/
-    └── load/                  # k6 load tests
+    └── load/                  # Artillery load tests (see docs/features/phase-5-observability.md)
 ```
 
 ---

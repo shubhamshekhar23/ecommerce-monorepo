@@ -5,46 +5,50 @@
       "email": "loadtest1@example.com",
       "password": "LoadTest123!",
       "firstName": "Load",
-      "lastName": "Tester"
+      "lastName": "Tester1"
     },
     {
       "id": "550e8400-e29b-41d4-a716-446655440101",
       "email": "loadtest2@example.com",
       "password": "LoadTest123!",
       "firstName": "Load",
-      "lastName": "User2"
+      "lastName": "Tester2"
     }
   ],
   "products": [
     {
       "id": "550e8400-e29b-41d4-a716-446655440000",
-      "name": "Test Product 1",
+      "name": "Load Test Product 1",
+      "slug": "load-test-product-1",
       "price": 99.99,
-      "stock": 1000
+      "variantId": "550e8400-e29b-41d4-a716-446655440300",
+      "sku": "LT-PROD-1-STD",
+      "stock": 10000
     },
     {
       "id": "550e8400-e29b-41d4-a716-446655440001",
-      "name": "Test Product 2",
+      "name": "Load Test Product 2",
+      "slug": "load-test-product-2",
       "price": 49.99,
-      "stock": 500
+      "variantId": "550e8400-e29b-41d4-a716-446655440301",
+      "sku": "LT-PROD-2-STD",
+      "stock": 10000
     },
     {
       "id": "550e8400-e29b-41d4-a716-446655440002",
-      "name": "Test Product 3",
+      "name": "Load Test Product 3",
+      "slug": "load-test-product-3",
       "price": 199.99,
-      "stock": 200
+      "variantId": "550e8400-e29b-41d4-a716-446655440302",
+      "sku": "LT-PROD-3-STD",
+      "stock": 10000
     }
   ],
   "categories": [
     {
       "id": "550e8400-e29b-41d4-a716-446655440200",
-      "name": "Electronics",
-      "slug": "electronics"
-    },
-    {
-      "id": "550e8400-e29b-41d4-a716-446655440201",
-      "name": "Clothing",
-      "slug": "clothing"
+      "name": "Load Test Category",
+      "slug": "load-test-category"
     }
   ]
 }

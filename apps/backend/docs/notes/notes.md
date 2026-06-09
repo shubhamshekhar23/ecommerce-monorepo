@@ -1,3 +1,13 @@
+# Phase 5
+
+- CorrelationIds
+  - Purpose of Request/Correlation ID: A unique `requestId` is assigned to every HTTP request, allowing all logs generated during that request to be correlated for easier debugging and distributed tracing.
+  - Request ID Propagation: `CorrelationIdMiddleware` reads the `X-Request-ID` header or generates a UUID, while `AsyncLocalStorage` propagates the `requestId` across the entire async call chain without parameter passing.
+  - Automatic Structured Logging: `nestjs-pino` uses `genReqId` and `customProps` to automatically attach `requestId` to every log line, requiring no manual work in services.
+  - End-to-End Observability: Searching for a specific `requestId` in the log aggregator retrieves all related HTTP, service, and database logs, making request tracing and issue diagnosis straightforward.
+
+---
+
 # Phase 4
 
 - Domain Events with EventEmitter2

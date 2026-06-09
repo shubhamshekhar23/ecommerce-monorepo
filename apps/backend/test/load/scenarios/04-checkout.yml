@@ -49,6 +49,7 @@ scenarios:
             Authorization: 'Bearer {{ accessToken }}'
           json:
             productId: '550e8400-e29b-41d4-a716-446655440000'
+            variantId: '550e8400-e29b-41d4-a716-446655440300'
             quantity: 1
           expect:
             - statusCode: 201
@@ -61,32 +62,21 @@ scenarios:
           expect:
             - statusCode: 200
       - think: 1
-      # Create payment intent
-      - post:
-          url: '{{ apiPrefix }}/stripe/create-payment-intent'
-          headers:
-            Authorization: 'Bearer {{ accessToken }}'
-          json:
-            orderId: '550e8400-e29b-41d4-a716-446655440002'
-          expect:
-            - statusCode: [200, 404]
-      - think: 2
-      # Create order (this is write-heavy)
+      # Create order — saga resolves the user's active cart automatically
       - post:
           url: '{{ apiPrefix }}/orders'
           headers:
             Authorization: 'Bearer {{ accessToken }}'
-          json:
-            cartId: '550e8400-e29b-41d4-a716-446655440003'
+          json: {}
           expect:
-            - statusCode: [201, 400, 404]
+            - statusCode: [201, 400]
           capture:
             json: '$.id'
             as: 'orderId'
       - think: 1
-      # View order confirmation
+      # View order confirmation using captured order ID
       - get:
-          url: '{{ apiPrefix }}/orders/550e8400-e29b-41d4-a716-446655440004'
+          url: '{{ apiPrefix }}/orders/{{ orderId }}'
           headers:
             Authorization: 'Bearer {{ accessToken }}'
           expect:

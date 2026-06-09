@@ -11,13 +11,13 @@
 
 `src/common/middleware/correlation-id.middleware.ts`
 
-Every inbound request gets a `X-Correlation-ID` header:
+Every inbound request gets a `X-Request-ID` header:
 - If the client sends one, it's used as-is (allows frontend to correlate browser errors with backend logs)
 - If not, one is generated (UUID v4)
 
-The ID is attached to the Pino logger as a child context so every log line from that request — including logs from deep inside services, DB query logs, and BullMQ job logs — carries the same ID.
+The ID is stored in Node's `AsyncLocalStorage` so every function in the request's async chain can access it, and Pino adds it as a `requestId` field on every log line — including logs from deep inside services, DB query logs, and BullMQ job logs.
 
-When a production incident occurs, you search `X-Correlation-ID: <value>` in your log aggregator and see the full story of that request in chronological order across all log levels.
+When a production incident occurs, you search `"requestId": "<value>"` in your log aggregator and see the full story of that request in chronological order across all log levels.
 
 ### OpenTelemetry Auto-Instrumentation
 
@@ -222,6 +222,100 @@ Open Explore → select Loki datasource → run a LogQL query:
 All three are visible in Grafana. Switch between dashboards (metrics), Explore with Loki datasource (logs), and the Jaeger datasource (traces) without leaving the same UI.
 
 You need all three. Logs without traces: you know something failed but cannot find where in the call stack. Metrics without logs: you see error rate spike but cannot find the specific request that triggered it. Traces without metrics: you can debug one request but cannot see patterns across thousands.
+
+---
+
+## Validating Locally
+
+The observability stack is only useful if you can see it working. The load test suite generates realistic traffic so all three pillars light up at once.
+
+### Step 1 — Start the stack
+
+```bash
+docker compose up -d
+```
+
+### Step 2 — Seed load test fixtures
+
+The Artillery scenarios need two specific users and three products with fixed IDs. This script upserts them without touching your existing seed data:
+
+```bash
+cd apps/backend
+npm run load:setup
+```
+
+### Step 3 — Run the load test
+
+Start with the mixed traffic scenario — it simulates 150–300 concurrent virtual users across guest browsing, auth, cart, and checkout flows over ~10 minutes:
+
+```bash
+npm run load:mixed
+```
+
+Or run a shorter focused scenario first:
+
+```bash
+npm run load:guest    # public browsing only, no auth needed, ~5 minutes
+npm run load:auth     # login/profile flow
+npm run load:cart     # add to cart, update quantities
+npm run load:orders   # list and view orders
+```
+
+### Step 4 — Observe while the test runs
+
+Open all three in separate tabs:
+
+**Logs — Grafana/Loki** (`http://localhost:3001`)
+- Explore → Loki datasource
+- Query: `{service="backend"}` for all logs
+- Query: `{service="backend"} |= "error"` to filter errors only
+- Query: `{service="backend"} |= "Rate limit exceeded"` to watch the rate limiter fire under load
+
+**Metrics — Grafana dashboards** (`http://localhost:3001`)
+- Open the RED dashboard — watch request rate climb, P95 latency, error rate
+- Open the Database dashboard — watch PgBouncer `client_active` and `client_waiting` during the checkout phase
+- If `client_waiting` goes above 0, PgBouncer pool is saturated — exactly the situation the pool is designed to prevent
+
+**Traces — Jaeger** (`http://localhost:16686`)
+- Select service `ecommerce-backend` (or `nestjs`)
+- Click any `POST /api/orders` trace — you'll see the full waterfall: HTTP handler → variant lock → stock check → order insert → outbox insert → Stripe call
+- The Stripe span will be the widest — that's the expected bottleneck
+
+**RabbitMQ** (`http://localhost:15672`, guest/guest)
+- Watch the `order.placed` queue fill and drain as the outbox processor publishes events
+
+### Step 5 — Cleanup fixtures after testing
+
+```bash
+npm run load:clean
+```
+
+### What you should see
+
+| Signal | Where | What to look for |
+|--------|-------|-----------------|
+| Request rate rising | Grafana RED dashboard | `rate(http_request_duration_ms_count[1m])` climbing |
+| P95 latency | Grafana RED dashboard | Should stay under 500ms during sustained load |
+| Cart add logs | Loki | `Item added: userId=... variantId=...` lines streaming in |
+| Order creation trace | Jaeger | Stripe span ~250ms, Prisma spans ~30–80ms |
+| Outbox events | RabbitMQ | `order.placed` messages flowing through the exchange |
+| Pool health | Grafana Database dashboard | `client_waiting` stays at 0 under normal load |
+
+### Known gotcha — Loki single-node ring
+
+Loki 3.x sometimes fails to register its own ingester in the ring on first boot, causing Promtail to get 500s when pushing logs. If `{service="backend"}` returns no results, check:
+
+```bash
+docker logs ecommerce_promtail --tail 20
+```
+
+If you see `at least 1 live replicas required`, restart Loki and Promtail:
+
+```bash
+docker compose restart loki promtail
+```
+
+The fix is already applied in `loki-config.yml` (explicit `ingester.lifecycler` config), but a race on first startup can still trigger it occasionally.
 
 ---
 

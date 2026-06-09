@@ -58,6 +58,7 @@ scenarios:
             Authorization: 'Bearer {{ accessToken }}'
           json:
             productId: '550e8400-e29b-41d4-a716-446655440000'
+            variantId: '550e8400-e29b-41d4-a716-446655440300'
             quantity: 1
           expect:
             - statusCode: 201
@@ -72,6 +73,7 @@ scenarios:
             Authorization: 'Bearer {{ accessToken }}'
           json:
             productId: '550e8400-e29b-41d4-a716-446655440001'
+            variantId: '550e8400-e29b-41d4-a716-446655440301'
             quantity: 2
           expect:
             - statusCode: 201
@@ -84,9 +86,9 @@ scenarios:
           expect:
             - statusCode: 200
       - think: 1
-      # Update quantity
+      # Update quantity using captured cart item ID
       - patch:
-          url: '{{ apiPrefix }}/cart/items/550e8400-e29b-41d4-a716-446655440000'
+          url: '{{ apiPrefix }}/cart/items/{{ cartItemId1 }}'
           headers:
             Authorization: 'Bearer {{ accessToken }}'
           json:

@@ -29,7 +29,6 @@ config:
     maxErrorRate: 1
     p95: 300
     p99: 600
-  processor: './processor.js'
 
 scenarios:
   - name: 'Guest Browse Products'

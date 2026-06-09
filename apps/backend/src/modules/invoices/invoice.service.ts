@@ -36,7 +36,7 @@ export class InvoiceService {
     await this.invoiceQueue.add(
       'generate-invoice',
       { orderId },
-      { jobId: `invoice:${orderId}`, removeOnComplete: 50 },
+      { jobId: `invoice-${orderId}`, removeOnComplete: 50 },
     );
   }
 

@@ -80,6 +80,7 @@ scenarios:
             Authorization: 'Bearer {{ accessToken }}'
           json:
             productId: '550e8400-e29b-41d4-a716-446655440000'
+            variantId: '550e8400-e29b-41d4-a716-446655440300'
             quantity: 1
           expect:
             - statusCode: 201
@@ -129,6 +130,7 @@ scenarios:
             Authorization: 'Bearer {{ accessToken }}'
           json:
             productId: '550e8400-e29b-41d4-a716-446655440000'
+            variantId: '550e8400-e29b-41d4-a716-446655440300'
             quantity: 1
           expect:
             - statusCode: 201
@@ -137,10 +139,9 @@ scenarios:
           url: '{{ apiPrefix }}/orders'
           headers:
             Authorization: 'Bearer {{ accessToken }}'
-          json:
-            cartId: '550e8400-e29b-41d4-a716-446655440003'
+          json: {}
           expect:
-            - statusCode: [201, 400, 404]
+            - statusCode: [201, 400]
       - think: 1
 
   # 5% Order viewing/management

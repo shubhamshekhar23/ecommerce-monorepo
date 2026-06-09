@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { OnEvent } from '@nestjs/event-emitter';
 import { Queue } from 'bullmq';
@@ -26,32 +26,43 @@ const ABANDON_DELAY_MS = 60 * 60 * 1000; // 1 hour
 
 @Injectable()
 export class CartRecoveryService {
+  private readonly logger = new Logger(CartRecoveryService.name);
+
   constructor(
     @InjectQueue(QUEUE_NAMES.CART_RECOVERY) private readonly recoveryQueue: Queue,
   ) {}
 
   async scheduleCheck(userId: string, cartId: string): Promise<void> {
-    // Use userId as the jobId so re-scheduling replaces the previous job.
-    // If the user adds more items, we reset the 1-hour clock.
-    await this.recoveryQueue.add(
-      'check-abandoned',
-      { userId, cartId },
-      {
-        jobId: `cart-recovery:${userId}`,   // deterministic ID → upserts instead of duplicates
-        delay: ABANDON_DELAY_MS,
-        removeOnComplete: true,
-        removeOnFail: 3,
-      },
-    );
+    try {
+      // Use userId as the jobId so re-scheduling replaces the previous job.
+      // If the user adds more items, we reset the 1-hour clock.
+      await this.recoveryQueue.add(
+        'check-abandoned',
+        { userId, cartId },
+        {
+          jobId: `cart-recovery-${userId}`,   // deterministic ID → upserts instead of duplicates
+          delay: ABANDON_DELAY_MS,
+          removeOnComplete: true,
+          removeOnFail: 3,
+        },
+      );
+    } catch (err) {
+      // Non-critical: cart was already saved. A missed recovery email is acceptable.
+      this.logger.warn(`Failed to schedule cart recovery for userId=${userId}: ${err instanceof Error ? err.message : String(err)}`);
+    }
   }
 
   @OnEvent(OrderCreatedEvent.EVENT_NAME)
   async handleOrderCreated(event: OrderCreatedEvent): Promise<void> {
-    await this.cancelCheck(event.userId);
+    try {
+      await this.cancelCheck(event.userId);
+    } catch (err) {
+      this.logger.warn(`Failed to cancel cart recovery for userId=${event.userId}: ${err instanceof Error ? err.message : String(err)}`);
+    }
   }
 
   async cancelCheck(userId: string): Promise<void> {
-    const job = await this.recoveryQueue.getJob(`cart-recovery:${userId}`);
+    const job = await this.recoveryQueue.getJob(`cart-recovery-${userId}`);
     await job?.remove();
   }
 }
