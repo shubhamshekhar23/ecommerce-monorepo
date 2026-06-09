@@ -1,3 +1,17 @@
+# Pahse 4
+
+- Domain Events with EventEmitter2
+  - Event-Driven Communication: `OrderService` emits domain events using `EventEmitter2` (`eventEmitter.emit('order.created', event)`) instead of directly calling other services.
+  - Services Subscribe with `@OnEvent()`: Modules like `MailService`, `InventoryService`, `AnalyticsService`, or `VendorService` listen using `@OnEvent('order.created')` and execute their own logic independently.
+  - Loose Coupling & Open/Closed Principle: New listeners can be added without modifying `OrderService`, making the system easier to extend and maintain.
+  - Domain vs Integration Events: Domain events are in-process (EventEmitter2 + `@OnEvent()` within the same application), while cross-service communication uses Outbox → RabbitMQ integration events.
+
+- CQRS:
+  - Separate Write & Read Models (CQRS): `ProductReview` is the normalized write model (one row per review), while `ProductRating` is the denormalized read model (one row per product with precomputed `avgRating` and `reviewCount`).
+  - Event-Driven Updates: When a review is approved, the `review.approved` event triggers `updateProductRating()`, which recomputes the aggregate and upserts the `ProductRating` record.
+  - Fast Read Performance: Product listing queries simply join `Product` with `ProductRating`, avoiding expensive `GROUP BY`, `AVG()`, and `COUNT()` operations on every request.
+  - Eventual Consistency: The write path (review submission/approval) and read path (product display) are independent, so there may be a brief delay before the read model reflects the latest approved review.
+
 # Phase 3 (Caching)
 
 - using redis as a cache storage

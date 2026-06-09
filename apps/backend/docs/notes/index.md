@@ -25,3 +25,6 @@
 - pessimistic row locking, transaction
 
 ---
+
+- domain event vs integration event
+- event-emitter , bullmq , rabbitmq
