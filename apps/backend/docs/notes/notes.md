@@ -6,6 +6,37 @@
   - Automatic Structured Logging: `nestjs-pino` uses `genReqId` and `customProps` to automatically attach `requestId` to every log line, requiring no manual work in services.
   - End-to-End Observability: Searching for a specific `requestId` in the log aggregator retrieves all related HTTP, service, and database logs, making request tracing and issue diagnosis straightforward.
 
+- Opentelemtry
+  - Automatic tracing: OpenTelemetry automatically creates spans for NestJS requests, Prisma queries, Redis operations, BullMQ jobs, and outgoing HTTP calls without manual instrumentation.
+  - End-to-end visibility: All spans are linked together, allowing an entire request flow across different components to be tracked as a single trace.
+  - Rich trace metadata: Each span records details such as service name, operation name, duration, HTTP status code, database query text, and parent span ID.
+  - Centralized monitoring: Traces are exported via OTLP to Jaeger (`http://jaeger:4318/v1/traces`) for visualization, debugging, and performance analysis.
+
+- Jaeger
+  - Jaeger provides end-to-end request tracing, showing every operation performed for a request and how long each one takes.
+  - Example trace: `POST /orders (450ms) → OrdersService.create (400ms) → SELECT FOR UPDATE (80ms) → INSERT order (30ms) → INSERT outbox_event (5ms) → StripeService.createPaymentIntent (250ms)`.
+  - The waterfall view highlights bottlenecks, making it clear that `StripeService.createPaymentIntent (250ms)` is the main reason the request is slow.
+  - Senior developers use Jaeger to debug and optimize production performance, identifying the exact slow operation instead of guessing.
+
+- http metrics (prometheus)
+  - Every API request is timed and recorded. For example, `POST /api/orders` returning `201` in 312 ms is saved as a metric.
+  - These metrics show how healthy the API is, such as how many requests are coming in, how fast they are, and how many are failing.
+  - Instead of saving every product ID separately, it groups similar requests together: `/api/products/:id` instead of `/api/products/123` or `/api/products/456`.
+  - This saves a huge amount of memory. Otherwise, a store with 50,000 products would create 50,000 separate metrics, making Prometheus slow or even crash.
+
+- Databse metrics
+  - PgBouncer exporter collects connection pool statistics from PgBouncer's internal admin database and exposes them as Prometheus metrics.
+  - Key metrics: `client_active` = running queries, `client_waiting` = queued requests, `server_idle` = unused connections, `total_requests` = cumulative requests processed.
+  - Most important alert: `pgbouncer_pools_client_waiting > 0` indicates the connection pool is saturated, causing API requests to queue and increasing response times.
+  - `STATS_USERS` must be configured so the exporter can access PgBouncer's admin interface and read pool statistics.
+
+- prometheu metrics
+  - Default metrics (CPU, memory, GC, event loop lag)
+  - Business metrics: ordersTotal → "How many orders are happening?"; paymentEvents → "Are payments succeeding or failing?"
+    ; inventoryFailures → "How often are customers unable to buy because stock is unavailable?";httpDuration → "How fast is each API endpoint responding?", Histogram — P50/P95/P99 request latency per route; cacheOperationsTotal → "Is the cache serving requests effectively, or are we hitting the database too often?"
+  - Prometheus Client: sits in nestjs app, Collects and exposes metrics at /api/metrics.
+  - Prometheus Server: Periodically pings /api/metrics and stores the metrics in its db.
+
 ---
 
 # Phase 4

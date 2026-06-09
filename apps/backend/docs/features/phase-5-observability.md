@@ -36,7 +36,18 @@ Traces are exported via OTLP to Jaeger at `http://jaeger:4318/v1/traces`.
 
 ### Jaeger Distributed Tracing
 
-Jaeger UI at `http://localhost:16686`.
+Traces can be viewed in two places — use whichever fits the task:
+
+**Grafana** (`http://localhost:3001`) — the daily driver.
+Jaeger is provisioned as a Grafana datasource (`grafana/provisioning/datasources/jaeger.yml`). Go to Explore → select **Jaeger** datasource to search and view traces without leaving Grafana. The key advantage: the `tracesToLogsV2` link is configured, so clicking any span shows a **Logs** button that queries Loki for log lines from that exact time window — jumping from a slow span directly to the log that explains why.
+
+**Jaeger UI** (`http://localhost:16686`) — the specialist tool.
+Use this for deeper investigation that Grafana doesn't fully replicate:
+- **System Architecture tab** — live service dependency map showing which services call which
+- Side-by-side trace comparison — useful when comparing a slow request to a fast one
+- Advanced filtering by operation name, tags, min/max duration
+
+In practice: Grafana is where you notice a problem (metrics spike → drill into a trace → jump to logs). Jaeger UI is where you go when you need to do serious root-cause analysis.
 
 A trace for `POST /orders` looks like:
 
