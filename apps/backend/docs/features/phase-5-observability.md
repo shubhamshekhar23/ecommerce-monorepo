@@ -218,7 +218,7 @@ Open Explore → select Loki datasource → run a LogQL query:
 
 **The key insight:** Pino still writes JSON to stdout — nothing about the application changed. Promtail tails the same stdout that `docker compose logs` shows, parses each line, and ships it to Loki. You get searchable, persistent logs with zero application code changes.
 
-**Log-trace correlation (what's still missing):** To click from a Jaeger span directly to the Loki log lines for that exact request, you'd add OpenTelemetry's Log Bridge API to inject `trace_id` and `span_id` into each Pino log line. That would make the three pillars fully cross-linked.
+**Log-trace correlation (partially wired):** The Grafana Jaeger datasource is configured with `tracesToLogsV2` and `filterByTraceID: true` — so clicking a span will attempt to query Loki filtered by that trace ID. However, this only works if `trace_id` and `span_id` are present in the log lines themselves. Since Pino does not currently inject them, Grafana falls back to a time-window query (all backend logs within ±1 minute of the span) rather than an exact match. To complete the link, add OpenTelemetry's Log Bridge API to inject `trace_id` and `span_id` into every Pino log line — then the three pillars are fully cross-linked and you can jump from a specific span to the exact log lines for that request.
 
 ---
 

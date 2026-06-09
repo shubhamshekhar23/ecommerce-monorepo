@@ -37,6 +37,28 @@
   - Prometheus Client: sits in nestjs app, Collects and exposes metrics at /api/metrics.
   - Prometheus Server: Periodically pings /api/metrics and stores the metrics in its db.
 
+- Grafana Dashboards
+  - RED Dashboard – Shows request count, errors, and response time to quickly check if the API is healthy.
+  - Business Dashboard – Shows orders, revenue, payment success, and conversions to track business performance.
+  - Database Dashboard – Shows query speed, connection usage, and slow queries to find database problems.
+  - Infrastructure Dashboard – Shows CPU, memory, and disk usage to monitor server/container resources.
+
+- Loki log aggregation
+  - Loki stores application logs so they are searchable and don't disappear after container restarts.
+  - Promtail continuously reads (tails) container stdout logs and sends them to Loki with labels like `service`, `pod`, and `container`.
+  - Grafana lets you search and filter logs (e.g., errors, payment failures, or a specific correlation ID) in the same UI as metrics.
+  - No application code changes are needed—Pino still writes JSON logs to stdout, and Promtail automatically collects and ships them to Loki.
+
+- The three Pillars
+  - Logs: NestJS uses Pino (lib) to write logs → Promtail (server) collects them → Loki (server + DB) stores and indexes them → tells what happened and in what order.
+  - Metrics: NestJS uses prom-client (lib) to expose `/api/metrics` → Prometheus (server + DB) scrapes and stores them → tells how much, how often, and how fast.
+  - Traces: NestJS uses OpenTelemetry SDK (lib) to create spans → Jaeger (server) receives them → Jaeger storage (DB: in-memory/Badger) stores them → tells how long each step took.
+  - Grafana: Connects to Loki, Prometheus, and Jaeger to visualize logs, metrics, and traces in one UI.
+  - Prometheus and Loki combine the server and database into one component, while Jaeger has a separate server and storage layer.
+  - Logs answer: _What happened?_
+  - Metrics answer: _How much/how often did it happen?_
+  - Traces answer: _Where was the time spent?_
+
 ---
 
 # Phase 4
