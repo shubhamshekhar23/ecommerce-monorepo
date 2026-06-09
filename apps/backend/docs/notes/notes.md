@@ -1,4 +1,4 @@
-# Pahse 4
+# Phase 4
 
 - Domain Events with EventEmitter2
   - Event-Driven Communication: `OrderService` emits domain events using `EventEmitter2` (`eventEmitter.emit('order.created', event)`) instead of directly calling other services.
@@ -11,6 +11,12 @@
   - Event-Driven Updates: When a review is approved, the `review.approved` event triggers `updateProductRating()`, which recomputes the aggregate and upserts the `ProductRating` record.
   - Fast Read Performance: Product listing queries simply join `Product` with `ProductRating`, avoiding expensive `GROUP BY`, `AVG()`, and `COUNT()` operations on every request.
   - Eventual Consistency: The write path (review submission/approval) and read path (product display) are independent, so there may be a brief delay before the read model reflects the latest approved review.
+
+- Order state check:
+  - State Machine with Transition Map: Order status changes are validated against a predefined `Record<OrderStatus, OrderStatus[]>` map, and any invalid transition throws a `BadRequestException`.
+  - Transactional Consistency: The order status update and `OrderStatusChangedEvent` emission occur inside the same transaction, ensuring both the database state and emitted event remain atomic and consistent.
+
+---
 
 # Phase 3 (Caching)
 
