@@ -6,6 +6,27 @@
   "timezone": "browser",
   "refresh": "30s",
   "schemaVersion": 38,
+  "templating": {
+    "list": [
+      {
+        "name": "topN",
+        "type": "custom",
+        "label": "Top N routes",
+        "description": "Number of slowest routes to show in the per-route chart. Select All to show every route.",
+        "query": "5,10,20,100",
+        "options": [
+          { "text": "5",   "value": "5",   "selected": true  },
+          { "text": "10",  "value": "10",  "selected": false },
+          { "text": "20",  "value": "20",  "selected": false },
+          { "text": "All", "value": "100", "selected": false }
+        ],
+        "current": { "text": "5", "value": "5" },
+        "hide": 0,
+        "includeAll": false,
+        "multi": false
+      }
+    ]
+  },
   "panels": [
     {
       "id": 1,
@@ -84,7 +105,7 @@
       "title": "Active In-Flight Requests",
       "description": "Requests currently being processed. A sustained spike here means the app is backed up.",
       "type": "stat",
-      "gridPos": { "x": 0, "y": 8, "w": 6, "h": 4 },
+      "gridPos": { "x": 0, "y": 18, "w": 6, "h": 4 },
       "targets": [
         {
           "expr": "nodejs_active_requests_total",
@@ -97,7 +118,7 @@
       "title": "P95 Latency by Route (ms)",
       "description": "Which endpoints are slowest? Sort descending to find the bottleneck.",
       "type": "table",
-      "gridPos": { "x": 6, "y": 8, "w": 18, "h": 8 },
+      "gridPos": { "x": 6, "y": 18, "w": 18, "h": 8 },
       "targets": [
         {
           "expr": "sort_desc(histogram_quantile(0.95, sum(rate(http_request_duration_ms_bucket[5m])) by (le, route)))",
@@ -106,6 +127,32 @@
         }
       ],
       "fieldConfig": { "defaults": { "unit": "ms" } }
+    },
+    {
+      "id": 6,
+      "title": "P95 Latency per Route — Top $topN (time series)",
+      "description": "One line per route, showing p95 over time. Use the Top N dropdown at the top of the dashboard to control how many routes are shown — default is the 5 slowest. Switch to All to see every route. When a spike happens, the route name in the legend tells you exactly which endpoint caused it.",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 8, "w": 24, "h": 10 },
+      "targets": [
+        {
+          "expr": "topk($topN, histogram_quantile(0.95, sum(rate(http_request_duration_ms_bucket[1m])) by (le, route)))",
+          "legendFormat": "{{ route }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 5
+          }
+        }
+      },
+      "options": {
+        "tooltip": { "mode": "multi", "sort": "desc" },
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["max", "mean", "lastNotNull"] }
+      }
     }
   ],
   "overwrite": true

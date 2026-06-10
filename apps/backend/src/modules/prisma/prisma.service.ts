@@ -1,7 +1,8 @@
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import type { ITXClientDenyList } from '@prisma/client/runtime/library';
 import { AsyncLocalStorage } from 'async_hooks';
+import * as api from '@opentelemetry/api';
 
 type TransactionClient = Omit<PrismaClient, ITXClientDenyList>;
 
@@ -29,6 +30,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   readonly rlsStorage = new AsyncLocalStorage<RlsContext>();
 
   async onModuleInit(): Promise<void> {
+    this.registerTracingMiddleware();
     try {
       await this.$connect();
       this.logger.log('Database connected successfully');
@@ -36,6 +38,34 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       this.logger.error('Failed to connect to database:', error);
       throw error;
     }
+  }
+
+  /*
+   - Adds a $use middleware that wraps every Prisma query in an OTEL span.
+   - Uses the public api.trace API (not @prisma/instrumentation) to stay
+   - compatible with any sdk-trace-base version.
+   */
+  private registerTracingMiddleware(): void {
+    this.$use(async (params: Prisma.MiddlewareParams, next) => {
+      const model = params.model ?? 'raw';
+      const span = api.trace.getTracer('prisma').startSpan(`prisma ${model}.${params.action}`, {
+        kind: api.SpanKind.CLIENT,
+        attributes: { 'db.system': 'postgresql', 'db.operation': params.action, 'db.sql.table': model },
+      });
+      return api.context.with(api.trace.setSpan(api.context.active(), span), async () => {
+        try {
+          const result = await next(params);
+          span.setStatus({ code: api.SpanStatusCode.OK });
+          return result;
+        } catch (err) {
+          span.recordException(err as Error);
+          span.setStatus({ code: api.SpanStatusCode.ERROR, message: (err as Error).message });
+          throw err;
+        } finally {
+          span.end();
+        }
+      });
+    });
   }
 
   async onModuleDestroy(): Promise<void> {

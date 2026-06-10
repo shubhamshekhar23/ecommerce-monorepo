@@ -31,6 +31,7 @@ export class HttpMetricsInterceptor implements NestInterceptor {
 
   private record(req: Request, statusCode: number, startMs: number): void {
     const route = (req.route?.path as string | undefined) ?? req.path;
+    if (route === '/api/metrics') return;
     this.histogram.labels(req.method, route, String(statusCode)).observe(Date.now() - startMs);
   }
 }

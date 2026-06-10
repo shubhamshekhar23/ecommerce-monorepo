@@ -25,16 +25,23 @@ When a production incident occurs, you search `"requestId": "<value>"` in your l
 
 OpenTelemetry's auto-instrumentation hooks into:
 - NestJS HTTP handler execution
-- Prisma queries (via `@opentelemetry/instrumentation-prisma`)
-- Redis calls
+- Redis calls (ioredis)
 - BullMQ job processing
 - Outgoing HTTP requests
+
+Prisma query spans are added via a custom `$use` middleware in `PrismaService` (not via `@prisma/instrumentation`, which is incompatible with `@opentelemetry/sdk-node >= 0.218.0` due to internal SDK API changes in v2.x). The middleware creates a child span for every Prisma operation and attaches it to the active HTTP request trace using `api.context.with(...)`.
 
 Every span captures: service name, operation name, duration, HTTP status code, DB query text, parent span ID.
 
 Traces are exported via OTLP to Jaeger at `http://jaeger:4318/v1/traces`.
 
 ### Jaeger Distributed Tracing
+
+Jaeger runs **v2** (`jaegertracing/jaeger:latest`, currently v2.19.0) configured via `apps/backend/jaeger.yml` (OpenTelemetry Collector format). v1 (`all-in-one`) reached end-of-life December 31, 2025 — v2 is the supported path.
+
+Storage uses **Badger** — a file-based embedded store built into the Jaeger image. Traces are written to the `jaeger_data` Docker volume and survive container restarts. This means you can run a load test, restart your stack, and still query traces from the previous run in Jaeger UI or Grafana.
+
+The alternative — in-memory storage — loses all traces the moment the container stops. Badger is the right choice for local dev; Elasticsearch or Cassandra would be used in production for multi-node deployments.
 
 Traces can be viewed in two places — use whichever fits the task:
 
@@ -228,7 +235,7 @@ Open Explore → select Loki datasource → run a LogQL query:
 |--------|------|-----------------|---------|
 | **Logs** | Pino → Promtail → **Loki** | What happened, in what order | Loki (persistent, searchable) |
 | **Metrics** | prom-client → Prometheus → Grafana | How much / how often | Prometheus TSDB |
-| **Traces** | OpenTelemetry → **Jaeger** | How long each step took | Jaeger in-memory / Badger |
+| **Traces** | OpenTelemetry → **Jaeger** | How long each step took | Badger (persistent, file-based) |
 
 All three are visible in Grafana. Switch between dashboards (metrics), Explore with Loki datasource (logs), and the Jaeger datasource (traces) without leaving the same UI.
 
@@ -347,6 +354,7 @@ Configured in Grafana alert rules:
 - `src/modules/metrics/metrics.module.ts`
 - `src/modules/logger/logger.module.ts`
 - `apps/backend/src/tracing.ts` (OpenTelemetry setup)
+- `src/modules/prisma/prisma.service.ts` (Prisma `$use` tracing middleware)
 - `src/modules/metrics/http-metrics.interceptor.ts` (HTTP duration histogram)
 - `apps/backend/loki-config.yml` (Loki single-node config)
 - `apps/backend/promtail-config.yml` (Docker Compose log collection)

@@ -39,8 +39,8 @@ config:
 
   # ── PRESET 1: Light ──────────────────────────────────────────────────────────
   phases:
-    - duration: 60
-      arrivalRate: 10
+    - duration: 600
+      arrivalRate: 100
       name: 'Light — sustained 10 req/s'
 
   # ── PRESET 2: Medium (uncomment this block, comment out Preset 1) ────────────

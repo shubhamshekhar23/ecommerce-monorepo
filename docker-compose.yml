@@ -195,13 +195,17 @@ services:
   # Distributed tracing. The NestJS app sends OTLP spans here via OpenTelemetry.
   # Open http://localhost:16686 to see request waterfalls: HTTP → service → Prisma → Redis.
   jaeger:
-    image: jaegertracing/all-in-one:latest
+    image: jaegertracing/jaeger:latest
     container_name: ecommerce_jaeger
-    environment:
-      - COLLECTOR_OTLP_ENABLED=true
+    user: root
+    command: ["--config=/etc/jaeger/jaeger.yml"]
+    volumes:
+      - ./apps/backend/jaeger.yml:/etc/jaeger/jaeger.yml:ro
+      - jaeger_data:/badger
     ports:
       - '16686:16686'  # Jaeger UI
       - '4318:4318'    # OTLP HTTP receiver (app sends traces here)
+      - '4317:4317'    # OTLP gRPC receiver
     networks:
       - ecommerce-network
 
@@ -427,6 +431,7 @@ volumes:
   prometheus_data:
   grafana_data:
   loki_data:
+  jaeger_data:
   # node_modules volumes: named so "docker compose down -v" removes them cleanly.
   # After any package.json change: docker compose build backend && docker compose up -d backend
   node_modules:

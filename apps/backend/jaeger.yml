@@ -1,0 +1,53 @@
+# Jaeger v2 configuration (OpenTelemetry Collector format)
+#
+# Storage: Badger — a file-based embedded store built into the Jaeger image.
+# Traces are written to the jaeger_data Docker volume and survive container
+# restarts. This lets you run a load test, restart the stack, and still query
+# traces from the previous run.
+#
+# Why Badger and not in-memory?
+#   In-memory loses all traces on container restart. Badger persists them to
+#   disk with no extra containers required. For multi-node production use
+#   Elasticsearch or Cassandra instead.
+#
+# Ports:
+#   4318  — OTLP HTTP (backend sends traces here)
+#   4317  — OTLP gRPC
+#   16686 — Jaeger UI and query API
+
+service:
+  extensions: [jaeger_storage, jaeger_query]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [jaeger_storage_exporter]
+
+extensions:
+  jaeger_storage:
+    backends:
+      badger_store:
+        badger:
+          ephemeral: false
+          directories:
+            keys: /badger/key
+            values: /badger/data
+
+  jaeger_query:
+    storage:
+      traces: badger_store
+    http:
+      endpoint: 0.0.0.0:16686
+    grpc:
+      endpoint: 0.0.0.0:16685
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+exporters:
+  jaeger_storage_exporter:
+    trace_storage: badger_store

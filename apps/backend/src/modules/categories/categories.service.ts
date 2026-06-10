@@ -8,6 +8,7 @@ import { PrismaService } from '@/modules/prisma/prisma.service';
 import { CreateCategoryDto, UpdateCategoryDto, CategoryResponseDto, CategoryTreeDto } from './dto';
 import { calculatePagination, buildPaginationResponse } from '@/common/utils/pagination.util';
 import { PaginationDto } from '@/common/types/pagination.interface';
+import * as api from '@opentelemetry/api';
 
 @Injectable()
 export class CategoriesService {
@@ -77,13 +78,21 @@ export class CategoriesService {
   }
 
   async getTree(): Promise<CategoryTreeDto[]> {
+    const tracer = api.trace.getTracer('categories');
     const categories = await this.prisma.category.findMany({
       where: { isActive: true, parentId: null },
       include: { children: { where: { isActive: true }, include: { children: true } } },
       orderBy: { name: 'asc' },
     });
 
-    return categories.map((c) => this.buildTreeNode(c));
+    return tracer.startActiveSpan('categories.buildTree', (span) => {
+      span.setAttribute('category.root_count', categories.length);
+      try {
+        return categories.map((c) => this.buildTreeNode(c));
+      } finally {
+        span.end();
+      }
+    });
   }
 
   // eslint-disable-next-line max-lines-per-function
