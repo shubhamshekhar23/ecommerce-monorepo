@@ -15,7 +15,7 @@
       "gridPos": { "x": 0, "y": 0, "w": 8, "h": 8 },
       "targets": [
         {
-          "expr": "sum(rate(http_request_duration_seconds_count[1m])) by (method, route)",
+          "expr": "sum(rate(http_request_duration_ms_count[1m])) by (method, route)",
           "legendFormat": "{{ method }} {{ route }}"
         }
       ],
@@ -23,26 +23,38 @@
     },
     {
       "id": 2,
-      "title": "5xx Error Rate (%)",
-      "description": "Server-side errors as % of total traffic. Alert fires at >1% sustained for 5min.",
+      "title": "Error Rate by Class (%)",
+      "description": "5xx = server broken (bug, crash, DB down). 4xx = bad client requests (auth failures, missing resources, validation errors). A 4xx spike with no 5xx means the problem is on the caller side, not yours.",
       "type": "timeseries",
       "gridPos": { "x": 8, "y": 0, "w": 8, "h": 8 },
       "targets": [
         {
-          "expr": "sum(rate(http_request_duration_seconds_count{status=~\"5..\"}[1m])) / sum(rate(http_request_duration_seconds_count[1m])) * 100",
-          "legendFormat": "5xx Error Rate %"
+          "expr": "sum(rate(http_request_duration_ms_count{status_code=~\"5..\"}[1m])) / sum(rate(http_request_duration_ms_count[1m])) * 100",
+          "legendFormat": "5xx (server errors)"
+        },
+        {
+          "expr": "sum(rate(http_request_duration_ms_count{status_code=~\"4..\"}[1m])) / sum(rate(http_request_duration_ms_count[1m])) * 100",
+          "legendFormat": "4xx (client errors)"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "percent",
-          "thresholds": {
-            "steps": [
-              { "value": 0, "color": "green" },
-              { "value": 1, "color": "red" }
+          "unit": "percent"
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "5xx (server errors)" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "4xx (client errors)" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "orange" } }
             ]
           }
-        }
+        ]
       }
     },
     {
@@ -53,15 +65,15 @@
       "gridPos": { "x": 16, "y": 0, "w": 8, "h": 8 },
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket[1m])) by (le)) * 1000",
+          "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_ms_bucket[1m])) by (le))",
           "legendFormat": "p50"
         },
         {
-          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[1m])) by (le)) * 1000",
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_ms_bucket[1m])) by (le))",
           "legendFormat": "p95"
         },
         {
-          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[1m])) by (le)) * 1000",
+          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_ms_bucket[1m])) by (le))",
           "legendFormat": "p99"
         }
       ],
@@ -75,7 +87,7 @@
       "gridPos": { "x": 0, "y": 8, "w": 6, "h": 4 },
       "targets": [
         {
-          "expr": "http_requests_in_flight",
+          "expr": "nodejs_active_requests_total",
           "legendFormat": "In-Flight"
         }
       ]
@@ -88,7 +100,7 @@
       "gridPos": { "x": 6, "y": 8, "w": 18, "h": 8 },
       "targets": [
         {
-          "expr": "sort_desc(histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, route)) * 1000)",
+          "expr": "sort_desc(histogram_quantile(0.95, sum(rate(http_request_duration_ms_bucket[5m])) by (le, route)))",
           "legendFormat": "{{ route }}",
           "instant": true
         }

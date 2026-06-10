@@ -1,0 +1,93 @@
+# Scenario: Single API Load Test — GET /api/products
+#
+# Purpose:
+#   A focused, minimal load test for a single endpoint. Use this to find the
+#   breaking point of your read path in isolation before running full-suite tests.
+#
+#   Why GET /api/products:
+#   - Highest-volume endpoint in production (every session hits it)
+#   - No auth required — zero setup noise, pure API + DB read-path signal
+#   - If this is slow, everything downstream (cart, checkout) will also be slow
+#   - Easy to interpret: slow results point directly to DB query or serialization
+#
+# How to vary load:
+#   Pick ONE of the preset phase blocks below and uncomment it.
+#   All others must remain commented out. Then run: npm run load:single
+#
+#   PRESET 1 — Light (baseline, just checking it works)
+#     Sustained 10 req/s for 60s. Expect p95 < 100ms.
+#
+#   PRESET 2 — Medium (typical traffic)
+#     Ramp 10 → 50 req/s over 30s, hold 50 req/s for 60s.
+#
+#   PRESET 3 — Heavy (stress test)
+#     Ramp 10 → 150 req/s over 60s, hold 150 req/s for 120s.
+#
+#   PRESET 4 — Spike (sudden burst, simulates flash sale)
+#     Jump instantly to 300 req/s for 30s, then drop back to 10.
+#
+# SLA thresholds (test fails if breached):
+#   - p95 response time  : 300ms
+#   - p99 response time  : 600ms
+#   - Max error rate     : 1%
+#
+# Run : npm run load:single            (from apps/backend/)
+# Report: npm run load:single:report   (generates single-api-report.html)
+
+config:
+  target: 'http://localhost:3000'
+
+  # ── PRESET 1: Light ──────────────────────────────────────────────────────────
+  phases:
+    - duration: 60
+      arrivalRate: 10
+      name: 'Light — sustained 10 req/s'
+
+  # ── PRESET 2: Medium (uncomment this block, comment out Preset 1) ────────────
+  # phases:
+  #   - duration: 30
+  #     arrivalRate: 10
+  #     rampTo: 50
+  #     name: 'Medium — ramp to 50 req/s'
+  #   - duration: 60
+  #     arrivalRate: 50
+  #     name: 'Medium — sustained 50 req/s'
+
+  # ── PRESET 3: Heavy (uncomment this block, comment out active preset) ─────────
+  # phases:
+  #   - duration: 60
+  #     arrivalRate: 10
+  #     rampTo: 150
+  #     name: 'Heavy — ramp to 150 req/s'
+  #   - duration: 120
+  #     arrivalRate: 150
+  #     name: 'Heavy — sustained 150 req/s'
+
+  # ── PRESET 4: Spike (uncomment this block, comment out active preset) ─────────
+  # phases:
+  #   - duration: 10
+  #     arrivalRate: 10
+  #     name: 'Spike — baseline'
+  #   - duration: 30
+  #     arrivalRate: 300
+  #     name: 'Spike — burst'
+  #   - duration: 20
+  #     arrivalRate: 10
+  #     name: 'Spike — recovery'
+
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+
+  ensure:
+    maxErrorRate: 1
+    p95: 300
+    p99: 600
+
+scenarios:
+  - name: 'List Products (page 1)'
+    flow:
+      - get:
+          url: '/api/products?page=1&limit=20'
+          expect:
+            - statusCode: 200

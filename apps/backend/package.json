@@ -28,6 +28,8 @@
     "prisma:studio": "prisma studio",
     "load:setup": "ts-node test/load/scripts/setup-test-data.ts",
     "load:clean": "ts-node test/load/scripts/cleanup-test-data.ts",
+    "load:single": "artillery run test/load/scenarios/00-single-api.yml",
+    "load:single:report": "artillery run --output single-api-report.json test/load/scenarios/00-single-api.yml && artillery report single-api-report.json --output single-api-report.html",
     "load:guest": "artillery run test/load/scenarios/01-guest-browse.yml",
     "load:auth": "artillery run test/load/scenarios/02-user-auth.yml",
     "load:cart": "artillery run test/load/scenarios/03-shopping-cart.yml",
