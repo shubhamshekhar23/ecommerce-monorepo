@@ -1,3 +1,38 @@
+# Scenario: Complete Checkout Flow
+#
+# Purpose:
+#   End-to-end test of the order creation saga — the most complex and slowest
+#   user journey. Deliberately uses the lowest peak arrival rate (30/s) to
+#   reflect real production ratios and to avoid overwhelming the saga
+#   orchestrator under artificial load.
+#
+# Flow tested:
+#   1. POST /auth/login         → captures accessToken
+#   2. POST /cart/items         → add a product to cart
+#   3. GET  /cart               → review cart before placing order
+#   4. POST /orders             → create order (saga resolves active cart automatically)
+#                                 captures orderId; accepts 201 or 400
+#   5. GET  /orders/:id         → fetch order confirmation
+#                                 accepts 200 or 404 (saga may not have committed yet)
+#
+# Load phases:
+#   - Warm-up   : 30s  @ 3 req/s
+#   - Ramp-up   : 60s  @ 3 → 30 req/s
+#   - Sustained : 120s @ 30 req/s
+#   - Cool-down : 30s  @ 30 → 5 req/s
+#   Total duration : ~240s (4 min)
+#
+# SLA thresholds (test fails if breached):
+#   - p95 response time  : 1000ms  (higher than other scenarios — saga latency)
+#   - p99 response time  : 2000ms
+#   - Max error rate     : 1%
+#
+# Note: POST /orders accepts 400 when the cart is empty or already checked out,
+#       which can happen when multiple virtual users share the same test account.
+#       GET /orders/:id accepts 404 because saga commit may be async.
+#
+# Run: npm run load:checkout  (from apps/backend/)
+
 config:
   target: 'http://localhost:3000'
   phases:

@@ -1,3 +1,35 @@
+# Scenario: Mixed Realistic Traffic
+#
+# Purpose:
+#   The primary full-system load test. Combines all user journeys with realistic
+#   traffic weights that reflect production usage patterns. Use this scenario for:
+#   - Pre-release performance validation
+#   - Observing the full system in Grafana and Jaeger under sustained peak load
+#   - Generating the HTML report (npm run load:report)
+#
+# Scenarios and weights (must sum to 100):
+#   - Guest Browse      50%  — unauthenticated product/category reads
+#   - Cart Operations   20%  — login + add items to cart
+#   - Authentication    15%  — login + profile fetch
+#   - Checkout          10%  — login + add to cart + place order
+#   - Order Management   5%  — login + list/view/cancel orders
+#
+# Load phases:
+#   - Warm-up         :  30s  @ 10 req/s
+#   - Normal traffic  : 180s  @ 10 → 150 req/s
+#   - Ramp to peak    : 120s  @ 150 → 300 req/s
+#   - Sustained peak  : 180s  @ 300 req/s
+#   - Cool-down       :  60s  @ 300 → 50 req/s
+#   Total duration    : ~570s (~9.5 min)
+#
+# SLA thresholds (test fails if breached):
+#   - p95 response time  : 500ms
+#   - p99 response time  : 1500ms  (wider window to account for checkout saga latency)
+#   - Max error rate     : 1%
+#
+# Run : npm run load:mixed   (from apps/backend/)
+# Report: npm run load:report  → generates report.html in apps/backend/
+
 config:
   target: 'http://localhost:3000'
   phases:

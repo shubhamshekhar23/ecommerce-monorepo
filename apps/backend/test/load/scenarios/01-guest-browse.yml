@@ -1,3 +1,30 @@
+# Scenario: Guest Product Browsing
+#
+# Purpose:
+#   Simulates unauthenticated users browsing the catalogue — the highest-volume
+#   read-only traffic pattern in production. No login required.
+#
+# Flow tested:
+#   1. List products (page 1, 20 items)
+#   2. Fetch category tree
+#   3. List products (page 2, 20 items)
+#   4. Health check
+#
+# Load phases:
+#   - Warm-up      : 30s  @ 10 req/s
+#   - Ramp-up      : 60s  @ 10 → 100 req/s
+#   - Sustained    : 120s @ 100 req/s
+#   - Peak traffic : 60s  @ 100 → 200 req/s
+#   - Cool-down    : 30s  @ 200 → 50 req/s
+#   Total duration : ~300s (5 min)
+#
+# SLA thresholds (test fails if breached):
+#   - p95 response time  : 300ms
+#   - p99 response time  : 600ms
+#   - Max error rate     : 1%
+#
+# Run: npm run load:guest  (from apps/backend/)
+
 config:
   target: 'http://localhost:3000'
   phases:

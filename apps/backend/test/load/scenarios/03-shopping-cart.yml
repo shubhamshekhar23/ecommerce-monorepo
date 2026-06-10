@@ -1,3 +1,36 @@
+# Scenario: Shopping Cart Operations
+#
+# Purpose:
+#   Tests the full cart lifecycle under concurrent authenticated load — the
+#   most write-heavy flow outside of checkout. Validates that concurrent
+#   add/update operations don't corrupt cart state.
+#
+# Flow tested:
+#   1. POST /auth/login          → captures accessToken
+#   2. GET  /cart                → read current cart
+#   3. POST /cart/items          → add product A (qty 1), captures cartItemId1
+#   4. POST /cart/items          → add product B (qty 2)
+#   5. GET  /cart                → verify cart contents
+#   6. PATCH /cart/items/:id     → update product A quantity to 3
+#                                  (accepts 200 or 404 — item may already be gone)
+#
+# Load phases:
+#   - Warm-up   : 30s  @ 8 req/s
+#   - Ramp-up   : 60s  @ 8 → 75 req/s
+#   - Sustained : 120s @ 75 req/s
+#   - Cool-down : 30s  @ 75 → 15 req/s
+#   Total duration : ~240s (4 min)
+#
+# SLA thresholds (test fails if breached):
+#   - p95 response time  : 400ms
+#   - p99 response time  : 800ms
+#   - Max error rate     : 0.5%
+#
+# Note: productIds in variables are placeholders. The scenario uses hardcoded
+#       UUIDs (550e8400-...) that must exist in the test database seeded before run.
+#
+# Run: npm run load:cart  (from apps/backend/)
+
 config:
   target: 'http://localhost:3000'
   phases:

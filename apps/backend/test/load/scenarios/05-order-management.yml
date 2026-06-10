@@ -1,3 +1,36 @@
+# Scenario: Order Management (post-checkout)
+#
+# Purpose:
+#   Simulates authenticated users browsing their order history and occasionally
+#   cancelling an order. Tests read-heavy order queries and the cancel state
+#   machine under concurrent load.
+#
+# Flow tested:
+#   1. POST /auth/login                  → captures accessToken
+#   2. GET  /orders/me?page=1&limit=20   → list first page of user orders
+#   3. GET  /orders/:id                  → view a specific order (accepts 200 or 404)
+#   4. POST /orders/:id/cancel           → cancel an order — skipped 80% of the time
+#                                          (skip: 80 means only 20% of VUs execute this step)
+#                                          accepts 200, 400 (already cancelled), or 404
+#   5. GET  /orders/me?page=2&limit=20   → list second page of user orders
+#
+# Load phases:
+#   - Warm-up   : 30s  @ 5 req/s
+#   - Ramp-up   : 60s  @ 5 → 40 req/s
+#   - Sustained : 120s @ 40 req/s
+#   - Cool-down : 30s  @ 40 → 10 req/s
+#   Total duration : ~240s (4 min)
+#
+# SLA thresholds (test fails if breached):
+#   - p95 response time  : 400ms
+#   - p99 response time  : 800ms
+#   - Max error rate     : 1%
+#
+# Note: The cancel step uses a hardcoded order UUID. In a fully seeded environment
+#       this will hit a real order; otherwise 404 is accepted as valid.
+#
+# Run: npm run load:orders  (from apps/backend/)
+
 config:
   target: 'http://localhost:3000'
   phases:

@@ -1,3 +1,32 @@
+# Scenario: User Authentication Flow
+#
+# Purpose:
+#   Stress-tests the auth endpoints under concurrent login load. Lower arrival
+#   rate than browsing because bcrypt comparisons are CPU-intensive — this
+#   helps surface CPU saturation and JWT-signing bottlenecks separately.
+#
+# Flow tested:
+#   1. POST /auth/login  → captures accessToken
+#   2. GET  /users/me    → authenticated profile fetch
+#   3. POST /auth/refresh → token refresh (accepts 200 or 401 as valid)
+#
+# Load phases:
+#   - Warm-up   : 30s  @ 5 req/s
+#   - Ramp-up   : 60s  @ 5 → 50 req/s
+#   - Sustained : 120s @ 50 req/s
+#   - Cool-down : 30s  @ 50 → 10 req/s
+#   Total duration : ~240s (4 min)
+#
+# SLA thresholds (test fails if breached):
+#   - p95 response time  : 500ms
+#   - p99 response time  : 1000ms
+#   - Max error rate     : 0.5%
+#
+# Note: refresh step may 401 if refreshToken is not captured from login
+#       response — this is expected and treated as valid (statusCode: [200, 401]).
+#
+# Run: npm run load:auth  (from apps/backend/)
+
 config:
   target: 'http://localhost:3000'
   phases:
