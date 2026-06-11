@@ -4,6 +4,7 @@ import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import configuration from './config/configuration';
 import { SearchModule } from './search/search.module';
 import { HealthController } from './health.controller';
+import { LoggerModule } from './logger.module';
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { HealthController } from './health.controller';
       isGlobal: true,
       load: [configuration],
     }),
+    LoggerModule,
 
     // Declares the product.events exchange so it exists before consumers bind queues.
     RabbitMQModule.forRootAsync({

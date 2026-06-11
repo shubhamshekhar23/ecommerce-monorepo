@@ -351,6 +351,7 @@ services:
     environment:
       <<: [*db-env, *rabbitmq-env, *jwt-env]
       PORT: 3006
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318/v1/traces
       # Auth service connects to Postgres directly (not PgBouncer) — it uses
       # session-level features incompatible with transaction pooling mode.
       DATABASE_URL: postgresql://ecommerce_user:ecommerce_password@postgres:5432/ecommerce_db
@@ -371,6 +372,7 @@ services:
     environment:
       <<: *rabbitmq-env
       PORT: 3005
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318/v1/traces
       OPENSEARCH_URL: http://opensearch:9200
     depends_on:
       rabbitmq:
@@ -389,6 +391,7 @@ services:
     environment:
       <<: *rabbitmq-env
       PORT: 3004
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318/v1/traces
       SMTP_HOST: mailpit
       SMTP_PORT: 1025
     depends_on:

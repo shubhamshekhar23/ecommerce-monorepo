@@ -7,18 +7,14 @@ import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic
 /*
  - This file MUST be imported before any other module so that
  - auto-instrumentation patches wrap Node modules at require() time.
- - If you import NestJS first, HTTP/Redis spans will not be captured.
- -
- - Prisma query spans are NOT handled here. @prisma/instrumentation is
- - incompatible with @opentelemetry/sdk-node >= 0.218.0 because it uses
- - internal Span constructor APIs that changed in sdk-trace-base v2.x.
- - Instead, PrismaService registers a $use middleware that creates spans
- - using the public OTEL API — see src/modules/prisma/prisma.service.ts.
+ - amqplib instrumentation is enabled (via auto-instrumentations) to extract
+ - the traceparent header from incoming RabbitMQ messages and continue the
+ - distributed trace that was started by the publishing service.
  */
 
 const sdk = new NodeSDK({
   resource: resourceFromAttributes({
-    [ATTR_SERVICE_NAME]: 'ecommerce-backend',
+    [ATTR_SERVICE_NAME]: 'ecommerce-search',
     [ATTR_SERVICE_VERSION]: process.env.npm_package_version ?? '1.0.0',
   }),
   traceExporter: new OTLPTraceExporter({
@@ -27,13 +23,6 @@ const sdk = new NodeSDK({
   instrumentations: [
     getNodeAutoInstrumentations({
       '@opentelemetry/instrumentation-fs': { enabled: false },
-      /*
-       - Disabled because logger.module.ts injects trace_id/span_id via a
-       - pino mixin that reads api.trace.getActiveSpan() at log time.
-       - That approach is more reliable than the patch-based instrumentation
-       - which can read stale context when res.on('finish') fires after the
-       - HTTP span has already exited its AsyncLocalStorage scope.
-       */
       '@opentelemetry/instrumentation-pino': { enabled: false },
     }),
   ],

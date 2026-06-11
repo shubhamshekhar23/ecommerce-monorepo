@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import configuration from './config/configuration';
 import { AuthModule } from './auth/auth.module';
 import { HealthController } from './health.controller';
+import { LoggerModule } from './logger.module';
 
 @Module({
   imports: [
@@ -10,6 +11,7 @@ import { HealthController } from './health.controller';
       isGlobal: true,
       load: [configuration],
     }),
+    LoggerModule,
     AuthModule,
   ],
   controllers: [HealthController],

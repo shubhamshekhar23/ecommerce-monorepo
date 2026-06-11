@@ -59,6 +59,30 @@
   - Metrics answer: _How much/how often did it happen?_
   - Traces answer: _Where was the time spent?_
 
+- The Observability Flow
+  - When an issue occurs (e.g., slow API response), start with the RED dashboard in Grafana to check request count, error rate, and latency of routes.
+  - If a specific route is slow or has errors, check the Jaeger trace for that route to see which operation is taking the most time or causing errors (e.g., Stripe API call).
+  - If the trace shows a bottleneck (e.g., Stripe call taking 250ms), check the logs in Loki for that specific request (using trace ID) to see if there are any error messages or warnings that explain why it's slow (e.g., network timeout, retry attempts).
+  - Also try to check the infrastructure dashboard to see if there are any resource spikes (CPU, memory) that correlate with the time of the issue, which could indicate a capacity problem.
+  - Whta can cause individual issues in infrastructure dashboard.
+    - CPU spike: infinite loop, heavy computation, DDoS attack, memory leak causing GC thrashing
+    - Memory spike: memory leak, large data processing, unoptimized caching, high traffic volume
+    - Disk I/O spike: heavy logging, large file uploads/downloads, database backups,
+
+- Same trace_id across services
+  - Every service should have OpenTelemetry (OTEL) enabled.
+  - OTEL keeps the same `trace_id` as a request travels across multiple services.
+  - Example: `Frontend → Backend → Auth Service → Notification Service` all share `trace_id = abc123`.
+  - Searching `trace_id = abc123` in Grafana/Loki shows logs from every service in one timeline.
+  - OTEL automatically propagates trace context via HTTP headers, gRPC metadata, or message queue headers.
+  - Without OTEL in one service, that service becomes a blind spot and its logs won't be linked to the rest of the request.
+
+- question
+  - what to add in logs compared to traces?
+  - check scenarios when cpu, ram etc. in infrastructre dashboard would spike and crash.
+  - Find all different sceneraios in this app, that we can use obeervability flow to solve issue and do rca.
+  -
+
 ---
 
 # Phase 4

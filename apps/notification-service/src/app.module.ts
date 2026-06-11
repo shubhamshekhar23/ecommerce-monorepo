@@ -7,6 +7,7 @@ import { join } from 'path';
 import configuration from './config/configuration';
 import { NotificationModule } from './notification/notification.module';
 import { HealthController } from './health.controller';
+import { LoggerModule } from './logger.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { HealthController } from './health.controller';
       isGlobal: true,
       load: [configuration],
     }),
+    LoggerModule,
 
     // RabbitMQ connection — shared across the whole service.
     // Exchanges are asserted here at startup so the service fails fast if the

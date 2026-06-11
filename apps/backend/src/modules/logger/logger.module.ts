@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { LoggerModule as PinoLoggerModule } from 'nestjs-pino';
 import { ConfigService } from '@nestjs/config';
 import { v4 as uuidv4 } from 'uuid';
+import * as api from '@opentelemetry/api';
 
 const serializers = {
   req(request: any) {
@@ -18,18 +19,32 @@ const serializers = {
   },
 };
 
-function createPinoConfig(configService: ConfigService) {
-  // const isDevelopment = configService.get<string>('NODE_ENV') === 'development';
+/*
+ - Reads the active OTEL span context at the moment each log line is written.
+ - This runs as a pino mixin so it captures the correct span_id even when
+ - pino-http's res.on('finish') callback fires after the HTTP instrumentation
+ - has exited its context scope — a race that makes instrumentation-pino
+ - inject the wrong (or no) span_id.
+ */
+function getOtelContext(): Record<string, string> {
+  const span = api.trace.getActiveSpan();
+  if (!span) return {};
+  const ctx = span.spanContext();
+  if (!api.isSpanContextValid(ctx)) return {};
+  return {
+    trace_id: ctx.traceId,
+    span_id: ctx.spanId,
+    trace_flags: `0${ctx.traceFlags.toString(16)}`,
+  };
+}
 
+function createPinoConfig(configService: ConfigService) {
   return {
     pinoHttp: {
       level: configService.get<string>('LOG_LEVEL') || 'info',
-      // Note: pino-pretty transport requires 'npm install pino-pretty --save-dev'
-      // For now, logs are output in JSON format (works in both dev and prod)
-      // To enable pretty printing in development, install pino-pretty and uncomment below:
-      // transport: isDevelopment ? { target: 'pino-pretty', options: { colorize: true } } : undefined,
       genReqId: (req: any) => req.headers['x-request-id'] || uuidv4(),
       customProps: (req: any) => ({ requestId: req.id }),
+      mixin: getOtelContext,
       serializers,
     },
   };

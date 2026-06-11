@@ -1,6 +1,7 @@
 import './tracing';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
+import { Logger as PinoLogger } from 'nestjs-pino';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import * as http from 'http';
@@ -67,7 +68,8 @@ function setupGracefulShutdown(httpServer: http.Server): void {
 }
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true });
+  app.useLogger(app.get(PinoLogger));
   const port = process.env.PORT ?? 3000;
 
   // Raw body parser for Stripe webhooks must be registered before other middleware
