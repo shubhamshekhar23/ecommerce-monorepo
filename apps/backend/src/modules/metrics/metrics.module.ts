@@ -34,8 +34,19 @@ import { HttpMetricsInterceptor } from './http-metrics.interceptor';
       labelNames: ['method', 'route', 'status_code'],
       buckets: [10, 50, 100, 200, 500, 1000, 2000],
     }),
+    makeHistogramProvider({
+      name: 'db_client_operation_duration',
+      help: 'Database operation duration in seconds',
+      labelNames: ['db_operation', 'db_sql_table'],
+      buckets: [0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 5],
+    }),
     HttpMetricsInterceptor,
   ],
-  exports: [BusinessMetricsService, HttpMetricsInterceptor, 'PROM_METRIC_HTTP_REQUEST_DURATION_MS'],
+  exports: [
+    BusinessMetricsService,
+    HttpMetricsInterceptor,
+    'PROM_METRIC_HTTP_REQUEST_DURATION_MS',
+    'PROM_METRIC_DB_CLIENT_OPERATION_DURATION',
+  ],
 })
 export class MetricsModule {}

@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectMetric } from '@willsoto/nestjs-prometheus';
-import { Counter } from 'prom-client';
+import { Counter, Histogram } from 'prom-client';
 import { RedisService } from './redis.service';
 import { isBugScenario } from '@/modules/debug-scenarios/bug-scenario.guard';
 
@@ -27,6 +27,7 @@ export class CacheService {
   constructor(
     private readonly redis: RedisService,
     @InjectMetric('cache_operations_total') private readonly cacheOps: Counter<string>,
+    @InjectMetric('redis_client_duration') private readonly redisDuration: Histogram<string>,
   ) {}
 
   async get<T>(key: string): Promise<T | null> {
@@ -36,6 +37,7 @@ export class CacheService {
     */
     if (isBugScenario(4)) return null;
 
+    const start = Date.now();
     try {
       const raw = await this.redis.getClient().get(key);
       const namespace = key.split(':')[0];
@@ -43,21 +45,28 @@ export class CacheService {
       return raw ? (JSON.parse(raw) as T) : null;
     } catch {
       return null;
+    } finally {
+      this.redisDuration.labels({ redis_command: 'get' }).observe((Date.now() - start) / 1000);
     }
   }
 
   async set(key: string, value: unknown, ttlSeconds = 60): Promise<void> {
+    const start = Date.now();
     try {
       await this.redis.getClient().set(key, JSON.stringify(value), 'EX', ttlSeconds);
     } catch (err) {
       this.logger.warn(`Cache set failed key=${key}: ${(err as Error).message}`);
+    } finally {
+      this.redisDuration.labels({ redis_command: 'set' }).observe((Date.now() - start) / 1000);
     }
   }
 
   async del(...keys: string[]): Promise<void> {
     try {
       if (keys.length > 0) await this.redis.getClient().del(...keys);
-    } catch { /* no-op */ }
+    } catch {
+      /* no-op */
+    }
   }
 
   /*
@@ -67,7 +76,9 @@ export class CacheService {
     try {
       let cursor = '0';
       do {
-        const [next, keys] = await this.redis.getClient().scan(cursor, 'MATCH', pattern, 'COUNT', '100');
+        const [next, keys] = await this.redis
+          .getClient()
+          .scan(cursor, 'MATCH', pattern, 'COUNT', '100');
         cursor = next;
         if (keys.length > 0) await this.redis.getClient().del(...keys);
       } while (cursor !== '0');
