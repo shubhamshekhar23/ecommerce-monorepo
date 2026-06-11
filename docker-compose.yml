@@ -322,6 +322,7 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318/v1/traces
       JWT_SECRET: dev-secret-key-min-32-chars-do-not-use-in-production
       JWT_REFRESH_SECRET: dev-refresh-secret-key-min-32-chars-do-not-use-in-production
+      BUG_SCENARIO: ${BUG_SCENARIO:-}
     volumes:
       - .:/app
       - node_modules:/app/node_modules
@@ -394,6 +395,7 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318/v1/traces
       SMTP_HOST: mailpit
       SMTP_PORT: 1025
+      BUG_SCENARIO: ${BUG_SCENARIO:-}
     depends_on:
       rabbitmq:
         condition: service_healthy

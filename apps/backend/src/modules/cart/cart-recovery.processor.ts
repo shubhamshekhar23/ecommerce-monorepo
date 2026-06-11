@@ -5,6 +5,7 @@ import { Job } from 'bullmq';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 import { MailService } from '@/modules/mail/mail.service';
 import { QUEUE_NAMES } from '@/modules/queue/queue.constants';
+import { isBugScenario } from '@/modules/debug-scenarios/bug-scenario.guard';
 
 interface CartRecoveryJobData {
   userId: string;
@@ -35,6 +36,12 @@ export class CartRecoveryProcessor extends WorkerHost {
   }
 
   async process(job: Job<CartRecoveryJobData>): Promise<void> {
+    /*
+     - S12: job throws on every attempt — exhausts retries, lands in dead-letter queue silently.
+     - Signal: BullMQ failed count climbs; Loki shows repeated error logs with job IDs.
+    */
+    if (isBugScenario(12)) throw new Error('Email service unavailable');
+
     const { cartId } = job.data;
 
     const cart = await this.prisma.cart.findUnique({

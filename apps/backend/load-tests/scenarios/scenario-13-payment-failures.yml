@@ -1,0 +1,34 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 30
+      arrivalRate: 2
+      name: 'Warm-up'
+    - duration: 180
+      arrivalRate: 5
+      name: 'Sustained — all payments fail after 2s delay'
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+  variables:
+    apiPrefix: '/api'
+    testUserEmail: 'loadtest1@example.com'
+    testUserPassword: 'LoadTest123!'
+
+scenarios:
+  - name: 'S13 - Order flow (Stripe times out on every request)'
+    flow:
+      - post:
+          url: '{{ apiPrefix }}/auth/login'
+          json:
+            email: '{{ testUserEmail }}'
+            password: '{{ testUserPassword }}'
+          capture:
+            json: '$.accessToken'
+            as: 'accessToken'
+      - post:
+          url: '{{ apiPrefix }}/orders'
+          headers:
+            Authorization: 'Bearer {{ accessToken }}'
+          json: {}
+      - think: 3

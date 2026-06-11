@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Controller,
   Get,
   Post,
@@ -12,6 +13,7 @@ import {
   UseInterceptors,
   UploadedFile,
 } from '@nestjs/common';
+import { isBugScenario } from '@/modules/debug-scenarios/bug-scenario.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiConsumes } from '@nestjs/swagger';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
@@ -87,6 +89,11 @@ export class ProductsController {
     @Query('limit') limit = 20,
     @Query('text') text?: string,
   ): Promise<PaginationDto<any>> {
+    /*
+     - S19: returns 400 for all product listing requests.
+     - Signal: Grafana ErrorRateByClass shows 4xx band (not 5xx); Loki needs status-code query, not level=error.
+    */
+    if (isBugScenario(19)) throw new BadRequestException('Invalid request parameters');
     return this.productsService.findAll(page, limit, text);
   }
 

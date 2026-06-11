@@ -2,6 +2,7 @@ import { Injectable, Logger, OnModuleInit, ServiceUnavailableException } from '@
 import CircuitBreaker from 'opossum';
 import type Stripe from 'stripe';
 import { StripeService } from '@/modules/stripe/stripe.service';
+import { isBugScenario } from '@/modules/debug-scenarios/bug-scenario.guard';
 
 // Circuit-breaker states (opossum automaton):
 //
@@ -36,10 +37,20 @@ export class CircuitBreakerService implements OnModuleInit {
   constructor(private readonly stripeService: StripeService) {}
 
   onModuleInit(): void {
+    /*
+     - S16: circuit never opens — timeout too short (100 ms) + instant reset (1 ms).
+     - Retries hammer the failing service; payment failure rate >> request rate.
+     - Signal: Grafana payment_events_total{failed} rate 3-5x HTTP request rate.
+     - Jaeger: single HTTP span has multiple Stripe child spans (retries), all failing.
+    */
+    const options = isBugScenario(16)
+      ? { ...BREAKER_OPTIONS, timeout: 100, resetTimeout: 1, volumeThreshold: 1 }
+      : BREAKER_OPTIONS;
+
     this.breaker = new CircuitBreaker(
       (orderId: string, amount: number) =>
         this.stripeService.createPaymentIntent(orderId, amount),
-      BREAKER_OPTIONS,
+      options,
     );
 
     this.breaker.on('open', () => this.logger.warn('Circuit breaker OPEN — Stripe unreachable'));

@@ -1,0 +1,24 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 600
+      arrivalRate: 2
+      name: 'Low sustained load — FD count climbs slowly (needs 10+ min)'
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+  variables:
+    apiPrefix: '/api'
+
+# NOTE: This is a slow-burn scenario. Watch process_open_fds in Grafana.
+# The FD count will increase by 1 per request. With 2 req/s it takes several
+# minutes before postgres max_connections is reached.
+scenarios:
+  - name: 'S20 - Product listing (each request leaks a DB connection)'
+    flow:
+      - get:
+          url: '{{ apiPrefix }}/products?page=1&limit=20'
+      - think: 3
+      - get:
+          url: '{{ apiPrefix }}/products?page=2&limit=20'
+      - think: 5

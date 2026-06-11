@@ -1,0 +1,37 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 30
+      arrivalRate: 2
+      name: 'Warm-up'
+    - duration: 180
+      arrivalRate: 8
+      name: 'Sustained — every order takes 3s+ (other routes stay fast)'
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+  variables:
+    apiPrefix: '/api'
+    testUserEmail: 'loadtest1@example.com'
+    testUserPassword: 'LoadTest123!'
+
+scenarios:
+  - name: 'S7 - Orders slow (baseline compare: GET /products should be fast)'
+    flow:
+      - post:
+          url: '{{ apiPrefix }}/auth/login'
+          json:
+            email: '{{ testUserEmail }}'
+            password: '{{ testUserPassword }}'
+          capture:
+            json: '$.accessToken'
+            as: 'accessToken'
+      - get:
+          url: '{{ apiPrefix }}/products?page=1&limit=5'
+      - think: 1
+      - post:
+          url: '{{ apiPrefix }}/orders'
+          headers:
+            Authorization: 'Bearer {{ accessToken }}'
+          json: {}
+      - think: 2

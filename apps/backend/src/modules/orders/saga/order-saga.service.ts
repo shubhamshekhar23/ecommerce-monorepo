@@ -2,6 +2,7 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { Prisma, OrderStatus } from '@prisma/client';
 import { PrismaService } from '@/modules/prisma/prisma.service';
+import { isBugScenario } from '@/modules/debug-scenarios/bug-scenario.guard';
 import { OutboxService } from '@/modules/outbox/outbox.service';
 import { CircuitBreakerService } from '@/modules/circuit-breaker/circuit-breaker.service';
 import { BusinessMetricsService } from '@/modules/metrics/business-metrics.service';
@@ -35,6 +36,24 @@ export class OrderSagaService {
   ) {}
 
   async execute(userId: string, cartId?: string): Promise<OrderWithItems> {
+    /*
+     - S3: holds a DB connection inside a 30 s transaction on every request.
+     - Under load the connection pool saturates; new requests hang waiting for a slot.
+     - Signal: pgbouncer_pools_client_waiting_count climbs; Jaeger spans start but have no DB children.
+    */
+    if (isBugScenario(3)) {
+      await this.prisma.$transaction(async () => {
+        await new Promise((r) => setTimeout(r, 30_000));
+      });
+    }
+
+    /*
+     - S7: simulates a slow external pre-auth call before the DB transaction.
+     - Signal: Grafana P99 for POST /orders jumps ~3 s; other routes unaffected.
+     - Jaeger: 3 s gap between HTTP span start and first DB child span.
+    */
+    if (isBugScenario(7)) await new Promise((r) => setTimeout(r, 3_000));
+
     const [cart, user] = await Promise.all([
       this.loadCart(userId, cartId),
       this.loadUser(userId),
@@ -80,11 +99,19 @@ export class OrderSagaService {
     tx: Prisma.TransactionClient,
     cart: CartWithItems,
   ): Promise<void> {
-    // Lock variant rows in a deterministic order to prevent deadlocks
-    const ids = [...new Set(cart.items.map((i) => i.variantId).filter(Boolean))].sort();
+    /*
+     - S18: removing .sort() breaks deterministic lock ordering.
+     - Two concurrent orders for the same variants in different item sequences deadlock each other.
+     - Signal: Loki shows "deadlock detected"; Grafana brief error spike then recovery.
+     - S10: sleep after acquiring locks holds them for 10 s, serialising concurrent orders.
+     - Signal: Jaeger shows requests queuing sequentially; latency spikes under concurrent load.
+    */
+    const rawIds = [...new Set(cart.items.map((i) => i.variantId).filter(Boolean))];
+    const ids = isBugScenario(18) ? rawIds : rawIds.sort();
     for (const id of ids) {
       await tx.$queryRaw(Prisma.sql`SELECT id FROM "ProductVariant" WHERE id = ${id} FOR UPDATE`);
     }
+    if (isBugScenario(10)) await new Promise((r) => setTimeout(r, 10_000));
   }
 
   private async validateStock(

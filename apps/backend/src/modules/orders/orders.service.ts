@@ -1,5 +1,5 @@
 /* eslint-disable max-lines */
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { OrderStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '@/modules/prisma/prisma.service';
@@ -10,6 +10,7 @@ import { OrderCreatedEvent, OrderStatusChangedEvent } from '@/modules/events/ord
 import { BusinessMetricsService } from '@/modules/metrics/business-metrics.service';
 import { AuditService } from '@/modules/audit/audit.service';
 import { OrderResponseDto, OrderItemResponseDto } from './dto/order-response.dto';
+import { isBugScenario } from '@/modules/debug-scenarios/bug-scenario.guard';
 
 type OrderWithItems = Prisma.OrderGetPayload<{
   include: { items: { include: { product: true } } };
@@ -28,6 +29,14 @@ export class OrdersService {
   ) {}
 
   async create(userId: string, cartId?: string): Promise<OrderResponseDto> {
+    /*
+     - S9: deterministic per-user failure — ~20% of users always fail, others never do.
+     - Signal: Grafana error rate ~20% not 100%; Loki errors cluster on same userId pattern.
+    */
+    if (isBugScenario(9) && userId.charCodeAt(0) % 5 === 0) {
+      throw new InternalServerErrorException('Order processing failed');
+    }
+
     const order = await this.saga.execute(userId, cartId);
     this.businessMetrics.recordOrder('PENDING');
     this.eventEmitter.emit(
@@ -66,6 +75,16 @@ export class OrdersService {
 
   async listAllOrders(page = 1, limit = 20): Promise<PaginationDto<OrderResponseDto>> {
     const { skip, take } = calculatePagination(page, limit);
+
+    /*
+     - S15: simulate a missing-index full-table scan with pg_sleep per row.
+     - Signal: Jaeger shows one long DB span; PgAdmin EXPLAIN shows Seq Scan.
+    */
+    if (isBugScenario(15)) {
+      await this.prisma.$queryRaw`
+        SELECT id FROM "Order" WHERE notes ILIKE ${'%urgent%'} AND pg_sleep(0.05) IS NOT NULL LIMIT 1
+      `;
+    }
 
     const [orders, total] = await Promise.all([
       this.prisma.order.findMany({

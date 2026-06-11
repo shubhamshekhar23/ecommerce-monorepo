@@ -4,10 +4,12 @@ import { Prisma } from '@prisma/client';
 import {
   Injectable,
   BadRequestException,
+  InternalServerErrorException,
   NotFoundException,
   ConflictException,
   Logger,
 } from '@nestjs/common';
+import { isBugScenario } from '@/modules/debug-scenarios/bug-scenario.guard';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 import { CacheService } from '@/modules/cache/cache.service';
@@ -59,6 +61,12 @@ interface ProductForResponse {
   images?: { id: string; url: string; altText: string | null; isMain: boolean; order: number }[];
   variants?: { price: { toString(): string } }[];
 }
+
+/*
+ - S8: module-level accumulator that is never cleared — simulates a memory leak.
+ - Grows with every product listing request under BUG_SCENARIO=8.
+*/
+const _memoryLeak: object[] = [];
 
 const VARIANT_INCLUDE = {
   where: { isActive: true },
@@ -233,6 +241,17 @@ export class ProductsService {
       LIMIT ${take + 1}
     `);
 
+    /*
+     - S5: synchronous sort of a large array per result — burns CPU and starves the event loop.
+     - Signal: Grafana process_cpu_seconds_total spikes; other routes also slow (shared event loop).
+    */
+    if (isBugScenario(5)) {
+      rows.forEach(() => {
+        const arr = Array.from({ length: 50_000 }, (_, i) => i);
+        arr.sort((a, b) => b - a);
+      });
+    }
+
     const hasMore = rows.length > take;
     const items = (hasMore ? rows.slice(0, take) : rows).map((row) => ({
       id: row.id, name: row.name, slug: row.slug, description: row.description,
@@ -247,6 +266,12 @@ export class ProductsService {
 
   // eslint-disable-next-line max-lines-per-function
   async findAll(page = 1, limit = 20, text?: string): Promise<PaginationDto<ProductResponseDto>> {
+    /*
+     - S1: throws before cache/DB — every request returns 500.
+     - Signal: Grafana HighErrorRate alert; Jaeger spans have error=true with no DB child spans.
+    */
+    if (isBugScenario(1)) throw new InternalServerErrorException('Database connection lost');
+
     const cacheKey = `products:list:${page}:${limit}:${text ?? ''}`;
     return this.withCache(cacheKey, PRODUCT_LIST_TTL, () => this.runFindAll(page, limit, text));
   }
@@ -255,6 +280,20 @@ export class ProductsService {
     const validPage = Math.max(page, 1);
     const validLimit = Math.min(Math.max(limit, 1), 100);
     const skip = (validPage - 1) * validLimit;
+
+    /*
+     - S2: single pg_sleep(0.5) makes every listing request take ~500 ms.
+     - Signal: Jaeger shows one long prisma span (not dozens like N+1).
+    */
+    if (isBugScenario(2)) await this.prisma.$queryRaw`SELECT pg_sleep(0.5)`;
+
+    /*
+     - S11: 10% of requests sleep 5 s — p50 is fine, p99 is terrible.
+     - Signal: Grafana HighP99Latency alert; Jaeger shows random long spans with no extra child spans.
+    */
+    if (isBugScenario(11) && Math.random() < 0.1) {
+      await new Promise((r) => setTimeout(r, 5_000));
+    }
 
     const where = {
       isActive: true,
@@ -272,12 +311,47 @@ export class ProductsService {
         include: {
           images: { where: { isMain: true } },
           category: { select: { name: true } },
-          variants: { where: { isActive: true }, select: { price: true }, orderBy: { price: 'asc' } },
+          /*
+           - S6: variants omitted from include so each product triggers a separate query below.
+          */
+          ...(isBugScenario(6) ? {} : {
+            variants: { where: { isActive: true }, select: { price: true }, orderBy: { price: 'asc' } },
+          }),
         },
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.product.count({ where }),
     ]);
+
+    /*
+     - S6: one findMany per product — N+1 pattern.
+     - Signal: Jaeger waterfall shows N prisma ProductVariant spans equal to page size.
+    */
+    if (isBugScenario(6)) {
+      for (const product of products) {
+        (product as any).variants = await this.prisma.productVariant.findMany({
+          where: { productId: product.id },
+        });
+      }
+    }
+
+    /*
+     - S8: push every product batch into a never-cleared module-level array.
+     - Signal: Grafana nodejs_heap_used_bytes hockey-sticks; HighMemoryUsage alert fires.
+    */
+    if (isBugScenario(8)) _memoryLeak.push(...products);
+
+    /*
+     - S20: open a raw pg.Client per request without closing it — FD leak.
+     - Signal: process_open_fds climbs steadily; eventually max_connections exceeded.
+    */
+    if (isBugScenario(20)) {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { Client } = require('pg') as typeof import('pg');
+      const client = new Client({ connectionString: process.env.DATABASE_URL });
+      await client.connect();
+      /* intentionally not calling client.end() */
+    }
 
     return buildPaginationResponse(products.map((p) => this.mapToResponse(p)), total, validPage, validLimit);
   }

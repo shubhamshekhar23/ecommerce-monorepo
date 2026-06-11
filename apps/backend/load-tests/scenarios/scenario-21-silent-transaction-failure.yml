@@ -1,0 +1,42 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 30
+      arrivalRate: 2
+      name: 'Warm-up'
+    - duration: 180
+      arrivalRate: 5
+      name: 'Sustained — orders return 201 but emails never arrive'
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+  variables:
+    apiPrefix: '/api'
+    testUserEmail: 'loadtest1@example.com'
+    testUserPassword: 'LoadTest123!'
+
+# NOTE: Orders will succeed (201) with no errors visible anywhere.
+# After running, check:
+#   - Mailpit at http://localhost:8025 — no emails received
+#   - RabbitMQ UI at http://localhost:15672 — queue message count stays 0
+#   - Jaeger: order span has no RabbitMQ child span in outbox processor trace
+#   - Loki: search "Published order.placed" — no results
+scenarios:
+  - name: 'S21 - Order creation (silent outbox event drop)'
+    flow:
+      - post:
+          url: '{{ apiPrefix }}/auth/login'
+          json:
+            email: '{{ testUserEmail }}'
+            password: '{{ testUserPassword }}'
+          capture:
+            json: '$.accessToken'
+            as: 'accessToken'
+      - post:
+          url: '{{ apiPrefix }}/orders'
+          headers:
+            Authorization: 'Bearer {{ accessToken }}'
+          json: {}
+          expect:
+            - statusCode: 201
+      - think: 3

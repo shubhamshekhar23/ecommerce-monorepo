@@ -5,6 +5,7 @@ import type { OutboxEvent } from '@prisma/client';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 import { EXCHANGES, ROUTING_KEYS } from '@ecommerce/shared-types';
 import type { OrderPlacedEvent } from '@ecommerce/shared-types';
+import { isBugScenario } from '@/modules/debug-scenarios/bug-scenario.guard';
 
 export interface OutboxEventData {
   aggregateId: string;
@@ -107,6 +108,17 @@ export class OutboxService {
   }
 
   private async publishToRabbitMQ(event: OutboxEvent): Promise<void> {
+    /*
+     - S21: event silently dropped — order returns 201, no errors, but emails/stock alerts never fire.
+     - Signal: Jaeger order span completes OK but outbox processor span has no RabbitMQ child span.
+     - Loki: "order created" log exists but no "Published order.placed" log downstream.
+     - RabbitMQ UI: queue message count stays 0; Mailpit: no emails received.
+    */
+    if (isBugScenario(21)) {
+      this.logger.log(`[S21] Silently dropping outbox event: type=${event.eventType} id=${event.id}`);
+      return;
+    }
+
     if (event.eventType === 'ORDER_CREATED') {
       const payload = event.payload as unknown as OrderPlacedEvent;
       await this.amqp.publish(EXCHANGES.ORDER, ROUTING_KEYS.ORDER.PLACED, payload);

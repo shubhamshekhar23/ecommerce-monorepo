@@ -77,6 +77,10 @@
   - OTEL automatically propagates trace context via HTTP headers, gRPC metadata, or message queue headers.
   - Without OTEL in one service, that service becomes a blind spot and its logs won't be linked to the rest of the request.
 
+- In production, if the Node.js app crashes, Docker/Kubernetes automatically detects the failure and starts a new instance, so the application recovers automatically.
+- If a request throws an error (e.g., user.name when user is null), NestJS catches the exception, returns an HTTP 500 response for that request, logs the error, and keeps the backend running so other requests continue to succeed.
+- Slow database queries hold connections longer, causing other requests to wait or timeout. Example: pg_sleep(2) keeps the only connection busy for 2s, so incoming requests queue up and eventually fail with a connection pool timeout.
+
 - question
   - what to add in logs compared to traces?
   - check scenarios when cpu, ram etc. in infrastructre dashboard would spike and crash.

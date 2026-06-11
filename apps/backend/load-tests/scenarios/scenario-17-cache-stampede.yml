@@ -1,0 +1,24 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 10
+      arrivalRate: 50
+      name: 'Burst after cache flush — all requests miss cache simultaneously'
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+  variables:
+    apiPrefix: '/api'
+
+# NOTE: Before running, flush the products cache:
+#   docker exec -it <redis-container> redis-cli DEL $(redis-cli KEYS 'products:*')
+# Then immediately run this test for the burst effect.
+# The stampede is brief — run multiple times to observe consistently.
+scenarios:
+  - name: 'S17 - Product listing burst (no stampede protection)'
+    flow:
+      - get:
+          url: '{{ apiPrefix }}/products?page=1&limit=20'
+      - think: 1
+      - get:
+          url: '{{ apiPrefix }}/products?page=1&limit=20'
