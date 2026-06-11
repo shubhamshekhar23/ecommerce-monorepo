@@ -1,7 +1,9 @@
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { InjectMetric } from '@willsoto/nestjs-prometheus';
 import { PrismaClient, Prisma } from '@prisma/client';
 import type { ITXClientDenyList } from '@prisma/client/runtime/library';
 import { AsyncLocalStorage } from 'async_hooks';
+import { Histogram } from 'prom-client';
 import * as api from '@opentelemetry/api';
 
 type TransactionClient = Omit<PrismaClient, ITXClientDenyList>;
@@ -29,6 +31,12 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   private readonly logger = new Logger('PrismaService');
   readonly rlsStorage = new AsyncLocalStorage<RlsContext>();
 
+  constructor(
+    @InjectMetric('db_client_operation_duration') private readonly dbDuration: Histogram<string>,
+  ) {
+    super();
+  }
+
   async onModuleInit(): Promise<void> {
     this.registerTracingMiddleware();
     try {
@@ -46,25 +54,32 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
    - compatible with any sdk-trace-base version.
    */
   private registerTracingMiddleware(): void {
-    this.$use(async (params: Prisma.MiddlewareParams, next) => {
-      const model = params.model ?? 'raw';
-      const span = api.trace.getTracer('prisma').startSpan(`prisma ${model}.${params.action}`, {
-        kind: api.SpanKind.CLIENT,
-        attributes: { 'db.system': 'postgresql', 'db.operation': params.action, 'db.sql.table': model },
-      });
-      return api.context.with(api.trace.setSpan(api.context.active(), span), async () => {
-        try {
-          const result = await next(params);
-          span.setStatus({ code: api.SpanStatusCode.OK });
-          return result;
-        } catch (err) {
-          span.recordException(err as Error);
-          span.setStatus({ code: api.SpanStatusCode.ERROR, message: (err as Error).message });
-          throw err;
-        } finally {
-          span.end();
-        }
-      });
+    this.$use((params: Prisma.MiddlewareParams, next) => this.executeWithTracing(params, next));
+  }
+
+  private async executeWithTracing(
+    params: Prisma.MiddlewareParams,
+    next: (p: Prisma.MiddlewareParams) => Promise<unknown>,
+  ): Promise<unknown> {
+    const model = params.model ?? 'raw';
+    const start = Date.now();
+    const span = api.trace.getTracer('prisma').startSpan(`prisma ${model}.${params.action}`, {
+      kind: api.SpanKind.CLIENT,
+      attributes: { 'db.system': 'postgresql', 'db.operation': params.action, 'db.sql.table': model },
+    });
+    return api.context.with(api.trace.setSpan(api.context.active(), span), async () => {
+      try {
+        const result = await next(params);
+        span.setStatus({ code: api.SpanStatusCode.OK });
+        return result;
+      } catch (err) {
+        span.recordException(err as Error);
+        span.setStatus({ code: api.SpanStatusCode.ERROR, message: (err as Error).message });
+        throw err;
+      } finally {
+        span.end();
+        this.dbDuration.labels({ db_operation: params.action, db_sql_table: model }).observe((Date.now() - start) / 1000);
+      }
     });
   }
 

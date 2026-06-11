@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectMetric } from '@willsoto/nestjs-prometheus';
-import { Counter } from 'prom-client';
+import { Counter, Histogram } from 'prom-client';
 import { RedisService } from './redis.service';
 
 const LOCK_TTL_MS = 5000;
@@ -26,9 +26,11 @@ export class CacheService {
   constructor(
     private readonly redis: RedisService,
     @InjectMetric('cache_operations_total') private readonly cacheOps: Counter<string>,
+    @InjectMetric('redis_client_duration') private readonly redisDuration: Histogram<string>,
   ) {}
 
   async get<T>(key: string): Promise<T | null> {
+    const start = Date.now();
     try {
       const raw = await this.redis.getClient().get(key);
       const namespace = key.split(':')[0];
@@ -36,14 +38,19 @@ export class CacheService {
       return raw ? (JSON.parse(raw) as T) : null;
     } catch {
       return null;
+    } finally {
+      this.redisDuration.labels({ redis_command: 'get' }).observe((Date.now() - start) / 1000);
     }
   }
 
   async set(key: string, value: unknown, ttlSeconds = 60): Promise<void> {
+    const start = Date.now();
     try {
       await this.redis.getClient().set(key, JSON.stringify(value), 'EX', ttlSeconds);
     } catch (err) {
       this.logger.warn(`Cache set failed key=${key}: ${(err as Error).message}`);
+    } finally {
+      this.redisDuration.labels({ redis_command: 'set' }).observe((Date.now() - start) / 1000);
     }
   }
 
