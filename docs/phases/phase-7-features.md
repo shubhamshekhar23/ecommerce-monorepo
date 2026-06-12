@@ -15,19 +15,23 @@ Migration: `prisma/migrations/20260528000003_phase7_features/migration.sql`
 
 Users can save multiple shipping addresses. The important lesson is in how addresses relate to orders.
 
-A naïve approach stores `Order.shippingAddressId` as a FK. If the user later edits their address, the order history shows the *updated* address — not the one they actually shipped to. This is wrong for receipts, invoices, and fraud disputes.
+A naïve approach stores `Order.shippingAddressId` as a FK. If the user later edits their address, the order history shows the _updated_ address — not the one they actually shipped to. This is wrong for receipts, invoices, and fraud disputes.
 
 The correct approach: `Order.shippingAddress` is a **JSONB column** — a snapshot of the address taken at checkout time:
 
 ```json
 {
-  "firstName": "John", "lastName": "Doe",
-  "line1": "123 Main St", "city": "New York",
-  "state": "NY", "postalCode": "10001", "country": "US"
+  "firstName": "John",
+  "lastName": "Doe",
+  "line1": "123 Main St",
+  "city": "New York",
+  "state": "NY",
+  "postalCode": "10001",
+  "country": "US"
 }
 ```
 
-The FK relationship is used only to *populate* the snapshot at order creation. After that, the order is immutable even if the user changes their address 10 times. The `addresses` table still exists for the "saved addresses" feature — it just doesn't drive historical order data.
+The FK relationship is used only to _populate_ the snapshot at order creation. After that, the order is immutable even if the user changes their address 10 times. The `addresses` table still exists for the "saved addresses" feature — it just doesn't drive historical order data.
 
 ### Coupon System — Optimistic Locking
 
@@ -56,7 +60,7 @@ A `CouponUsage` record is also inserted with `(couponId, userId)` unique constra
 
 Shipping cost is calculated using the strategy pattern: a `ShippingCalculator` interface with pluggable implementations. Current implementations include flat-rate and weight-based calculators. A real carrier API (UPS, FedEx) would implement the same interface without changing the caller.
 
-### Tax Engine — Rules Engine Pattern
+### Tax Engine — Rules Engine Pattern (it seems TODO)
 
 `src/modules/tax/tax.service.ts`
 
@@ -67,6 +71,7 @@ Tax rules are encoded as a set of conditions evaluated in order: country → sta
 `src/modules/reviews/reviews.service.ts`
 
 Review lifecycle:
+
 1. User submits → status: `PENDING`
 2. Admin approves → status: `APPROVED`, fires `review.approved` event
 3. Event handler recomputes `ProductRating.avgRating` and `reviewCount` from all approved reviews
@@ -96,12 +101,14 @@ The job payload is a complete snapshot — `alertId`, `email`, `productName`, an
 `src/modules/returns/returns.service.ts`
 
 Return requests follow a state machine:
+
 ```
 PENDING → APPROVED → REFUNDED
 PENDING → REJECTED
 ```
 
 On `APPROVED → REFUNDED`:
+
 1. Call Stripe's Refunds API with the original `paymentIntentId`
 2. Store Stripe's `refundId` on the `ReturnRequest` for reconciliation
 3. Restock the returned items (increment `ProductVariant.stock`)
@@ -182,7 +189,7 @@ The `Math.random() * 0.3` adds up to 30% jitter. Without jitter, if 1000 email j
 The processor also has an idempotency check as a safety net:
 
 ```typescript
-if (!cart || cart.items.length === 0) return;  // user already checked out
+if (!cart || cart.items.length === 0) return; // user already checked out
 ```
 
 If the job fires but the cart is already empty (e.g. cancellation raced with job removal), it silently skips — no email, no retry.
@@ -218,8 +225,7 @@ The worker receives the CSV buffer, streams it through `csv-parse`, validates ea
 
 ```typescript
 // csv-parser.worker.ts — runs in a separate OS thread
-parseAndValidate(buffer)
-  .then((result) => parentPort!.postMessage(result))
+parseAndValidate(buffer).then((result) => parentPort!.postMessage(result));
 ```
 
 The result is `{ validRows, errors, skipped }`. The main thread never processes individual rows — it only receives the final result.
@@ -246,7 +252,7 @@ const arrayBuffer = (buffer.buffer as ArrayBuffer).slice(
 );
 new Worker(WORKER_PATH, {
   workerData: { buffer: arrayBuffer },
-  transferList: [arrayBuffer],   // zero-copy: main thread cannot read it after this
+  transferList: [arrayBuffer], // zero-copy: main thread cannot read it after this
 });
 ```
 
