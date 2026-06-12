@@ -1,3 +1,30 @@
+# Phase 6 (security)
+
+- RS256 JWT (Asymmetric Signing)
+  - Private key held only by Auth Service for signing tokens
+  - Public key distributed to all services for verifying tokens
+  - Gateway verifies token once and injects user info into headers for downstream services
+
+- Google OAuth2 (Authorization Code Flow)
+  - Standard OAuth2 flow with server-side token exchange
+  - Client secret never leaves the server, so intercepted authorization code is useless
+  - Social login linked to `OAuthAccount` model for multiple providers per user
+
+- TOTP 2FA
+  - Time-based One-Time Passwords using the same algorithm as Google Authenticator
+  - Secret stored securely and used to generate 6-digit codes that change every 30 seconds
+  - Users must enter the current code from their authenticator app in addition to their password for enhanced security
+
+- Audit Log
+  - Immutable log of critical actions (e.g., login attempts, password changes, failed logins)
+  - Stored in a separate database table with user ID, action type, timestamp, and metadata
+  - Used for security monitoring, forensic analysis, and compliance purposes
+
+- Access Token + Refresh Token
+  - Short-lived access tokens (e.g., 15 minutes) for authentication
+  - Long-lived refresh tokens (e.g., 7 days) for obtaining new access tokens without re-authenticating
+  - Refresh tokens stored securely and can be revoked if needed (e.g., on logout or suspected compromise)
+
 # Phase 5
 
 - CorrelationIds
