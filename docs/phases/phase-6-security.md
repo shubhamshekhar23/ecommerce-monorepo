@@ -21,26 +21,26 @@ The monolith originally used HS256 with a shared secret. Any service holding the
 A service that can only verify tokens cannot create new ones, even if it is compromised.
 
 Key setup:
-- `JWT_PRIVATE_KEY` in `apps/auth-service/.env` (RSA 2048-bit, PEM format)
-- `JWT_PUBLIC_KEY` in `apps/backend/.env` and `apps/gateway/.env`
+- `JWT_PRIVATE_KEY` in `apps/auth-service/.env` only — no other service holds it
+- `JWT_PUBLIC_KEY` in `apps/backend/.env` and `apps/gateway/.env` (verify only, cannot sign)
 - Gateway verifies the token once on every request and injects `X-User-Id` / `X-User-Email` headers — downstream services trust the headers, never re-verify the JWT
 
-A `GET /.well-known/jwks.json` endpoint publishes the public key in JWK Set format so any service can autodiscover it.
+A `GET /.well-known/jwks.json` endpoint on the auth-service (`apps/auth-service/src/auth/jwks.controller.ts`) publishes the public key in JWK Set format so any service can autodiscover it.
 
-### Google OAuth2 with PKCE
+### Google OAuth2 (Authorization Code Flow)
 
 `apps/auth-service/src/` (Passport Google strategy)
 
-PKCE (Proof Key for Code Exchange) prevents authorization code interception attacks:
+Standard OAuth2 Authorization Code flow via `passport-google-oauth20`:
 
-1. Client generates `code_verifier` (random 64 bytes)
-2. Derives `code_challenge = base64url(sha256(code_verifier))`
-3. Sends user to Google with `code_challenge`
-4. Google returns `authorization_code`
-5. Client exchanges code for tokens, sending `code_verifier`
-6. Google verifies: `sha256(code_verifier) == code_challenge`
+1. App is registered in Google Cloud Console (APIs & Services → Credentials), which issues a `clientID` and `clientSecret` stored in `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` env vars
+2. Browser is redirected to Google with a `state` nonce (CSRF protection)
+3. User authenticates; Google redirects back with `authorization_code`
+4. Passport exchanges the code + `clientSecret` for tokens **server-side**
+5. `GoogleStrategy.validate()` is called with the profile
+6. `authService.handleOAuthLogin()` finds or creates the user
 
-Why it matters: an attacker can intercept the `authorization_code` in the redirect URI (e.g. on a mobile app). Without PKCE they could exchange it for tokens. With PKCE they cannot — they don't have the `code_verifier` that was never transmitted over the network.
+Because the `clientSecret` never leaves the server, an intercepted `authorization_code` alone is useless — this is a confidential client flow and PKCE is not needed.
 
 Social login links to the `OAuthAccount` model (provider + providerUserId), which references the `User`. One user can have multiple OAuth providers linked.
 

@@ -62,7 +62,7 @@
   },
   "dependencies": {
     "@ecommerce/shared-types": "*",
-    "@golevelup/nestjs-rabbitmq": "^9.0.2",
+    "@golevelup/nestjs-rabbitmq": "^8.1.0",
     "@nestjs-modules/mailer": "^2.0.2",
     "@nestjs/bullmq": "^11.0.4",
     "@nestjs/common": "^10.3.0",

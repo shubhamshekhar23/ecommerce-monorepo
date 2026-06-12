@@ -28,5 +28,8 @@
   },
   "devDependencies": {
     "turbo": "^2.9.16"
+  },
+  "allowScripts": {
+    "@nestjs/core@10.4.22": true
   }
 }

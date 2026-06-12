@@ -18,7 +18,8 @@
       "Bash(curl -s \"http://localhost:3005/api/search?q=headphones\")",
       "Bash(python3 -m json.tool)",
       "Bash(docker compose *)",
-      "Bash(open -a Docker)"
+      "Bash(open -a Docker)",
+      "Bash(PRISMA_MIGRATE_SKIP_GENERATE=1 npx prisma migrate dev --name feat_full_auth)"
     ]
   }
 }

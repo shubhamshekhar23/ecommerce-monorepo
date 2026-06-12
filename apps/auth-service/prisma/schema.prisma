@@ -1,7 +1,3 @@
-// Auth-service owns user credentials and refresh tokens.
-// Migrations run from apps/backend — do NOT run prisma migrate here.
-// Run `npm run prisma:generate` to regenerate the Prisma client after schema changes.
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -11,15 +7,30 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum UserRole {
+  USER
+  ADMIN
+  VENDOR
+}
+
+enum OAuthProvider {
+  GOOGLE
+}
+
 model User {
   id            String         @id @default(cuid())
   email         String         @unique
   password      String
   firstName     String?
   lastName      String?
+  role          UserRole       @default(USER)
   isActive      Boolean        @default(true)
   emailVerified Boolean        @default(false)
+  totpSecret    String?
+  totpEnabled   Boolean        @default(false)
   refreshTokens RefreshToken[]
+  oauthAccounts OAuthAccount[]
+  passwordResetTokens PasswordResetToken[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
@@ -37,4 +48,46 @@ model RefreshToken {
 
   @@index([userId])
   @@index([token])
+}
+
+model OAuthAccount {
+  id             String        @id @default(cuid())
+  userId         String
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider       OAuthProvider
+  providerUserId String
+  createdAt      DateTime      @default(now())
+
+  @@unique([provider, providerUserId])
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  usedAt    DateTime?
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  timestamp DateTime @default(now())
+  userId    String?
+  userEmail String?
+  userRole  String?
+  action    String
+  entity    String?
+  entityId  String?
+  before    Json?
+  after     Json?
+  ipAddress String?
+  userAgent String?
+
+  @@index([userId])
+  @@index([action])
 }

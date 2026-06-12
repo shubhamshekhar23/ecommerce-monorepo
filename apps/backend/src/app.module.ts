@@ -4,7 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { PrismaModule } from '@/modules/prisma/prisma.module';
 import { UsersModule } from '@/modules/users/users.module';
-import { AuthModule } from '@/modules/auth/auth.module';
+import { SecurityModule } from '@/modules/security/security.module';
 import { CategoriesModule } from '@/modules/categories/categories.module';
 import { ProductsModule } from '@/modules/products/products.module';
 import { CartModule } from '@/modules/cart/cart.module';
@@ -56,7 +56,7 @@ import { AppService } from './app.service';
     ReturnsModule,
     InvoiceModule,
     PrismaModule,
-    AuthModule,
+    SecurityModule,
     UsersModule,
     CategoriesModule,
     ProductsModule,

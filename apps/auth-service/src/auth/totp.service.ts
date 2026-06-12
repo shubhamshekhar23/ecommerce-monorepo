@@ -10,11 +10,6 @@ import { createHmac, randomBytes } from 'crypto';
 //   3. hmac    = HMAC-SHA1(key, counter_as_8_bytes_big_endian)
 //   4. offset  = hmac[19] & 0x0f                  ← last nibble of hash
 //   5. code    = (read 4 bytes at offset, mask high bit) % 1_000_000
-//
-// Why is it secure?
-//   - Without the shared secret, the HMAC cannot be computed
-//   - The 30-second window limits replay attacks
-//   - The code changes even if an attacker intercepts it — expired within 30s
 
 const BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
@@ -62,14 +57,12 @@ function base32Decode(encoded: string): Buffer {
 function computeTotp(secret: string, windowOffset = 0): string {
   const counter = Math.floor(Date.now() / 1000 / 30) + windowOffset;
 
-  // Encode counter as 8-byte big-endian (the spec requires this exact format)
   const counterBuf = Buffer.alloc(8);
   counterBuf.writeBigInt64BE(BigInt(counter));
 
   const key = base32Decode(secret);
   const hmac = createHmac('sha1', key).update(counterBuf).digest();
 
-  // Dynamic truncation: pick 4 bytes starting at the offset indicated by the last nibble
   const offset = hmac[19] & 0x0f;
   const otp = (hmac.readUInt32BE(offset) & 0x7fffffff) % 1_000_000;
 
@@ -79,13 +72,12 @@ function computeTotp(secret: string, windowOffset = 0): string {
 @Injectable()
 export class TotpService {
   generateSecret(email: string): { secret: string; uri: string } {
-    const secret = base32Encode(randomBytes(20)); // 20 bytes = 160 bits
+    const secret = base32Encode(randomBytes(20));
     const uri = this.buildUri(email, 'Ecommerce', secret);
     return { secret, uri };
   }
 
   verify(token: string, secret: string): boolean {
-    // Check current window and ±1 to handle clock skew
     for (const offset of [-1, 0, 1]) {
       if (computeTotp(secret, offset) === token) return true;
     }

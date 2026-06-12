@@ -1,13 +1,12 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { createHash, randomBytes } from 'crypto';
-import { PrismaService } from '@/modules/prisma/prisma.service';
-import { MailService } from '@/modules/mail/mail.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { MailService } from '../mail/mail.service';
 
-// Secure token pattern — the key properties:
+// Secure token pattern:
 //   1. Single-use: tokenHash is marked usedAt on first use
 //   2. Short TTL: 1 hour expiry
 //   3. Never stored raw: we store SHA-256(token), email the raw token
-//      → even if the DB is leaked, the attacker cannot use the tokens
 //   4. Invalidates previous tokens for the same user on new request
 const TOKEN_TTL_MS = 60 * 60 * 1000;
 
@@ -23,13 +22,12 @@ export class PasswordResetService {
     // Always return success — never reveal whether the email is registered
     if (!user) return;
 
-    // Invalidate any previous unused tokens for this user
     await this.prisma.passwordResetToken.updateMany({
       where: { userId: user.id, usedAt: null },
       data: { usedAt: new Date() },
     });
 
-    const rawToken = randomBytes(32).toString('hex'); // 256 bits of entropy
+    const rawToken = randomBytes(32).toString('hex');
     const tokenHash = createHash('sha256').update(rawToken).digest('hex');
     const expiresAt = new Date(Date.now() + TOKEN_TTL_MS);
 
@@ -66,7 +64,7 @@ export class PasswordResetService {
         where: { id: record.userId },
         data: { password: hashedPassword },
       }),
-      // Revoke all refresh tokens — the password changed, old sessions should end
+      // Revoke all refresh tokens — password changed, old sessions must end
       this.prisma.refreshToken.updateMany({
         where: { userId: record.userId },
         data: { revokedAt: new Date() },
