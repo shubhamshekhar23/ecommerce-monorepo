@@ -1,3 +1,7 @@
+# Phase 7
+
+- Orders store a snapshot of the shipping address in a JSONB column instead of an FK, so if a user changes `123 Main St` to `456 Park Ave` later, old orders still show `123 Main St`, preserving correct receipts and order history.
+
 # Phase 6 (security)
 
 - RS256 JWT (Asymmetric Signing)

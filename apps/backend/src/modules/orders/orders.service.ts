@@ -195,6 +195,7 @@ export class OrdersService {
         variantAttributes: item.variantAttributes as Record<string, string> | null,
         subtotal: parseFloat(String(item.price)) * item.quantity,
       })),
+      shippingCost: order.shippingCost !== null && order.shippingCost !== undefined ? String(order.shippingCost) : null,
       totalPrice: String(order.totalPrice),
       status: order.status,
       notes: order.notes,

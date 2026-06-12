@@ -7,6 +7,7 @@ import { OutboxService } from '@/modules/outbox/outbox.service';
 import { CircuitBreakerService } from '@/modules/circuit-breaker/circuit-breaker.service';
 import { BusinessMetricsService } from '@/modules/metrics/business-metrics.service';
 import { CorrelationIdService } from '@/common/services/correlation-id.service';
+import { ShippingService } from '@/modules/shipping/shipping.service';
 import type { NotificationJobPayload } from '@/modules/queue/dto/notification-job.dto';
 
 type CartWithItems = Prisma.CartGetPayload<{
@@ -15,7 +16,7 @@ type CartWithItems = Prisma.CartGetPayload<{
 type OrderWithItems = Prisma.OrderGetPayload<{
   include: { items: { include: { product: true } } };
 }>;
-type UserForNotification = { email: string; firstName: string | null };
+type UserForNotification = { email: string; firstName: string | null; country: string };
 
 // Why a Saga?
 // The order flow spans multiple resources: DB (create order + decrement stock),
@@ -33,6 +34,7 @@ export class OrderSagaService {
     private readonly circuitBreaker: CircuitBreakerService,
     private readonly businessMetrics: BusinessMetricsService,
     private readonly correlationId: CorrelationIdService,
+    private readonly shippingService: ShippingService,
   ) {}
 
   async execute(userId: string, cartId?: string): Promise<OrderWithItems> {
@@ -85,7 +87,7 @@ export class OrderSagaService {
       async (tx) => {
         await this.acquireVariantLocks(tx, cart);
         await this.validateStock(tx, cart);
-        const order = await this.createOrderRecord(tx, userId, cart);
+        const order = await this.createOrderRecord(tx, userId, cart, user.country);
         await this.decrementStock(tx, cart);
         await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
         await this.publishOrderCreatedEvent(tx, order, user, cart);
@@ -133,17 +135,21 @@ export class OrderSagaService {
     tx: Prisma.TransactionClient,
     userId: string,
     cart: CartWithItems,
+    country: string,
   ): Promise<OrderWithItems> {
-    const totalPrice = cart.items.reduce(
+    const subtotal = cart.items.reduce(
       (sum, item) => sum + parseFloat(String(item.variant!.price)) * item.quantity,
       0,
     );
+    const totalWeightKg = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+    const shipping = this.shippingService.selectStrategy(subtotal, totalWeightKg, country);
 
     return tx.order.create({
       data: {
         orderNumber: this.generateOrderNumber(),
         userId,
-        totalPrice,
+        totalPrice: subtotal + shipping.cost,
+        shippingCost: shipping.cost,
         status: OrderStatus.PENDING,
         items: {
           createMany: {
@@ -151,7 +157,6 @@ export class OrderSagaService {
               productId: item.productId,
               quantity: item.quantity,
               price: item.variant!.price,
-              // Snapshot variant attributes at purchase time — immutable after order placed
               variantAttributes: this.buildAttributeSnapshot(item.variant),
             })),
           },
@@ -271,10 +276,14 @@ export class OrderSagaService {
   private async loadUser(userId: string): Promise<UserForNotification> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { email: true, firstName: true },
+      select: {
+        email: true,
+        firstName: true,
+        addresses: { where: { isDefault: true }, select: { country: true }, take: 1 },
+      },
     });
     if (!user) throw new BadRequestException('User not found');
-    return user;
+    return { email: user.email, firstName: user.firstName, country: user.addresses[0]?.country ?? 'US' };
   }
 
   private validateCart(cart: CartWithItems): void {

@@ -41,7 +41,10 @@ export class OrderResponseDto {
   @ApiProperty({ type: [OrderItemResponseDto] })
   items!: OrderItemResponseDto[];
 
-  @ApiProperty({ example: '149.99' })
+  @ApiProperty({ example: '5.00', nullable: true })
+  shippingCost!: string | null;
+
+  @ApiProperty({ example: '154.99' })
   totalPrice!: string;
 
   @ApiProperty({ enum: OrderStatus, example: OrderStatus.PENDING })
