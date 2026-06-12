@@ -1,0 +1,56 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 30
+      arrivalRate: 1
+      name: 'Warm-up'
+    - duration: 120
+      arrivalRate: 3
+      name: 'Sustained — concurrent orders for same products deadlock'
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+  variables:
+    apiPrefix: '/api'
+    user1Email: 'loadtest1@example.com'
+    user1Password: 'LoadTest123!'
+    user2Email: 'loadtest2@example.com'
+    user2Password: 'LoadTest123!'
+
+# NOTE: Deadlocks only happen when two users order the same product variants
+# at the same time. Ensure both loadtest users have carts with the same products.
+scenarios:
+  - name: 'S18 - User 1 orders (no sort — deadlock risk)'
+    weight: 1
+    flow:
+      - post:
+          url: '{{ apiPrefix }}/auth/login'
+          json:
+            email: '{{ user1Email }}'
+            password: '{{ user1Password }}'
+          capture:
+            json: '$.accessToken'
+            as: 'accessToken'
+      - post:
+          url: '{{ apiPrefix }}/orders'
+          headers:
+            Authorization: 'Bearer {{ accessToken }}'
+          json: {}
+      - think: 2
+  - name: 'S18 - User 2 orders (no sort — deadlock risk)'
+    weight: 1
+    flow:
+      - post:
+          url: '{{ apiPrefix }}/auth/login'
+          json:
+            email: '{{ user2Email }}'
+            password: '{{ user2Password }}'
+          capture:
+            json: '$.accessToken'
+            as: 'accessToken'
+      - post:
+          url: '{{ apiPrefix }}/orders'
+          headers:
+            Authorization: 'Bearer {{ accessToken }}'
+          json: {}
+      - think: 2

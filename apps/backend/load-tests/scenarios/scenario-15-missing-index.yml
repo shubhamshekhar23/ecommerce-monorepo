@@ -1,0 +1,38 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 30
+      arrivalRate: 3
+      name: 'Warm-up'
+    - duration: 180
+      arrivalRate: 10
+      name: 'Sustained — admin order list slow due to seq scan'
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+  variables:
+    apiPrefix: '/api'
+    adminEmail: 'admin@example.com'
+    adminPassword: 'Admin123!'
+
+scenarios:
+  - name: 'S15 - Admin order listing (full table scan per request)'
+    flow:
+      - post:
+          url: '{{ apiPrefix }}/auth/login'
+          json:
+            email: '{{ adminEmail }}'
+            password: '{{ adminPassword }}'
+          capture:
+            json: '$.accessToken'
+            as: 'accessToken'
+      - get:
+          url: '{{ apiPrefix }}/orders?page=1&limit=20'
+          headers:
+            Authorization: 'Bearer {{ accessToken }}'
+      - think: 3
+      - get:
+          url: '{{ apiPrefix }}/orders?page=2&limit=20'
+          headers:
+            Authorization: 'Bearer {{ accessToken }}'
+      - think: 3

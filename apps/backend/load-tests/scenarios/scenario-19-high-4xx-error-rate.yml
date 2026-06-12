@@ -1,0 +1,24 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 30
+      arrivalRate: 5
+      name: 'Warm-up'
+    - duration: 180
+      arrivalRate: 20
+      name: 'Sustained — all product requests return 400'
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+  variables:
+    apiPrefix: '/api'
+
+scenarios:
+  - name: 'S19 - Product listing (all 400s — not a crash)'
+    flow:
+      - get:
+          url: '{{ apiPrefix }}/products?page=1&limit=20'
+      - think: 1
+      - get:
+          url: '{{ apiPrefix }}/products?page=2&limit=20'
+      - think: 2

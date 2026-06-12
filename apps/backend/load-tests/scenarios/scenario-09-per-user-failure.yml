@@ -1,0 +1,60 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 30
+      arrivalRate: 3
+      name: 'Warm-up'
+    - duration: 180
+      arrivalRate: 10
+      name: 'Sustained — ~20% of users always fail, others never fail'
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+  variables:
+    apiPrefix: '/api'
+    users:
+      - email: 'loadtest1@example.com'
+        password: 'LoadTest123!'
+      - email: 'loadtest2@example.com'
+        password: 'LoadTest123!'
+      - email: 'loadtest3@example.com'
+        password: 'LoadTest123!'
+      - email: 'loadtest4@example.com'
+        password: 'LoadTest123!'
+      - email: 'loadtest5@example.com'
+        password: 'LoadTest123!'
+
+scenarios:
+  - name: 'S9 - Order creation (deterministic per-user failure)'
+    flow:
+      - post:
+          url: '{{ apiPrefix }}/auth/login'
+          json:
+            email: '{{ users[0].email }}'
+            password: '{{ users[0].password }}'
+          capture:
+            json: '$.accessToken'
+            as: 'accessToken'
+      - post:
+          url: '{{ apiPrefix }}/orders'
+          headers:
+            Authorization: 'Bearer {{ accessToken }}'
+          json: {}
+      - think: 3
+  - name: 'S9 - User 2'
+    weight: 1
+    flow:
+      - post:
+          url: '{{ apiPrefix }}/auth/login'
+          json:
+            email: '{{ users[1].email }}'
+            password: '{{ users[1].password }}'
+          capture:
+            json: '$.accessToken'
+            as: 'accessToken'
+      - post:
+          url: '{{ apiPrefix }}/orders'
+          headers:
+            Authorization: 'Bearer {{ accessToken }}'
+          json: {}
+      - think: 3

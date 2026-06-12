@@ -27,6 +27,13 @@ export class OrderConsumer {
     queueOptions: { durable: true },
   })
   async handleOrderPlaced(event: OrderPlacedEvent): Promise<void | Nack> {
+    /*
+     - S14: consumer sleeps 5 s per message — processes 12 msg/min instead of hundreds.
+     - Under order load the RabbitMQ queue depth grows; emails arrive minutes late.
+     - Signal: RabbitMQ UI messages_ready climbs; Loki shows slow consumer throughput.
+    */
+    if (process.env.BUG_SCENARIO === '14') await new Promise((r) => setTimeout(r, 5_000));
+
     this.logger.log(`Order placed event: orderId=${event.orderId} email=${event.userEmail}`);
 
     try {

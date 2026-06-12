@@ -1,0 +1,24 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 30
+      arrivalRate: 5
+      name: 'Warm-up'
+    - duration: 180
+      arrivalRate: 20
+      name: 'Sustained — p50 fine, p99 terrible (10% sleep 5s)'
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+  variables:
+    apiPrefix: '/api'
+
+scenarios:
+  - name: 'S11 - Product listing (random 5s delay on 10% of requests)'
+    flow:
+      - get:
+          url: '{{ apiPrefix }}/products?page=1&limit=20'
+      - think: 1
+      - get:
+          url: '{{ apiPrefix }}/products?page=2&limit=20'
+      - think: 2

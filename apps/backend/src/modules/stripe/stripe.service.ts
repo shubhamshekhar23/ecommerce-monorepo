@@ -6,6 +6,7 @@ import { PrismaService } from '@/modules/prisma/prisma.service';
 import { PaymentStatus } from '@prisma/client';
 import { PaymentConfirmedEvent } from '@/modules/events/order.events';
 import { BusinessMetricsService } from '@/modules/metrics/business-metrics.service';
+import { isBugScenario } from '@/modules/debug-scenarios/bug-scenario.guard';
 
 type StripeClient = InstanceType<typeof Stripe>;
 type StripePaymentIntent = Awaited<ReturnType<StripeClient['paymentIntents']['create']>>;
@@ -38,6 +39,16 @@ export class StripeService {
     const order = await this.prisma.order.findUnique({ where: { id: orderId } });
     if (!order) {
       throw new NotFoundException(`Order with ID ${orderId} not found`);
+    }
+
+    /*
+     - S13: simulates a Stripe API timeout — 2 s delay then throws.
+     - Signal: Grafana PaymentFailureSpike alert; payment_success_rate_percent drops to 0.
+     - Jaeger: HTTP spans fail at the Stripe child span after 2 s.
+    */
+    if (isBugScenario(13)) {
+      await new Promise((r) => setTimeout(r, 2_000));
+      throw new Error('Stripe API timeout');
     }
 
     const paymentIntent = await this.stripe.paymentIntents.create({

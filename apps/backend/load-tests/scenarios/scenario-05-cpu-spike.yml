@@ -1,0 +1,27 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 30
+      arrivalRate: 5
+      name: 'Warm-up'
+    - duration: 180
+      arrivalRate: 30
+      name: 'Sustained — CPU burn per search result'
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+  variables:
+    apiPrefix: '/api'
+
+scenarios:
+  - name: 'S5 - Product search (CPU intensive per result)'
+    flow:
+      - get:
+          url: '{{ apiPrefix }}/products/search?q=shirt'
+      - think: 1
+      - get:
+          url: '{{ apiPrefix }}/products/search?q=pants'
+      - think: 1
+      - get:
+          url: '{{ apiPrefix }}/products/search?q=shoes'
+      - think: 2

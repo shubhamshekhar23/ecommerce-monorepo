@@ -1,0 +1,36 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 30
+      arrivalRate: 2
+      name: 'Warm-up'
+    - duration: 180
+      arrivalRate: 5
+      name: 'Sustained — retries amplify payment failures, failure rate >> request rate'
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+  variables:
+    apiPrefix: '/api'
+    testUserEmail: 'loadtest1@example.com'
+    testUserPassword: 'LoadTest123!'
+
+# NOTE: Also set BUG_SCENARIO=13 to make Stripe fail — S16 amplifies that failure via retries.
+# Alternatively run with just BUG_SCENARIO=16 to observe the circuit never opening.
+scenarios:
+  - name: 'S16 - Orders (circuit never opens, retries flood Stripe)'
+    flow:
+      - post:
+          url: '{{ apiPrefix }}/auth/login'
+          json:
+            email: '{{ testUserEmail }}'
+            password: '{{ testUserPassword }}'
+          capture:
+            json: '$.accessToken'
+            as: 'accessToken'
+      - post:
+          url: '{{ apiPrefix }}/orders'
+          headers:
+            Authorization: 'Bearer {{ accessToken }}'
+          json: {}
+      - think: 3

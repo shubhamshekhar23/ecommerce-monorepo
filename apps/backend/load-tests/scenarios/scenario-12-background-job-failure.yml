@@ -1,0 +1,40 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 60
+      arrivalRate: 2
+      name: 'Add items to carts (triggers recovery jobs after ABANDON_DELAY_MS)'
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+  variables:
+    apiPrefix: '/api'
+    testUserEmail: 'loadtest1@example.com'
+    testUserPassword: 'LoadTest123!'
+
+# NOTE: After running this, wait ~60s for cart recovery jobs to trigger and fail.
+# Then observe BullMQ failed count and Loki error logs from CartRecoveryProcessor.
+scenarios:
+  - name: 'S12 - Add to cart and abandon (recovery jobs will fail)'
+    flow:
+      - post:
+          url: '{{ apiPrefix }}/auth/login'
+          json:
+            email: '{{ testUserEmail }}'
+            password: '{{ testUserPassword }}'
+          capture:
+            json: '$.accessToken'
+            as: 'accessToken'
+      - get:
+          url: '{{ apiPrefix }}/products?page=1&limit=5'
+          capture:
+            json: '$.data[0].id'
+            as: 'productId'
+      - post:
+          url: '{{ apiPrefix }}/cart/items'
+          headers:
+            Authorization: 'Bearer {{ accessToken }}'
+          json:
+            productId: '{{ productId }}'
+            quantity: 1
+      - think: 5
