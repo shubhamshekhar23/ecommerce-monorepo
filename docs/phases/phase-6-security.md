@@ -128,13 +128,15 @@ Secure single-use token pattern:
 
 ---
 
-## JWT Revocation Trade-Off
+## Access Token + Refresh Token
 
-JWTs are stateless — there is no server-side session to invalidate. If you ban a user, their JWT remains valid until expiry.
+A single long-lived JWT is risky — if it leaks, the attacker has access until it expires. Two tokens solve this:
 
-This project uses short access token expiry (15 minutes) + refresh token rotation as the practical solution:
-- When a user is banned, their refresh token is revoked in the DB
-- Their access token will expire in at most 15 minutes
-- Next refresh call fails → they are effectively logged out
+- **Access token** — 15 minutes, stateless, sent on every request. Short life limits the leak window.
+- **Refresh token** — 7 days, stored in the DB, used only to get a new access token silently. Never sent on regular API calls.
 
-The alternative (token revocation list in Redis keyed by `jti` claim) adds a Redis lookup on every request — a trade-off you'd make only if 15-minute windows are unacceptable for your threat model.
+On `POST /auth/refresh`: the old refresh token is revoked and a new pair is issued (**rotation** — each refresh token is single-use). A stolen token can only be used once before it's invalidated.
+
+Refresh tokens can be revoked instantly from the DB — on logout, ban, or suspicious activity. Access tokens expire on their own within 15 minutes. Per-user cap of 5 active sessions — oldest is pruned when exceeded.
+
+The alternative (Redis revocation list for access tokens) gives instant invalidation but adds a Redis lookup on every request — only worth it if 15 minutes is too long for your threat model.
