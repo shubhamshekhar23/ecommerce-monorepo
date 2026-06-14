@@ -6,6 +6,17 @@ import { StripeService } from './stripe.service';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 import { BusinessMetricsService } from '@/modules/metrics/business-metrics.service';
 
+jest.mock('stripe', () => {
+  return jest.fn().mockImplementation(() => ({
+    paymentIntents: {
+      create: jest.fn().mockResolvedValue({ id: 'pi_mock', status: 'requires_payment_method' }),
+      cancel: jest.fn().mockResolvedValue({ id: 'pi_mock', status: 'canceled' }),
+    },
+    refunds: { create: jest.fn().mockResolvedValue({ id: 're_mock' }) },
+    webhooks: { constructEvent: jest.fn() },
+  }));
+});
+
 // eslint-disable-next-line max-lines-per-function
 describe('StripeService', () => {
   let service: StripeService;

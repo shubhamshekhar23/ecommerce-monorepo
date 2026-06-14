@@ -29,6 +29,7 @@ describe('CategoriesService', () => {
           useValue: {
             category: {
               create: jest.fn(),
+              findFirst: jest.fn(),
               findUnique: jest.fn(),
               findMany: jest.fn(),
               count: jest.fn(),

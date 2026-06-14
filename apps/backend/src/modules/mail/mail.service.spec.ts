@@ -106,7 +106,7 @@ describe('MailService', () => {
         orderNumber: 'ORD-123',
         status: 'PENDING',
         createdAt: new Date('2024-01-01'),
-        total: { toString: () => '99.99' },
+        totalPrice: { toString: () => '99.99' },
       };
 
       const items = [{ productName: 'Laptop', quantity: 1, price: 99.99 }];
