@@ -1,3 +1,11 @@
+# Phase 8
+
+- Migration Safety Check (`migration-safety-check.sh`)
+  - Validates new database migrations to ensure they are safe for zero-downtime deployments.
+  - ❌ `DROP TABLE` / `DROP COLUMN` – Old application instances may still access them, causing query failures. If detected, the CI pipeline fails.
+  - ❌ `RENAME TABLE` / `RENAME COLUMN` – Old application instances still use the original names, resulting in query errors. If detected, the CI pipeline fails.
+  - ⚠️ `ADD COLUMN NOT NULL` without `DEFAULT` – Old application instances insert data without the new column, causing `NOT NULL` constraint violations. Reported as a warning only; CI does not fail.
+
 # Phase 7
 
 - Orders store a snapshot of the shipping address in a JSONB column instead of an FK, so if a user changes `123 Main St` to `456 Park Ave` later, old orders still show `123 Main St`, preserving correct receipts and order history.

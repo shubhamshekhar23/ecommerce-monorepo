@@ -34,11 +34,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          # Scope cache to backend package-lock — frontend changes don't bust this cache.
           cache: 'npm'
-          cache-dependency-path: apps/backend/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - run: npm ci
+        working-directory: .
 
       - run: npm run lint:check
 
@@ -117,9 +117,10 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: apps/backend/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - run: npm ci
+        working-directory: .
 
       # Must run before tsc and before jest — generates @prisma/client TypeScript types.
       # Without this, any "import { PrismaClient } from '@prisma/client'" fails at compile time.
