@@ -115,7 +115,9 @@ export class OutboxService {
      - RabbitMQ UI: queue message count stays 0; Mailpit: no emails received.
     */
     if (isBugScenario(21)) {
-      this.logger.log(`[S21] Silently dropping outbox event: type=${event.eventType} id=${event.id}`);
+      this.logger.log(
+        `[S21] Silently dropping outbox event: type=${event.eventType} id=${event.id}`,
+      );
       return;
     }
 

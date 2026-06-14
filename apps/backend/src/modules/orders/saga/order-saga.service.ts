@@ -56,20 +56,14 @@ export class OrderSagaService {
     */
     if (isBugScenario(7)) await new Promise((r) => setTimeout(r, 3_000));
 
-    const [cart, user] = await Promise.all([
-      this.loadCart(userId, cartId),
-      this.loadUser(userId),
-    ]);
+    const [cart, user] = await Promise.all([this.loadCart(userId, cartId), this.loadUser(userId)]);
 
     this.validateCart(cart);
 
     const order = await this.runOrderTransaction(userId, cart, user);
 
     try {
-      await this.circuitBreaker.createPaymentIntent(
-        order.id,
-        parseFloat(String(order.totalPrice)),
-      );
+      await this.circuitBreaker.createPaymentIntent(order.id, parseFloat(String(order.totalPrice)));
     } catch (error) {
       await this.compensate(order);
       throw error;
@@ -116,10 +110,7 @@ export class OrderSagaService {
     if (isBugScenario(10)) await new Promise((r) => setTimeout(r, 10_000));
   }
 
-  private async validateStock(
-    tx: Prisma.TransactionClient,
-    cart: CartWithItems,
-  ): Promise<void> {
+  private async validateStock(tx: Prisma.TransactionClient, cart: CartWithItems): Promise<void> {
     for (const item of cart.items) {
       const variant = await tx.productVariant.findUnique({ where: { id: item.variantId! } });
       if (!variant || variant.stock < item.quantity) {
@@ -175,10 +166,7 @@ export class OrderSagaService {
     return attrs;
   }
 
-  private async decrementStock(
-    tx: Prisma.TransactionClient,
-    cart: CartWithItems,
-  ): Promise<void> {
+  private async decrementStock(tx: Prisma.TransactionClient, cart: CartWithItems): Promise<void> {
     for (const item of cart.items) {
       await tx.productVariant.update({
         where: { id: item.variantId! },
@@ -283,7 +271,11 @@ export class OrderSagaService {
       },
     });
     if (!user) throw new BadRequestException('User not found');
-    return { email: user.email, firstName: user.firstName, country: user.addresses[0]?.country ?? 'US' };
+    return {
+      email: user.email,
+      firstName: user.firstName,
+      country: user.addresses[0]?.country ?? 'US',
+    };
   }
 
   private validateCart(cart: CartWithItems): void {
@@ -291,7 +283,10 @@ export class OrderSagaService {
   }
 
   private generateOrderNumber(): string {
-    const ts = new Date().toISOString().replace(/[-:T.Z]/g, '').substring(0, 14);
+    const ts = new Date()
+      .toISOString()
+      .replace(/[-:T.Z]/g, '')
+      .substring(0, 14);
     const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
     return `${ts}-${rand}`;
   }

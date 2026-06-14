@@ -41,7 +41,14 @@ export class OrdersService {
     this.businessMetrics.recordOrder('PENDING');
     this.eventEmitter.emit(
       OrderCreatedEvent.EVENT_NAME,
-      new OrderCreatedEvent(order.id, order.userId, order.orderNumber, String(order.totalPrice), order.items.length, order.createdAt),
+      new OrderCreatedEvent(
+        order.id,
+        order.userId,
+        order.orderNumber,
+        String(order.totalPrice),
+        order.items.length,
+        order.createdAt,
+      ),
     );
     return this.mapToResponse(order);
   }
@@ -56,7 +63,11 @@ export class OrdersService {
     return this.mapToResponse(order);
   }
 
-  async listUserOrders(userId: string, page = 1, limit = 20): Promise<PaginationDto<OrderResponseDto>> {
+  async listUserOrders(
+    userId: string,
+    page = 1,
+    limit = 20,
+  ): Promise<PaginationDto<OrderResponseDto>> {
     const { skip, take } = calculatePagination(page, limit);
 
     const [orders, total] = await Promise.all([
@@ -70,7 +81,12 @@ export class OrdersService {
       this.prisma.order.count({ where: { userId } }),
     ]);
 
-    return buildPaginationResponse(orders.map((o) => this.mapToResponse(o)), total, page, limit);
+    return buildPaginationResponse(
+      orders.map((o) => this.mapToResponse(o)),
+      total,
+      page,
+      limit,
+    );
   }
 
   async listAllOrders(page = 1, limit = 20): Promise<PaginationDto<OrderResponseDto>> {
@@ -96,7 +112,12 @@ export class OrdersService {
       this.prisma.order.count(),
     ]);
 
-    return buildPaginationResponse(orders.map((o) => this.mapToResponse(o)), total, page, limit);
+    return buildPaginationResponse(
+      orders.map((o) => this.mapToResponse(o)),
+      total,
+      page,
+      limit,
+    );
   }
 
   // eslint-disable-next-line max-lines-per-function
@@ -175,7 +196,13 @@ export class OrdersService {
 
     this.eventEmitter.emit(
       OrderStatusChangedEvent.EVENT_NAME,
-      new OrderStatusChangedEvent(orderId, order.userId, order.status, OrderStatus.CANCELLED, updated.updatedAt),
+      new OrderStatusChangedEvent(
+        orderId,
+        order.userId,
+        order.status,
+        OrderStatus.CANCELLED,
+        updated.updatedAt,
+      ),
     );
     return this.mapToResponse(updated);
   }
@@ -186,16 +213,21 @@ export class OrdersService {
       id: order.id,
       orderNumber: order.orderNumber,
       userId: order.userId,
-      items: order.items.map((item): OrderItemResponseDto => ({
-        id: item.id,
-        productId: item.productId,
-        productName: item.product?.name ?? null,
-        quantity: item.quantity,
-        price: String(item.price),
-        variantAttributes: item.variantAttributes as Record<string, string> | null,
-        subtotal: parseFloat(String(item.price)) * item.quantity,
-      })),
-      shippingCost: order.shippingCost !== null && order.shippingCost !== undefined ? String(order.shippingCost) : null,
+      items: order.items.map(
+        (item): OrderItemResponseDto => ({
+          id: item.id,
+          productId: item.productId,
+          productName: item.product?.name ?? null,
+          quantity: item.quantity,
+          price: String(item.price),
+          variantAttributes: item.variantAttributes as Record<string, string> | null,
+          subtotal: parseFloat(String(item.price)) * item.quantity,
+        }),
+      ),
+      shippingCost:
+        order.shippingCost !== null && order.shippingCost !== undefined
+          ? String(order.shippingCost)
+          : null,
       totalPrice: String(order.totalPrice),
       status: order.status,
       notes: order.notes,

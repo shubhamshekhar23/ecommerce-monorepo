@@ -36,7 +36,12 @@ async function seedCategory(): Promise<void> {
   await prisma.category.upsert({
     where: { id: IDS.category },
     update: {},
-    create: { id: IDS.category, name: 'Load Test Category', slug: 'load-test-category', isActive: true },
+    create: {
+      id: IDS.category,
+      name: 'Load Test Category',
+      slug: 'load-test-category',
+      isActive: true,
+    },
   });
   console.log('✓ Category');
 }
@@ -76,9 +81,30 @@ async function seedUsers(): Promise<void> {
 }
 
 const PRODUCT_DATA = [
-  { id: IDS.products.one, name: 'Load Test Product 1', slug: 'load-test-product-1', price: '99.99', variantId: IDS.variants.one, sku: 'LT-PROD-1-STD' },
-  { id: IDS.products.two, name: 'Load Test Product 2', slug: 'load-test-product-2', price: '49.99', variantId: IDS.variants.two, sku: 'LT-PROD-2-STD' },
-  { id: IDS.products.three, name: 'Load Test Product 3', slug: 'load-test-product-3', price: '199.99', variantId: IDS.variants.three, sku: 'LT-PROD-3-STD' },
+  {
+    id: IDS.products.one,
+    name: 'Load Test Product 1',
+    slug: 'load-test-product-1',
+    price: '99.99',
+    variantId: IDS.variants.one,
+    sku: 'LT-PROD-1-STD',
+  },
+  {
+    id: IDS.products.two,
+    name: 'Load Test Product 2',
+    slug: 'load-test-product-2',
+    price: '49.99',
+    variantId: IDS.variants.two,
+    sku: 'LT-PROD-2-STD',
+  },
+  {
+    id: IDS.products.three,
+    name: 'Load Test Product 3',
+    slug: 'load-test-product-3',
+    price: '199.99',
+    variantId: IDS.variants.three,
+    sku: 'LT-PROD-3-STD',
+  },
 ];
 
 async function seedProducts(): Promise<void> {
@@ -91,7 +117,15 @@ async function seedProducts(): Promise<void> {
     await prisma.productVariant.upsert({
       where: { id: p.variantId },
       update: {},
-      create: { id: p.variantId, productId: p.id, sku: p.sku, price: p.price, cost: '0', stock: 10000, isActive: true },
+      create: {
+        id: p.variantId,
+        productId: p.id,
+        sku: p.sku,
+        price: p.price,
+        cost: '0',
+        stock: 10000,
+        isActive: true,
+      },
     });
   }
   console.log('✓ Products + variants (stock: 10000 each)');

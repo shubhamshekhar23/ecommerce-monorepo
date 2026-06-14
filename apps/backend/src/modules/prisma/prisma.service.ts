@@ -65,7 +65,11 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     const start = Date.now();
     const span = api.trace.getTracer('prisma').startSpan(`prisma ${model}.${params.action}`, {
       kind: api.SpanKind.CLIENT,
-      attributes: { 'db.system': 'postgresql', 'db.operation': params.action, 'db.sql.table': model },
+      attributes: {
+        'db.system': 'postgresql',
+        'db.operation': params.action,
+        'db.sql.table': model,
+      },
     });
     return api.context.with(api.trace.setSpan(api.context.active(), span), async () => {
       try {
@@ -78,7 +82,9 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         throw err;
       } finally {
         span.end();
-        this.dbDuration.labels({ db_operation: params.action, db_sql_table: model }).observe((Date.now() - start) / 1000);
+        this.dbDuration
+          .labels({ db_operation: params.action, db_sql_table: model })
+          .observe((Date.now() - start) / 1000);
       }
     });
   }

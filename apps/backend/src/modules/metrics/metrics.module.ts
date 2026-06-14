@@ -1,5 +1,10 @@
 import { Module } from '@nestjs/common';
-import { PrometheusModule, makeCounterProvider, makeGaugeProvider, makeHistogramProvider } from '@willsoto/nestjs-prometheus';
+import {
+  PrometheusModule,
+  makeCounterProvider,
+  makeGaugeProvider,
+  makeHistogramProvider,
+} from '@willsoto/nestjs-prometheus';
 import { MetricsController } from './metrics.controller';
 import { BusinessMetricsService } from './business-metrics.service';
 import { HttpMetricsInterceptor } from './http-metrics.interceptor';
@@ -23,11 +28,28 @@ import { HttpMetricsInterceptor } from './http-metrics.interceptor';
   controllers: [MetricsController],
   providers: [
     BusinessMetricsService,
-    makeCounterProvider({ name: 'orders_total', help: 'Total orders by status', labelNames: ['status'] }),
-    makeCounterProvider({ name: 'payment_events_total', help: 'Payment events by status', labelNames: ['status'] }),
-    makeGaugeProvider({ name: 'payment_success_rate_percent', help: 'Payment success rate (0-100)' }),
-    makeGaugeProvider({ name: 'cart_to_order_conversion_rate', help: 'Cart to order conversion rate (0-100)' }),
-    makeCounterProvider({ name: 'inventory_reservation_failures_total', help: 'Inventory reservation failures' }),
+    makeCounterProvider({
+      name: 'orders_total',
+      help: 'Total orders by status',
+      labelNames: ['status'],
+    }),
+    makeCounterProvider({
+      name: 'payment_events_total',
+      help: 'Payment events by status',
+      labelNames: ['status'],
+    }),
+    makeGaugeProvider({
+      name: 'payment_success_rate_percent',
+      help: 'Payment success rate (0-100)',
+    }),
+    makeGaugeProvider({
+      name: 'cart_to_order_conversion_rate',
+      help: 'Cart to order conversion rate (0-100)',
+    }),
+    makeCounterProvider({
+      name: 'inventory_reservation_failures_total',
+      help: 'Inventory reservation failures',
+    }),
     makeHistogramProvider({
       name: 'http_request_duration_ms',
       help: 'HTTP request duration in milliseconds',

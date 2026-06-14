@@ -58,6 +58,10 @@ export class CartRecoveryProcessor extends WorkerHost {
 
     const appUrl = this.config.get<string>('APP_URL') ?? 'http://localhost:3000';
     this.logger.log(`Cart recovery job=${job.id}: sending email to ${cart.user.email}`);
-    await this.mailService.sendAbandonedCartEmail(cart.user.email, cart.user.firstName ?? '', `${appUrl}/cart`);
+    await this.mailService.sendAbandonedCartEmail(
+      cart.user.email,
+      cart.user.firstName ?? '',
+      `${appUrl}/cart`,
+    );
   }
 }

@@ -41,7 +41,8 @@ export class HealthController {
       () => this.db.isHealthy(),
       () => this.redis.isHealthy(),
       () => this.memory.checkHeap('memory_heap', MEMORY_HEAP_THRESHOLD),
-      () => this.disk.checkStorage('storage', { path: '/', thresholdPercent: DISK_THRESHOLD_PERCENT }),
+      () =>
+        this.disk.checkStorage('storage', { path: '/', thresholdPercent: DISK_THRESHOLD_PERCENT }),
     ]);
   }
 
@@ -54,10 +55,7 @@ export class HealthController {
   @ApiResponse({ status: 200, description: 'Ready to accept traffic' })
   @ApiResponse({ status: 503, description: 'Not ready yet' })
   readiness() {
-    return this.health.check([
-      () => this.db.isHealthy(),
-      () => this.redis.isHealthy(),
-    ]);
+    return this.health.check([() => this.db.isHealthy(), () => this.redis.isHealthy()]);
   }
 
   // Liveness probe: is the process alive and not deadlocked?
@@ -72,7 +70,8 @@ export class HealthController {
   liveness() {
     return this.health.check([
       () => this.memory.checkHeap('memory_heap', MEMORY_HEAP_THRESHOLD),
-      () => this.disk.checkStorage('storage', { path: '/', thresholdPercent: DISK_THRESHOLD_PERCENT }),
+      () =>
+        this.disk.checkStorage('storage', { path: '/', thresholdPercent: DISK_THRESHOLD_PERCENT }),
     ]);
   }
 }

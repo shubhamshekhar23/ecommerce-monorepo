@@ -13,7 +13,9 @@ interface ShippingStrategy {
 
 class FreeShippingStrategy implements ShippingStrategy {
   name = 'free';
-  calculate(): number { return 0; }
+  calculate(): number {
+    return 0;
+  }
 }
 
 class FlatRateStrategy implements ShippingStrategy {
@@ -55,8 +57,7 @@ export class ShippingService {
 
   // Returns the cheapest option — used when no selection is made.
   getCheapest(subtotal: number, weightKg: number, country: string): ShippingQuote {
-    return this.getQuotes(subtotal, weightKg, country)
-      .sort((a, b) => a.cost - b.cost)[0];
+    return this.getQuotes(subtotal, weightKg, country).sort((a, b) => a.cost - b.cost)[0];
   }
 
   // Free shipping threshold: orders over $50 qualify for free.

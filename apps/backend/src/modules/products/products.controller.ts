@@ -56,7 +56,12 @@ export class ProductsController {
   @Public()
   @ApiOperation({ summary: 'List products with cursor-based pagination (recommended)' })
   @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({ name: 'cursor', required: false, type: String, description: 'Opaque cursor from previous response meta.nextCursor' })
+  @ApiQuery({
+    name: 'cursor',
+    required: false,
+    type: String,
+    description: 'Opaque cursor from previous response meta.nextCursor',
+  })
   async findAllCursor(
     @Query('limit') limit = 20,
     @Query('cursor') cursor?: string,
@@ -83,7 +88,9 @@ export class ProductsController {
   // Legacy offset pagination — kept for backward compat. Use /products/cursor instead.
   @Get()
   @Public()
-  @ApiOperation({ summary: 'List products (offset pagination — use /products/cursor for new clients)' })
+  @ApiOperation({
+    summary: 'List products (offset pagination — use /products/cursor for new clients)',
+  })
   async findAll(
     @Query('page') page = 1,
     @Query('limit') limit = 20,

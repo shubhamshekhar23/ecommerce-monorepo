@@ -28,11 +28,16 @@ export class CouponsService {
     const coupon = await this.findByCode(code);
     this.assertValid(coupon, subtotal);
 
-    const discount = coupon.type === 'PERCENTAGE'
-      ? subtotal * (Number(coupon.value) / 100)
-      : Math.min(Number(coupon.value), subtotal);
+    const discount =
+      coupon.type === 'PERCENTAGE'
+        ? subtotal * (Number(coupon.value) / 100)
+        : Math.min(Number(coupon.value), subtotal);
 
-    return { discountAmount: Math.round(discount * 100) / 100, couponId: coupon.id, couponCode: coupon.code };
+    return {
+      discountAmount: Math.round(discount * 100) / 100,
+      couponId: coupon.id,
+      couponCode: coupon.code,
+    };
   }
 
   // Atomic apply: UPDATE coupons SET usedCount = usedCount + 1 WHERE id = ? AND usedCount < maxUses
@@ -62,9 +67,19 @@ export class CouponsService {
     });
   }
 
-  private assertValid(coupon: { isActive: boolean; expiresAt: Date | null; maxUses: number | null; usedCount: number; minOrderAmount: Decimal | null }, subtotal: number): void {
+  private assertValid(
+    coupon: {
+      isActive: boolean;
+      expiresAt: Date | null;
+      maxUses: number | null;
+      usedCount: number;
+      minOrderAmount: Decimal | null;
+    },
+    subtotal: number,
+  ): void {
     if (!coupon.isActive) throw new BadRequestException('Coupon is inactive');
-    if (coupon.expiresAt && coupon.expiresAt < new Date()) throw new BadRequestException('Coupon has expired');
+    if (coupon.expiresAt && coupon.expiresAt < new Date())
+      throw new BadRequestException('Coupon has expired');
     if (coupon.maxUses !== null && coupon.usedCount >= coupon.maxUses) {
       throw new BadRequestException('Coupon has reached its usage limit');
     }

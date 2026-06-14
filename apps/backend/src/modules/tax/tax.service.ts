@@ -24,15 +24,19 @@ interface TaxRule {
 
 const TAX_RULES: TaxRule[] = [
   // Digital goods: EU VAT applies uniformly
-  { name: 'EU Digital VAT', matches: (c) => c.isDigitalGoods === true && EU_COUNTRIES.has(c.country), rate: 0.20 },
+  {
+    name: 'EU Digital VAT',
+    matches: (c) => c.isDigitalGoods === true && EU_COUNTRIES.has(c.country),
+    rate: 0.2,
+  },
   // US state taxes
-  { name: 'CA Sales Tax',  matches: (c) => c.country === 'US' && c.state === 'CA', rate: 0.0725 },
-  { name: 'NY Sales Tax',  matches: (c) => c.country === 'US' && c.state === 'NY', rate: 0.08 },
-  { name: 'TX Sales Tax',  matches: (c) => c.country === 'US' && c.state === 'TX', rate: 0.0825 },
+  { name: 'CA Sales Tax', matches: (c) => c.country === 'US' && c.state === 'CA', rate: 0.0725 },
+  { name: 'NY Sales Tax', matches: (c) => c.country === 'US' && c.state === 'NY', rate: 0.08 },
+  { name: 'TX Sales Tax', matches: (c) => c.country === 'US' && c.state === 'TX', rate: 0.0825 },
   // UK VAT
-  { name: 'UK VAT',        matches: (c) => c.country === 'GB', rate: 0.20 },
+  { name: 'UK VAT', matches: (c) => c.country === 'GB', rate: 0.2 },
   // Default: no tax
-  { name: 'No Tax',        matches: () => true, rate: 0 },
+  { name: 'No Tax', matches: () => true, rate: 0 },
 ];
 
 const EU_COUNTRIES = new Set(['DE', 'FR', 'IT', 'ES', 'NL', 'BE', 'AT', 'SE', 'PL']);

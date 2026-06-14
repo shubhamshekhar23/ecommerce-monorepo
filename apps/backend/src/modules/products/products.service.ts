@@ -14,7 +14,11 @@ import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 import { CacheService } from '@/modules/cache/cache.service';
 import { EXCHANGES, ROUTING_KEYS } from '@ecommerce/shared-types';
-import type { ProductCreatedEvent, ProductUpdatedEvent, ProductDeletedEvent } from '@ecommerce/shared-types';
+import type {
+  ProductCreatedEvent,
+  ProductUpdatedEvent,
+  ProductDeletedEvent,
+} from '@ecommerce/shared-types';
 import { CreateProductDto, UpdateProductDto, ProductImageDto } from './dto';
 import { ProductResponseDto, ProductSearchResponseDto } from './dto/product-response.dto';
 import { buildPaginationResponse } from '@/common/utils/pagination.util';
@@ -145,7 +149,9 @@ export class ProductsService {
     if (!product) throw new NotFoundException(`Product with ID ${id} not found`);
 
     if (updateProductDto.slug && updateProductDto.slug !== product.slug) {
-      const existing = await this.prisma.product.findFirst({ where: { slug: updateProductDto.slug } });
+      const existing = await this.prisma.product.findFirst({
+        where: { slug: updateProductDto.slug },
+      });
       if (existing) throw new ConflictException('Product slug already exists');
     }
 
@@ -184,7 +190,10 @@ export class ProductsService {
   }
 
   // eslint-disable-next-line max-lines-per-function
-  async findAllCursor(limit = DEFAULT_CURSOR_LIMIT, cursor?: string): Promise<CursorPageDto<ProductResponseDto>> {
+  async findAllCursor(
+    limit = DEFAULT_CURSOR_LIMIT,
+    cursor?: string,
+  ): Promise<CursorPageDto<ProductResponseDto>> {
     const cacheKey = `products:cursor:${limit}:${cursor ?? ''}`;
     return this.withCache(cacheKey, PRODUCT_LIST_TTL, async () => {
       const take = Math.min(Math.max(limit, 1), MAX_CURSOR_LIMIT);
@@ -196,24 +205,40 @@ export class ProductsService {
         include: {
           images: { where: { isMain: true } },
           category: { select: { name: true } },
-          variants: { where: { isActive: true }, select: { price: true }, orderBy: { price: 'asc' } },
+          variants: {
+            where: { isActive: true },
+            select: { price: true },
+            orderBy: { price: 'asc' },
+          },
         },
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       });
 
       const hasMore = products.length > take;
       const items = hasMore ? products.slice(0, take) : products;
-      return buildCursorResponse(items.map((p) => this.mapToResponse(p)), take, hasMore);
+      return buildCursorResponse(
+        items.map((p) => this.mapToResponse(p)),
+        take,
+        hasMore,
+      );
     });
   }
 
-  async search(term: string, limit = DEFAULT_CURSOR_LIMIT, cursor?: string): Promise<CursorPageDto<ProductSearchResponseDto>> {
+  async search(
+    term: string,
+    limit = DEFAULT_CURSOR_LIMIT,
+    cursor?: string,
+  ): Promise<CursorPageDto<ProductSearchResponseDto>> {
     const cacheKey = `products:search:${term}:${limit}:${cursor ?? ''}`;
     return this.withCache(cacheKey, PRODUCT_LIST_TTL, () => this.runSearch(term, limit, cursor));
   }
 
   // eslint-disable-next-line max-lines-per-function
-  private async runSearch(term: string, limit: number, cursor?: string): Promise<CursorPageDto<ProductSearchResponseDto>> {
+  private async runSearch(
+    term: string,
+    limit: number,
+    cursor?: string,
+  ): Promise<CursorPageDto<ProductSearchResponseDto>> {
     const take = Math.min(Math.max(limit, 1), MAX_CURSOR_LIMIT);
 
     const cursorClause = cursor
@@ -254,10 +279,18 @@ export class ProductsService {
 
     const hasMore = rows.length > take;
     const items = (hasMore ? rows.slice(0, take) : rows).map((row) => ({
-      id: row.id, name: row.name, slug: row.slug, description: row.description,
-      categoryId: row.categoryId, isActive: row.isActive,
-      createdAt: row.createdAt, updatedAt: row.updatedAt,
-      priceRange: { min: row.minPrice ? Number(row.minPrice) : null, max: row.maxPrice ? Number(row.maxPrice) : null },
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      description: row.description,
+      categoryId: row.categoryId,
+      isActive: row.isActive,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      priceRange: {
+        min: row.minPrice ? Number(row.minPrice) : null,
+        max: row.maxPrice ? Number(row.maxPrice) : null,
+      },
       searchRank: row.rank,
     }));
 
@@ -276,7 +309,11 @@ export class ProductsService {
     return this.withCache(cacheKey, PRODUCT_LIST_TTL, () => this.runFindAll(page, limit, text));
   }
 
-  private async runFindAll(page: number, limit: number, text?: string): Promise<PaginationDto<ProductResponseDto>> {
+  private async runFindAll(
+    page: number,
+    limit: number,
+    text?: string,
+  ): Promise<PaginationDto<ProductResponseDto>> {
     const validPage = Math.max(page, 1);
     const validLimit = Math.min(Math.max(limit, 1), 100);
     const skip = (validPage - 1) * validLimit;
@@ -307,16 +344,24 @@ export class ProductsService {
 
     const [products, total] = await Promise.all([
       this.prisma.product.findMany({
-        where, skip, take: validLimit,
+        where,
+        skip,
+        take: validLimit,
         include: {
           images: { where: { isMain: true } },
           category: { select: { name: true } },
           /*
            - S6: variants omitted from include so each product triggers a separate query below.
           */
-          ...(isBugScenario(6) ? {} : {
-            variants: { where: { isActive: true }, select: { price: true }, orderBy: { price: 'asc' } },
-          }),
+          ...(isBugScenario(6)
+            ? {}
+            : {
+                variants: {
+                  where: { isActive: true },
+                  select: { price: true },
+                  orderBy: { price: 'asc' },
+                },
+              }),
         },
         orderBy: { createdAt: 'desc' },
       }),
@@ -353,7 +398,12 @@ export class ProductsService {
       /* intentionally not calling client.end() */
     }
 
-    return buildPaginationResponse(products.map((p) => this.mapToResponse(p)), total, validPage, validLimit);
+    return buildPaginationResponse(
+      products.map((p) => this.mapToResponse(p)),
+      total,
+      validPage,
+      validLimit,
+    );
   }
 
   async findById(id: string): Promise<ProductResponseDto> {
@@ -370,7 +420,9 @@ export class ProductsService {
   }
 
   async findBySlug(slug: string): Promise<ProductResponseDto> {
-    return this.withCache(`products:detail:slug:${slug}`, PRODUCT_DETAIL_TTL, () => this.fetchBySlug(slug));
+    return this.withCache(`products:detail:slug:${slug}`, PRODUCT_DETAIL_TTL, () =>
+      this.fetchBySlug(slug),
+    );
   }
 
   private async fetchBySlug(slug: string): Promise<ProductResponseDto> {
@@ -424,9 +476,10 @@ export class ProductsService {
   private mapToResponse(product: ProductForResponse): ProductResponseDto {
     const variants = product.variants ?? [];
     const prices = variants.map((v) => parseFloat(v.price.toString()));
-    const priceRange = prices.length > 0
-      ? { min: Math.min(...prices), max: Math.max(...prices) }
-      : { min: null, max: null };
+    const priceRange =
+      prices.length > 0
+        ? { min: Math.min(...prices), max: Math.max(...prices) }
+        : { min: null, max: null };
 
     return {
       id: product.id,

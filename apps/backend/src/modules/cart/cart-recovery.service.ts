@@ -28,9 +28,7 @@ const ABANDON_DELAY_MS = 60 * 60 * 1000; // 1 hour
 export class CartRecoveryService {
   private readonly logger = new Logger(CartRecoveryService.name);
 
-  constructor(
-    @InjectQueue(QUEUE_NAMES.CART_RECOVERY) private readonly recoveryQueue: Queue,
-  ) {}
+  constructor(@InjectQueue(QUEUE_NAMES.CART_RECOVERY) private readonly recoveryQueue: Queue) {}
 
   async scheduleCheck(userId: string, cartId: string): Promise<void> {
     try {
@@ -40,7 +38,7 @@ export class CartRecoveryService {
         'check-abandoned',
         { userId, cartId },
         {
-          jobId: `cart-recovery-${userId}`,   // deterministic ID → upserts instead of duplicates
+          jobId: `cart-recovery-${userId}`, // deterministic ID → upserts instead of duplicates
           delay: ABANDON_DELAY_MS,
           removeOnComplete: true,
           removeOnFail: 3,
@@ -48,7 +46,9 @@ export class CartRecoveryService {
       );
     } catch (err) {
       // Non-critical: cart was already saved. A missed recovery email is acceptable.
-      this.logger.warn(`Failed to schedule cart recovery for userId=${userId}: ${err instanceof Error ? err.message : String(err)}`);
+      this.logger.warn(
+        `Failed to schedule cart recovery for userId=${userId}: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   }
 
@@ -57,7 +57,9 @@ export class CartRecoveryService {
     try {
       await this.cancelCheck(event.userId);
     } catch (err) {
-      this.logger.warn(`Failed to cancel cart recovery for userId=${event.userId}: ${err instanceof Error ? err.message : String(err)}`);
+      this.logger.warn(
+        `Failed to cancel cart recovery for userId=${event.userId}: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   }
 

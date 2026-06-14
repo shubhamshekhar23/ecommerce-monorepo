@@ -4,6 +4,60 @@ Things that are intentionally skipped for now but worth coming back to. Each ite
 
 ---
 
+## Phase 10 — CDC with Debezium + Kafka (Search Sync)
+
+### Replace RabbitMQ Product Events with Debezium CDC Pipeline
+
+**What:** Use Debezium to watch the Postgres WAL and stream every product table change to a Kafka topic. Replace the current `search-service` RabbitMQ subscription with a Kafka consumer that reads with offset tracking.
+
+**Why this matters:** The current `product.events` RabbitMQ pattern has a silent data loss risk — if search-service is down when a product is updated, the message is gone and the search index is permanently out of sync with no indication anything went wrong. Kafka's durable log means the consumer picks up exactly where it left off after any downtime and can replay from the beginning to rebuild the index from scratch.
+
+**RabbitMQ stays for notifications:** CDC replaces only the search sync path. Order and user events that drive notification emails remain on RabbitMQ — those are application-layer business events with explicit intent, not data observations. CDC + Kafka and RabbitMQ solve different problems and coexist.
+
+**What you will learn:**
+- CDC (Change Data Capture) and how Debezium reads Postgres WAL without touching application code
+- Kafka as a durable event log vs RabbitMQ as a message broker — when each is the right tool
+- Consumer groups and offset tracking — consumers replay missed events instead of losing them
+- At-least-once delivery guarantees and idempotent consumers
+
+**How to implement:**
+- Add Debezium and Kafka (+ Zookeeper or KRaft) to `docker-compose.yml`
+- Configure Debezium Postgres connector to watch the `Product` and `ProductVariant` tables
+- Create a `product.changes` Kafka topic that receives all row-level change events from Debezium
+- Replace `RabbitMQModule` in search-service with `kafkajs` consumer reading from `product.changes`
+- Handle insert/update/delete CDC event types and map them to OpenSearch index/update/delete operations
+- Add `KAFKA_BROKER_URL` to search-service environment in docker-compose
+
+**References:** `apps/search-service/src/app.module.ts`, `apps/search-service/src/search/`, `docker-compose.yml`
+
+---
+
+## Phase 11 — Real-time Analytics & Recommendations Pipeline
+
+### Kafka Clickstream Pipeline with Product Recommendations
+
+**What:** Stream user behaviour events (product views, searches, add-to-cart, purchases) to Kafka at high volume. Build two independent consumers: an analytics aggregator that computes trending products and popular categories, and a recommendations engine that derives "users who viewed X also viewed Y." Serve results from Redis for fast product page responses.
+
+**Why Kafka and not RabbitMQ:** This is the textbook Kafka use case. Event volume is too high for RabbitMQ (thousands of events per minute across all users). Multiple independent consumers need to read the same events at their own pace — analytics and recommendations both subscribe to the same clickstream topic without interfering with each other. Replay capability means you can backfill a new recommendation model against 30 days of historical events.
+
+**What you will learn:**
+- Clickstream design — what events to emit, what payload shape works for multiple consumers
+- Kafka consumer groups — analytics consumer and recommendations consumer read the same topic independently
+- Stream aggregation — computing counts and co-occurrence from a live event stream
+- High-volume event ingestion patterns used by Amazon, Shopify, Netflix
+- Kafka vs RabbitMQ in the same app — both coexist, each doing what it is best at
+
+**How to implement:**
+- Add a `ClickstreamMiddleware` (or interceptor) to backend that publishes view/search/cart/purchase events to a `user.behaviour` Kafka topic — fire-and-forget, must not block the response
+- Add an `analytics-service` that consumes `user.behaviour`, aggregates counts with a sliding window, and writes trending products and popular categories to Redis with a TTL
+- Add a `recommendations-service` (or module inside search-service) that builds a co-occurrence matrix from view events and writes `product:<id>:also-viewed` sets to Redis
+- Expose a `GET /products/:id/recommendations` endpoint on the backend that reads from Redis
+- Add a `GET /products/trending` endpoint backed by the Redis analytics aggregates
+
+**References:** `apps/search-service/`, `apps/backend/src/modules/products/`, `docker-compose.yml`
+
+---
+
 ## CI — Per-Service Workflows
 
 ### Add Separate CI Workflows For Each Service

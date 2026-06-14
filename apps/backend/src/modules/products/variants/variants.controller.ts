@@ -39,10 +39,7 @@ export class VariantsController {
   @ApiBearerAuth()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Add an option to a variant type (e.g. "XL" to Size)' })
-  async addOption(
-    @Param('typeId') typeId: string,
-    @Body('value') value: string,
-  ): Promise<any> {
+  async addOption(@Param('typeId') typeId: string, @Body('value') value: string): Promise<any> {
     return this.variantsService.addOption(typeId, value);
   }
 

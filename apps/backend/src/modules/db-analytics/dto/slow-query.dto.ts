@@ -10,13 +10,18 @@ export class SlowQueryDto {
   @ApiProperty({ description: 'Average execution time in milliseconds' })
   meanExecMs!: number;
 
-  @ApiProperty({ description: 'Total execution time across all calls (ms). Sort by this to find the most expensive queries.' })
+  @ApiProperty({
+    description:
+      'Total execution time across all calls (ms). Sort by this to find the most expensive queries.',
+  })
   totalExecMs!: number;
 
   @ApiProperty({ description: 'Total rows returned or affected' })
   rows!: number;
 
-  @ApiProperty({ description: 'Standard deviation of execution time — high stddev = inconsistent query' })
+  @ApiProperty({
+    description: 'Standard deviation of execution time — high stddev = inconsistent query',
+  })
   stddevExecMs!: number;
 }
 
@@ -27,10 +32,15 @@ export class TableStatDto {
   @ApiProperty({ description: 'Estimated number of live (visible) rows' })
   liveTuples!: number;
 
-  @ApiProperty({ description: 'Dead rows that have been updated/deleted but not yet vacuumed. High dead tuples = bloat.' })
+  @ApiProperty({
+    description:
+      'Dead rows that have been updated/deleted but not yet vacuumed. High dead tuples = bloat.',
+  })
   deadTuples!: number;
 
-  @ApiProperty({ description: 'Dead tuples as a percentage of live + dead. > 20% warrants manual VACUUM.' })
+  @ApiProperty({
+    description: 'Dead tuples as a percentage of live + dead. > 20% warrants manual VACUUM.',
+  })
   deadTuplePercent!: number;
 
   @ApiProperty({ description: 'Total table size including indexes (human-readable)' })

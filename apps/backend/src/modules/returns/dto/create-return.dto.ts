@@ -1,4 +1,12 @@
-import { IsString, IsNotEmpty, IsArray, IsInt, Min, IsOptional, ValidateNested } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsArray,
+  IsInt,
+  Min,
+  IsOptional,
+  ValidateNested,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
@@ -11,5 +19,9 @@ class ReturnItemDto {
 export class CreateReturnDto {
   @IsString() @IsNotEmpty() @ApiProperty() orderId!: string;
   @IsString() @IsNotEmpty() @ApiProperty() reason!: string;
-  @IsArray() @ValidateNested({ each: true }) @Type(() => ReturnItemDto) @ApiProperty({ type: [ReturnItemDto] }) items!: ReturnItemDto[];
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ReturnItemDto)
+  @ApiProperty({ type: [ReturnItemDto] })
+  items!: ReturnItemDto[];
 }

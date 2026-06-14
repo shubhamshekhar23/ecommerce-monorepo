@@ -69,7 +69,10 @@ export class ReturnsService {
 
   // Compensating transaction: Stripe refund + restock + mark order REFUNDED.
   // In production this would use the Outbox pattern for guaranteed execution.
-  async processRefund(returnId: string, stripeService: { refund: (paymentIntentId: string) => Promise<{ id: string }> }) {
+  async processRefund(
+    returnId: string,
+    stripeService: { refund: (paymentIntentId: string) => Promise<{ id: string }> },
+  ) {
     const request = await this.prisma.returnRequest.findUnique({
       where: { id: returnId },
       include: { order: { include: { items: true } }, items: true },
@@ -95,7 +98,9 @@ export class ReturnsService {
       }),
       // Restock each returned item
       ...request.items.map((item: { orderItemId: string; quantity: number }) => {
-        const orderItem = request.order.items.find((oi: { id: string; productId: string }) => oi.id === item.orderItemId);
+        const orderItem = request.order.items.find(
+          (oi: { id: string; productId: string }) => oi.id === item.orderItemId,
+        );
         return this.prisma.productVariant.updateMany({
           where: { productId: orderItem?.productId ?? '' },
           data: { stock: { increment: item.quantity } },

@@ -30,7 +30,9 @@ export class InvoiceService {
   // jobId deduplicates within BullMQ in case of rapid double-POSTs.
   async enqueueGeneration(orderId: string): Promise<void> {
     const filePath = getInvoicePath(orderId);
-    const already = await access(filePath).then(() => true).catch(() => false);
+    const already = await access(filePath)
+      .then(() => true)
+      .catch(() => false);
     if (already) return;
 
     await this.invoiceQueue.add(
@@ -53,7 +55,9 @@ export class InvoiceService {
     if (order.userId !== userId) throw new NotFoundException('Order not found');
 
     const filePath = getInvoicePath(orderId);
-    const ready = await access(filePath).then(() => true).catch(() => false);
+    const ready = await access(filePath)
+      .then(() => true)
+      .catch(() => false);
 
     if (!ready) {
       res.status(202).json({ message: 'Invoice is being generated, try again in a few seconds' });

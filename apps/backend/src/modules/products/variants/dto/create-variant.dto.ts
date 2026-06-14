@@ -54,7 +54,11 @@ export class CreateVariantDto {
   @IsOptional()
   @IsArray()
   @ArrayMinSize(1)
-  @ApiProperty({ type: [VariantAttributeDto], required: false, description: 'Attribute values, e.g. [{typeName:"Size",optionValue:"L"}]' })
+  @ApiProperty({
+    type: [VariantAttributeDto],
+    required: false,
+    description: 'Attribute values, e.g. [{typeName:"Size",optionValue:"L"}]',
+  })
   attributes?: VariantAttributeDto[];
 
   @IsOptional()

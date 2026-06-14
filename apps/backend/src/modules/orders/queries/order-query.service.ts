@@ -24,11 +24,19 @@ export class OrderQueryService {
     return this.fetchAndProject(orderId);
   }
 
-  async listUserOrders(userId: string, page = 1, limit = 20): Promise<PaginationDto<OrderReadModel>> {
+  async listUserOrders(
+    userId: string,
+    page = 1,
+    limit = 20,
+  ): Promise<PaginationDto<OrderReadModel>> {
     const { skip, take } = calculatePagination(page, limit);
     const [orders, total] = await Promise.all([
       this.prisma.order.findMany({
-        where: { userId }, skip, take, include: ORDER_INCLUDE, orderBy: { createdAt: 'desc' },
+        where: { userId },
+        skip,
+        take,
+        include: ORDER_INCLUDE,
+        orderBy: { createdAt: 'desc' },
       }),
       this.prisma.order.count({ where: { userId } }),
     ]);
@@ -38,14 +46,22 @@ export class OrderQueryService {
   async listAllOrders(page = 1, limit = 20): Promise<PaginationDto<OrderReadModel>> {
     const { skip, take } = calculatePagination(page, limit);
     const [orders, total] = await Promise.all([
-      this.prisma.order.findMany({ skip, take, include: ORDER_INCLUDE, orderBy: { createdAt: 'desc' } }),
+      this.prisma.order.findMany({
+        skip,
+        take,
+        include: ORDER_INCLUDE,
+        orderBy: { createdAt: 'desc' },
+      }),
       this.prisma.order.count(),
     ]);
     return buildPaginationResponse(orders.map(mapToOrderReadModel), total, page, limit);
   }
 
   private async fetchAndProject(orderId: string): Promise<OrderReadModel> {
-    const order = await this.prisma.order.findUnique({ where: { id: orderId }, include: ORDER_INCLUDE });
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: ORDER_INCLUDE,
+    });
     if (!order) throw new NotFoundException(`Order ${orderId} not found`);
     const readModel = mapToOrderReadModel(order);
     await this.cache.set(`read:order:${orderId}`, readModel, READ_MODEL_TTL);

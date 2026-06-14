@@ -47,8 +47,7 @@ export class CircuitBreakerService implements OnModuleInit {
       : BREAKER_OPTIONS;
 
     this.breaker = new CircuitBreaker(
-      (orderId: string, amount: number) =>
-        this.stripeService.createPaymentIntent(orderId, amount),
+      (orderId: string, amount: number) => this.stripeService.createPaymentIntent(orderId, amount),
       options,
     );
 

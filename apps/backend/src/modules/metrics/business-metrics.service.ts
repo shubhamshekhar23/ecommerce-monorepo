@@ -13,9 +13,12 @@ export class BusinessMetricsService {
   constructor(
     @InjectMetric('orders_total') private readonly ordersTotal: Counter<string>,
     @InjectMetric('payment_events_total') private readonly paymentEventsTotal: Counter<string>,
-    @InjectMetric('payment_success_rate_percent') private readonly paymentSuccessRate: Gauge<string>,
-    @InjectMetric('cart_to_order_conversion_rate') private readonly cartConversionRate: Gauge<string>,
-    @InjectMetric('inventory_reservation_failures_total') private readonly inventoryFailures: Counter<string>,
+    @InjectMetric('payment_success_rate_percent')
+    private readonly paymentSuccessRate: Gauge<string>,
+    @InjectMetric('cart_to_order_conversion_rate')
+    private readonly cartConversionRate: Gauge<string>,
+    @InjectMetric('inventory_reservation_failures_total')
+    private readonly inventoryFailures: Counter<string>,
   ) {}
 
   recordOrder(status: string): void {

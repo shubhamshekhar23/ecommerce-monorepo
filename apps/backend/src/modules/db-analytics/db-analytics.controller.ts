@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Query, HttpCode, HttpStatus, ParseIntPipe, DefaultValuePipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Query,
+  HttpCode,
+  HttpStatus,
+  ParseIntPipe,
+  DefaultValuePipe,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { Roles } from '@/common/decorators';
 import { UserRole } from '@prisma/client';
@@ -33,7 +42,8 @@ export class DbAnalyticsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Reset pg_stat_statements counters',
-    description: 'Call after adding an index or optimizing a query to measure improvement from a clean baseline.',
+    description:
+      'Call after adding an index or optimizing a query to measure improvement from a clean baseline.',
   })
   async resetStats(): Promise<{ message: string }> {
     await this.dbAnalytics.resetStats();

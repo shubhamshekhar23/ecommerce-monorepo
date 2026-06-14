@@ -11,6 +11,10 @@ export class CreateVariantTypeDto {
   @IsArray()
   @ArrayMinSize(1)
   @IsString({ each: true })
-  @ApiProperty({ example: ['S', 'M', 'L', 'XL'], description: 'Initial options to create', required: false })
+  @ApiProperty({
+    example: ['S', 'M', 'L', 'XL'],
+    description: 'Initial options to create',
+    required: false,
+  })
   options?: string[];
 }

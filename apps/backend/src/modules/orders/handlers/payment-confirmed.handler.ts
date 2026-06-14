@@ -28,7 +28,13 @@ export class PaymentConfirmedHandler {
 
     this.eventEmitter.emit(
       OrderStatusChangedEvent.EVENT_NAME,
-      new OrderStatusChangedEvent(event.orderId, event.userId, OrderStatus.PENDING, OrderStatus.CONFIRMED, new Date()),
+      new OrderStatusChangedEvent(
+        event.orderId,
+        event.userId,
+        OrderStatus.PENDING,
+        OrderStatus.CONFIRMED,
+        new Date(),
+      ),
     );
     this.logger.log(`Order ${event.orderId} auto-confirmed after payment`);
   }

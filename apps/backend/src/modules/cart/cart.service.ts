@@ -7,8 +7,12 @@ import { CartResponseDto, CartItemResponseDto } from './dto/cart-response.dto';
 const CART_INCLUDE = {
   items: {
     include: {
-      product: { select: { id: true, name: true, slug: true, images: { where: { isMain: true } } } },
-      variant: { include: { attributeValues: { include: { option: { include: { variantType: true } } } } } },
+      product: {
+        select: { id: true, name: true, slug: true, images: { where: { isMain: true } } },
+      },
+      variant: {
+        include: { attributeValues: { include: { option: { include: { variantType: true } } } } },
+      },
     },
   },
 } as const;
@@ -41,7 +45,12 @@ export class CartService {
   }
 
   // eslint-disable-next-line max-lines-per-function
-  async addItem(userId: string, productId: string, variantId: string, quantity: number): Promise<CartResponseDto | null> {
+  async addItem(
+    userId: string,
+    productId: string,
+    variantId: string,
+    quantity: number,
+  ): Promise<CartResponseDto | null> {
     if (quantity < 1 || quantity > 999) {
       throw new BadRequestException('Quantity must be between 1 and 999');
     }
@@ -56,7 +65,9 @@ export class CartService {
     }
 
     if (variant.stock < quantity) {
-      this.logger.warn(`Insufficient stock: variantId=${variantId} requested=${quantity} available=${variant.stock}`);
+      this.logger.warn(
+        `Insufficient stock: variantId=${variantId} requested=${quantity} available=${variant.stock}`,
+      );
       throw new BadRequestException('Insufficient stock');
     }
 
@@ -85,7 +96,11 @@ export class CartService {
     return this.getCart(userId);
   }
 
-  async updateItem(userId: string, cartItemId: string, quantity: number): Promise<CartResponseDto | null> {
+  async updateItem(
+    userId: string,
+    cartItemId: string,
+    quantity: number,
+  ): Promise<CartResponseDto | null> {
     const cartItem = await this.prisma.cartItem.findUnique({
       where: { id: cartItemId },
       include: { cart: true },
@@ -137,24 +152,26 @@ export class CartService {
     return {
       id: cart.id,
       userId: cart.userId,
-      items: items.map((item): CartItemResponseDto => ({
-        id: item.id,
-        productId: item.productId,
-        variantId: item.variantId,
-        product: item.product,
-        variant: {
-          id: item.variant.id,
-          productId: item.variant.productId,
-          sku: item.variant.sku,
-          price: String(item.variant.price),
-          stock: item.variant.stock,
-          isActive: item.variant.isActive,
-          attributeValues: item.variant.attributeValues,
-        },
-        quantity: item.quantity,
-        unitPrice: parseFloat(String(item.variant.price)),
-        subtotal: parseFloat(String(item.variant.price)) * item.quantity,
-      })),
+      items: items.map(
+        (item): CartItemResponseDto => ({
+          id: item.id,
+          productId: item.productId,
+          variantId: item.variantId,
+          product: item.product,
+          variant: {
+            id: item.variant.id,
+            productId: item.variant.productId,
+            sku: item.variant.sku,
+            price: String(item.variant.price),
+            stock: item.variant.stock,
+            isActive: item.variant.isActive,
+            attributeValues: item.variant.attributeValues,
+          },
+          quantity: item.quantity,
+          unitPrice: parseFloat(String(item.variant.price)),
+          subtotal: parseFloat(String(item.variant.price)) * item.quantity,
+        }),
+      ),
       itemCount: items.length,
       totalPrice,
       createdAt: cart.createdAt,
