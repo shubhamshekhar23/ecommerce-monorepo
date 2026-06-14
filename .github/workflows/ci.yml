@@ -12,6 +12,7 @@ on:
     paths:
       - 'apps/backend/**'
       - '.github/workflows/ci.yml'
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
