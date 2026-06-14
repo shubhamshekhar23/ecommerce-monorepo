@@ -34,20 +34,20 @@ k8s/
 
 ## Docker Compose → Kubernetes Mapping
 
-| Concern | Docker Compose (Phases 1–10) | Kubernetes (Phase 11) |
-|---|---|---|
-| Service discovery | Container name DNS (`rabbitmq:5672`) | CoreDNS Service name (`rabbitmq:5672` — same!) |
-| Health checks | `healthcheck:` block | Liveness + Readiness probes |
-| Zero-downtime deploy | `blue-green-deploy.sh` (130 lines) | Rolling update (built-in, 5 lines of config) |
-| Scaling | Manual: SSH + edit compose | HPA: automatic CPU/memory-based |
-| Secrets | `.env` file on server | K8s Secret (base64 encoded) |
-| Non-secret config | YAML anchors in compose file | ConfigMap |
-| Traffic routing | nginx container + `upstream.conf` | Ingress controller |
-| Stateful workloads | Named volumes | StatefulSet + PVC |
-| One-shot tasks | `docker run --rm` | K8s Job |
-| Dependency ordering | `depends_on: condition: service_healthy` | Init containers |
-| Rollback | `IMAGE_TAG=old bash blue-green-deploy.sh` | `kubectl rollout undo deployment/backend` |
-| Infra-as-code | `docker-compose.prod.yml` | YAML manifests + Kustomize overlays |
+| Concern              | Docker Compose (Phases 1–10)              | Kubernetes (Phase 11)                          |
+| -------------------- | ----------------------------------------- | ---------------------------------------------- |
+| Service discovery    | Container name DNS (`rabbitmq:5672`)      | CoreDNS Service name (`rabbitmq:5672` — same!) |
+| Health checks        | `healthcheck:` block                      | Liveness + Readiness probes                    |
+| Zero-downtime deploy | `blue-green-deploy.sh` (130 lines)        | Rolling update (built-in, 5 lines of config)   |
+| Scaling              | Manual: SSH + edit compose                | HPA: automatic CPU/memory-based                |
+| Secrets              | `.env` file on server                     | K8s Secret (base64 encoded)                    |
+| Non-secret config    | YAML anchors in compose file              | ConfigMap                                      |
+| Traffic routing      | nginx container + `upstream.conf`         | Ingress controller                             |
+| Stateful workloads   | Named volumes                             | StatefulSet + PVC                              |
+| One-shot tasks       | `docker run --rm`                         | K8s Job                                        |
+| Dependency ordering  | `depends_on: condition: service_healthy`  | Init containers                                |
+| Rollback             | `IMAGE_TAG=old bash blue-green-deploy.sh` | `kubectl rollout undo deployment/backend`      |
+| Infra-as-code        | `docker-compose.prod.yml`                 | YAML manifests + Kustomize overlays            |
 
 ---
 
@@ -56,6 +56,7 @@ k8s/
 ### 1. Rolling Updates Replace Blue-Green Script
 
 `apps/backend/scripts/blue-green-deploy.sh` was 130 lines doing 5 things manually:
+
 1. Start new slot → K8s starts new Pods automatically
 2. Poll health check → readiness probe gates traffic (with `maxUnavailable: 0`)
 3. Switch nginx upstream → Deployment controller removes old Pods from Service endpoints
@@ -68,8 +69,8 @@ Every step was a manual re-implementation of what K8s does natively.
 strategy:
   type: RollingUpdate
   rollingUpdate:
-    maxUnavailable: 0  # never fewer than minReplicas healthy Pods
-    maxSurge: 1        # allow 1 extra Pod during rollout
+    maxUnavailable: 0 # never fewer than minReplicas healthy Pods
+    maxSurge: 1 # allow 1 extra Pod during rollout
 ```
 
 Rollback: `kubectl rollout undo deployment/backend -n ecommerce`
@@ -77,6 +78,7 @@ Rollback: `kubectl rollout undo deployment/backend -n ecommerce`
 ### 2. Liveness vs Readiness Probes
 
 The backend already separates `/api/health/live` from `/api/health/ready` — this was designed for exactly this moment:
+
 - **Liveness** (`/api/health/live`): process-local check (memory, disk). Failure → restart container.
 - **Readiness** (`/api/health/ready`): dependency check (DB + Redis). Failure → remove from Service endpoints (no traffic), but don't restart.
 
@@ -85,6 +87,7 @@ Other services (auth, search, gateway, notification) currently only have `GET /h
 ### 3. Resources: Requests vs Limits
 
 Resource values come directly from `apps/backend/docker-compose.prod.yml`:
+
 - `cpus: '1'` → `limits.cpu: 1000m` (millicores)
 - `memory: 512M` → `limits.memory: 512Mi`
 - requests set at ~50% of limits (Burstable QoS class)
@@ -92,10 +95,10 @@ Resource values come directly from `apps/backend/docker-compose.prod.yml`:
 ```yaml
 resources:
   requests:
-    cpu: "500m"    # scheduler guarantee on a Node
+    cpu: "500m" # scheduler guarantee on a Node
     memory: "256Mi"
   limits:
-    cpu: "1000m"   # cgroup ceiling — OOMKilled if exceeded
+    cpu: "1000m" # cgroup ceiling — OOMKilled if exceeded
     memory: "512Mi"
 ```
 
@@ -115,6 +118,7 @@ See `k8s/overlays/local/secrets/README.md` for the full list of required Secrets
 ### 5. StatefulSets for Infra
 
 Postgres, Redis, and RabbitMQ use StatefulSets (not Deployments):
+
 - Pods get stable names: `postgres-0`, `redis-0`
 - Each Pod gets its own PVC via `volumeClaimTemplates`
 - Sequential startup ordering
@@ -135,9 +139,9 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: migrate
-          command: ['npx', 'prisma', 'migrate', 'deploy']
+          command: ["npx", "prisma", "migrate", "deploy"]
           env:
-            - name: DIRECT_DATABASE_URL  # bypasses PgBouncer — advisory locks require direct connection
+            - name: DIRECT_DATABASE_URL # bypasses PgBouncer — advisory locks require direct connection
               valueFrom:
                 secretKeyRef: ...
 ```
@@ -168,6 +172,7 @@ kustomize build k8s/overlays/production | grep replicas # 3
 ```
 
 CI sets image tags with:
+
 ```bash
 kustomize edit set image ghcr.io/.../backend=ghcr.io/.../backend:sha-abc1234
 kubectl apply -k k8s/overlays/staging
@@ -181,7 +186,7 @@ K8s starts all Pods across all Deployments simultaneously — no built-in depend
 initContainers:
   - name: wait-for-pgbouncer
     image: busybox:1.36
-    command: ['sh', '-c', 'until nc -z pgbouncer 6432; do sleep 2; done']
+    command: ["sh", "-c", "until nc -z pgbouncer 6432; do sleep 2; done"]
 ```
 
 Without init containers: Pods crash-loop until dependencies are ready (K8s retries on failure, so it eventually works, but logs are messy). Init containers make it intentional and explicit.
@@ -189,11 +194,13 @@ Without init containers: Pods crash-loop until dependencies are ready (K8s retri
 ### 10. CI/CD: kubectl apply Replaces SSH
 
 Old flow:
+
 ```
 CI → SSH into server → docker compose pull → blue-green-deploy.sh
 ```
 
 New flow:
+
 ```
 CI → configure kubeconfig → run migrate Job → kustomize edit set image → kubectl apply -k
 ```
@@ -201,10 +208,12 @@ CI → configure kubeconfig → run migrate Job → kustomize edit set image →
 CI no longer has SSH access to production servers — it has a scoped kubeconfig token with `edit` permissions in the `ecommerce` namespace only.
 
 New GitHub secrets required:
+
 - `KUBECONFIG_STAGING` — base64-encoded kubeconfig for staging cluster service account
 - `KUBECONFIG_PRODUCTION` — base64-encoded kubeconfig for production cluster service account
 
 Generate a scoped service account:
+
 ```bash
 kubectl create serviceaccount ci-deployer -n ecommerce
 kubectl create rolebinding ci-deployer \
@@ -281,15 +290,3 @@ kubectl rollout undo deployment/backend -n ecommerce
 - `.github/workflows/ci.yml` — deploy jobs updated from SSH to kubectl apply
 
 ---
-
-## What's NOT in Phase 11
-
-These are the next phases:
-
-- **Service Mesh** (Istio/Linkerd) — mTLS between services, traffic shaping, canary at % level — Phase 12
-- **GitOps** (Argo CD + Argo Rollouts) — CI push → Argo reconciles; true canary deploys — Phase 12
-- **KEDA** — scale notification-service based on RabbitMQ queue depth (not CPU) — Phase 13
-- **Cluster Autoscaler / Karpenter** — automatically add/remove Nodes based on Pod pressure — Phase 13
-- **Multi-region** — independent clusters per region, global load balancing — Phase 14
-- **Network Policies** — zero-trust Pod-to-Pod networking — Phase 12 security hardening
-- **Pod Disruption Budgets** — guarantee minimum replicas during node maintenance — Phase 12
