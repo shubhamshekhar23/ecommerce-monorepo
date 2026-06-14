@@ -4,6 +4,140 @@ Things that are intentionally skipped for now but worth coming back to. Each ite
 
 ---
 
+## Phase 12 — Service Mesh (Istio / Linkerd)
+
+### Add mTLS, Traffic Shaping, and Canary at the Network Layer
+
+**What:** Deploy a service mesh sidecar (Istio or Linkerd) alongside every Pod so all service-to-service traffic is encrypted and observable without application code changes.
+
+- mTLS between every service pair automatically — no certificate management in app code
+- Traffic shaping via `VirtualService` / `HTTPRoute` — route 10% of traffic to a canary Pod, ramp up gradually
+- Automatic retries, timeouts, and circuit breaking at the network layer (complements the app-level circuit breaker already in place)
+- Distributed tracing and per-route latency metrics out of the box via Envoy sidecar
+- Replace the current manual canary deploy script with mesh-level traffic weight rules
+
+**References:** `k8s/`, `apps/backend/src/modules/circuit-breaker/`
+
+---
+
+## Phase 12 — GitOps (Argo CD + Argo Rollouts)
+
+### Replace kubectl-in-CI with Argo CD Reconciliation and True Canary Deploys
+
+**What:** Shift from CI pushing `kubectl apply` commands to Argo CD watching the `k8s/` directory and reconciling cluster state automatically. Add Argo Rollouts for percentage-based canary promotions with automated analysis.
+
+- CI pushes a new image tag to the git repo (via `kustomize edit set image`) — that is the only CI→cluster interaction
+- Argo CD detects the git change and applies it — cluster state is always a reflection of git state
+- Argo Rollouts replaces standard `Deployment` for canary-capable services; promotes from 10% → 50% → 100% based on Prometheus error-rate analysis gates
+- Automatic rollback if error rate or latency exceeds threshold during rollout
+- Full audit trail — every cluster change is a git commit, not a CI log
+
+**References:** `k8s/overlays/`, `.github/workflows/ci.yml`
+
+---
+
+## Phase 12 — Network Policies (Zero-Trust Pod Networking)
+
+### Restrict Pod-to-Pod Traffic with Kubernetes Network Policies
+
+**What:** Add `NetworkPolicy` manifests so Pods can only talk to the services they legitimately need. By default Kubernetes allows all Pod-to-Pod traffic — a compromised Pod can reach any other Pod in the cluster.
+
+- Default-deny ingress and egress for all Pods in the `ecommerce` namespace
+- Allow backend → postgres, backend → redis, backend → rabbitmq explicitly
+- Allow gateway → backend, gateway → auth-service, gateway → search-service, gateway → notification-service
+- Allow auth-service → postgres, auth-service → redis
+- Deny everything else — a compromised notification-service cannot reach postgres directly
+- Pairs with service mesh mTLS for defence in depth
+
+**References:** `k8s/base/`
+
+---
+
+## Phase 12 — Pod Disruption Budgets
+
+### Guarantee Minimum Replicas During Node Maintenance
+
+**What:** Add `PodDisruptionBudget` manifests for every service so Kubernetes cannot evict too many Pods simultaneously during node drain, cluster upgrades, or autoscaler scale-down events.
+
+- Set `minAvailable: 1` for each service — at least one replica must stay up during voluntary disruptions
+- Prevents a node drain from taking down all replicas of a service if they happen to be co-located
+- Required before enabling Cluster Autoscaler — without PDBs, scale-down can cause accidental full outages
+- Low effort, high safety — each PDB is ~8 lines of YAML
+
+**References:** `k8s/base/`
+
+---
+
+## Phase 13 — KEDA (Event-Driven Autoscaling)
+
+### Scale Notification-Service on RabbitMQ Queue Depth
+
+**What:** Replace CPU-based HPA for notification-service with KEDA scaling on RabbitMQ queue depth. When the queue is empty, scale to zero. When a burst of order events arrives, scale up instantly.
+
+- KEDA `ScaledObject` targets the `order.placed` queue in RabbitMQ — queue depth is the scaling signal
+- Scale to zero when idle (saves cost), scale to N replicas within seconds when messages accumulate
+- CPU-based scaling is wrong for queue consumers — a consumer waiting for messages uses near-zero CPU even when the queue is full; KEDA makes the right metric the scaling metric
+- Same pattern can be applied to search-service (OpenSearch indexing backlog) once Kafka CDC is in place
+
+**References:** `apps/notification-service/`, `k8s/base/`, Phase 11 Kafka TODO
+
+---
+
+## Phase 13 — Cluster Autoscaler / Karpenter
+
+### Automatically Add and Remove Nodes Based on Pod Pressure
+
+**What:** Deploy Cluster Autoscaler (or Karpenter on AWS) so the cluster adds Nodes when Pods are unschedulable due to resource pressure, and removes underutilised Nodes to reduce cost.
+
+- Cluster Autoscaler watches for `Pending` Pods and triggers node group scale-up
+- Karpenter (AWS-native) is faster — provisions nodes in ~60s vs ~3min for CA, and can right-size node types per workload
+- Pairs with KEDA — KEDA scales Pods up, Cluster Autoscaler scales Nodes up to fit them
+- Must have Pod Disruption Budgets in place before enabling scale-down (see Phase 12)
+- Configure node taints and tolerations to separate stateful workloads (Postgres) from stateless services
+
+**References:** `k8s/`, Phase 12 PDB TODO
+
+---
+
+## Phase 14 — Multi-Region Deployment
+
+### Independent Clusters Per Region with Global Load Balancing
+
+**What:** Deploy the full stack into two or more regions (e.g. `us-east-1` and `eu-west-1`). Route users to the nearest region via a global load balancer. Handle data residency, cross-region replication, and failover.
+
+- Independent Kubernetes clusters per region — no cross-region control plane dependency
+- Global load balancer (AWS Global Accelerator, Cloudflare, or GCP Cloud Load Balancing) routes to nearest healthy region
+- Postgres streaming replication cross-region for read replicas; writes go to primary region
+- Redis per region (read-only replica from primary); session tokens must work across regions — use stateless JWT (already done)
+- Kafka MirrorMaker 2 replicates event topics cross-region for analytics consumers
+- Active-passive initially (one region handles writes, other handles reads) → active-active once conflict resolution strategy is defined
+- Data residency: EU users' PII must stay in EU region — requires per-region Postgres primaries and routing rules
+
+**References:** `k8s/overlays/`, `docker-compose.replica.yml`, Phase 11 Kafka TODO
+
+---
+
+## Phase 11 — Auth Service Own Database
+
+### Give Auth-Service Its Own Database
+
+**What:** Migrate `User`, `RefreshToken`, and `Session` tables out of the backend's Postgres into a dedicated auth-service database. Publish user lifecycle events (created, updated, deleted) to Kafka so downstream services maintain lightweight local copies of the user fields they need rather than querying auth cross-service.
+
+**Why:** In a real ecommerce platform, auth scales differently — millions of token validations per second vs thousands of orders per minute. Separate DB means separate scaling, separate migration pipeline, and a dedicated team can own identity without touching backend schema. Without the Kafka fan-out step, every service (orders, reviews, notifications) needs to call auth-service for user data on every request — adding latency and a cross-service failure point.
+
+**How to implement:**
+- Add a second Postgres instance (`postgres-auth`) to docker-compose with its own volume
+- Move `User`, `RefreshToken` models to a new Prisma schema in `apps/auth-service`
+- Remove those tables from the backend schema; replace direct `prisma.user` calls in backend with a local `UserSummary` table (id, email, firstName, role) populated via Kafka user events
+- Publish `user.created`, `user.updated`, `user.deleted` events from auth-service to Kafka on every state change
+- Backend and notification-service consume those events to keep their local user copy in sync
+
+**Why deferred:** Requires Phase 11 Kafka pipeline to be in place first — without the fan-out, splitting the DB just creates cross-service API coupling which is worse than a shared DB.
+
+**References:** `apps/auth-service/`, `apps/backend/prisma/schema.prisma`, Phase 11 Kafka TODO
+
+---
+
 ## Phase 10 — CDC with Debezium + Kafka (Search Sync)
 
 ### Replace RabbitMQ Product Events with Debezium CDC Pipeline
