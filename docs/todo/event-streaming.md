@@ -45,23 +45,3 @@ Advanced event-driven architecture beyond the current RabbitMQ setup. RabbitMQ h
 - Add A/B testing hook: record which recommendation variant was shown and track conversion
 
 **References:** `apps/backend/src/modules/products/`, `apps/backend/src/modules/orders/`, Kafka consumer group docs
-
----
-
-## Auth Service — Dedicated Database
-
-**What:** Give `auth-service` its own Postgres database (or schema) instead of sharing the monolith's DB.
-
-**Current state:** `apps/auth-service` connects to the same `ecommerce_db` Postgres database as `apps/backend`. In a real microservices architecture each service owns its data — sharing a DB creates tight coupling (schema migrations in one service can break the other, no independent scaling).
-
-**Why it matters for a real ecommerce app:** Auth is a high-read, low-write service with a very different access pattern from orders. Separating the DB enables independent migration, independent connection pooling, and proper service ownership. It also matches how companies like Shopify and Amazon structure their auth boundary.
-
-**Scope (keep it concise):**
-
-- Provision a second Postgres instance or database (e.g. `auth_db`) in `docker-compose.yml` and `k8s/`
-- Move User, RefreshToken, OAuthAccount, TwoFactorSecret tables to `auth-service`'s own Prisma schema
-- Backend reads user data via auth-service API or a shared-types contract — no direct cross-DB join
-- Update CI to run Prisma migrations for both schemas independently
-- Add `AUTH_DATABASE_URL` env var to auth-service configuration
-
-**References:** `apps/auth-service/`, `apps/backend/prisma/schema.prisma`, `docker-compose.yml`

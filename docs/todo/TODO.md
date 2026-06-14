@@ -9,7 +9,7 @@ Deferred work grouped by theme. Each file contains the full context, current sta
 - [phase-7-backfill.md](phase-7-backfill.md) — Application feature gaps: Reviews, Tax, Stock Alerts, Returns, Vendor Marketplace
 - [observability.md](observability.md) — Log–trace correlation and future observability work
 - [ci-cd-gitops.md](ci-cd-gitops.md) — Matrix CI for all services + GitOps with Argo CD
-- [event-streaming.md](event-streaming.md) — CDC + Debezium, Analytics & Recommendations, Auth Service own DB
+- [event-streaming.md](event-streaming.md) — CDC + Debezium, Analytics & Recommendations
 - [kubernetes-platform.md](kubernetes-platform.md) — Network Policies, PDBs, Service Mesh, KEDA, Cluster Autoscaler, Multi-Region
 
 ---
@@ -31,25 +31,22 @@ Wire CI for all services (currently only backend is built/pushed). Do this befor
 Replace broken kubectl-in-CI deploy jobs with Argo CD reconciliation. Unblocks reliable deployments for everything that follows.
 
 **5. Event streaming — CDC + Debezium** (`event-streaming.md`)
-Kafka + Debezium for search sync. Required before analytics and auth DB split (both depend on Kafka topics being available).
+Kafka + Debezium for search sync. Required before analytics (both depend on Kafka topics being available).
 
 **6. Event streaming — Analytics & Recommendations** (`event-streaming.md`)
 Clickstream pipeline and recommendation engine. Requires Kafka from step 5.
 
-**7. Event streaming — Auth Service own DB** (`event-streaming.md`)
-Split auth database. Requires Kafka fan-out from step 5 so other services can stay in sync without cross-DB queries.
-
-**8. Kubernetes — Network Policies + PDBs** (`kubernetes-platform.md`)
+**7. Kubernetes — Network Policies + PDBs** (`kubernetes-platform.md`)
 Zero-trust pod networking and disruption budgets. Must be in place before autoscaling — PDBs protect pods during Cluster Autoscaler scale-down.
 
-**9. Kubernetes — Service Mesh** (`kubernetes-platform.md`)
+**8. Kubernetes — Service Mesh** (`kubernetes-platform.md`)
 Istio/Linkerd for mTLS and traffic observability. Complements Network Policies with identity-based enforcement.
 
-**10. Kubernetes — KEDA** (`kubernetes-platform.md`)
-Scale workers on queue depth. Requires PDBs from step 8.
+**9. Kubernetes — KEDA** (`kubernetes-platform.md`)
+Scale workers on queue depth. Requires PDBs from step 7.
 
-**11. Kubernetes — Cluster Autoscaler** (`kubernetes-platform.md`)
-Node-level scaling. Requires PDBs (step 8) and KEDA (step 10) to be in place so scale-down is safe and pods actually reduce when queues drain.
+**10. Kubernetes — Cluster Autoscaler** (`kubernetes-platform.md`)
+Node-level scaling. Requires PDBs (step 7) and KEDA (step 9) to be in place so scale-down is safe and pods actually reduce when queues drain.
 
-**12. Multi-Region** (`kubernetes-platform.md`)
+**11. Multi-Region** (`kubernetes-platform.md`)
 Active-active across regions. Everything else must be stable first.
