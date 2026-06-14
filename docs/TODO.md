@@ -58,23 +58,53 @@ Things that are intentionally skipped for now but worth coming back to. Each ite
 
 ---
 
-## CI — Per-Service Workflows
+## CI — Matrix Workflow for All Services
 
-### Add Separate CI Workflows For Each Service
+### Replace Per-File CI with a Single Matrix Workflow
 
-**What:** Create independent GitHub Actions workflow files for `auth-service`, `notification-service`, `search-service`, and `gateway` — one file per service, each triggered only by changes to that service's path.
+**What:** Replace the current single-service `ci.yml` (backend only) with a matrix workflow that detects which services changed on each push and runs lint → type-check → build → push → deploy only for those services. One workflow file covers all five services.
 
-**Current state:** CI only covers `apps/backend/**`. Changes to any other service are never linted, type-checked, or tested in CI. The other services also lack `type-check`, `format:check`, and a combined `ci` script in their `package.json`.
+**Current state:** CI only covers `apps/backend/**`. Changes to `auth-service`, `notification-service`, `search-service`, or `gateway` are never linted, type-checked, built, or pushed. If you change `auth-service` and push, no new Docker image is built — Kubernetes silently keeps running the old image.
+
+**Why matrix over separate files:**
+- One file to maintain instead of five — adding a new service is one line in the matrix, not a new workflow file
+- The changed-services detection step is explicit and easy to read
+- All services follow identical pipeline steps; inconsistencies can't creep in across files
+- GitHub shows one workflow run per push, not five separate ones
+
+**Pipeline shape:**
+
+```
+git push
+    │
+    ├── detect-changes job
+    │     Outputs a JSON matrix of which services changed:
+    │     e.g. {"include":[{"service":"auth-service"},{"service":"gateway"}]}
+    │
+    ├── lint job (matrix)
+    │     Runs for each changed service in parallel
+    │     Steps: npm ci → build shared-types → type-check → format:check
+    │
+    ├── build job (matrix, needs: lint)
+    │     Runs for each changed service in parallel
+    │     Steps: docker buildx → push ghcr.io/<repo>/<service>:sha-<hash>
+    │
+    └── deploy job (matrix, needs: build, push only)
+          Steps: kustomize edit set image → kubectl apply -k → kubectl rollout status
+```
 
 **How to implement:**
-- Add `type-check`, `format:check`, and `ci` scripts to each service's `package.json` (matching the pattern in `apps/backend/package.json`)
-- Create `.github/workflows/ci-auth.yml`, `ci-notification.yml`, `ci-search.yml`, `ci-gateway.yml`
-- Each workflow should mirror the backend CI structure: lint → format check → type check → tests
-- Use `paths: ['apps/<service>/**', '.github/workflows/ci-<service>.yml']` so each workflow only triggers on relevant changes
 
-**Why separate workflows:** Each service fails/passes independently — a broken auth-service doesn't block you from seeing notification-service results. Better for a multi-service repo where services evolve at different speeds.
+- Add `type-check`, `format:check`, and `ci` scripts to `package.json` of each service (`auth-service`, `notification-service`, `search-service`, `gateway`) matching the pattern in `apps/backend/package.json`
+- Create `.github/workflows/ci-services.yml` with four jobs:
+  - `detect-changes`: use `dorny/paths-filter` action to check which `apps/<service>/**` paths changed; output a dynamic matrix JSON
+  - `lint`: matrix job over changed services; runs `npm ci` at root → `build shared-types` → `prisma generate` (for backend) → service-level `type-check` and `format:check`
+  - `build`: matrix job over changed services; builds `apps/<service>/Dockerfile` with monorepo root as context; pushes to GHCR with `sha-<hash>` and branch tags
+  - `deploy-staging` / `deploy-production`: matrix job; runs `kustomize edit set image` to pin the SHA tag then `kubectl apply -k k8s/overlays/<env>`; gates on `kubectl rollout status deployment/<service>`; only backend runs `prisma migrate deploy`
+- Add kustomization image entries for `auth-service`, `notification-service`, `search-service` to `k8s/overlays/staging/kustomization.yaml` and `k8s/overlays/production/kustomization.yaml` (gateway entry already exists)
+- Keep `ci.yml` (backend) in place or fold backend into the same matrix — either approach works; folding it in means one file for everything
 
-**References:** `.github/workflows/ci.yml`, `apps/backend/package.json`
+**References:** `.github/workflows/ci.yml`, `apps/*/package.json`, `apps/*/Dockerfile`, `k8s/overlays/staging/`, `k8s/overlays/production/`
 
 ---
 
