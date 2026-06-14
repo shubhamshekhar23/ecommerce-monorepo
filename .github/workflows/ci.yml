@@ -129,6 +129,9 @@ jobs:
       - run: npm ci
         working-directory: .
 
+      - name: Build shared-types
+        run: npm run build --workspace=@ecommerce/shared-types
+
       # Must run before tsc and before jest — generates @prisma/client TypeScript types.
       # Without this, any "import { PrismaClient } from '@prisma/client'" fails at compile time.
       - name: Generate Prisma client
