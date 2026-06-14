@@ -42,7 +42,7 @@ export class DbAnalyticsService {
   // with 500ms average. This is why total_exec_time, not mean, is the right sort key
   // for finding what to optimize first.
   async getSlowQueries(limit = 10): Promise<SlowQueryDto[]> {
-    const rows = await this.prisma.$queryRaw<PgStatStatement[]>`
+    const rows = await this.readReplica.$queryRaw<PgStatStatement[]>`
       SELECT
         query,
         calls,
@@ -82,7 +82,7 @@ export class DbAnalyticsService {
   // UPDATE writes a new version, marks the old one dead. VACUUM reclaims them.
   // > 20% dead tuple ratio on a heavily-written table means autovacuum is falling behind.
   async getTableStats(): Promise<TableStatDto[]> {
-    const rows = await this.prisma.$queryRaw<PgStatTable[]>`
+    const rows = await this.readReplica.$queryRaw<PgStatTable[]>`
       SELECT
         st.relname,
         st.n_live_tup,
