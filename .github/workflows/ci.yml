@@ -41,6 +41,12 @@ jobs:
       - run: npm ci
         working-directory: .
 
+      - name: Build shared-types
+        run: npm run build --workspace=packages/shared-types
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
       - run: npm run lint:check
 
       - run: npm run format:check
