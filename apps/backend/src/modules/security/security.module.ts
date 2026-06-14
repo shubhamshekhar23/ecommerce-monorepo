@@ -3,6 +3,7 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { UsersModule } from '@/modules/users/users.module';
+import { PrismaModule } from '@/modules/prisma/prisma.module';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 
@@ -22,6 +23,7 @@ import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
       }),
     }),
     UsersModule,
+    PrismaModule,
   ],
   providers: [JwtStrategy, JwtRefreshStrategy],
 })

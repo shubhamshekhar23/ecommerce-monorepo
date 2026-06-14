@@ -22,4 +22,10 @@ $$;
 -- Allow the replicator user to connect to this database.
 -- pg_hba.conf inside the Docker container also needs a replication entry,
 -- which is handled by POSTGRES_HOST_AUTH_METHOD in docker-compose.replica.yml.
-GRANT CONNECT ON DATABASE ecommerce_db TO replicator;
+-- Uses current_database() so this migration works in any environment (CI uses
+-- test_db, local uses ecommerce_db) without modification.
+DO $$
+BEGIN
+    EXECUTE format('GRANT CONNECT ON DATABASE %I TO replicator', current_database());
+END
+$$;

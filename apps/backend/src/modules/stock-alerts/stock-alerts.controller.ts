@@ -1,6 +1,6 @@
 import { Controller, Post, Delete, Body, Param, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { IsEmail, IsString } from 'class-validator';
+import { IsEmail } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { CurrentUser } from '@/common/decorators';
 import type { RequestUser } from '@/common/types/request-user.interface';

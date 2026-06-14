@@ -1,6 +1,5 @@
 import { Injectable, Logger, OnModuleInit, ServiceUnavailableException } from '@nestjs/common';
 import CircuitBreaker from 'opossum';
-import type Stripe from 'stripe';
 import { StripeService } from '@/modules/stripe/stripe.service';
 import { isBugScenario } from '@/modules/debug-scenarios/bug-scenario.guard';
 

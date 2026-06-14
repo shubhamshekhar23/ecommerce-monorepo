@@ -352,6 +352,7 @@ services:
     environment:
       <<: [*db-env, *rabbitmq-env, *jwt-env]
       PORT: 3006
+      REDIS_URL: redis://redis:6379
       OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318/v1/traces
       # Auth service connects to Postgres directly (not PgBouncer) — it uses
       # session-level features incompatible with transaction pooling mode.
@@ -360,6 +361,8 @@ services:
       postgres:
         condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - ecommerce-network

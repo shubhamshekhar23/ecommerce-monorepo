@@ -15,12 +15,10 @@ import { LoggerModule } from './logger.module';
     LoggerModule,
 
     // Declares the product.events exchange so it exists before consumers bind queues.
-    RabbitMQModule.forRootAsync({
-      useFactory: () => ({
-        uri: process.env.RABBITMQ_URL ?? 'amqp://guest:guest@localhost:5672',
-        exchanges: [{ name: 'product.events', type: 'topic' }],
-        connectionInitOptions: { wait: true },
-      }),
+    RabbitMQModule.forRoot(RabbitMQModule, {
+      uri: process.env.RABBITMQ_URL ?? 'amqp://guest:guest@localhost:5672',
+      exchanges: [{ name: 'product.events', type: 'topic' }],
+      connectionInitOptions: { wait: true },
     }),
 
     SearchModule,

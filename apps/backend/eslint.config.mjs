@@ -2,6 +2,7 @@ import eslint from '@eslint/js';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import tsPlugin from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
+import globals from 'globals';
 
 export default [
   {
@@ -21,16 +22,8 @@ export default [
         },
       },
       globals: {
-        console: 'readonly',
-        process: 'readonly',
-        Buffer: 'readonly',
-        __dirname: 'readonly',
-        __filename: 'readonly',
-        describe: 'readonly',
-        it: 'readonly',
-        beforeEach: 'readonly',
-        expect: 'readonly',
-        jest: 'readonly',
+        ...globals.node,
+        ...globals.es2021,
       },
     },
     plugins: {
@@ -49,6 +42,9 @@ export default [
       'no-debugger': 'error',
       'no-var': 'error',
       'no-unused-vars': 'off',
+      // TypeScript's compiler already checks for undefined references — no-undef
+      // gives false positives on TS namespaces (PDFKit.PDFDocument, Express.Multer.File).
+      'no-undef': 'off',
       'prefer-const': 'error',
       '@typescript-eslint/no-unused-vars': [
         'error',
@@ -74,17 +70,9 @@ export default [
         },
       },
       globals: {
-        console: 'readonly',
-        process: 'readonly',
-        Buffer: 'readonly',
-        __dirname: 'readonly',
-        __filename: 'readonly',
-        describe: 'readonly',
-        it: 'readonly',
-        beforeEach: 'readonly',
-        afterEach: 'readonly',
-        expect: 'readonly',
-        jest: 'readonly',
+        ...globals.node,
+        ...globals.es2021,
+        ...globals.jest,
       },
     },
     plugins: {

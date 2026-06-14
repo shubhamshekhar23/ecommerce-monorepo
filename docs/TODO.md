@@ -4,6 +4,26 @@ Things that are intentionally skipped for now but worth coming back to. Each ite
 
 ---
 
+## CI — Per-Service Workflows
+
+### Add Separate CI Workflows For Each Service
+
+**What:** Create independent GitHub Actions workflow files for `auth-service`, `notification-service`, `search-service`, and `gateway` — one file per service, each triggered only by changes to that service's path.
+
+**Current state:** CI only covers `apps/backend/**`. Changes to any other service are never linted, type-checked, or tested in CI. The other services also lack `type-check`, `format:check`, and a combined `ci` script in their `package.json`.
+
+**How to implement:**
+- Add `type-check`, `format:check`, and `ci` scripts to each service's `package.json` (matching the pattern in `apps/backend/package.json`)
+- Create `.github/workflows/ci-auth.yml`, `ci-notification.yml`, `ci-search.yml`, `ci-gateway.yml`
+- Each workflow should mirror the backend CI structure: lint → format check → type check → tests
+- Use `paths: ['apps/<service>/**', '.github/workflows/ci-<service>.yml']` so each workflow only triggers on relevant changes
+
+**Why separate workflows:** Each service fails/passes independently — a broken auth-service doesn't block you from seeing notification-service results. Better for a multi-service repo where services evolve at different speeds.
+
+**References:** `.github/workflows/ci.yml`, `apps/backend/package.json`
+
+---
+
 ## Phase 5 — Observability
 
 ### Full Log-Trace Correlation (Pino → OpenTelemetry Log Bridge)

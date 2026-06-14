@@ -20,10 +20,12 @@ RUN apk add --no-cache dumb-init
 WORKDIR /app
 
 COPY --from=builder /repo/node_modules ./node_modules
+COPY --from=builder /repo/apps/gateway/node_modules ./apps/gateway/node_modules
 COPY --from=builder /repo/packages/shared-types/package.json ./packages/shared-types/package.json
 COPY --from=builder /repo/packages/shared-types/dist ./packages/shared-types/dist
-COPY --from=builder /repo/apps/gateway/dist ./dist
+COPY --from=builder /repo/apps/gateway/dist ./apps/gateway/dist
 
 EXPOSE 3000
+WORKDIR /app/apps/gateway
 ENTRYPOINT ["dumb-init", "--"]
 CMD ["node", "dist/main"]
