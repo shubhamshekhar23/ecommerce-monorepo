@@ -1,0 +1,65 @@
+# eu-west-1 managed service endpoints.
+# This region runs a Postgres STREAMING REPLICA (read replica of the us-east-1 primary).
+# Writes that arrive here go cross-region to the primary over a private tunnel
+# (AWS Transit Gateway / VPC peering). Read latency for EU users is local.
+# Replace placeholder values with actual endpoints before applying.
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: ecommerce
+spec:
+  type: ExternalName
+  # RDS read replica local to eu-west-1.
+  # Typical replication lag: <100ms on a healthy primary.
+  # If you need strong-consistency reads (e.g. immediately after a write), use
+  # a postgres-primary ExternalName service pointing to the us-east-1 primary.
+  # Example: mydb-replica.abcdefghij.eu-west-1.rds.amazonaws.com
+  externalName: YOUR_RDS_REPLICA_ENDPOINT.eu-west-1.rds.amazonaws.com
+---
+# postgres-primary — explicit write endpoint for transactions that must go to
+# the primary regardless of region. Auth service uses this for token writes.
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-primary
+  namespace: ecommerce
+spec:
+  type: ExternalName
+  externalName: YOUR_RDS_PRIMARY_ENDPOINT.us-east-1.rds.amazonaws.com
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: ecommerce
+spec:
+  type: ExternalName
+  # Separate Redis cluster per region — no cross-region session replication.
+  # Cache misses fall through to Postgres (the read replica). TTL-based expiry
+  # handles eventual consistency; the analytics Kafka consumer invalidates
+  # recommendation keys when fresh co-purchase data is available.
+  externalName: YOUR_ELASTICACHE_ENDPOINT.eu-west-1.cache.amazonaws.com
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq
+  namespace: ecommerce
+spec:
+  type: ExternalName
+  # RabbitMQ instance local to eu-west-1.
+  # The Shovel plugin on this broker is configured to forward messages to the
+  # us-east-1 broker for events that need cross-region fan-out (e.g. order analytics).
+  externalName: YOUR_RABBITMQ_ENDPOINT.eu-west-1.example.com
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redpanda
+  namespace: ecommerce
+spec:
+  type: ExternalName
+  # Redpanda Remote Read Replica of the us-east-1 cluster.
+  # search-service and analytics-service consume from here with local latency.
+  externalName: YOUR_KAFKA_BROKER.eu-west-1.example.com

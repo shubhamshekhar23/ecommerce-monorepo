@@ -129,7 +129,7 @@ Kiali + traffic topology graphs remain a cluster-install step (not committed as 
 
 ---
 
-## Multi-Region Active-Active (Phase 14)
+## Multi-Region Active-Active (Phase 14) ✅ Done (2026-06-15)
 
 **What:** Run the platform across two regions (e.g. `us-east-1` and `eu-west-1`) with active traffic in both, using global load balancing and cross-region Postgres replication.
 
@@ -139,11 +139,34 @@ Kiali + traffic topology graphs remain a cluster-install step (not committed as 
 
 **High-level design:**
 
-- Two Kubernetes clusters (one per region) managed by the same Argo CD instance (app-of-apps pointing at both)
+- Two Kubernetes clusters (one per region) managed by the same Argo CD instance (app-of-apps pointing at both) ✅
 - CockroachDB or PlanetScale (distributed SQL) replaces the single Postgres primary — multi-region writes with no cross-region synchronous round-trip for reads
-- Alternatively: Postgres streaming replication with read replica in region 2, and only writes going cross-region to the primary (acceptable for most ecommerce write patterns)
+- Alternatively: Postgres streaming replication with read replica in region 2, and only writes going cross-region to the primary (acceptable for most ecommerce write patterns) ✅
 - Global load balancer (CloudFlare, AWS Global Accelerator, or GCP Global LB) routes users to the nearest region
-- Redis cross-region: separate cache per region (cache invalidation events over Kafka) — do not replicate session data cross-region synchronously
-- RabbitMQ per region with shovel plugin for cross-region event fan-out where needed
+- Redis cross-region: separate cache per region (cache invalidation events over Kafka) — do not replicate session data cross-region synchronously ✅
+- RabbitMQ per region with shovel plugin for cross-region event fan-out where needed ✅
 
-**References:** `k8s/`, CockroachDB multi-region docs, AWS Global Accelerator, Argo CD multi-cluster docs
+**What was done:**
+
+- `k8s/overlays/us-east-1/` — production overlay extended with us-east-1 ExternalName endpoints; hosts the Postgres PRIMARY, Kafka primary, Redis and RabbitMQ instances. Patches the app-config ConfigMap with `REGION=us-east-1` and `OTEL_RESOURCE_ATTRIBUTES=service.region=us-east-1` so traces are identifiable per region without code changes.
+
+- `k8s/overlays/eu-west-1/` — production overlay extended with eu-west-1 ExternalName endpoints:
+  - `postgres` ExternalName → RDS streaming READ REPLICA (local read latency for EU users)
+  - `postgres-primary` ExternalName → us-east-1 RDS primary (explicit write endpoint for services that need strong-consistency, e.g. auth token writes)
+  - `redis` → separate ElastiCache per region (no cross-region session replication; cache misses fall through to the local Postgres replica; TTL-based expiry handles eventual consistency)
+  - `rabbitmq` → local RabbitMQ broker with Shovel plugin forwarding cross-region events to us-east-1
+  - `redpanda` → Redpanda Remote Read Replica of the us-east-1 Kafka cluster
+
+- `k8s/argocd/multi-cluster/applicationset.yaml` — Argo CD `ApplicationSet` with a list generator targeting both cluster API servers; generates `ecommerce-us-east-1` and `ecommerce-eu-west-1` Applications automatically, each pointing at its region overlay. Replace `YOUR_*_K8S_API_SERVER` placeholders with actual cluster URLs.
+
+- `k8s/argocd/multi-cluster/cluster-registration.sh` — helper script to register both kubeconfig contexts with Argo CD (`argocd cluster add`) before applying the ApplicationSet.
+
+**What still requires manual work before going live:**
+- Replace all `YOUR_*_ENDPOINT` placeholders in both overlay patch files with actual managed service endpoints
+- Configure Postgres streaming replication on RDS (enable read replica in eu-west-1)
+- Configure RabbitMQ Shovel plugin on the eu-west-1 broker
+- Configure Redpanda Remote Read Replica or Kafka MirrorMaker 2 for eu-west-1
+- Point a global load balancer (CloudFlare / AWS Global Accelerator) at both cluster ingresses
+- Register both clusters in Argo CD and apply the ApplicationSet
+
+**References:** `k8s/overlays/us-east-1/`, `k8s/overlays/eu-west-1/`, `k8s/argocd/multi-cluster/`, Argo CD ApplicationSet docs, AWS Global Accelerator

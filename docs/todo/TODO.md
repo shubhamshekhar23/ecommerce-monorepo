@@ -50,5 +50,5 @@ ScaledObject for notification-service in `k8s/base/keda/`: scales on `notificati
 **11. ~~Kubernetes — Cluster Autoscaler~~ ✅ Done (2026-06-15)** (`kubernetes-platform.md`)
 Manifests in `k8s/cluster-autoscaler/` (kube-system namespace, applied separately). RBAC + Deployment with `--balance-similar-node-groups`, `--expander=least-waste`, `--scale-down-unneeded-time=10m`, nodes=2:10. `safe-to-evict: "true"` on notification-service, analytics-service, search-service pod templates.
 
-**12. Multi-Region** (`kubernetes-platform.md`)
-Active-active across regions. Everything else must be stable first.
+**12. ~~Multi-Region~~ ✅ Done (2026-06-15)** (`kubernetes-platform.md`)
+Region overlays in `k8s/overlays/us-east-1/` and `k8s/overlays/eu-west-1/` — ExternalName endpoints per region, Postgres read replica in eu-west-1, separate Redis/RabbitMQ/Redpanda per region. Argo CD ApplicationSet in `k8s/argocd/multi-cluster/` deploys correct overlay to each cluster. Replace endpoint placeholders before applying.

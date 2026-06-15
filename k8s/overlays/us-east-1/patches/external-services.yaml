@@ -1,0 +1,46 @@
+# us-east-1 managed service endpoints.
+# This region hosts the Postgres PRIMARY — all writes land here.
+# Replace placeholder values with actual endpoints before applying.
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: ecommerce
+spec:
+  type: ExternalName
+  # RDS Multi-AZ primary: writes from all regions route here.
+  # Example: mydb-primary.abcdefghij.us-east-1.rds.amazonaws.com
+  externalName: YOUR_RDS_PRIMARY_ENDPOINT.us-east-1.rds.amazonaws.com
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: ecommerce
+spec:
+  type: ExternalName
+  # ElastiCache cluster local to us-east-1 — no cross-region session reads.
+  # Example: myredis.abcdefg.0001.use1.cache.amazonaws.com
+  externalName: YOUR_ELASTICACHE_ENDPOINT.us-east-1.cache.amazonaws.com
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq
+  namespace: ecommerce
+spec:
+  type: ExternalName
+  # RabbitMQ instance local to us-east-1.
+  # Cross-region fan-out uses the Shovel plugin configured on this broker.
+  externalName: YOUR_RABBITMQ_ENDPOINT.us-east-1.example.com
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redpanda
+  namespace: ecommerce
+spec:
+  type: ExternalName
+  # Redpanda/MSK broker local to us-east-1.
+  # Consumers in eu-west-1 replicate via MirrorMaker 2 or Redpanda Remote Read Replicas.
+  externalName: YOUR_KAFKA_BROKER.us-east-1.example.com

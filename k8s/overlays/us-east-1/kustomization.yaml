@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# us-east-1 is the PRIMARY region — it hosts the Postgres write primary and
+# the Kafka cluster that eu-west-1 mirrors from.
+# Build on top of the production overlay so replica counts, images, and
+# the Ingress TLS patch are all inherited.
+
+namespace: ecommerce
+
+resources:
+  - ../production
+
+patches:
+  # Override the ExternalName service endpoints with us-east-1 endpoints.
+  - path: patches/external-services.yaml
+  # Inject REGION into the shared ConfigMap so all services can identify
+  # which region they're running in (useful for tracing and logging).
+  - path: patches/region-config.yaml

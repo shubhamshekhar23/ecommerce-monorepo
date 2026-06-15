@@ -1,0 +1,12 @@
+# Strategic merge patch — adds REGION to the shared app-config ConfigMap.
+# All services that mount app-config will see REGION=us-east-1 without any
+# application code changes.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: ecommerce
+data:
+  REGION: "us-east-1"
+  # OTEL service.name suffix helps Jaeger/Grafana distinguish traces per region.
+  OTEL_RESOURCE_ATTRIBUTES: "service.region=us-east-1"

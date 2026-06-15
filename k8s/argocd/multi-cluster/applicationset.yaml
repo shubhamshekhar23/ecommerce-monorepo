@@ -1,0 +1,48 @@
+# ApplicationSet replaces the per-service Application files when running multi-cluster.
+# It generates one Application per region entry in the list generator and pushes
+# the right overlay to the right cluster — no manual duplication.
+#
+# Prerequisites:
+#   1. Register both clusters in Argo CD:
+#        argocd cluster add <us-east-1-context> --name us-east-1
+#        argocd cluster add <eu-west-1-context> --name eu-west-1
+#   2. Apply this file to the Argo CD cluster:
+#        kubectl apply -f k8s/argocd/multi-cluster/applicationset.yaml -n argocd
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: ecommerce-multi-region
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - region: us-east-1
+            # Replace with the API server URL of your us-east-1 cluster.
+            # Get it from: argocd cluster list
+            clusterUrl: https://YOUR_US_EAST_1_K8S_API_SERVER
+          - region: eu-west-1
+            clusterUrl: https://YOUR_EU_WEST_1_K8S_API_SERVER
+  template:
+    metadata:
+      # One Application per region: ecommerce-us-east-1, ecommerce-eu-west-1.
+      name: ecommerce-{{region}}
+      namespace: argocd
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/shubhamshekhar23/ecommerce-monorepo.git
+        targetRevision: HEAD
+        # Each region gets its own overlay with region-specific service endpoints.
+        path: k8s/overlays/{{region}}
+      destination:
+        server: "{{clusterUrl}}"
+        namespace: ecommerce
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true

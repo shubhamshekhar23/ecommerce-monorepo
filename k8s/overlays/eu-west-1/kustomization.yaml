@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# eu-west-1 is the REPLICA region — it runs a Postgres streaming replica and a
+# separate Redis/RabbitMQ/Redpanda cluster. Writes go cross-region to us-east-1.
+# Inherits production replica counts, images, and Ingress TLS config.
+
+namespace: ecommerce
+
+resources:
+  - ../production
+
+patches:
+  - path: patches/external-services.yaml
+  - path: patches/region-config.yaml
