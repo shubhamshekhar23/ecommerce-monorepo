@@ -4,11 +4,13 @@ Improvements to the build and deployment pipeline. Current state: a single monol
 
 ---
 
-## Matrix CI Workflow — Build All Services
+## Matrix CI Workflow — Build All Services ✅ Done (2026-06-15)
 
 **What:** Replace the current single-service CI workflow with a matrix that detects which service changed and only builds/pushes that service's image.
 
-**Current state:** `.github/workflows/ci.yml` always builds `apps/backend`. Other apps (`apps/frontend`, `apps/auth-service`, `apps/notification-service`, `apps/search-service`, `apps/gateway`) have no CI — their images are never built or pushed to the registry.
+**Status:** Implemented. `detect-changes` job uses `dorny/paths-filter` to output which services changed (including shared-types propagation). `build` job is a matrix over all 5 services, skipping unchanged ones. Each service gets its own GHA cache scope. Broken `deploy-staging` / `deploy-production` jobs removed — replaced with a comment explaining the Argo CD plan.
+
+**Previous state:** `.github/workflows/ci.yml` always built `apps/backend`. Other apps had no CI.
 
 **Why it matters:** In a real monorepo every service needs independent build and publish. The current setup means only the backend can ever be deployed; all other services are permanently stale.
 
@@ -24,11 +26,20 @@ Improvements to the build and deployment pipeline. Current state: a single monol
 
 ---
 
-## GitOps Deployment With Argo CD
+## GitOps Deployment With Argo CD ✅ Done (partial, 2026-06-15)
 
 **What:** Replace manual `kubectl apply` and the broken `deploy-production` CI job with a GitOps loop: CI writes the new image tag to `k8s/` manifests, Argo CD detects the change and applies it.
 
-**Current state:** The CI `deploy-production` and `deploy-staging` jobs run `kubectl apply` directly using a `KUBECONFIG` secret that does not exist — they always fail. There is no GitOps controller watching the cluster.
+**Status:** Manifests committed. `k8s/argocd/app-of-apps.yaml` defines the parent Application. `k8s/argocd/apps/` contains one Application per service pointing at the relevant `k8s/base/<service>` path. Broken deploy jobs removed from `ci.yml`.
+
+**To activate (requires a cluster):**
+1. `kubectl create namespace argocd`
+2. `kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml`
+3. `kubectl apply -f k8s/argocd/app-of-apps.yaml`
+
+Argo CD will then reconcile all services automatically on every push to main.
+
+**Previous state:** The CI `deploy-production` and `deploy-staging` jobs ran `kubectl apply` directly using a `KUBECONFIG` secret that did not exist — they always failed.
 
 **Why it matters:** Direct-apply CI is fragile and stateless. GitOps makes the cluster state auditable and self-healing — the cluster always converges to what is in git.
 
@@ -45,9 +56,11 @@ Improvements to the build and deployment pipeline. Current state: a single monol
 
 ---
 
-## Service Dockerfile Cleanup — Align With Backend's 3-Stage Pattern
+## Service Dockerfile Cleanup — Align With Backend's 3-Stage Pattern ✅ Done (2026-06-15)
 
 **What:** Rewrite the four service Dockerfiles (`auth-service`, `gateway`, `notification-service`, `search-service`) to match the backend's proven 3-stage build pattern (`deps` → `builder` → `runner`) instead of the current fragile workaround.
+
+**Status:** All four Dockerfiles rewritten. Each now uses `deps` (full `npm ci` with all workspace manifests + native tools) → `builder` (compile TypeScript, no build tools) → `runner` (lean, dumb-init, non-root user). `auth-service` includes `prisma generate` in both deps and builder stages. All four standardise on `WORKDIR /app`.
 
 **Current state (fragile):** The four service Dockerfiles use a combination of:
 - Workspace-scoped `npm install --workspace=X --ignore-scripts` to avoid postinstall conflicts

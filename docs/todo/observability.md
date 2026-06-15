@@ -4,22 +4,22 @@ Gaps in logging, tracing, and monitoring correlation. Builds on the existing Ope
 
 ---
 
-## Log–Trace Correlation (Phase 5 Gap)
+## Log–Trace Correlation ✅ Done (2026-06-15)
 
 ### Inject Trace ID Into Every Log Line
 
 **What:** Stamp every Pino log entry with the active OpenTelemetry `traceId` and `spanId` so logs and traces are joinable in Grafana/Tempo.
 
-**Current state:** Pino and OpenTelemetry are both set up, but the trace context is not injected into the Pino log format. Logs and traces exist in parallel but cannot be correlated by trace ID.
+**Status:** Already implemented. `logger.module.ts` registers a `mixin: getOtelContext` function that reads `api.trace.getActiveSpan()` at log time and injects `trace_id`, `span_id`, and `trace_flags` into every log record. `@opentelemetry/instrumentation-pino` is intentionally disabled in `tracing.ts` because the mixin approach is more reliable (avoids the race where `res.on('finish')` fires after the HTTP span has exited its ALS scope).
 
-**Why it matters:** Without the correlation, you cannot go from a slow Tempo span → drill into logs → see exactly what happened. The two systems are blind to each other, which defeats the purpose of structured observability.
+Verified live: every request log line carries all three fields, e.g.:
+```json
+{ "trace_id": "f517ce51615bec8b6c82a3f12038305b", "span_id": "0c53dfb8d1f03571", "trace_flags": "01" }
+```
 
-- Add a `mixin` to the Pino logger that reads `trace.getActiveSpan()` from the OpenTelemetry API and injects `traceId`, `spanId`, and `traceFlags` into every log record
-- Ensure the mixin is added to the `PinoLogger` configuration in `LoggerModule`
-- Confirm the fields appear in JSON log output during a traced request
-- Document the Grafana query to join on `traceId`
+**Grafana query to join logs and traces:** In Grafana Explore, use a Loki derived field on `trace_id` pointing at the Tempo datasource. Then clicking `trace_id` in any log line opens the linked Tempo trace directly.
 
-**References:** `apps/backend/src/modules/logger/`, `apps/backend/src/tracing.ts`, NestJS Pino mixin docs
+**References:** `apps/backend/src/modules/logger/logger.module.ts`, `apps/backend/src/tracing.ts`
 
 ---
 

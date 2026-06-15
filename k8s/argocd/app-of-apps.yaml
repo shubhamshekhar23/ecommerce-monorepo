@@ -1,0 +1,27 @@
+# App-of-apps: a single Argo CD Application that manages all service Applications.
+# Apply this once after installing Argo CD:
+#   kubectl apply -f k8s/argocd/app-of-apps.yaml
+#
+# Argo CD will then discover and sync all Applications in k8s/argocd/apps/.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ecommerce-apps
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/shubhamshekhar23/ecommerce-monorepo.git
+    targetRevision: HEAD
+    path: k8s/argocd/apps
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

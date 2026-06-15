@@ -1,30 +1,71 @@
 name: CI
 
-# Only run on backend changes — no wasted CI minutes for frontend-only commits.
 on:
   push:
     branches: [main, develop]
     paths:
-      - 'apps/backend/**'
+      - 'apps/**'
+      - 'packages/**'
       - '.github/workflows/ci.yml'
   pull_request:
     branches: [main, develop]
     paths:
-      - 'apps/backend/**'
+      - 'apps/**'
+      - 'packages/**'
       - '.github/workflows/ci.yml'
   workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/backend
 
 jobs:
-  # ── Job 1: Lint + Type Check ──────────────────────────────────────────────
+  # ── Job 1: Detect changed services ───────────────────────────────────────────
+  # dorny/paths-filter outputs a boolean per service so downstream jobs only
+  # run (or build) what actually changed. shared-types changes rebuild everything.
+  detect-changes:
+    name: Detect Changed Services
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      auth-service: ${{ steps.filter.outputs.auth-service }}
+      gateway: ${{ steps.filter.outputs.gateway }}
+      notification-service: ${{ steps.filter.outputs.notification-service }}
+      search-service: ${{ steps.filter.outputs.search-service }}
+      any-service: ${{ steps.filter.outputs.any-service }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'apps/backend/**'
+              - 'packages/shared-types/**'
+            auth-service:
+              - 'apps/auth-service/**'
+              - 'packages/shared-types/**'
+            gateway:
+              - 'apps/gateway/**'
+              - 'packages/shared-types/**'
+            notification-service:
+              - 'apps/notification-service/**'
+              - 'packages/shared-types/**'
+            search-service:
+              - 'apps/search-service/**'
+              - 'packages/shared-types/**'
+            any-service:
+              - 'apps/**'
+              - 'packages/**'
+
+  # ── Job 2: Lint + Type Check (backend) ───────────────────────────────────────
   # Fastest job — runs in parallel with test. Catches code quality issues immediately.
   lint-typecheck:
     name: Lint & Type Check
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.backend == 'true'
     defaults:
       run:
         working-directory: apps/backend
@@ -53,7 +94,7 @@ jobs:
 
       - run: npm run type-check
 
-  # ── Job 2: Migration Safety ───────────────────────────────────────────────
+  # ── Job 3: Migration Safety ───────────────────────────────────────────────────
   # WHY this job exists:
   # Zero-downtime deploys require backward-compatible migrations.
   # The deploy sequence is: migrate → start new containers → switch traffic → stop old.
@@ -68,16 +109,18 @@ jobs:
     name: Migration Safety
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.backend == 'true'
 
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # needed to compare against base branch
+          fetch-depth: 0
 
       - name: Check migrations
         run: bash apps/backend/scripts/migration-safety-check.sh
 
-  # ── Job 3: Tests ──────────────────────────────────────────────────────────
+  # ── Job 4: Tests ──────────────────────────────────────────────────────────────
   # Uses REAL Postgres + Redis — no mocks.
   # Why no mocks? Mock DB tests pass when the real query would fail due to:
   #   - Missing index causing timeout under load
@@ -88,6 +131,8 @@ jobs:
     name: Tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.backend == 'true'
     defaults:
       run:
         working-directory: apps/backend
@@ -132,8 +177,6 @@ jobs:
       - name: Build shared-types
         run: npm run build --workspace=@ecommerce/shared-types
 
-      # Must run before tsc and before jest — generates @prisma/client TypeScript types.
-      # Without this, any "import { PrismaClient } from '@prisma/client'" fails at compile time.
       - name: Generate Prisma client
         run: npx prisma generate
 
@@ -163,34 +206,69 @@ jobs:
           files: apps/backend/coverage/coverage-final.json
           fail_ci_if_error: false
 
-  # ── Job 4: Build & Push Docker Image ─────────────────────────────────────
+  # ── Job 5: Build & Push (matrix over changed services) ───────────────────────
   # Only runs on push (not PRs) — PRs verify the code is correct, pushes ship it.
-  # Uses GitHub Actions cache for Docker layer cache:
-  #   Cold build: ~3 min. Cache hit: ~30s (only changed layers rebuild).
-  #   cache-from reads layers from cache; cache-to writes new layers back.
-  #   mode=max caches ALL intermediate layers, not just the final stage.
+  # Builds only the services that changed, not the entire monorepo every time.
+  #
+  # Layer cache strategy (type=gha, mode=max):
+  #   Cold build: ~3-5 min per service. Cache hit: ~30s (only changed layers rebuild).
+  #   mode=max caches ALL intermediate layers including the deps stage — deps is the
+  #   slowest layer (npm ci + native compilation). On cache hit it's skipped entirely.
+  #   Cache key is scoped per service so one service's cache never pollutes another.
   build:
-    name: Build & Push
+    name: Build & Push — ${{ matrix.service }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: [lint-typecheck, migration-safety, test]
-    if: github.event_name == 'push'
+    needs: [lint-typecheck, migration-safety, test, detect-changes]
+    # lint-typecheck, migration-safety, test all use `if` conditions so they may be
+    # skipped. `always()` here lets build run even when those jobs were skipped.
+    if: |
+      always() &&
+      github.event_name == 'push' &&
+      needs.detect-changes.outputs.any-service == 'true' &&
+      !contains(needs.*.result, 'failure')
     permissions:
       contents: read
       packages: write
 
-    outputs:
-      # Immutable SHA tag used by deploy jobs for rollback capability.
-      # Branch tags (main, develop) are floating — they move with each push.
-      # SHA tags never move — you can always roll back to sha-abc1234.
-      image-tag: ${{ steps.meta.outputs.version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: backend
+            changed: ${{ needs.detect-changes.outputs.backend }}
+            dockerfile: apps/backend/Dockerfile
+            image: backend
+          - service: auth-service
+            changed: ${{ needs.detect-changes.outputs.auth-service }}
+            dockerfile: apps/auth-service/Dockerfile
+            image: auth-service
+          - service: gateway
+            changed: ${{ needs.detect-changes.outputs.gateway }}
+            dockerfile: apps/gateway/Dockerfile
+            image: gateway
+          - service: notification-service
+            changed: ${{ needs.detect-changes.outputs.notification-service }}
+            dockerfile: apps/notification-service/Dockerfile
+            image: notification-service
+          - service: search-service
+            changed: ${{ needs.detect-changes.outputs.search-service }}
+            dockerfile: apps/search-service/Dockerfile
+            image: search-service
 
     steps:
+      - name: Skip unchanged service
+        if: matrix.changed != 'true'
+        run: echo "No changes in ${{ matrix.service }} — skipping build."
+
       - uses: actions/checkout@v4
+        if: matrix.changed == 'true'
 
       - uses: docker/setup-buildx-action@v3
+        if: matrix.changed == 'true'
 
       - uses: docker/login-action@v3
+        if: matrix.changed == 'true'
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -198,137 +276,30 @@ jobs:
 
       - name: Image metadata
         id: meta
+        if: matrix.changed == 'true'
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.image }}
           tags: |
             type=sha,prefix=sha-
             type=ref,event=branch
             type=semver,pattern={{version}}
 
       - uses: docker/build-push-action@v6
+        if: matrix.changed == 'true'
         with:
           context: .
-          file: apps/backend/Dockerfile
+          file: ${{ matrix.dockerfile }}
           target: runner
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
 
-  # ── Job 5: Deploy to Staging ──────────────────────────────────────────────
-  # Runs only on develop branch.
-  # Phase 11: replaced SSH + blue-green-deploy.sh with kubectl apply -k.
-  # Rolling updates (maxUnavailable: 0 + maxSurge: 1) replace the bash script natively:
-  #   - New Pods start → readiness probe gates traffic → old Pods drain → old Pods stop.
-  # Requires: KUBECONFIG_STAGING secret (base64-encoded kubeconfig for a service account
-  # with edit permissions in the ecommerce namespace only).
-  deploy-staging:
-    name: Deploy → Staging
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: [build]
-    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
-    environment:
-      name: staging
-      url: https://staging.api.example.com
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v4
-        with:
-          version: 'v1.29.0'
-
-      - name: Configure kubeconfig
-        run: |
-          mkdir -p ~/.kube
-          echo "${{ secrets.KUBECONFIG_STAGING }}" | base64 -d > ~/.kube/config
-          chmod 600 ~/.kube/config
-
-      - name: Run database migration
-        # Prisma migrate runs as a one-shot Job BEFORE the Deployment rollout.
-        # This enforces the expand/contract pattern: new schema is applied while
-        # old app version is still running, then new app version rolls out.
-        run: |
-          JOB_NAME="prisma-migrate-${GITHUB_SHA::8}"
-          kubectl create job "${JOB_NAME}" \
-            --image="ghcr.io/${{ github.repository }}/backend:${{ needs.build.outputs.image-tag }}" \
-            --namespace=ecommerce \
-            -- npx prisma migrate deploy
-          kubectl patch job "${JOB_NAME}" -n ecommerce \
-            --type=json \
-            -p='[{"op":"add","path":"/spec/template/spec/containers/0/env","value":[{"name":"DIRECT_DATABASE_URL","valueFrom":{"secretKeyRef":{"name":"backend-secrets","key":"DIRECT_DATABASE_URL"}}}]}]'
-          kubectl wait "job/${JOB_NAME}" --for=condition=complete --timeout=120s -n ecommerce
-
-      - name: Update image tags
-        # kustomize edit set image pins the exact SHA tag in the overlay before applying.
-        # This ensures staging always runs the image built from this exact commit.
-        run: |
-          cd k8s/overlays/staging
-          kustomize edit set image \
-            ghcr.io/shubhamshekhar23/ecommerce-monorepo/backend=ghcr.io/${{ github.repository }}/backend:${{ needs.build.outputs.image-tag }}
-
-      - name: Apply manifests
-        run: kubectl apply -k k8s/overlays/staging
-
-      - name: Wait for rollout
-        run: |
-          kubectl rollout status deployment/backend -n ecommerce --timeout=300s
-          kubectl rollout status deployment/gateway -n ecommerce --timeout=300s
-
-  # ── Job 6: Deploy to Production ───────────────────────────────────────────
-  # Main branch only. Requires manual approval via GitHub environment protection.
-  # Set up: Repo → Settings → Environments → production → Required reviewers.
-  deploy-production:
-    name: Deploy → Production
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: [build]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    environment:
-      name: production
-      url: https://api.example.com
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v4
-        with:
-          version: 'v1.29.0'
-
-      - name: Configure kubeconfig
-        run: |
-          mkdir -p ~/.kube
-          echo "${{ secrets.KUBECONFIG_PRODUCTION }}" | base64 -d > ~/.kube/config
-          chmod 600 ~/.kube/config
-
-      - name: Run database migration
-        run: |
-          JOB_NAME="prisma-migrate-${GITHUB_SHA::8}"
-          kubectl create job "${JOB_NAME}" \
-            --image="ghcr.io/${{ github.repository }}/backend:${{ needs.build.outputs.image-tag }}" \
-            --namespace=ecommerce \
-            -- npx prisma migrate deploy
-          kubectl patch job "${JOB_NAME}" -n ecommerce \
-            --type=json \
-            -p='[{"op":"add","path":"/spec/template/spec/containers/0/env","value":[{"name":"DIRECT_DATABASE_URL","valueFrom":{"secretKeyRef":{"name":"backend-secrets","key":"DIRECT_DATABASE_URL"}}}]}]'
-          kubectl wait "job/${JOB_NAME}" --for=condition=complete --timeout=120s -n ecommerce
-
-      - name: Update image tags
-        run: |
-          cd k8s/overlays/production
-          kustomize edit set image \
-            ghcr.io/shubhamshekhar23/ecommerce-monorepo/backend=ghcr.io/${{ github.repository }}/backend:${{ needs.build.outputs.image-tag }}
-
-      - name: Apply manifests
-        run: kubectl apply -k k8s/overlays/production
-
-      - name: Wait for rollout
-        run: |
-          kubectl rollout status deployment/backend -n ecommerce --timeout=300s
-          kubectl rollout status deployment/gateway -n ecommerce --timeout=300s
-          kubectl rollout status deployment/auth-service -n ecommerce --timeout=300s
+  # ── Deploy jobs disabled — no cluster configured ──────────────────────────────
+  # deploy-staging and deploy-production are disabled until Argo CD is set up.
+  # They require KUBECONFIG secrets and a live cluster that don't exist yet.
+  # GitOps plan: CI writes the new image tag to k8s/ manifests and commits it;
+  # Argo CD detects the change and reconciles the cluster automatically.
+  # See docs/todo/ci-cd-gitops.md for the full Argo CD implementation plan.

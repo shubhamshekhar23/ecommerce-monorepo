@@ -20,17 +20,17 @@ Work these in order — each group unblocks the next.
 **1. ~~Phase 7 backfill~~ ✅ Done (2026-06-15)**
 Reviews, Returns, Stock Alerts, Tax, and Vendor Marketplace gaps all closed. See `docs/phases/phase-7-features.md` for details.
 
-**2. Observability** (`observability.md`)
-Add trace ID injection to logs. Low effort, high payoff — cross-linking traces and logs makes every debugging session faster. No deployment changes needed.
+**2. ~~Observability~~ ✅ Done (2026-06-15)** (`observability.md`)
+Log–trace correlation already implemented: `mixin: getOtelContext` in `LoggerModule` injects `trace_id`, `span_id`, `trace_flags` into every Pino log line.
 
-**3. CI/CD — Dockerfile cleanup** (`ci-cd-gitops.md`)
-Rewrite the four service Dockerfiles to match the backend's 3-stage pattern. Current workaround is fragile — any lockfile change can break module resolution silently. Fix this before wiring CI so images build reliably.
+**3. ~~CI/CD — Dockerfile cleanup~~ ✅ Done (2026-06-15)** (`ci-cd-gitops.md`)
+All four service Dockerfiles rewritten to the 3-stage deps→builder→runner pattern.
 
-**4. CI/CD — Matrix workflow** (`ci-cd-gitops.md`)
-Wire CI for all services (currently only backend is built/pushed). Do this before Argo CD so you have images to deploy.
+**4. ~~CI/CD — Matrix workflow~~ ✅ Done (2026-06-15)** (`ci-cd-gitops.md`)
+ci.yml now uses dorny/paths-filter + matrix build over changed services. Broken deploy jobs disabled.
 
-**5. CI/CD — GitOps with Argo CD** (`ci-cd-gitops.md`)
-Replace broken kubectl-in-CI deploy jobs with Argo CD reconciliation. Unblocks reliable deployments for everything that follows.
+**5. ~~CI/CD — GitOps with Argo CD~~ ✅ Done (partial, 2026-06-15)** (`ci-cd-gitops.md`)
+Argo CD Application manifests committed to k8s/argocd/. App-of-apps pattern ready to apply once a cluster exists. Deploy jobs remain disabled until then.
 
 **6. Event streaming — CDC + Debezium** (`event-streaming.md`)
 Kafka + Debezium for search sync. Required before analytics (both depend on Kafka topics being available).
