@@ -1,0 +1,10 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: postgres-pdb
+spec:
+  # Postgres is single-primary — never allow voluntary disruption without a ready replacement.
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: postgres

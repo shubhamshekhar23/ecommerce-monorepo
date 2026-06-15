@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-opensearch-ingress
+spec:
+  podSelector:
+    matchLabels:
+      app: opensearch
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: search-service
+      ports:
+        - port: 9200

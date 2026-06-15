@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytics-service
+  namespace: ecommerce
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: analytics-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: analytics-service
+    spec:
+      terminationGracePeriodSeconds: 30
+      initContainers:
+        - name: wait-for-redpanda
+          image: busybox:1.36
+          command: ['sh', '-c', 'until nc -z redpanda 9092; do echo waiting for redpanda; sleep 2; done']
+        - name: wait-for-clickhouse
+          image: busybox:1.36
+          command: ['sh', '-c', 'until nc -z clickhouse 8123; do echo waiting for clickhouse; sleep 2; done']
+      containers:
+        - name: analytics-service
+          image: ghcr.io/shubhamshekhar23/ecommerce-monorepo/analytics-service:latest
+          ports:
+            - containerPort: 3007
+          env:
+            - name: PORT
+              value: "3007"
+            - name: KAFKA_BROKERS
+              value: "redpanda:9092"
+            - name: CLICKHOUSE_URL
+              value: "http://clickhouse:8123"
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: analytics-secrets
+                  key: REDIS_URL
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3007
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3007
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec:
+                command: ['/bin/sh', '-c', 'sleep 5']
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"

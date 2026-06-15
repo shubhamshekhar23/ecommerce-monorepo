@@ -38,8 +38,8 @@ Redpanda + Kafka Connect + Debezium 2.7 wired into docker-compose. Postgres WAL 
 **7. ~~Event streaming — Analytics & Recommendations~~ ✅ Done (2026-06-15)** (`event-streaming.md`)
 `apps/analytics-service`: ClickHouse (columnar store) + kafkajs `order.placed` consumer + 5-min co-purchase cron → Redis sorted sets → `GET /api/recommendations/products/:id`. Backend publishes via `KafkaProducerService` + `OrderAnalyticsHandler`.
 
-**8. Kubernetes — Network Policies + PDBs** (`kubernetes-platform.md`)
-Zero-trust pod networking and disruption budgets. Must be in place before autoscaling — PDBs protect pods during Cluster Autoscaler scale-down.
+**8. ~~Kubernetes — Network Policies + PDBs~~ ✅ Done (2026-06-15)** (`kubernetes-platform.md`)
+Default-deny ingress NetworkPolicy + 11 per-service allow policies in `k8s/base/network-policies/`. PDBs (`minAvailable: 1`) for backend, gateway, auth-service, postgres, redis, rabbitmq in `k8s/base/pdb/`. analytics-service k8s manifests added.
 
 **9. Kubernetes — Service Mesh** (`kubernetes-platform.md`)
 Istio/Linkerd for mTLS and traffic observability. Complements Network Policies with identity-based enforcement.

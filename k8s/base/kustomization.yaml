@@ -5,12 +5,15 @@ namespace: ecommerce
 
 resources:
   - namespace.yaml
+  - network-policies/
+  - pdb/
   - infra/
   - backend/
   - auth-service/
   - gateway/
   - search-service/
   - notification-service/
+  - analytics-service/
   - ingress/
   - monitoring/
   - jobs/

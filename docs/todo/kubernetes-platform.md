@@ -4,7 +4,7 @@ Production-readiness work for the Kubernetes layer. These items have no applicat
 
 ---
 
-## Network Policies — Zero-Trust Pod-to-Pod Traffic
+## Network Policies — Zero-Trust Pod-to-Pod Traffic ✅ Done (2026-06-15)
 
 **What:** Lock down pod-to-pod traffic with Kubernetes `NetworkPolicy` so services can only communicate with their declared dependencies.
 
@@ -29,7 +29,7 @@ Production-readiness work for the Kubernetes layer. These items have no applicat
 
 ---
 
-## Pod Disruption Budgets — Safe Rolling Updates
+## Pod Disruption Budgets — Safe Rolling Updates ✅ Done (2026-06-15)
 
 **What:** Add `PodDisruptionBudget` resources to ensure minimum availability during node drain, cluster upgrades, and rolling deployments.
 
