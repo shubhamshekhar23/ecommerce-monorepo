@@ -1,0 +1,11 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Cluster Autoscaler lives in kube-system, not the ecommerce namespace.
+# Apply separately: kubectl apply -k k8s/cluster-autoscaler/
+# Before applying, replace <NODE_GROUP_ID> in deployment.yaml with the
+# actual node group name for your cloud provider.
+
+resources:
+  - rbac.yaml
+  - deployment.yaml

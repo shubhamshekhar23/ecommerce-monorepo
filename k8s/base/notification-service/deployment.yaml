@@ -17,6 +17,8 @@ spec:
     metadata:
       labels:
         app: notification-service
+      annotations:
+        cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
     spec:
       terminationGracePeriodSeconds: 30
       initContainers:

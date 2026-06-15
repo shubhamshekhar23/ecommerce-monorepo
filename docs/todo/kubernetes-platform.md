@@ -102,7 +102,7 @@ Kiali + traffic topology graphs remain a cluster-install step (not committed as 
 
 ---
 
-## Cluster Autoscaler — Node-Level Scaling
+## Cluster Autoscaler — Node-Level Scaling ✅ Done (2026-06-15)
 
 **What:** Add the Cluster Autoscaler so the node pool grows when pods are pending and shrinks when nodes are underutilised.
 
@@ -112,13 +112,20 @@ Kiali + traffic topology graphs remain a cluster-install step (not committed as 
 
 **Implementation plan:**
 
-- Enable Cluster Autoscaler on the node pool (cloud-specific: `--balance-similar-node-groups`, `--skip-nodes-with-local-storage=false`)
-- Set node pool min/max (`min: 2`, `max: 10` for the app pool)
-- Annotate nodes with resource requests in all `Deployment` manifests — the autoscaler uses `requests`, not `limits`, to decide if a node is underutilised
-- Add the `cluster-autoscaler.kubernetes.io/safe-to-evict: "true"` annotation to pods that can be freely moved (batch workers, non-stateful services)
+- Enable Cluster Autoscaler on the node pool (cloud-specific: `--balance-similar-node-groups`, `--skip-nodes-with-local-storage=false`) ✅
+- Set node pool min/max (`min: 2`, `max: 10` for the app pool) ✅
+- Annotate nodes with resource requests in all `Deployment` manifests — the autoscaler uses `requests`, not `limits`, to decide if a node is underutilised ✅ (all 6 services already had requests set)
+- Add the `cluster-autoscaler.kubernetes.io/safe-to-evict: "true"` annotation to pods that can be freely moved (batch workers, non-stateful services) ✅
 - Verify scale-down: cordon a node, watch the autoscaler drain and terminate it while PDBs protect running pods
 
-**References:** `k8s/`, Cluster Autoscaler cloud-provider docs
+**What was done:**
+- `k8s/cluster-autoscaler/` — standalone kustomize directory (separate from `k8s/base/` because the autoscaler runs in `kube-system`, not the `ecommerce` namespace); apply with `kubectl apply -k k8s/cluster-autoscaler/`
+- `rbac.yaml` — ServiceAccount + ClusterRole (node/pod/PDB read access, node update for cordon/drain, lease for leader election) + Role (configmap for status persistence) + bindings
+- `deployment.yaml` — `registry.k8s.io/autoscaling/cluster-autoscaler:v1.29.0`; key flags: `--balance-similar-node-groups` (even AZ spread), `--skip-nodes-with-local-storage=false` (allow draining Prometheus emptyDir pods), `--expander=least-waste`, `--scale-down-unneeded-time=10m` (avoid churn from bursts that KEDA already absorbed), `--scale-down-utilization-threshold=0.5`; replace `<NODE_GROUP_ID>` with actual ASG/MIG name before applying
+- `safe-to-evict: "true"` added to pod templates of `notification-service`, `analytics-service`, `search-service` — pure queue/event consumers with no local state; the autoscaler can freely drain the node they run on
+- `safe-to-evict: "false"` on the autoscaler itself — prevents it from evicting the process responsible for drain decisions
+
+**References:** `k8s/cluster-autoscaler/`, Cluster Autoscaler cloud-provider docs
 
 ---
 

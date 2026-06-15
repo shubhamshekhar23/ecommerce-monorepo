@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cluster-autoscaler
+  namespace: kube-system
+  labels:
+    app: cluster-autoscaler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cluster-autoscaler
+  template:
+    metadata:
+      labels:
+        app: cluster-autoscaler
+      annotations:
+        # Prevent the autoscaler from evicting itself during scale-down.
+        cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8085"
+    spec:
+      priorityClassName: system-cluster-critical
+      serviceAccountName: cluster-autoscaler
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        fsGroup: 65534
+      containers:
+        - name: cluster-autoscaler
+          image: registry.k8s.io/autoscaling/cluster-autoscaler:v1.29.0
+          command:
+            - ./cluster-autoscaler
+            - --v=4
+            - --stderrthreshold=info
+            # Replace with your cloud provider: aws | gce | azure | digitalocean
+            - --cloud-provider=aws
+            # Node group(s): format is min:max:node-group-id
+            # Replace <NODE_GROUP_ID> with the actual ASG name (AWS) or MIG name (GCP).
+            # Example (AWS):  --nodes=2:10:eks-app-pool-abc123
+            # Example (GCP):  --nodes=2:10:https://www.googleapis.com/compute/v1/projects/PROJECT/zones/ZONE/instanceGroups/GROUP
+            - --nodes=2:10:<NODE_GROUP_ID>
+            - --scale-down-enabled=true
+            # Drain similar node groups evenly so no single AZ runs hot.
+            - --balance-similar-node-groups=true
+            # Allow draining nodes that host pods using emptyDir (e.g. Prometheus).
+            - --skip-nodes-with-local-storage=false
+            # Allow draining nodes with DaemonSet-only pods (node-exporter, etc.).
+            - --skip-nodes-with-system-pods=false
+            # Pick the node group that wastes the least CPU/memory after adding a node.
+            - --expander=least-waste
+            # Wait 10 min of underutilisation before removing a node — avoids churn
+            # from short bursts that KEDA already handled with pod-level scaling.
+            - --scale-down-unneeded-time=10m
+            - --scale-down-utilization-threshold=0.5
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "300Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          ports:
+            - containerPort: 8085
+              name: metrics

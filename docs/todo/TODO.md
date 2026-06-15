@@ -47,8 +47,8 @@ Istio manifests in `k8s/base/service-mesh/`: STRICT mTLS PeerAuthentication, Des
 **10. ~~Kubernetes — KEDA~~ ✅ Done (2026-06-15)** (`kubernetes-platform.md`)
 ScaledObject for notification-service in `k8s/base/keda/`: scales on `notification.order` queue depth (1 replica per 10 messages), min 1, max 20, 15s poll, 60s cooldown. TriggerAuthentication reads RabbitMQ Management API credentials from a Secret.
 
-**11. Kubernetes — Cluster Autoscaler** (`kubernetes-platform.md`)
-Node-level scaling. Requires PDBs (step 8) and KEDA (step 10) to be in place so scale-down is safe and pods actually reduce when queues drain.
+**11. ~~Kubernetes — Cluster Autoscaler~~ ✅ Done (2026-06-15)** (`kubernetes-platform.md`)
+Manifests in `k8s/cluster-autoscaler/` (kube-system namespace, applied separately). RBAC + Deployment with `--balance-similar-node-groups`, `--expander=least-waste`, `--scale-down-unneeded-time=10m`, nodes=2:10. `safe-to-evict: "true"` on notification-service, analytics-service, search-service pod templates.
 
 **12. Multi-Region** (`kubernetes-platform.md`)
 Active-active across regions. Everything else must be stable first.
