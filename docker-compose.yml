@@ -39,13 +39,16 @@ services:
     container_name: ecommerce_postgres
     # pg_stat_statements: tracks cumulative query execution stats (Phase 10 — slow query analysis).
     # Must be in shared_preload_libraries at startup — cannot be loaded via SQL after boot.
-    # wal_level=replica + max_wal_senders: required for streaming replication (docker-compose.replica.yml).
+    # wal_level=logical: required for Debezium CDC — enables logical decoding of the WAL.
+    # max_replication_slots: Debezium creates a replication slot to track WAL position.
+    # max_wal_senders: slots to replicas + Debezium (4 = 3 replicas + 1 CDC).
     command: >
       postgres
       -c shared_preload_libraries=pg_stat_statements
       -c pg_stat_statements.track=all
-      -c wal_level=replica
-      -c max_wal_senders=3
+      -c wal_level=logical
+      -c max_wal_senders=4
+      -c max_replication_slots=5
       -c wal_keep_size=64
     environment:
       POSTGRES_USER: ecommerce_user
@@ -151,6 +154,120 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+    networks:
+      - ecommerce-network
+
+  # ── Redpanda (Kafka-compatible broker) ─────────────────────────────────────
+  # Kafka-API-compatible broker — no Zookeeper needed. Debezium writes CDC events
+  # here; search-service consumes them. External port 19092 lets host tools (kcat,
+  # rpk) connect without going through the container network.
+  redpanda:
+    image: redpandadata/redpanda:v24.2.7
+    container_name: ecommerce_redpanda
+    command:
+      - redpanda
+      - start
+      - --kafka-addr
+      - internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr
+      - internal://redpanda:9092,external://localhost:19092
+      - --pandaproxy-addr
+      - internal://0.0.0.0:8082,external://0.0.0.0:18082
+      - --advertise-pandaproxy-addr
+      - internal://redpanda:8082,external://localhost:18082
+      - --schema-registry-addr
+      - internal://0.0.0.0:8081,external://0.0.0.0:18081
+      - --rpc-addr
+      - redpanda:33145
+      - --advertise-rpc-addr
+      - redpanda:33145
+      - --smp
+      - '1'
+      - --memory
+      - 512M
+      - --mode
+      - dev-container
+      - --default-log-level=warn
+    ports:
+      - '19092:19092'  # external Kafka API (host tools)
+      - '18082:18082'  # external Pandaproxy (REST)
+    volumes:
+      - redpanda_data:/var/lib/redpanda/data
+    healthcheck:
+      test: ['CMD-SHELL', 'rpk cluster health | grep -q "Healthy:.*true"']
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    networks:
+      - ecommerce-network
+
+  # ── Redpanda Console ────────────────────────────────────────────────────────
+  # Web UI to browse topics, messages, consumer group lag. http://localhost:8080
+  redpanda-console:
+    image: redpandadata/console:v2.7.2
+    container_name: ecommerce_redpanda_console
+    environment:
+      - KAFKA_BROKERS=redpanda:9092
+    ports:
+      - '8080:8080'
+    depends_on:
+      redpanda:
+        condition: service_healthy
+    networks:
+      - ecommerce-network
+
+  # ── Kafka Connect (Debezium) ────────────────────────────────────────────────
+  # Runs the Debezium Postgres source connector. Reads Postgres WAL via the
+  # logical replication slot and produces CDC events to Redpanda topics.
+  # connector-init registers the connector config on first boot.
+  kafka-connect:
+    image: debezium/connect:2.7
+    container_name: ecommerce_kafka_connect
+    environment:
+      BOOTSTRAP_SERVERS: redpanda:9092
+      GROUP_ID: kafka-connect-cluster
+      CONFIG_STORAGE_TOPIC: _connect-configs
+      OFFSET_STORAGE_TOPIC: _connect-offsets
+      STATUS_STORAGE_TOPIC: _connect-status
+      KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      KEY_CONVERTER_SCHEMAS_ENABLE: 'false'
+      VALUE_CONVERTER_SCHEMAS_ENABLE: 'false'
+    ports:
+      - '8083:8083'
+    depends_on:
+      redpanda:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -sf http://localhost:8083/connectors']
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    networks:
+      - ecommerce-network
+
+  # ── Connector Init ──────────────────────────────────────────────────────────
+  # One-shot service: registers the Debezium Postgres connector config via the
+  # Kafka Connect REST API. Runs once on startup; restarts on failure until
+  # kafka-connect is healthy and accepts the POST.
+  connector-init:
+    image: curlimages/curl:latest
+    container_name: ecommerce_connector_init
+    depends_on:
+      kafka-connect:
+        condition: service_healthy
+    volumes:
+      - ./infra/debezium/connector.json:/connector.json:ro
+    command: >
+      -sf -X POST
+      -H "Content-Type: application/json"
+      -d @/connector.json
+      http://kafka-connect:8083/connectors
+    restart: on-failure
     networks:
       - ecommerce-network
 
@@ -374,12 +491,12 @@ services:
       dockerfile: apps/search-service/Dockerfile
     container_name: ecommerce_search
     environment:
-      <<: *rabbitmq-env
       PORT: 3005
       OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318/v1/traces
       OPENSEARCH_URL: http://opensearch:9200
+      KAFKA_BROKERS: redpanda:9092
     depends_on:
-      rabbitmq:
+      redpanda:
         condition: service_healthy
       opensearch:
         condition: service_healthy
@@ -434,6 +551,7 @@ volumes:
   postgres_data:
   redis_data:
   rabbitmq_data:
+  redpanda_data:
   opensearch_data:
   pgadmin_data:
   prometheus_data:

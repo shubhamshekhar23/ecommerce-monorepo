@@ -4,26 +4,32 @@ Advanced event-driven architecture beyond the current RabbitMQ setup. RabbitMQ h
 
 ---
 
-## CDC + Debezium — Postgres-to-Kafka Change Stream
+## CDC + Debezium — Postgres-to-Kafka Change Stream ✅ Done (2026-06-15)
 
 **What:** Stream every row-level change in the Postgres primary to a Kafka topic via Debezium so downstream consumers (search, analytics, ML) get a real-time, replayable feed without polling the DB.
 
-**Current state:** Search indexing and product sync are done via direct DB calls or RabbitMQ events from the application layer. There is no WAL-based change capture — if a row changes outside the app (migration, manual fix, bulk update), downstream systems fall out of sync silently.
+**Status:** Implemented. Redpanda (Kafka-compatible, no Zookeeper), Kafka Connect with Debezium 2.7, and a one-shot `connector-init` service are all wired into `docker-compose.yml`. Postgres WAL level changed to `logical` with `max_replication_slots=5`. Debezium connector config is at `infra/debezium/connector.json` — watches `public.Product`, emits to `ecommerce.public.Product`. `search-service` CDC consumer (`CdcConsumer`) replaces the old `ProductConsumer` and uses `kafkajs` to subscribe and index changes into OpenSearch. RabbitMQ dependency removed from search-service entirely.
 
-**Why Kafka, not RabbitMQ:** Kafka is a durable log. Consumers track their own offset and can replay from any point. RabbitMQ is push-based: messages are gone once consumed. CDC requires replay (re-indexing, backfill) — only a log store supports that.
+**Architecture decisions:**
+- Redpanda (not Confluent Kafka): Kafka-API-compatible, no Zookeeper, single binary — right for dev
+- `value.converter.schemas.enable=false`: Debezium emits plain JSON `{ op, before, after }` envelope — no Avro registry needed for dev
+- `snapshot.mode=initial`: on first start, Debezium snapshots all existing `Product` rows before streaming WAL changes — existing products get indexed without a manual backfill
+- Price field: `Product` table has no `price` column (it lives on `ProductVariant`). CDC consumer sets `price: 0` in the search index; real prices come from the backend API on product fetch
+- RabbitMQ retained for: backend BullMQ queues, notification-service email jobs, auth-service events — push tasks, not log consumption
 
-**Why Debezium, not outbox events:** Debezium reads the Postgres WAL directly so every change is captured regardless of where it came from. The outbox pattern captures only app-initiated changes.
+**Previous state:** `search-service` consumed `product.events` exchange via `@golevelup/nestjs-rabbitmq`. No WAL capture — changes from migrations, bulk updates, or admin DB access would silently fall out of sync.
 
-**Implementation plan:**
+**Key files:**
+- `docker-compose.yml` — redpanda, redpanda-console, kafka-connect, connector-init services; postgres wal_level=logical
+- `infra/debezium/connector.json` — Debezium connector config
+- `apps/search-service/src/search/consumers/cdc.consumer.ts` — kafkajs consumer, Debezium envelope parser
+- `apps/search-service/src/search/search.module.ts` — CdcConsumer registered
+- `apps/search-service/src/app.module.ts` — RabbitMQModule removed
+- `apps/search-service/package.json` — kafkajs added, @golevelup/nestjs-rabbitmq removed
 
-- Deploy Kafka (Confluent or Redpanda) and Kafka Connect alongside the existing stack
-- Deploy Debezium PostgreSQL connector pointed at the primary; configure WAL level to `logical`
-- Debezium emits to topics: `ecommerce.public.products`, `ecommerce.public.orders`, `ecommerce.public.inventory`, etc.
-- `search-service` consumes `ecommerce.public.products` with offset tracking — replaces current polling or RabbitMQ event
-- Retain RabbitMQ for: email/notification jobs, BullMQ-style task queues, payment webhook processing — these are push tasks, not log consumption
-- Add Kafka UI (Redpanda Console or Akhq) to the local Docker Compose for development visibility
+**To start the full stack:** `docker compose up -d` — connector-init runs once and registers the Debezium connector. Browse topics at http://localhost:8080 (Redpanda Console). Kafka Connect API at http://localhost:8083.
 
-**References:** `apps/search-service/`, `apps/notification-service/`, `docker-compose.yml`, Debezium PostgreSQL connector docs
+**References:** `apps/search-service/`, `docker-compose.yml`, `infra/debezium/`, Debezium PostgreSQL connector docs
 
 ---
 

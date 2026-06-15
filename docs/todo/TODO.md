@@ -32,8 +32,8 @@ ci.yml now uses dorny/paths-filter + matrix build over changed services. Broken 
 **5. ~~CI/CD — GitOps with Argo CD~~ ✅ Done (partial, 2026-06-15)** (`ci-cd-gitops.md`)
 Argo CD Application manifests committed to k8s/argocd/. App-of-apps pattern ready to apply once a cluster exists. Deploy jobs remain disabled until then.
 
-**6. Event streaming — CDC + Debezium** (`event-streaming.md`)
-Kafka + Debezium for search sync. Required before analytics (both depend on Kafka topics being available).
+**6. ~~Event streaming — CDC + Debezium~~ ✅ Done (2026-06-15)** (`event-streaming.md`)
+Redpanda + Kafka Connect + Debezium 2.7 wired into docker-compose. Postgres WAL set to logical. `search-service` CDC consumer replaces RabbitMQ consumer. Debezium connector config at `infra/debezium/connector.json`.
 
 **7. Event streaming — Analytics & Recommendations** (`event-streaming.md`)
 Clickstream pipeline and recommendation engine. Requires Kafka from step 6.
