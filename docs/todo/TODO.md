@@ -6,7 +6,6 @@ Deferred work grouped by theme. Each file contains the full context, current sta
 
 ## Files
 
-- [phase-7-backfill.md](phase-7-backfill.md) — Application feature gaps: Reviews, Tax, Stock Alerts, Returns, Vendor Marketplace
 - [observability.md](observability.md) — Log–trace correlation and future observability work
 - [ci-cd-gitops.md](ci-cd-gitops.md) — Matrix CI for all services + GitOps with Argo CD + Dockerfile cleanup
 - [event-streaming.md](event-streaming.md) — CDC + Debezium, Analytics & Recommendations
@@ -18,8 +17,8 @@ Deferred work grouped by theme. Each file contains the full context, current sta
 
 Work these in order — each group unblocks the next.
 
-**1. Phase 7 backfill** (`phase-7-backfill.md`)
-No infrastructure dependencies. Pure application code. Do these first to close completeness gaps in existing features before adding new systems.
+**1. ~~Phase 7 backfill~~ ✅ Done (2026-06-15)**
+Reviews, Returns, Stock Alerts, Tax, and Vendor Marketplace gaps all closed. See `docs/phases/phase-7-features.md` for details.
 
 **2. Observability** (`observability.md`)
 Add trace ID injection to logs. Low effort, high payoff — cross-linking traces and logs makes every debugging session faster. No deployment changes needed.

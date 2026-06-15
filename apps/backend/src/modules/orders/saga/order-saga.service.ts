@@ -8,6 +8,7 @@ import { CircuitBreakerService } from '@/modules/circuit-breaker/circuit-breaker
 import { BusinessMetricsService } from '@/modules/metrics/business-metrics.service';
 import { CorrelationIdService } from '@/common/services/correlation-id.service';
 import { ShippingService } from '@/modules/shipping/shipping.service';
+import { TaxService } from '@/modules/tax/tax.service';
 import type { NotificationJobPayload } from '@/modules/queue/dto/notification-job.dto';
 
 type CartWithItems = Prisma.CartGetPayload<{
@@ -16,7 +17,12 @@ type CartWithItems = Prisma.CartGetPayload<{
 type OrderWithItems = Prisma.OrderGetPayload<{
   include: { items: { include: { product: true } } };
 }>;
-type UserForNotification = { email: string; firstName: string | null; country: string };
+type UserForNotification = {
+  email: string;
+  firstName: string | null;
+  country: string;
+  state?: string;
+};
 
 // Why a Saga?
 // The order flow spans multiple resources: DB (create order + decrement stock),
@@ -35,6 +41,7 @@ export class OrderSagaService {
     private readonly businessMetrics: BusinessMetricsService,
     private readonly correlationId: CorrelationIdService,
     private readonly shippingService: ShippingService,
+    private readonly taxService: TaxService,
   ) {}
 
   async execute(userId: string, cartId?: string): Promise<OrderWithItems> {
@@ -81,7 +88,7 @@ export class OrderSagaService {
       async (tx) => {
         await this.acquireVariantLocks(tx, cart);
         await this.validateStock(tx, cart);
-        const order = await this.createOrderRecord(tx, userId, cart, user.country);
+        const order = await this.createOrderRecord(tx, userId, cart, user.country, user.state);
         await this.decrementStock(tx, cart);
         await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
         await this.publishOrderCreatedEvent(tx, order, user, cart);
@@ -127,6 +134,7 @@ export class OrderSagaService {
     userId: string,
     cart: CartWithItems,
     country: string,
+    state?: string,
   ): Promise<OrderWithItems> {
     const subtotal = cart.items.reduce(
       (sum, item) => sum + parseFloat(String(item.variant!.price)) * item.quantity,
@@ -134,18 +142,22 @@ export class OrderSagaService {
     );
     const totalWeightKg = cart.items.reduce((sum, item) => sum + item.quantity, 0);
     const shipping = this.shippingService.selectStrategy(subtotal, totalWeightKg, country);
+    const tax = this.taxService.calculate({ country, state, subtotal });
 
     return tx.order.create({
       data: {
         orderNumber: this.generateOrderNumber(),
         userId,
-        totalPrice: subtotal + shipping.cost,
+        subtotal,
+        totalPrice: subtotal + shipping.cost + tax.amount,
         shippingCost: shipping.cost,
+        taxAmount: tax.amount,
         status: OrderStatus.PENDING,
         items: {
           createMany: {
             data: cart.items.map((item) => ({
               productId: item.productId,
+              variantId: item.variantId,
               quantity: item.quantity,
               price: item.variant!.price,
               variantAttributes: this.buildAttributeSnapshot(item.variant),
@@ -267,7 +279,7 @@ export class OrderSagaService {
       select: {
         email: true,
         firstName: true,
-        addresses: { where: { isDefault: true }, select: { country: true }, take: 1 },
+        addresses: { where: { isDefault: true }, select: { country: true, state: true }, take: 1 },
       },
     });
     if (!user) throw new BadRequestException('User not found');
@@ -275,6 +287,7 @@ export class OrderSagaService {
       email: user.email,
       firstName: user.firstName,
       country: user.addresses[0]?.country ?? 'US',
+      state: user.addresses[0]?.state,
     };
   }
 

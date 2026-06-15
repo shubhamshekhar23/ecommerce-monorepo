@@ -20,8 +20,9 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@ne
 import { ProductsService } from './products.service';
 import { CsvImportService } from './csv-import.service';
 import { CreateProductDto, UpdateProductDto } from './dto';
-import { Public, Roles } from '@/common/decorators';
+import { Public, Roles, CurrentUser } from '@/common/decorators';
 import { UserRole } from '@prisma/client';
+import type { RequestUser } from '@/common/types/request-user.interface';
 import { PaginationDto } from '@/common/types/pagination.interface';
 import { CursorPageDto } from '@/common/types/cursor-pagination.interface';
 
@@ -34,20 +35,27 @@ export class ProductsController {
   ) {}
 
   @Post()
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.VENDOR)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Create a new product' })
-  async create(@Body() createProductDto: CreateProductDto): Promise<any> {
-    return this.productsService.create(createProductDto);
+  @ApiOperation({ summary: 'Create a new product (admin or vendor)' })
+  async create(
+    @CurrentUser() user: RequestUser,
+    @Body() createProductDto: CreateProductDto,
+  ): Promise<any> {
+    return this.productsService.create(createProductDto, user.id, user.role);
   }
 
   @Put(':id')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.VENDOR)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Update a product' })
-  async update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto): Promise<any> {
-    return this.productsService.update(id, updateProductDto);
+  @ApiOperation({ summary: 'Update a product (admin or owning vendor)' })
+  async update(
+    @CurrentUser() user: RequestUser,
+    @Param('id') id: string,
+    @Body() updateProductDto: UpdateProductDto,
+  ): Promise<any> {
+    return this.productsService.update(id, updateProductDto, user.id, user.role);
   }
 
   // Cursor pagination endpoint — use this for infinite scroll / "load more" UIs.
@@ -137,12 +145,12 @@ export class ProductsController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.VENDOR)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Soft delete product' })
-  async softDelete(@Param('id') id: string): Promise<void> {
-    await this.productsService.softDelete(id);
+  @ApiOperation({ summary: 'Soft delete product (admin or owning vendor)' })
+  async softDelete(@CurrentUser() user: RequestUser, @Param('id') id: string): Promise<void> {
+    await this.productsService.softDelete(id, user.id, user.role);
   }
 
   // Bulk CSV import — stream processing + validation pipeline.

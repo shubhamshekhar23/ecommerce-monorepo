@@ -37,4 +37,11 @@ export class ReturnsController {
   reject(@Param('id') id: string, @Body('reason') reason: string) {
     return this.returnsService.reject(id, reason);
   }
+
+  @Patch(':id/refund')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Issue Stripe refund and restock items (admin only)' })
+  processRefund(@Param('id') id: string): Promise<{ id: string }> {
+    return this.returnsService.processRefund(id);
+  }
 }

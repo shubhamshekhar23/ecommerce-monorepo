@@ -258,6 +258,8 @@ model ProductVariant {
   images          VariantImage[]
   attributeValues VariantAttributeValue[]
   cartItems       CartItem[]
+  orderItems      OrderItem[]
+  stockAlerts     StockAlert[]
   isActive        Boolean                 @default(true)
   createdAt       DateTime                @default(now())
   updatedAt       DateTime                @updatedAt
@@ -400,18 +402,21 @@ model OutboxEvent {
 }
 
 model OrderItem {
-  id                String       @id @default(cuid())
+  id                String          @id @default(cuid())
   orderId           String
-  order             Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order             Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId         String
-  product           Product      @relation(fields: [productId], references: [id], onDelete: Restrict)
+  product           Product         @relation(fields: [productId], references: [id], onDelete: Restrict)
+  variantId         String?
+  variant           ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
   quantity          Int
-  price             Decimal      @db.Decimal(10, 2)
+  price             Decimal         @db.Decimal(10, 2)
   variantAttributes Json?
   returnItems       ReturnItem[]
 
   @@index([orderId])
   @@index([productId])
+  @@index([variantId])
 }
 
 // ── Phase 7: Core Feature Backfill ───────────────────────────────────────────
@@ -506,17 +511,20 @@ model ProductRating {
 // Fan-out pattern: when a product comes back in stock, one event triggers
 // N notification jobs — one per subscribed user.
 model StockAlert {
-  id        String   @id @default(cuid())
+  id        String          @id @default(cuid())
   productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variantId String?
+  variant   ProductVariant? @relation(fields: [variantId], references: [id], onDelete: Cascade)
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   email     String
-  notified  Boolean  @default(false)
-  createdAt DateTime @default(now())
+  notified  Boolean         @default(false)
+  createdAt DateTime        @default(now())
 
-  @@unique([productId, userId])
+  @@unique([productId, variantId, userId])
   @@index([productId, notified])
+  @@index([variantId, notified])
 }
 
 // Secure token pattern: HMAC-signed, single-use, short TTL.

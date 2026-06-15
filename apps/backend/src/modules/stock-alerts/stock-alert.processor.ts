@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { Job } from 'bullmq';
 import { QUEUE_NAMES } from '@/modules/queue/queue.constants';
 import { MailService } from '@/modules/mail/mail.service';
+import { PrismaService } from '@/modules/prisma/prisma.service';
 
 interface StockAlertJobData {
   alertId: string;
@@ -33,17 +34,23 @@ export class StockAlertProcessor extends WorkerHost {
   constructor(
     private readonly mailService: MailService,
     private readonly config: ConfigService,
+    private readonly prisma: PrismaService,
   ) {
     super();
   }
 
   async process(job: Job<StockAlertJobData>): Promise<void> {
-    const { email, productName, productSlug } = job.data;
+    const { alertId, email, productName, productSlug } = job.data;
     const appUrl = this.config.get<string>('APP_URL') ?? 'http://localhost:3000';
     const productUrl = `${appUrl}/products/${productSlug}`;
 
     this.logger.log(`Stock alert job=${job.id} product=${productName} email=${email}`);
     await this.mailService.sendStockAlertEmail(email, productName, productUrl);
+    /*
+     - Mark notified only after successful delivery so BullMQ retries still reach
+     - this subscriber if the email send throws (SMTP down, network error, etc.).
+     */
+    await this.prisma.stockAlert.update({ where: { id: alertId }, data: { notified: true } });
     this.logger.log(`Stock alert sent job=${job.id}`);
   }
 }

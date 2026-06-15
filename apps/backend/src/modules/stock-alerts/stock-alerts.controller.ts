@@ -1,13 +1,18 @@
 import { Controller, Post, Delete, Body, Param, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { IsEmail } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsEmail, IsOptional, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { CurrentUser } from '@/common/decorators';
 import type { RequestUser } from '@/common/types/request-user.interface';
 import { StockAlertsService } from './stock-alerts.service';
 
 class SubscribeDto {
   @IsEmail() @ApiProperty() email!: string;
+  @IsOptional() @IsString() @ApiPropertyOptional() variantId?: string;
+}
+
+class UnsubscribeDto {
+  @IsOptional() @IsString() @ApiPropertyOptional() variantId?: string;
 }
 
 @ApiTags('stock-alerts')
@@ -18,13 +23,15 @@ export class StockAlertsController {
 
   @Post()
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Subscribe to back-in-stock notification' })
+  @ApiOperation({
+    summary: 'Subscribe to back-in-stock notification for a product or specific variant',
+  })
   subscribe(
     @CurrentUser() user: RequestUser,
     @Param('productId') productId: string,
     @Body() dto: SubscribeDto,
   ): Promise<void> {
-    return this.stockAlertsService.subscribe(user.id, productId, dto.email);
+    return this.stockAlertsService.subscribe(user.id, productId, dto.email, dto.variantId);
   }
 
   @Delete()
@@ -33,7 +40,8 @@ export class StockAlertsController {
   unsubscribe(
     @CurrentUser() user: RequestUser,
     @Param('productId') productId: string,
+    @Body() dto: UnsubscribeDto,
   ): Promise<void> {
-    return this.stockAlertsService.unsubscribe(user.id, productId);
+    return this.stockAlertsService.unsubscribe(user.id, productId, dto.variantId);
   }
 }

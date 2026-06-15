@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client';
 import {
   Injectable,
   BadRequestException,
+  ForbiddenException,
   InternalServerErrorException,
   NotFoundException,
   ConflictException,
@@ -19,6 +20,7 @@ import type {
   ProductUpdatedEvent,
   ProductDeletedEvent,
 } from '@ecommerce/shared-types';
+import { UserRole } from '@prisma/client';
 import { CreateProductDto, UpdateProductDto, ProductImageDto } from './dto';
 import { ProductResponseDto, ProductSearchResponseDto } from './dto/product-response.dto';
 import { buildPaginationResponse } from '@/common/utils/pagination.util';
@@ -35,8 +37,10 @@ import { CursorPageDto } from '@/common/types/cursor-pagination.interface';
 const PRODUCT_DETAIL_TTL = 300;
 const PRODUCT_LIST_TTL = 60;
 
-// FTS row no longer includes price/cost/stock — those live on ProductVariant.
-// min/max price is derived from a subquery over active variants.
+/*
+ - FTS row no longer includes price/cost/stock — those live on ProductVariant.
+ - min/max price is derived from a subquery over active variants.
+ */
 interface ProductFtsRow {
   id: string;
   name: string;
@@ -49,9 +53,13 @@ interface ProductFtsRow {
   minPrice: Decimal | null;
   maxPrice: Decimal | null;
   rank: number;
+  avgRating: Decimal | null;
+  reviewCount: number;
 }
 
-// Minimum shape required by mapToResponse — satisfied by both list and detail includes.
+/*
+ - Minimum shape required by mapToResponse — satisfied by both list and detail includes.
+ */
 interface ProductForResponse {
   id: string;
   name: string;
@@ -64,6 +72,7 @@ interface ProductForResponse {
   category?: { name: string } | null;
   images?: { id: string; url: string; altText: string | null; isMain: boolean; order: number }[];
   variants?: { price: { toString(): string } }[];
+  rating?: { avgRating: Decimal | number; reviewCount: number } | null;
 }
 
 /*
@@ -99,7 +108,11 @@ export class ProductsService {
   }
 
   // eslint-disable-next-line max-lines-per-function
-  async create(createProductDto: CreateProductDto): Promise<ProductResponseDto> {
+  async create(
+    createProductDto: CreateProductDto,
+    actorId?: string,
+    actorRole?: UserRole,
+  ): Promise<ProductResponseDto> {
     const { categoryId, images, price, cost, stock, ...productData } = createProductDto;
 
     await this.validateCategoryExists(categoryId);
@@ -107,8 +120,9 @@ export class ProductsService {
     const existing = await this.prisma.product.findFirst({ where: { slug: productData.slug } });
     if (existing) throw new ConflictException('Product slug already exists');
 
+    const vendorId = actorRole === UserRole.VENDOR ? actorId : null;
     const product = await this.prisma.product.create({
-      data: { ...productData, categoryId },
+      data: { ...productData, categoryId, vendorId: vendorId ?? undefined },
       include: { images: true },
     });
 
@@ -144,9 +158,17 @@ export class ProductsService {
     return this.fetchById(product.id);
   }
 
-  async update(id: string, updateProductDto: UpdateProductDto): Promise<ProductResponseDto> {
+  async update(
+    id: string,
+    updateProductDto: UpdateProductDto,
+    actorId?: string,
+    actorRole?: UserRole,
+  ): Promise<ProductResponseDto> {
     const product = await this.prisma.product.findUnique({ where: { id } });
     if (!product) throw new NotFoundException(`Product with ID ${id} not found`);
+    if (actorRole === UserRole.VENDOR && product.vendorId !== actorId) {
+      throw new ForbiddenException('You do not own this product');
+    }
 
     if (updateProductDto.slug && updateProductDto.slug !== product.slug) {
       const existing = await this.prisma.product.findFirst({
@@ -205,6 +227,7 @@ export class ProductsService {
         include: {
           images: { where: { isMain: true } },
           category: { select: { name: true } },
+          rating: true,
           variants: {
             where: { isActive: true },
             select: { price: true },
@@ -254,14 +277,17 @@ export class ProductsService {
         p."categoryId", p."isActive", p."createdAt", p."updatedAt",
         MIN(v.price) AS "minPrice",
         MAX(v.price) AS "maxPrice",
-        ts_rank(p."searchVector", plainto_tsquery('english', ${term})) AS rank
+        ts_rank(p."searchVector", plainto_tsquery('english', ${term})) AS rank,
+        pr."avgRating",
+        COALESCE(pr."reviewCount", 0) AS "reviewCount"
       FROM "Product" p
       LEFT JOIN "ProductVariant" v ON v."productId" = p.id AND v."isActive" = true
+      LEFT JOIN "ProductRating" pr ON pr."productId" = p.id
       WHERE
         p."isActive" = true
         AND p."searchVector" @@ plainto_tsquery('english', ${term})
         ${cursorClause}
-      GROUP BY p.id, p.name, p.slug, p.description, p."categoryId", p."isActive", p."createdAt", p."updatedAt"
+      GROUP BY p.id, p.name, p.slug, p.description, p."categoryId", p."isActive", p."createdAt", p."updatedAt", pr."avgRating", pr."reviewCount"
       ORDER BY rank DESC, p."createdAt" DESC, p.id DESC
       LIMIT ${take + 1}
     `);
@@ -292,6 +318,8 @@ export class ProductsService {
         max: row.maxPrice ? Number(row.maxPrice) : null,
       },
       searchRank: row.rank,
+      avgRating: row.avgRating ? Number(row.avgRating) : null,
+      reviewCount: Number(row.reviewCount),
     }));
 
     return buildCursorResponse(items as ProductSearchResponseDto[], take, hasMore);
@@ -350,6 +378,7 @@ export class ProductsService {
         include: {
           images: { where: { isMain: true } },
           category: { select: { name: true } },
+          rating: true,
           /*
            - S6: variants omitted from include so each product triggers a separate query below.
           */
@@ -413,7 +442,7 @@ export class ProductsService {
   private async fetchById(id: string): Promise<ProductResponseDto> {
     const product = await this.prisma.product.findUnique({
       where: { id },
-      include: { images: true, category: true, variants: VARIANT_INCLUDE },
+      include: { images: true, category: true, rating: true, variants: VARIANT_INCLUDE },
     });
     if (!product) throw new NotFoundException(`Product with ID ${id} not found`);
     return this.mapToResponse(product);
@@ -428,7 +457,7 @@ export class ProductsService {
   private async fetchBySlug(slug: string): Promise<ProductResponseDto> {
     const product = await this.prisma.product.findUnique({
       where: { slug },
-      include: { images: true, category: true, variants: VARIANT_INCLUDE },
+      include: { images: true, category: true, rating: true, variants: VARIANT_INCLUDE },
     });
     if (!product) throw new NotFoundException(`Product with slug ${slug} not found`);
     return this.mapToResponse(product);
@@ -456,9 +485,12 @@ export class ProductsService {
     await this.prisma.productImage.delete({ where: { id: imageId } });
   }
 
-  async softDelete(id: string): Promise<void> {
+  async softDelete(id: string, actorId?: string, actorRole?: UserRole): Promise<void> {
     const product = await this.prisma.product.findUnique({ where: { id } });
     if (!product) throw new NotFoundException(`Product with ID ${id} not found`);
+    if (actorRole === UserRole.VENDOR && product.vendorId !== actorId) {
+      throw new ForbiddenException('You do not own this product');
+    }
 
     await this.prisma.product.update({ where: { id }, data: { isActive: false } });
     await this.invalidateProducts();
@@ -498,6 +530,8 @@ export class ProductsService {
       })),
       variants: variants.map((v) => ({ price: v.price.toString() })),
       isActive: product.isActive,
+      avgRating: product.rating ? Number(product.rating.avgRating) : null,
+      reviewCount: product.rating?.reviewCount ?? 0,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
     };

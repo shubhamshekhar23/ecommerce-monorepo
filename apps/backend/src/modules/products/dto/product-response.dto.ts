@@ -61,6 +61,12 @@ export class ProductResponseDto {
   @ApiProperty({ example: true })
   isActive!: boolean;
 
+  @ApiProperty({ example: 4.5, nullable: true })
+  avgRating!: number | null;
+
+  @ApiProperty({ example: 23 })
+  reviewCount!: number;
+
   @ApiProperty({ example: '2026-06-06T10:00:00.000Z' })
   createdAt!: Date;
 
@@ -93,6 +99,12 @@ export class ProductSearchResponseDto {
 
   @ApiProperty({ example: 0.9876, description: 'ts_rank score from PostgreSQL FTS' })
   searchRank!: number;
+
+  @ApiProperty({ example: 4.5, nullable: true })
+  avgRating!: number | null;
+
+  @ApiProperty({ example: 23 })
+  reviewCount!: number;
 
   @ApiProperty({ example: '2026-06-06T10:00:00.000Z' })
   createdAt!: Date;

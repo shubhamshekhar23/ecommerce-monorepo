@@ -104,6 +104,7 @@ export class VariantsService {
     if (wasOutOfStock) {
       this.eventEmitter.emit(PRODUCT_RESTOCKED_EVENT, {
         productId: variant.product.id,
+        variantId,
         productName: variant.product.name,
       });
     }

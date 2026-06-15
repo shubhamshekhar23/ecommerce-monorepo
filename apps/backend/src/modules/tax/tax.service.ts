@@ -14,6 +14,7 @@ interface TaxContext {
   state?: string;
   subtotal: number;
   isDigitalGoods?: boolean;
+  isExempt?: boolean; // true for tax-exempt users (e.g. resellers, non-profits)
 }
 
 interface TaxRule {
@@ -23,7 +24,14 @@ interface TaxRule {
 }
 
 const TAX_RULES: TaxRule[] = [
-  // Digital goods: EU VAT applies uniformly
+  /*
+   - Tax-exempt users (resellers, non-profits) pay no tax regardless of jurisdiction.
+   - Must be first rule — exempt status overrides all other rules.
+   */
+  { name: 'Tax Exempt', matches: (c) => c.isExempt === true, rate: 0 },
+  /*
+   - Digital goods: EU VAT applies uniformly regardless of member state.
+   */
   {
     name: 'EU Digital VAT',
     matches: (c) => c.isDigitalGoods === true && EU_COUNTRIES.has(c.country),

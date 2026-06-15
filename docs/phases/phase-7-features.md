@@ -1,9 +1,40 @@
 # Phase 7 — Core Feature Backfill
 
-**Status:** ✅ Done
+**Status:** ✅ Done (including backfill — see below)
 **Concept cluster:** Each feature is a pattern exercise. The business feature is the vehicle; the pattern is the lesson.
 
 Migration: `prisma/migrations/20260528000003_phase7_features/migration.sql`
+Backfill migration: `prisma/migrations/20260615000000_phase7_backfill_variant_ids/migration.sql`
+
+## Backfill Completed (2026-06-15)
+
+The following gaps were closed after the initial Phase 7 implementation:
+
+**Reviews**
+- `approveReview` now guards `PENDING` status only — double-approve throws `BadRequestException`
+- `rejectReview` allows `PENDING → REJECTED` (normal) and `APPROVED → REJECTED` (admin reversal); the latter emits `REVIEW_REJECTED_EVENT` to recompute `ProductRating`
+- `ProductRating.avgRating` and `reviewCount` are now included in all product list/detail/search responses
+
+**Returns**
+- `PATCH /returns/:id/refund` endpoint added — `APPROVED → REFUNDED` is now reachable
+- `StripeService` injected directly into `ReturnsService` (removed duck-typed parameter)
+- `approve` and `reject` now guard `PENDING` status and write `AuditLog` entries
+- Refund restocking now targets the specific purchased variant (`OrderItem.variantId`) rather than all variants under the product
+
+**Stock Alerts**
+- `StockAlert.notified` is now set to `true` by the processor after successful email delivery, not by the service after enqueue — BullMQ retries reach undelivered subscribers
+- Subscriptions are now variant-level: `variantId` added to `StockAlert` (nullable for product-level subscriptions); restock event payload extended with `variantId`; fan-out filters to exact variant subscribers + product-level subscribers
+
+**Tax**
+- `TaxService.calculate()` is now called during order creation in `order-saga.service.ts`
+- `Order.taxAmount` and `Order.subtotal` are populated on every new order
+- `totalPrice = subtotal + shippingCost + taxAmount`
+- `isExempt` rule added as the first (highest-priority) tax rule
+
+**Vendor Marketplace**
+- `POST /products` and `PUT /products/:id` and `DELETE /products/:id` now allow `VENDOR` role
+- Vendors can only update/delete products they own (`product.vendorId === actorId`); admin bypasses the check
+- `vendorId` is automatically set on product creation when the actor is a VENDOR
 
 ---
 

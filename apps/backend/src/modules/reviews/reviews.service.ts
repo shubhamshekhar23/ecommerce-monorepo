@@ -3,12 +3,15 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 
-// Materialized aggregate pattern:
-// ProductRating is NOT recomputed on every request.
-// It is updated asynchronously when a review is approved via an event.
-// Trade-off: rating may be stale by seconds, acceptable for display purposes.
-// Never use the aggregate for business decisions (e.g. showing stock) — query the source.
+/*
+ - Materialized aggregate pattern:
+ - ProductRating is NOT recomputed on every request.
+ - It is updated asynchronously when a review is approved or un-approved via an event.
+ - Trade-off: rating may be stale by seconds, acceptable for display purposes.
+ - Never use the aggregate for business decisions (e.g. showing stock) — query the source.
+ */
 export const REVIEW_APPROVED_EVENT = 'review.approved';
+export const REVIEW_REJECTED_EVENT = 'review.rejected';
 
 @Injectable()
 export class ReviewsService {
@@ -32,20 +35,37 @@ export class ReviewsService {
   }
 
   async approveReview(reviewId: string) {
-    const review = await this.prisma.productReview.update({
+    const review = await this.prisma.productReview.findUnique({ where: { id: reviewId } });
+    if (!review) throw new NotFoundException('Review not found');
+    if (review.status !== 'PENDING') {
+      throw new BadRequestException('Only PENDING reviews can be approved');
+    }
+    const updated = await this.prisma.productReview.update({
       where: { id: reviewId },
       data: { status: 'APPROVED' },
     });
-    // Emit event — the handler below recomputes the aggregate
     this.eventEmitter.emit(REVIEW_APPROVED_EVENT, { productId: review.productId });
-    return review;
+    return updated;
   }
 
   async rejectReview(reviewId: string) {
-    return this.prisma.productReview.update({
+    const review = await this.prisma.productReview.findUnique({ where: { id: reviewId } });
+    if (!review) throw new NotFoundException('Review not found');
+    if (review.status === 'REJECTED') {
+      throw new BadRequestException('Review is already rejected');
+    }
+    const updated = await this.prisma.productReview.update({
       where: { id: reviewId },
       data: { status: 'REJECTED' },
     });
+    /*
+     - Emit recompute event when an already-approved review is reversed.
+     - Approving a review increments the aggregate; rejecting it must decrement it.
+     */
+    if (review.status === 'APPROVED') {
+      this.eventEmitter.emit(REVIEW_REJECTED_EVENT, { productId: review.productId });
+    }
+    return updated;
   }
 
   async listForProduct(productId: string) {
