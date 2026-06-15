@@ -157,3 +157,29 @@ PgBouncer        :6432  — connection pooler
 - `apps/auth-service/src/auth/auth.controller.ts`
 - `apps/gateway/src/main.ts` (JWT middleware + proxy routing)
 - `apps/gateway/src/health/health.controller.ts`
+
+---
+
+## Phase 9 Backfill (2026-06-15)
+
+### API Versioning — `/api/v1/` Prefix
+
+**Problem:** All services exposed routes at `/api/*` with no version segment. Introducing breaking changes to an endpoint (new required field, changed response shape, removed field) had no safe path — existing clients would break with no notice and no fallback.
+
+**Why version in the URL path:** Header-based versioning (`Accept: application/vnd.ecommerce.v1+json`) is theoretically cleaner but browsers, curl, and most frontend HTTP clients make it harder to reason about. Path versioning is visible, cacheable, and explicit — the URL uniquely identifies the resource including its version contract.
+
+**What changed:**
+
+- `apps/backend/src/main.ts` — default prefix changed from `api` to `api/v1` (still overridable via `API_PREFIX` env var for future versions)
+- `apps/auth-service/src/main.ts` — `setGlobalPrefix('api/v1', { exclude: ['health'] })`
+- `apps/search-service/src/main.ts` — same
+- `apps/analytics-service/src/main.ts` — added `setGlobalPrefix('api/v1', { exclude: ['health'] })` (was missing entirely)
+- `apps/gateway/src/main.ts` — all `pathFilter` strings updated from `/api/...` to `/api/v1/...`; the catch-all function guard updated to match `path.startsWith('/api/v1/')` and exclude the v1 auth/search/recommendations prefixes
+- `apps/frontend/src/shared/config.ts` — default API base URL changed from `http://localhost:4000/api` to `http://localhost:4000/api/v1`
+
+**How to ship a v2 without breaking v1:**
+- Deploy new controllers at `/api/v2/products` alongside the existing `/api/v1/products`
+- Add a `v2` pathFilter entry in the gateway above the `v1` catch-all
+- Deprecate v1 after clients have migrated (return a `Deprecation` header)
+
+**Ports are unchanged.** This is a path change only — docker-compose, Kubernetes Service definitions, and inter-service URLs do not need updating.

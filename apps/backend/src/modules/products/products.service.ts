@@ -89,9 +89,20 @@ const VARIANT_INCLUDE = {
   },
 } as const;
 
+const L1_TTL_MS = 5_000;
+
 @Injectable()
 export class ProductsService {
   private readonly logger = new Logger(ProductsService.name);
+  /*
+   - L1 in-memory cache sits above Redis for hot-key relief.
+   - During a sale, the first page of products can receive thousands of requests/s.
+   - Even with Redis stampede protection, each request still pays a network RTT to Redis.
+   - 5 s of in-process caching eliminates that RTT for the hottest keys.
+   - Trade-off: each replica holds its own L1 map, so stale windows are per-replica.
+   - Cleared on every write-path invalidation so stale window stays bounded.
+   */
+  private readonly l1Cache = new Map<string, { value: unknown; expiry: number }>();
 
   constructor(
     private readonly prisma: PrismaService,
@@ -99,11 +110,33 @@ export class ProductsService {
     private readonly amqp: AmqpConnection,
   ) {}
 
+  private getL1<T>(key: string): T | null {
+    const entry = this.l1Cache.get(key);
+    if (!entry || Date.now() > entry.expiry) {
+      this.l1Cache.delete(key);
+      return null;
+    }
+    return entry.value as T;
+  }
+
+  private setL1(key: string, value: unknown): void {
+    this.l1Cache.set(key, { value, expiry: Date.now() + L1_TTL_MS });
+  }
+
   private async withCache<T>(key: string, ttl: number, fetchFn: () => Promise<T>): Promise<T> {
     return this.cache.getOrSet(key, ttl, fetchFn);
   }
 
+  private async withHotCache<T>(key: string, ttl: number, fetchFn: () => Promise<T>): Promise<T> {
+    const l1 = this.getL1<T>(key);
+    if (l1 !== null) return l1;
+    const result = await this.withCache(key, ttl, fetchFn);
+    this.setL1(key, result);
+    return result;
+  }
+
   private async invalidateProducts(): Promise<void> {
+    this.l1Cache.clear();
     await this.cache.invalidateByPattern('products:*');
   }
 
@@ -217,12 +250,12 @@ export class ProductsService {
     cursor?: string,
   ): Promise<CursorPageDto<ProductResponseDto>> {
     const cacheKey = `products:cursor:${limit}:${cursor ?? ''}`;
-    return this.withCache(cacheKey, PRODUCT_LIST_TTL, async () => {
+    return this.withHotCache(cacheKey, PRODUCT_LIST_TTL, async () => {
       const take = Math.min(Math.max(limit, 1), MAX_CURSOR_LIMIT);
       const cursorWhere = buildCursorWhere(cursor);
 
       const products = await this.prisma.product.findMany({
-        where: { isActive: true, ...cursorWhere },
+        where: { isActive: true, deletedAt: null, ...cursorWhere },
         take: take + 1,
         include: {
           images: { where: { isMain: true } },
@@ -253,7 +286,7 @@ export class ProductsService {
     cursor?: string,
   ): Promise<CursorPageDto<ProductSearchResponseDto>> {
     const cacheKey = `products:search:${term}:${limit}:${cursor ?? ''}`;
-    return this.withCache(cacheKey, PRODUCT_LIST_TTL, () => this.runSearch(term, limit, cursor));
+    return this.withHotCache(cacheKey, PRODUCT_LIST_TTL, () => this.runSearch(term, limit, cursor));
   }
 
   // eslint-disable-next-line max-lines-per-function
@@ -492,7 +525,10 @@ export class ProductsService {
       throw new ForbiddenException('You do not own this product');
     }
 
-    await this.prisma.product.update({ where: { id }, data: { isActive: false } });
+    await this.prisma.product.update({
+      where: { id },
+      data: { isActive: false, deletedAt: new Date() },
+    });
     await this.invalidateProducts();
     const event: ProductDeletedEvent = { productId: id };
     await this.amqp.publish(EXCHANGES.PRODUCT, ROUTING_KEYS.PRODUCT.DELETED, event);

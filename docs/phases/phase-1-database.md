@@ -200,3 +200,60 @@ EXPLAIN ANALYZE SELECT * FROM "Product" WHERE id > '...' ORDER BY id LIMIT 20;
 This is the single most common pagination mistake in production — offset gets slower with every page.
 
 ---
+
+## Phase 1 Backfill (2026-06-15)
+
+Three gaps closed that weren't addressed in the original phase.
+
+### 1. Conditional Stock Decrement
+
+**Problem:** The original `decrementStock` in `order-saga.service.ts` used `productVariant.update()` — a plain `UPDATE SET stock = stock - qty`. Even with a `SELECT ... FOR UPDATE` row lock acquired earlier, the validate-then-update split under `ReadCommitted` isolation still has a correctness gap: the lock prevents concurrent modification, but it doesn't guard against a scenario where the lock was somehow missed.
+
+**Fix:** Changed to `updateMany WHERE stock >= qty`. This is a single atomic SQL:
+
+```sql
+UPDATE "ProductVariant" SET stock = stock - $qty WHERE id = $id AND stock >= $qty
+```
+
+`result.count === 0` means the stock guard failed — throw `BadRequestException` and record the metric. This provides defense-in-depth on top of the FOR UPDATE lock.
+
+**File:** `apps/backend/src/modules/orders/saga/order-saga.service.ts`
+
+---
+
+### 2. Soft Delete with `deletedAt` Timestamp
+
+**Problem:** `isActive = false` was used for both "admin-deactivated" and "soft-deleted" states. These are different operations with different semantics. There was no timestamp recording *when* a record was deleted — no audit trail, no ability to purge after a retention window.
+
+**Fix:** Added `deletedAt DateTime?` to both `User` and `Product` models.
+
+- `NULL` = not deleted (the default)
+- a timestamp = deleted at that moment
+
+`softDelete()` in `products.service.ts` now sets both `isActive: false` AND `deletedAt: new Date()`. `findAllCursor` filters `deletedAt: null` in addition to `isActive: true`.
+
+**Migration:** `prisma/migrations/20260615000001_phase1_backfill_soft_delete/migration.sql`
+
+```sql
+ALTER TABLE "Product" ADD COLUMN "deletedAt" TIMESTAMP(3);
+ALTER TABLE "User"    ADD COLUMN "deletedAt" TIMESTAMP(3);
+CREATE INDEX "Product_active_not_deleted_idx" ON "Product"("createdAt" DESC)
+  WHERE "isActive" = true AND "deletedAt" IS NULL;
+```
+
+---
+
+### 3. Covering Indexes
+
+**Problem:** Indexes tell Postgres *which rows* to fetch, but a standard index only stores the key columns. To read projected columns (`price`, `quantity`, etc.) Postgres still fetches the heap page — random I/O for each row.
+
+**What a covering index does:** PostgreSQL's `INCLUDE` clause stores extra columns in the leaf pages of the index. When all projected columns are in the index, Postgres never touches the heap — this is an index-only scan.
+
+**Two covering indexes added:**
+
+- `ProductVariant (productId) INCLUDE (price) WHERE isActive = true` — every product list page runs a price-range subquery; price is now served from the index leaf.
+- `OrderItem (orderId) INCLUDE (productId, variantId, quantity, price)` — every order detail page fetches all item rows by orderId; all four projected columns are now in the index.
+
+**Migration:** `prisma/migrations/20260615000002_covering_indexes/migration.sql`
+
+**How to verify:** `EXPLAIN (ANALYZE, BUFFERS)` on the order items query should show `Index Only Scan` and `Heap Fetches: 0` once the visibility map is vacuumed.

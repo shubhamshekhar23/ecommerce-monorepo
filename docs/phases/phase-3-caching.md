@@ -139,3 +139,30 @@ A drop below ~70% on `products` means either invalidation is too aggressive or a
 - `src/modules/rate-limit/rate-limiter.service.ts` — sliding window Lua script
 - `src/modules/rate-limit/rate-limit.guard.ts` — canActivate + key strategy
 - `src/modules/rate-limit/rate-limit.decorator.ts` — @RateLimit() decorator
+
+---
+
+## Phase 3 Backfill (2026-06-15)
+
+### Hot Redis Key — L1 In-Memory Cache
+
+**Problem:** During a flash sale, the first page of products (`products:cursor:20:`) gets hit thousands of times per second. The stampede lock in `CacheService.getOrSet` prevents DB thundering-herd, but every single request still pays a Redis network round-trip (~0.5–2 ms). At 5,000 req/s that's 2,500–10,000 ms of cumulative Redis I/O per second — a recognised "hot key" bottleneck.
+
+**Fix:** Added an in-process L1 cache (`Map<string, { value, expiry }>`) inside `ProductsService` that sits above the Redis layer.
+
+```
+request → L1 Map (5 s TTL, ~0 ms) → Redis (60 s TTL, ~1 ms) → PostgreSQL
+```
+
+- On L1 hit: return immediately, zero network cost.
+- On L1 miss: fall through to `CacheService.getOrSet` (Redis + stampede lock), then populate L1 with the result.
+- On any write (`invalidateProducts`): `l1Cache.clear()` is called before the Redis `SCAN DEL`, so stale data is evicted immediately.
+
+**Key design decisions:**
+- TTL is 5 s (not 60 s like Redis) — short enough that a product update is visible to users within 5 s without needing cross-replica cache invalidation (L1 is per-process).
+- `l1Cache.clear()` on invalidation rather than key-specific delete — simpler and correct; the Map is small and the cost is negligible.
+- No size cap — the number of distinct product list cache keys is bounded by distinct cursor values in real traffic, which is small.
+
+**Trade-off:** In a 3-replica deployment, after a product update, each replica flushes its own L1 independently. For up to 5 s, a user could be routed to a replica that still has old data in L1. This is acceptable for a product catalogue — it is not acceptable for stock levels or order state (which are never L1-cached).
+
+**File:** `apps/backend/src/modules/products/products.service.ts` — `l1Cache`, `getL1`, `setL1`, `withHotCache`, updated `invalidateProducts`

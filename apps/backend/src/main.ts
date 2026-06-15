@@ -77,7 +77,7 @@ async function bootstrap(): Promise<void> {
 
   setupMiddleware(app);
   setupPipes(app);
-  app.setGlobalPrefix(process.env.API_PREFIX ?? 'api');
+  app.setGlobalPrefix(process.env.API_PREFIX ?? 'api/v1');
   app.useStaticAssets(join(__dirname, '..', 'uploads'), { prefix: '/uploads/' });
   setupSwagger(app);
 

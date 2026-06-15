@@ -64,12 +64,12 @@ async function bootstrap(): Promise<void> {
   // 1. JWT extraction — must run before any proxy
   expressApp.use(buildJwtMiddleware(publicKey));
 
-  // 2. Auth-service proxy  (/api/auth/*)
+  // 2. Auth-service proxy  (/api/v1/auth/*)
   expressApp.use(
     createProxyMiddleware({
       target: authUrl,
       changeOrigin: true,
-      pathFilter: "/api/auth/**",
+      pathFilter: "/api/v1/auth/**",
       on: {
         error: (_err, _req, res) => {
           (res as Response)
@@ -80,12 +80,12 @@ async function bootstrap(): Promise<void> {
     }),
   );
 
-  // 3. Search-service proxy  (/api/search*)
+  // 3. Search-service proxy  (/api/v1/search*)
   expressApp.use(
     createProxyMiddleware({
       target: searchUrl,
       changeOrigin: true,
-      pathFilter: "/api/search**",
+      pathFilter: "/api/v1/search**",
       on: {
         error: (_err, _req, res) => {
           (res as Response)
@@ -96,36 +96,34 @@ async function bootstrap(): Promise<void> {
     }),
   );
 
-  // 4. Analytics-service proxy  (/api/recommendations/*)
+  // 4. Analytics-service proxy  (/api/v1/recommendations/*)
   expressApp.use(
     createProxyMiddleware({
       target: analyticsUrl,
       changeOrigin: true,
-      pathFilter: "/api/recommendations/**",
+      pathFilter: "/api/v1/recommendations/**",
       on: {
         error: (_err, _req, res) => {
-          (res as Response)
-            .status(502)
-            .json({
-              statusCode: 502,
-              message: "Analytics service unavailable",
-            });
+          (res as Response).status(502).json({
+            statusCode: 502,
+            message: "Analytics service unavailable",
+          });
         },
       },
     }),
   );
 
-  // 5. Backend catch-all  (/api/* except auth + search + recommendations)
+  // 5. Backend catch-all  (/api/v1/* except auth + search + recommendations)
   //    /health is excluded so NestJS handles it.
   expressApp.use(
     createProxyMiddleware({
       target: backendUrl,
       changeOrigin: true,
       pathFilter: (path: string) =>
-        path.startsWith("/api/") &&
-        !path.startsWith("/api/auth/") &&
-        !path.startsWith("/api/search") &&
-        !path.startsWith("/api/recommendations"),
+        path.startsWith("/api/v1/") &&
+        !path.startsWith("/api/v1/auth/") &&
+        !path.startsWith("/api/v1/search") &&
+        !path.startsWith("/api/v1/recommendations"),
       on: {
         error: (_err, _req, res) => {
           (res as Response)
@@ -138,11 +136,11 @@ async function bootstrap(): Promise<void> {
 
   await app.listen(port);
   console.log(`Gateway running on port ${port}`);
-  console.log(`  → /api/auth/**            → ${authUrl}`);
-  console.log(`  → /api/search**           → ${searchUrl}`);
-  console.log(`  → /api/recommendations/** → ${analyticsUrl}`);
-  console.log(`  → /api/**                 → ${backendUrl}`);
-  console.log(`  → /health                 → gateway (aggregated)`);
+  console.log(`  → /api/v1/auth/**            → ${authUrl}`);
+  console.log(`  → /api/v1/search**           → ${searchUrl}`);
+  console.log(`  → /api/v1/recommendations/** → ${analyticsUrl}`);
+  console.log(`  → /api/v1/**                 → ${backendUrl}`);
+  console.log(`  → /health                    → gateway (aggregated)`);
 }
 
 bootstrap();
