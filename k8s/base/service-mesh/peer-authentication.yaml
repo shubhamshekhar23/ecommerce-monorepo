@@ -1,0 +1,11 @@
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: strict-mtls
+  namespace: ecommerce
+spec:
+  # Enforce mutual TLS for all pod-to-pod communication in the namespace.
+  # Plain HTTP between pods becomes a policy violation — identity is verified
+  # at the sidecar level before any application code runs.
+  mtls:
+    mode: STRICT

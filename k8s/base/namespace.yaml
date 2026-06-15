@@ -2,3 +2,8 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: ecommerce
+  labels:
+    # Enables automatic Envoy sidecar injection for all pods in this namespace.
+    # Requires Istio to be installed in the cluster first:
+    #   istioctl install --set profile=default
+    istio-injection: enabled

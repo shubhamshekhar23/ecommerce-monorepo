@@ -1,0 +1,83 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: gateway
+spec:
+  hosts:
+    - gateway
+  http:
+    - timeout: 30s
+      retries:
+        attempts: 3
+        perTryTimeout: 10s
+        retryOn: gateway-error,connect-failure,retriable-4xx
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: backend
+spec:
+  hosts:
+    - backend
+  http:
+    - timeout: 15s
+      retries:
+        attempts: 3
+        perTryTimeout: 5s
+        retryOn: gateway-error,connect-failure,retriable-4xx
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: auth-service
+spec:
+  hosts:
+    - auth-service
+  http:
+    - timeout: 5s
+      retries:
+        attempts: 2
+        perTryTimeout: 2s
+        retryOn: gateway-error,connect-failure
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: search-service
+spec:
+  hosts:
+    - search-service
+  http:
+    - timeout: 5s
+      retries:
+        attempts: 2
+        perTryTimeout: 2s
+        retryOn: gateway-error,connect-failure,retriable-4xx
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: notification-service
+spec:
+  hosts:
+    - notification-service
+  http:
+    - timeout: 60s
+      retries:
+        attempts: 3
+        perTryTimeout: 20s
+        retryOn: gateway-error,connect-failure
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: analytics-service
+spec:
+  hosts:
+    - analytics-service
+  http:
+    - timeout: 10s
+      retries:
+        attempts: 2
+        perTryTimeout: 5s
+        retryOn: gateway-error,connect-failure,retriable-4xx

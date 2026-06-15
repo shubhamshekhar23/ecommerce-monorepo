@@ -41,8 +41,8 @@ Redpanda + Kafka Connect + Debezium 2.7 wired into docker-compose. Postgres WAL 
 **8. ~~Kubernetes — Network Policies + PDBs~~ ✅ Done (2026-06-15)** (`kubernetes-platform.md`)
 Default-deny ingress NetworkPolicy + 11 per-service allow policies in `k8s/base/network-policies/`. PDBs (`minAvailable: 1`) for backend, gateway, auth-service, postgres, redis, rabbitmq in `k8s/base/pdb/`. analytics-service k8s manifests added.
 
-**9. Kubernetes — Service Mesh** (`kubernetes-platform.md`)
-Istio/Linkerd for mTLS and traffic observability. Complements Network Policies with identity-based enforcement.
+**9. ~~Kubernetes — Service Mesh~~ ✅ Done (2026-06-15)** (`kubernetes-platform.md`)
+Istio manifests in `k8s/base/service-mesh/`: STRICT mTLS PeerAuthentication, DestinationRules (circuit breaking + connection pool limits), VirtualServices (per-service timeouts and retries). Namespace labeled for automatic sidecar injection.
 
 **10. Kubernetes — KEDA** (`kubernetes-platform.md`)
 Scale workers on queue depth. Requires PDBs from step 8.

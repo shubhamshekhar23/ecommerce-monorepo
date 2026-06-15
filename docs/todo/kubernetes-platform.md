@@ -48,7 +48,7 @@ Production-readiness work for the Kubernetes layer. These items have no applicat
 
 ---
 
-## Service Mesh — mTLS And Observability
+## Service Mesh — mTLS And Observability ✅ Done (2026-06-15)
 
 **What:** Deploy Istio or Linkerd to get mutual TLS between all services, traffic-level observability (latency per service pair, retries, circuit breaking) without application-layer changes.
 
@@ -59,13 +59,21 @@ Production-readiness work for the Kubernetes layer. These items have no applicat
 **Implementation plan:**
 
 - Install Istio (or Linkerd for a lighter footprint) in the cluster
-- Label the `ecommerce` namespace for automatic sidecar injection
-- Define `DestinationRule` resources for circuit breaking per service (replaces opossum at infrastructure level)
-- Define `VirtualService` resources for traffic shifting (useful for canary deployments in Phase 14)
+- Label the `ecommerce` namespace for automatic sidecar injection ✅
+- Define `DestinationRule` resources for circuit breaking per service (replaces opossum at infrastructure level) ✅
+- Define `VirtualService` resources for traffic shifting (useful for canary deployments in Phase 14) ✅
 - Enable Kiali and connect to Grafana for traffic topology graphs
-- Enforce `PeerAuthentication` in STRICT mTLS mode — plain HTTP between pods becomes a policy violation
+- Enforce `PeerAuthentication` in STRICT mTLS mode — plain HTTP between pods becomes a policy violation ✅
 
-**References:** `k8s/`, Istio docs, Linkerd docs
+**What was done:** Istio manifests committed to `k8s/base/service-mesh/`:
+- `peer-authentication.yaml` — STRICT mTLS across the entire `ecommerce` namespace
+- `destination-rules.yaml` — connection pool limits and outlier detection (circuit breaking) for all 6 services; auth-service ejects on 3 consecutive 5xx errors (tighter, since JWT validation failures are always bugs)
+- `virtual-services.yaml` — per-service timeouts and retry policies tuned to each service's SLA (auth 5s, search 5s, backend 15s, gateway 30s, notification 60s)
+- `namespace.yaml` patched with `istio-injection: enabled` label
+
+Kiali + traffic topology graphs remain a cluster-install step (not committed as manifests).
+
+**References:** `k8s/base/service-mesh/`, Istio docs
 
 ---
 
