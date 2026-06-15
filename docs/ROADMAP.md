@@ -52,7 +52,7 @@ SECURITY                    ARCHITECTURE                MICROSERVICES
 - *Token introspection* — chose self-validating RS256 JWT (0ms overhead) over introspection endpoint (20ms per request); trade-off documented in Phase 9 notes
 - *DDD bounded contexts / Aggregates / Hexagonal architecture* — architectural patterns applied informally; no explicit DDD modelling exercise
 - *Service mesh concepts* — Envoy/Linkerd sidecar proxies not deployed; concepts documented in Phase 9
-- *Change data capture* — WAL-based CDC documented in Phase 10 study notes; Debezium not wired up (Outbox pattern covers the same use case at this scale)
+- *Change data capture* — ✅ Implemented (2026-06-15): Postgres `wal_level=logical`, Debezium 2.7 via Kafka Connect, Redpanda broker. `search-service` CDC consumer replaces RabbitMQ event listener. `analytics-service` consumes `order.placed` domain events from Kafka into ClickHouse.
 - *API key auth* — not a project requirement; JWT covers all authentication needs
 
 
@@ -694,8 +694,8 @@ Monitor replication lag:
 SELECT now() - pg_last_xact_replay_timestamp() AS replication_lag;
 ```
 
-**Change Data Capture with Logical Replication**
-Instead of polling Postgres for changes to sync to Elasticsearch, subscribe to the Postgres WAL (Write-Ahead Log). Every INSERT/UPDATE/DELETE emits an event. Use `pg_logical` or Debezium (Docker Compose). Your search index stays in sync with near-zero lag and no polling.
+**Change Data Capture with Logical Replication** ✅ Done (2026-06-15)
+Postgres WAL (`wal_level=logical`) → Debezium 2.7 (Kafka Connect) → Redpanda → `search-service` CDC consumer (`ecommerce.public.Product` topic). OpenSearch index is now driven by WAL events — no polling, no RabbitMQ dependency in search-service. See `infra/debezium/connector.json` and `apps/search-service/src/search/consumers/cdc.consumer.ts`.
 
 **pg_stat_statements Analysis**
 

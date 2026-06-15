@@ -57,8 +57,9 @@ Promtail           ──► tails container logs → Loki
 **Microservices**
 
 - `apps/auth-service` — NestJS, Prisma, Passport, otplib
-- `apps/search-service` — NestJS, OpenSearch client
+- `apps/search-service` — NestJS, kafkajs (Debezium CDC consumer), OpenSearch client
 - `apps/notification-service` — NestJS, `@golevelup/nestjs-rabbitmq`, Nodemailer/Handlebars
+- `apps/analytics-service` — NestJS, kafkajs (`order.placed` consumer), `@clickhouse/client`, ioredis, `@nestjs/schedule` (co-purchase cron); exposes `GET /api/recommendations/products/:id`
 - `apps/gateway` — NestJS, `http-proxy-middleware`, `jsonwebtoken`
 
 **Infrastructure**
@@ -67,7 +68,10 @@ Promtail           ──► tails container logs → Loki
 - Nginx reverse proxy
 - PgBouncer (transaction pooling mode)
 - RabbitMQ (durable queues, dead-letter exchanges)
-- OpenSearch (product search index)
+- Redpanda (Kafka-compatible broker — CDC events, analytics domain events)
+- Kafka Connect + Debezium 2.7 (WAL-based CDC: Postgres → Redpanda → search-service)
+- ClickHouse (columnar OLAP store — `order_items` table, co-purchase aggregation)
+- OpenSearch (product search index, fed by CDC consumer in search-service)
 - Prometheus + Grafana (metrics — HTTP histogram, business metrics, PgBouncer pool stats)
 - Jaeger (distributed tracing via OTLP)
 - Loki + Promtail (log aggregation)
