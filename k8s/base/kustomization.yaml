@@ -8,6 +8,7 @@ resources:
   - network-policies/
   - pdb/
   - service-mesh/
+  - keda/
   - infra/
   - backend/
   - auth-service/

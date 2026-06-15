@@ -1,0 +1,32 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: notification-service
+spec:
+  scaleTargetRef:
+    name: notification-service
+  # Never scale to zero — a cold-start notification-service misses messages that
+  # arrived while it was down because RabbitMQ delivered them to other consumers.
+  # Keeping minReplicaCount: 1 ensures at least one consumer is always active.
+  minReplicaCount: 1
+  maxReplicaCount: 20
+  # Check queue depth every 15 seconds. Fast enough to react to a spike without
+  # hammering the Management API.
+  pollingInterval: 15
+  # Wait 60 seconds after queue drains before removing a replica. Prevents
+  # flapping if a short burst clears faster than SMTP delivery finishes.
+  cooldownPeriod: 60
+  triggers:
+    - type: rabbitmq
+      metadata:
+        # Use the HTTP Management API (port 15672) — no AMQP connection needed
+        # from the KEDA operator, and queue depth is read-only.
+        protocol: http
+        queueName: notification.order
+        mode: QueueLength
+        # Add 1 replica for every 10 pending messages.
+        # At value=10 and maxReplicas=20, the service can absorb 200 queued
+        # messages before hitting the ceiling.
+        value: "10"
+      authenticationRef:
+        name: rabbitmq-trigger-auth

@@ -77,7 +77,7 @@ Kiali + traffic topology graphs remain a cluster-install step (not committed as 
 
 ---
 
-## KEDA — Scale On Queue Depth Not CPU
+## KEDA — Scale On Queue Depth Not CPU ✅ Done (2026-06-15)
 
 **What:** Use KEDA to autoscale worker pods (notification, order processing) based on RabbitMQ queue depth instead of CPU utilisation.
 
@@ -88,13 +88,17 @@ Kiali + traffic topology graphs remain a cluster-install step (not committed as 
 **Implementation plan:**
 
 - Install KEDA in the cluster
-- Add `ScaledObject` resources for `notification-service` and any order-processing workers
-- Configure RabbitMQ scaler: `queueLength: 10` → add 1 replica per 10 pending messages
-- Set `minReplicaCount: 1`, `maxReplicaCount: 20` to avoid cold-start and runaway scaling
-- Set `pollingInterval: 15` (seconds between queue-depth checks)
-- Keep PDBs active so KEDA scale-down doesn't violate minimum availability
+- Add `ScaledObject` resources for `notification-service` and any order-processing workers ✅
+- Configure RabbitMQ scaler: `queueLength: 10` → add 1 replica per 10 pending messages ✅
+- Set `minReplicaCount: 1`, `maxReplicaCount: 20` to avoid cold-start and runaway scaling ✅
+- Set `pollingInterval: 15` (seconds between queue-depth checks) ✅
+- Keep PDBs active so KEDA scale-down doesn't violate minimum availability ✅ (PDBs in place from step 8)
 
-**References:** `k8s/`, KEDA RabbitMQ scaler docs, `apps/notification-service/`
+**What was done:** KEDA manifests committed to `k8s/base/keda/`:
+- `trigger-auth.yaml` — Secret (placeholder credentials, replace during cluster bootstrap) + TriggerAuthentication so KEDA reads the RabbitMQ Management HTTP API URL from the Secret, not hardcoded in the ScaledObject
+- `notification-scaledobject.yaml` — ScaledObject targeting `notification.order` queue; 1 replica per 10 pending messages, min 1 (never scale to zero — a cold-start worker misses messages), max 20, cooldown 60s to prevent flapping while SMTP delivery catches up, poll every 15s
+
+**References:** `k8s/base/keda/`, KEDA RabbitMQ scaler docs, `apps/notification-service/`
 
 ---
 

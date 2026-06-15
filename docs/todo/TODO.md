@@ -44,8 +44,8 @@ Default-deny ingress NetworkPolicy + 11 per-service allow policies in `k8s/base/
 **9. ~~Kubernetes — Service Mesh~~ ✅ Done (2026-06-15)** (`kubernetes-platform.md`)
 Istio manifests in `k8s/base/service-mesh/`: STRICT mTLS PeerAuthentication, DestinationRules (circuit breaking + connection pool limits), VirtualServices (per-service timeouts and retries). Namespace labeled for automatic sidecar injection.
 
-**10. Kubernetes — KEDA** (`kubernetes-platform.md`)
-Scale workers on queue depth. Requires PDBs from step 8.
+**10. ~~Kubernetes — KEDA~~ ✅ Done (2026-06-15)** (`kubernetes-platform.md`)
+ScaledObject for notification-service in `k8s/base/keda/`: scales on `notification.order` queue depth (1 replica per 10 messages), min 1, max 20, 15s poll, 60s cooldown. TriggerAuthentication reads RabbitMQ Management API credentials from a Secret.
 
 **11. Kubernetes — Cluster Autoscaler** (`kubernetes-platform.md`)
 Node-level scaling. Requires PDBs (step 8) and KEDA (step 10) to be in place so scale-down is safe and pods actually reduce when queues drain.
