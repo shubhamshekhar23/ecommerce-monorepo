@@ -33,21 +33,34 @@ Advanced event-driven architecture beyond the current RabbitMQ setup. RabbitMQ h
 
 ---
 
-## Analytics Service & Recommendations Engine
+## Analytics Service & Recommendations Engine ✅ Done (2026-06-15)
 
-**What:** Build a dedicated analytics consumer that reads from Kafka topics and powers a recommendations engine (collaborative filtering or item-based similarity).
+**What:** Dedicated analytics consumer that reads from Kafka and powers an item-based co-purchase recommendation engine.
 
-**Current state:** No analytics pipeline exists beyond the Prometheus business metrics in `BusinessMetricsService`. Order and product interaction data is stored in Postgres but never used for recommendations.
+**Status:** Implemented. `apps/analytics-service` is a new NestJS service with four layers:
 
-**Why it belongs here:** Once CDC is in place, the Kafka topics are the natural input to an analytics consumer. The analytics service reads from those topics, writes to a columnar store (ClickHouse or TimescaleDB), and exposes recommendation endpoints to the backend.
+- `OrderConsumer` — kafkajs consumer on `order.placed` topic; parses `AnalyticsOrderEvent` and inserts rows into ClickHouse
+- `ClickhouseService` — creates `order_items` table on boot; exposes `insertOrderItems` and `getCoPurchasePairs` (co-purchase aggregate query)
+- `CoPurchaseJob` — `@Cron` every 5 minutes: queries ClickHouse for product-pair co-occurrence counts → bulk-writes to Redis sorted sets (`ZADD recs:product:{id} score partnerId`)
+- `RecommendationsController` — `GET /api/recommendations/products/:id` → `ZREVRANGE` top-5 from Redis
 
-**Implementation plan:**
+Backend publishes `AnalyticsOrderEvent` to Kafka topic `order.placed` via `KafkaProducerService` + `OrderAnalyticsHandler` (listens to existing `order.created` EventEmitter event). This keeps the orders service unaware of Kafka — the handler is a side-effect listener.
 
-- Stand up ClickHouse or TimescaleDB as the analytics store
-- Build `apps/analytics-service` (NestJS or Python) that consumes Kafka topics for order events, product views, and cart interactions
-- Implement item-based collaborative filtering: products frequently bought together by the same users
-- Expose a `GET /recommendations?userId=&productId=` endpoint consumed by the products module
-- Wire recommendations into product detail responses in `apps/backend`
-- Add A/B testing hook: record which recommendation variant was shown and track conversion
+ClickHouse (single-node, `24.3-alpine`) and `analytics-service` added to docker-compose. Gateway proxies `/api/recommendations/**` → analytics-service.
 
-**References:** `apps/backend/src/modules/products/`, `apps/backend/src/modules/orders/`, Kafka consumer group docs
+**Why ClickHouse:** Orders table is OLTP (row-store). The co-purchase aggregation (`GROUP BY product pair, count orders`) is a full-scan aggregate — exactly the workload columnar stores are built for. Running it on Postgres would lock tables or require a read replica.
+
+**Why Redis for serving:** Recommendations are pre-computed; serving is a point lookup (`ZREVRANGE`). Redis sorted sets are the right structure: `O(log N + K)` for top-K, naturally ordered by score.
+
+**Algorithm:** Simple item-based co-purchase (products bought together in the same order). No ML needed — the SQL `JOIN order_items ON order_id` is the entire model. Scores are raw co-occurrence counts; can be normalized later.
+
+**Key files:**
+- `apps/analytics-service/` — new NestJS service
+- `packages/shared-types/src/events/analytics.events.ts` — `AnalyticsOrderEvent`
+- `apps/backend/src/modules/kafka/` — `KafkaProducerModule` + `KafkaProducerService`
+- `apps/backend/src/modules/orders/handlers/order-analytics.handler.ts`
+- `docker-compose.yml` — ClickHouse + analytics-service; backend + gateway updated
+
+**Endpoint:** `GET /api/recommendations/products/:id` → `[{ productId, score }]` (top 5 co-purchased products)
+
+**References:** `apps/analytics-service/`, `apps/backend/src/modules/kafka/`, `apps/backend/src/modules/orders/handlers/order-analytics.handler.ts`

@@ -35,8 +35,8 @@ Argo CD Application manifests committed to k8s/argocd/. App-of-apps pattern read
 **6. ~~Event streaming — CDC + Debezium~~ ✅ Done (2026-06-15)** (`event-streaming.md`)
 Redpanda + Kafka Connect + Debezium 2.7 wired into docker-compose. Postgres WAL set to logical. `search-service` CDC consumer replaces RabbitMQ consumer. Debezium connector config at `infra/debezium/connector.json`.
 
-**7. Event streaming — Analytics & Recommendations** (`event-streaming.md`)
-Clickstream pipeline and recommendation engine. Requires Kafka from step 6.
+**7. ~~Event streaming — Analytics & Recommendations~~ ✅ Done (2026-06-15)** (`event-streaming.md`)
+`apps/analytics-service`: ClickHouse (columnar store) + kafkajs `order.placed` consumer + 5-min co-purchase cron → Redis sorted sets → `GET /api/recommendations/products/:id`. Backend publishes via `KafkaProducerService` + `OrderAnalyticsHandler`.
 
 **8. Kubernetes — Network Policies + PDBs** (`kubernetes-platform.md`)
 Zero-trust pod networking and disruption budgets. Must be in place before autoscaling — PDBs protect pods during Cluster Autoscaler scale-down.

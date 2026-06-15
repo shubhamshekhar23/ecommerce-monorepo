@@ -271,6 +271,26 @@ services:
     networks:
       - ecommerce-network
 
+  # ── ClickHouse ──────────────────────────────────────────────────────────────
+  # Columnar OLAP store. analytics-service writes raw order_items here;
+  # the co-purchase cron job aggregates over them to compute product similarity.
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.3-alpine
+    container_name: ecommerce_clickhouse
+    ports:
+      - '8123:8123'  # HTTP interface (queries, inserts)
+      - '9000:9000'  # native protocol
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:8123/ping | grep -q ok']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - ecommerce-network
+
   # ── OpenSearch ──────────────────────────────────────────────────────────────
   opensearch:
     image: opensearchproject/opensearch:2.12.0
@@ -439,6 +459,7 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318/v1/traces
       JWT_SECRET: dev-secret-key-min-32-chars-do-not-use-in-production
       JWT_REFRESH_SECRET: dev-refresh-secret-key-min-32-chars-do-not-use-in-production
+      KAFKA_BROKERS: redpanda:9092
       BUG_SCENARIO: ${BUG_SCENARIO:-}
     volumes:
       - .:/app
@@ -454,6 +475,8 @@ services:
       redis:
         condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+      redpanda:
         condition: service_healthy
       jaeger:
         condition: service_started
@@ -537,6 +560,7 @@ services:
       AUTH_SERVICE_URL: http://auth-service:3006
       SEARCH_SERVICE_URL: http://search-service:3005
       NOTIFICATION_SERVICE_URL: http://notification-service:3004
+      ANALYTICS_SERVICE_URL: http://analytics-service:3007
     ports:
       - '3000:3000'
     depends_on:
@@ -547,11 +571,33 @@ services:
     networks:
       - ecommerce-network
 
+  # ── Analytics Service ────────────────────────────────────────────────────────
+  analytics-service:
+    build:
+      context: .
+      dockerfile: apps/analytics-service/Dockerfile
+    container_name: ecommerce_analytics
+    environment:
+      PORT: 3007
+      KAFKA_BROKERS: redpanda:9092
+      CLICKHOUSE_URL: http://clickhouse:8123
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      redpanda:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ecommerce-network
+
 volumes:
   postgres_data:
   redis_data:
   rabbitmq_data:
   redpanda_data:
+  clickhouse_data:
   opensearch_data:
   pgadmin_data:
   prometheus_data:

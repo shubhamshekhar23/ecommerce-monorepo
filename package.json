@@ -8,6 +8,7 @@
     "apps/frontend",
     "apps/notification-service",
     "apps/search-service",
+    "apps/analytics-service",
     "apps/auth-service",
     "apps/gateway",
     "packages/shared-types"

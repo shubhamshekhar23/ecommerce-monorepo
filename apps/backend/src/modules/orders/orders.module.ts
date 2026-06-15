@@ -5,6 +5,7 @@ import { CircuitBreakerModule } from '@/modules/circuit-breaker/circuit-breaker.
 import { MetricsModule } from '@/modules/metrics/metrics.module';
 import { ShippingModule } from '@/modules/shipping/shipping.module';
 import { TaxModule } from '@/modules/tax/tax.module';
+import { KafkaProducerModule } from '@/modules/kafka/kafka-producer.module';
 import { OrderSagaService } from './saga/order-saga.service';
 import { OrdersService } from './orders.service';
 import { OrdersController } from './orders.controller';
@@ -12,6 +13,7 @@ import { OrderQueryService } from './queries/order-query.service';
 import { OrderReadModelHandler } from './handlers/order-read-model.handler';
 import { PaymentConfirmedHandler } from './handlers/payment-confirmed.handler';
 import { OrderNotificationHandler } from './handlers/order-notification.handler';
+import { OrderAnalyticsHandler } from './handlers/order-analytics.handler';
 
 @Module({
   imports: [
@@ -21,6 +23,7 @@ import { OrderNotificationHandler } from './handlers/order-notification.handler'
     MetricsModule,
     ShippingModule,
     TaxModule,
+    KafkaProducerModule,
   ],
   controllers: [OrdersController],
   providers: [
@@ -30,6 +33,7 @@ import { OrderNotificationHandler } from './handlers/order-notification.handler'
     OrderReadModelHandler,
     PaymentConfirmedHandler,
     OrderNotificationHandler,
+    OrderAnalyticsHandler,
   ],
   exports: [OrdersService],
 })
