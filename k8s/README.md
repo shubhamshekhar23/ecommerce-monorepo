@@ -31,16 +31,21 @@ bash k8s/scripts/local-setup.sh
 # 2. Create all dev secrets
 bash k8s/scripts/create-dev-secrets.sh
 
-# 3. Apply all manifests
-kubectl apply -k k8s/overlays/local
+# 3. Build all service images and load them into the kind cluster
+bash k8s/scripts/build-local.sh
 
-# 4. Add to /etc/hosts
+# 4. Apply all manifests
+# (--load-restrictor flag required: monitoring kustomization references grafana dashboards
+#  and alert_rules.yml from apps/backend/, which is outside the k8s/ tree)
+kustomize build --load-restrictor LoadRestrictionsNone k8s/overlays/local | kubectl apply -f -
+
+# 5. Add to /etc/hosts
 echo "127.0.0.1 api.ecommerce.local" | sudo tee -a /etc/hosts
 
-# 5. Watch Pods come up
+# 6. Watch Pods come up
 kubectl get pods -n ecommerce -w
 
-# 6. Test
+# 7. Test
 curl http://api.ecommerce.local/health
 ```
 

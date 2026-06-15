@@ -25,7 +25,6 @@ COPY package*.json .npmrc ./
 # Missing manifests cause npm to misplace packages into workspace-local node_modules,
 # breaking Node's module resolution for the app running from /app/dist.
 COPY apps/backend/package*.json ./apps/backend/
-COPY apps/frontend/package*.json ./apps/frontend/
 COPY apps/notification-service/package.json ./apps/notification-service/
 COPY apps/search-service/package.json ./apps/search-service/
 COPY apps/auth-service/package.json ./apps/auth-service/
@@ -101,12 +100,13 @@ RUN apk add --no-cache dumb-init openssl
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/backend/node_modules ./apps/backend/node_modules
-# Symlink node_modules/@ecommerce/shared-types → ../../packages/shared-types
-# resolves to /app/packages/shared-types — must exist in the runner.
+# Merge workspace-local packages into root so @nestjs/core (at root) can reach them.
+COPY --from=deps /app/apps/backend/node_modules/. ./node_modules/
 COPY --from=builder /app/packages/shared-types/package.json ./packages/shared-types/package.json
 COPY --from=builder /app/packages/shared-types/dist ./packages/shared-types/dist
 COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
+# prisma schema + migrations needed for `prisma migrate deploy` in the migrate job
+COPY --from=deps /app/apps/backend/prisma ./apps/backend/prisma
 
 # Create non-root user "nestjs" for security.
 RUN addgroup -g 1001 -S nodejs && adduser -S nestjs -u 1001

@@ -3,7 +3,7 @@ RUN apk add --no-cache openssl python3 make g++
 
 WORKDIR /monorepo
 
-COPY package.json package-lock.json ./
+COPY package*.json .npmrc ./
 # All workspace manifests must be present so npm hoists packages to root node_modules.
 # Missing manifests cause npm to place packages in workspace-local node_modules,
 # which the runner stage does not copy, breaking module resolution at runtime.
@@ -14,7 +14,7 @@ COPY apps/auth-service/package.json ./apps/auth-service/
 COPY apps/search-service/package.json ./apps/search-service/
 COPY apps/gateway/package.json ./apps/gateway/
 
-RUN npm ci --workspace=apps/notification-service --workspace=packages/shared-types
+RUN npm install --workspace=packages/shared-types --workspace=apps/notification-service --ignore-scripts
 
 COPY packages/shared-types ./packages/shared-types
 RUN cd packages/shared-types && npx tsc
@@ -34,7 +34,7 @@ ENV NODE_ENV=production
 # finds hoisted packages (/app/node_modules) and workspace-specific packages
 # (/app/apps/notification-service/node_modules) when running from the workspace dir.
 COPY --from=builder /monorepo/node_modules ./node_modules
-COPY --from=builder /monorepo/apps/notification-service/node_modules ./apps/notification-service/node_modules
+COPY --from=builder /monorepo/apps/notification-service/node_modules/. ./node_modules/
 COPY --from=builder /monorepo/packages/shared-types/package.json ./packages/shared-types/package.json
 COPY --from=builder /monorepo/packages/shared-types/dist ./packages/shared-types/dist
 COPY --from=builder /monorepo/apps/notification-service/dist ./apps/notification-service/dist

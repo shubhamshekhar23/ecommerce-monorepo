@@ -26,8 +26,10 @@ spec:
           image: postgres:16-alpine
           # pg_stat_statements must be in shared_preload_libraries at startup.
           # wal_level=replica + max_wal_senders enable streaming replication (Phase 10).
-          command:
-            - postgres
+          # args (not command) so docker-entrypoint.sh still runs — it handles initdb,
+          # data dir permissions, and drops from root to postgres user via gosu.
+          # Entrypoint sees leading '-' and prepends 'postgres' before exec.
+          args:
             - -c
             - shared_preload_libraries=pg_stat_statements
             - -c

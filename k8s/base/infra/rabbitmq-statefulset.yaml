@@ -39,20 +39,22 @@ spec:
               command: ['rabbitmq-diagnostics', 'ping']
             initialDelaySeconds: 60
             periodSeconds: 10
+            timeoutSeconds: 10
             failureThreshold: 6
           readinessProbe:
             exec:
               command: ['rabbitmq-diagnostics', 'ping']
             initialDelaySeconds: 20
             periodSeconds: 10
+            timeoutSeconds: 10
             failureThreshold: 5
           resources:
             requests:
               cpu: "100m"
-              memory: "128Mi"
+              memory: "256Mi"
             limits:
               cpu: "500m"
-              memory: "256Mi"
+              memory: "512Mi"
   volumeClaimTemplates:
     - metadata:
         name: rabbitmq-data

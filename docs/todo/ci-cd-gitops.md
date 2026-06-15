@@ -45,6 +45,32 @@ Improvements to the build and deployment pipeline. Current state: a single monol
 
 ---
 
+## Service Dockerfile Cleanup — Align With Backend's 3-Stage Pattern
+
+**What:** Rewrite the four service Dockerfiles (`auth-service`, `gateway`, `notification-service`, `search-service`) to match the backend's proven 3-stage build pattern (`deps` → `builder` → `runner`) instead of the current fragile workaround.
+
+**Current state (fragile):** The four service Dockerfiles use a combination of:
+- Workspace-scoped `npm install --workspace=X --ignore-scripts` to avoid postinstall conflicts
+- Merging workspace-local `node_modules` into root in the runner stage to fix module resolution
+- An explicit `npm rebuild bcrypt --build-from-source` step for auth-service
+
+This works but is brittle — any change to `package-lock.json` (adding a dependency, upgrading a package) can silently break hoisting again, causing missing-module errors at container startup.
+
+**Why it's fragile:** npm's hoisting decisions are encoded in `package-lock.json`, which was generated on the host with the full monorepo including the frontend. The lockfile places some packages (`reflect-metadata`, `bcrypt` native binding) at workspace level rather than root. The current Dockerfiles paper over this with a merge step. If the lockfile changes, the merge may no longer cover all affected packages.
+
+**The right fix:** Follow the backend's approach exactly:
+- Use a `deps` stage that runs `npm ci` (full install, not workspace-scoped) — this installs everything in the way the lockfile prescribes and the runner copies only what's needed
+- Use a `builder` stage that compiles TypeScript, runs `prisma generate` (for auth-service), and builds the dist
+- Use a lean `runner` stage that copies `node_modules` and `dist` from the prior stages
+
+**Why this works:** `npm ci` (full install) installs all packages at their lockfile-specified locations. Copying the full root `node_modules` to the runner means every package is at root — no workspace-level split, no merge hacks needed. The backend has been running this way reliably.
+
+**Additional fix:** Regenerate `package-lock.json` from scratch after adding the `apps/frontend` workspace exclusion where appropriate, so hoisting decisions in the lockfile are predictable.
+
+**References:** `apps/backend/Dockerfile` (reference implementation), `apps/auth-service/Dockerfile`, `apps/gateway/Dockerfile`, `apps/notification-service/Dockerfile`, `apps/search-service/Dockerfile`
+
+---
+
 ## Immediate Quick Win — Disable Broken Deploy Jobs
 
 Until Argo CD is set up, comment out `deploy-production` and `deploy-staging` in `.github/workflows/ci.yml` so CI passes consistently. These jobs require `KUBECONFIG` secrets and a live cluster that don't exist in the current environment.

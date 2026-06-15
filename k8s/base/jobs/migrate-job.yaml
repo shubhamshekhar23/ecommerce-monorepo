@@ -33,6 +33,11 @@ spec:
           image: ghcr.io/shubhamshekhar23/ecommerce-monorepo/backend:latest
           command: ['npx', 'prisma', 'migrate', 'deploy']
           env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: DATABASE_URL
             - name: DIRECT_DATABASE_URL
               valueFrom:
                 secretKeyRef:

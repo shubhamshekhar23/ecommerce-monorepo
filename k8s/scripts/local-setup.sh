@@ -46,6 +46,11 @@ kubectl patch deployment metrics-server \
   -p='[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
 
 echo "Waiting for ingress-nginx to be ready..."
+# Pods take a few seconds to appear after apply — wait until at least one exists before kubectl wait.
+until kubectl get pods -n ingress-nginx --selector=app.kubernetes.io/component=controller 2>/dev/null | grep -q controller; do
+  echo "  waiting for ingress-nginx pods to appear..."
+  sleep 5
+done
 kubectl wait --namespace ingress-nginx \
   --for=condition=ready pod \
   --selector=app.kubernetes.io/component=controller \
