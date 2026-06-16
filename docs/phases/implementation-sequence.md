@@ -93,7 +93,7 @@ This file is the single source of truth for what to implement next in this monor
   → [phase-7.1-api-advanced.md](./phase-7.1-api-advanced.md)
   Build Prisma `select` object from `fields` query param (allowlist-validated). Pass `select` to `findMany`. Unlike a response interceptor, this avoids fetching unused columns from the DB entirely.
 
-- [ ] **16. ETag / Conditional Requests**
+- [x] **16. ETag / Conditional Requests**
   → [phase-7.1-api-advanced.md](./phase-7.1-api-advanced.md)
   Global `EtagInterceptor` — SHA1 hash of response body → `ETag` header. If `If-None-Match` matches, respond `304` with no body. Apply to GET requests only.
 

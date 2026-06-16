@@ -10,6 +10,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import { join } from 'path';
 import { AppModule } from './app.module';
+import { EtagInterceptor } from '@/common/interceptors';
 
 const logger = new Logger('Bootstrap');
 
@@ -77,6 +78,7 @@ async function bootstrap(): Promise<void> {
 
   setupMiddleware(app);
   setupPipes(app);
+  app.useGlobalInterceptors(new EtagInterceptor());
   app.setGlobalPrefix(process.env.API_PREFIX ?? 'api/v1');
   app.useStaticAssets(join(__dirname, '..', 'uploads'), { prefix: '/uploads/' });
   setupSwagger(app);
