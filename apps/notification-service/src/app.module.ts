@@ -1,13 +1,13 @@
-import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
-import { MailerModule } from '@nestjs-modules/mailer';
-import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
-import { join } from 'path';
-import configuration from './config/configuration';
-import { NotificationModule } from './notification/notification.module';
-import { HealthController } from './health.controller';
-import { LoggerModule } from './logger.module';
+import { Module } from "@nestjs/common";
+import { ConfigModule } from "@nestjs/config";
+import { RabbitMQModule } from "@golevelup/nestjs-rabbitmq";
+import { MailerModule } from "@nestjs-modules/mailer";
+import { HandlebarsAdapter } from "@nestjs-modules/mailer/dist/adapters/handlebars.adapter";
+import { join } from "path";
+import configuration from "./config/configuration";
+import { NotificationModule } from "./notification/notification.module";
+import { HealthController } from "./health.controller";
+import { LoggerModule } from "./logger.module";
 
 @Module({
   imports: [
@@ -21,10 +21,11 @@ import { LoggerModule } from './logger.module';
     // Exchanges are asserted here at startup so the service fails fast if the
     // broker is unavailable. Queues are created by @RabbitSubscribe decorators.
     RabbitMQModule.forRoot(RabbitMQModule, {
-      uri: process.env.RABBITMQ_URL ?? 'amqp://guest:guest@localhost:5672',
+      uri: process.env.RABBITMQ_URL ?? "amqp://guest:guest@localhost:5672",
       exchanges: [
-        { name: 'order.events', type: 'topic' },
-        { name: 'user.events', type: 'topic' },
+        { name: "order.events", type: "topic" },
+        { name: "user.events", type: "topic" },
+        { name: "review.events", type: "topic" },
       ],
       connectionInitOptions: { wait: true },
     }),
@@ -32,17 +33,18 @@ import { LoggerModule } from './logger.module';
     MailerModule.forRootAsync({
       useFactory: () => ({
         transport: {
-          host: process.env.SMTP_HOST ?? 'localhost',
-          port: parseInt(process.env.SMTP_PORT ?? '1025', 10),
-          auth:
-            process.env.SMTP_USER
-              ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD }
-              : undefined,
+          host: process.env.SMTP_HOST ?? "localhost",
+          port: parseInt(process.env.SMTP_PORT ?? "1025", 10),
+          auth: process.env.SMTP_USER
+            ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD }
+            : undefined,
         },
-        defaults: { from: process.env.SMTP_FROM ?? '"ECommerce" <noreply@ecommerce.com>' },
+        defaults: {
+          from: process.env.SMTP_FROM ?? '"ECommerce" <noreply@ecommerce.com>',
+        },
         template: {
           // In dev: src/mail/templates. After nest build: dist/mail/templates
-          dir: join(__dirname, 'mail', 'templates'),
+          dir: join(__dirname, "mail", "templates"),
           adapter: new HandlebarsAdapter(),
           options: { strict: false },
         },

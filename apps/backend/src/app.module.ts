@@ -38,6 +38,7 @@ import { HttpMetricsInterceptor } from '@/modules/metrics/http-metrics.intercept
 import { SentryExceptionFilter } from '@/common/filters/sentry-exception.filter';
 import { CommonModule } from '@/common/common.module';
 import { AuditModule } from '@/modules/audit/audit.module';
+import { InboxModule } from '@/modules/inbox/inbox.module';
 import { AddressesModule } from '@/modules/addresses/addresses.module';
 import { CouponsModule } from '@/modules/coupons/coupons.module';
 import { ReviewsModule } from '@/modules/reviews/reviews.module';
@@ -80,6 +81,7 @@ import { AppService } from './app.service';
     }),
     CommonModule,
     AuditModule,
+    InboxModule,
     LoggerModule,
     AddressesModule,
     CouponsModule,

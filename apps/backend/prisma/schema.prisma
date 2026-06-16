@@ -648,3 +648,10 @@ model DataErasureRequest {
 
   @@index([status, scheduledAt])
 }
+
+model InboxMessage {
+  messageId   String   @id
+  processedAt DateTime @default(now())
+
+  @@index([processedAt])
+}

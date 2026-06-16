@@ -1,23 +1,22 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { PrismaService } from '@/modules/prisma/prisma.service';
+import { EXCHANGES, ROUTING_KEYS } from '@ecommerce/shared-types';
+import type { ReviewApprovedEvent, ReviewRejectedEvent } from '@ecommerce/shared-types';
 import { CreateReviewDto } from './dto/create-review.dto';
 
 /*
  - Materialized aggregate pattern:
  - ProductRating is NOT recomputed on every request.
- - It is updated asynchronously when a review is approved or un-approved via an event.
+ - It is updated asynchronously when a review is approved/rejected via RabbitMQ.
  - Trade-off: rating may be stale by seconds, acceptable for display purposes.
- - Never use the aggregate for business decisions (e.g. showing stock) — query the source.
  */
-export const REVIEW_APPROVED_EVENT = 'review.approved';
-export const REVIEW_REJECTED_EVENT = 'review.rejected';
 
 @Injectable()
 export class ReviewsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly eventEmitter: EventEmitter2,
+    private readonly amqp: AmqpConnection,
   ) {}
 
   async submitReview(userId: string, dto: CreateReviewDto) {
@@ -35,8 +34,7 @@ export class ReviewsService {
   }
 
   async approveReview(reviewId: string) {
-    const review = await this.prisma.productReview.findUnique({ where: { id: reviewId } });
-    if (!review) throw new NotFoundException('Review not found');
+    const review = await this.fetchReviewWithUser(reviewId);
     if (review.status !== 'PENDING') {
       throw new BadRequestException('Only PENDING reviews can be approved');
     }
@@ -44,13 +42,13 @@ export class ReviewsService {
       where: { id: reviewId },
       data: { status: 'APPROVED' },
     });
-    this.eventEmitter.emit(REVIEW_APPROVED_EVENT, { productId: review.productId });
+    const event: ReviewApprovedEvent = this.buildEvent(review);
+    await this.amqp.publish(EXCHANGES.REVIEW, ROUTING_KEYS.REVIEW.APPROVED, event);
     return updated;
   }
 
   async rejectReview(reviewId: string) {
-    const review = await this.prisma.productReview.findUnique({ where: { id: reviewId } });
-    if (!review) throw new NotFoundException('Review not found');
+    const review = await this.fetchReviewWithUser(reviewId);
     if (review.status === 'REJECTED') {
       throw new BadRequestException('Review is already rejected');
     }
@@ -59,11 +57,13 @@ export class ReviewsService {
       data: { status: 'REJECTED' },
     });
     /*
-     - Emit recompute event when an already-approved review is reversed.
+     - Only publish the rejected event if the review was previously APPROVED.
      - Approving a review increments the aggregate; rejecting it must decrement it.
+     - Rejecting a PENDING review has no effect on the rating aggregate.
      */
     if (review.status === 'APPROVED') {
-      this.eventEmitter.emit(REVIEW_REJECTED_EVENT, { productId: review.productId });
+      const event: ReviewRejectedEvent = this.buildEvent(review);
+      await this.amqp.publish(EXCHANGES.REVIEW, ROUTING_KEYS.REVIEW.REJECTED, event);
     }
     return updated;
   }
@@ -80,7 +80,6 @@ export class ReviewsService {
     return { reviews, avgRating: rating?.avgRating ?? null, reviewCount: rating?.reviewCount ?? 0 };
   }
 
-  // Called by event handler — recomputes the materialized aggregate from the source of truth.
   async recomputeRating(productId: string): Promise<void> {
     const result = await this.prisma.productReview.aggregate({
       where: { productId, status: 'APPROVED' },
@@ -102,5 +101,30 @@ export class ReviewsService {
         updatedAt: new Date(),
       },
     });
+  }
+
+  private async fetchReviewWithUser(reviewId: string) {
+    const review = await this.prisma.productReview.findUnique({
+      where: { id: reviewId },
+      include: { user: { select: { email: true, firstName: true } } },
+    });
+    if (!review) throw new NotFoundException('Review not found');
+    return review;
+  }
+
+  private buildEvent(review: {
+    id: string;
+    productId: string;
+    userId: string;
+    user: { email: string; firstName: string | null };
+  }): ReviewApprovedEvent {
+    return {
+      messageId: crypto.randomUUID(),
+      reviewId: review.id,
+      productId: review.productId,
+      userId: review.userId,
+      userEmail: review.user.email,
+      userFirstName: review.user.firstName ?? 'Customer',
+    };
   }
 }

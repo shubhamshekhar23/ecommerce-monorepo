@@ -16,6 +16,7 @@ import { OutboxProcessor } from './outbox.processor';
           { name: 'order.events', type: 'topic' },
           { name: 'user.events', type: 'topic' },
           { name: 'product.events', type: 'topic' },
+          { name: 'review.events', type: 'topic' },
         ],
         // Don't fail app startup if RabbitMQ is unavailable in dev without broker running
         connectionInitOptions: { wait: false },
