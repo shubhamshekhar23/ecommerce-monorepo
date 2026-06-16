@@ -297,6 +297,55 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.service }}
           cache-to: type=gha,mode=max,scope=${{ matrix.service }}
 
+  # ── Job 5b: Pact Consumer → Provider Contract Tests ──────────────────────────
+  # Two-step: consumer test (frontend) generates the pact file, then the provider
+  # (backend) verifies it satisfies every recorded interaction.
+  # Testcontainers spins up isolated PostgreSQL + Redis — no services block needed.
+  # The committed pacts/frontend-backend.json is the source of truth; the consumer
+  # step confirms it hasn't drifted from what the frontend actually expects.
+  pact:
+    name: Pact Contract Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [detect-changes]
+    if: |
+      needs.detect-changes.outputs.backend == 'true' ||
+      needs.detect-changes.outputs.any-service == 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - run: npm ci
+        working-directory: .
+
+      - name: Build shared-types
+        run: npm run build --workspace=@ecommerce/shared-types
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+        working-directory: apps/backend
+
+      - name: Consumer contract test — generate pact file
+        working-directory: apps/frontend
+        run: npm run test:pact
+
+      - name: Provider verification — backend satisfies consumer expectations
+        working-directory: apps/backend
+        env:
+          NODE_ENV: test
+          JWT_PRIVATE_KEY: ''
+          STRIPE_SECRET_KEY: sk_test_placeholder
+          RABBITMQ_URL: amqp://guest:guest@localhost:5672
+          KAFKA_BROKERS: localhost:9092
+          SEARCH_GRPC_URL: localhost:5005
+        run: npm run test:pact
+
   # ── Deploy jobs disabled — no cluster configured ──────────────────────────────
   # deploy-staging and deploy-production are disabled until Argo CD is set up.
   # They require KUBECONFIG secrets and a live cluster that don't exist yet.

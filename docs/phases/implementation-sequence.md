@@ -189,7 +189,7 @@ This file is the single source of truth for what to implement next in this monor
   → [phase-12-testing.md](./phase-12-testing.md)
   Expand `test/app.e2e-spec.ts`: register → login → `GET /products` → add to cart → `POST /orders`. Assert HTTP responses AND business side effects (order row in DB, stock decremented, audit log written). Use Testcontainers DB from item 33.
 
-- [ ] **35. Pact Consumer-Provider Contract Tests**
+- [x] **35. Pact Consumer-Provider Contract Tests**
   → [phase-12-testing.md](./phase-12-testing.md)
   Consumer (`apps/frontend`): `PactV3` defines expected `GET /api/v1/products` response shape → generates `pacts/frontend-backend.json`. Provider (`apps/backend/test/pact/`): `Verifier` runs against the pact file. Commit pact file. Add to CI: consumer → provider verification.
 
