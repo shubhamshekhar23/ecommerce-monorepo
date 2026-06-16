@@ -117,7 +117,7 @@ This file is the single source of truth for what to implement next in this monor
 
 ## Wave 7 — Realtime
 
-- [ ] **20. SSE Order Status Stream**
+- [x] **20. SSE Order Status Stream**
   → [phase-7.2-realtime.md](./phase-7.2-realtime.md)
   `@Sse(':id/status-stream')` on `OrdersController` returning `Observable<MessageEvent>`. `OrderStatusRegistry` holds `Subject` per orderId. `OrderSagaService` emits on each status transition. For multi-replica: use Redis Pub/Sub instead of in-process Subject.
 

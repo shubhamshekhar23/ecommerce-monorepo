@@ -13,6 +13,13 @@ export class EtagInterceptor implements NestInterceptor {
     const res = context.switchToHttp().getResponse<Response>();
     return next.handle().pipe(
       switchMap((body) => {
+        /*
+         - SSE and other streaming responses flush headers immediately; setting
+         - a new header after that throws "Cannot set headers after they are sent".
+         - Skip ETag generation for any response that is already streaming.
+         */
+        if (res.headersSent) return of(body);
+
         const etag = `"${createHash('sha1').update(JSON.stringify(body)).digest('hex')}"`;
         res.setHeader('ETag', etag);
         if (req.headers['if-none-match'] === etag) {

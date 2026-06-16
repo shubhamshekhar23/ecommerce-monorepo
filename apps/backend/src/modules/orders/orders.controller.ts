@@ -9,10 +9,15 @@ import {
   HttpCode,
   HttpStatus,
   UseInterceptors,
+  Sse,
+  Header,
 } from '@nestjs/common';
+import type { MessageEvent } from '@nestjs/common';
+import type { Observable } from 'rxjs';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
 import { OrderQueryService } from './queries/order-query.service';
+import { OrderStatusRegistry } from './order-status.registry';
 import { CurrentUser, Roles } from '@/common/decorators';
 import { IdempotencyInterceptor } from '@/common/interceptors';
 import { RateLimit } from '@/modules/rate-limit/rate-limit.decorator';
@@ -33,6 +38,7 @@ export class OrdersController {
   constructor(
     private readonly ordersService: OrdersService,
     private readonly orderQueryService: OrderQueryService,
+    private readonly orderStatusRegistry: OrderStatusRegistry,
   ) {}
 
   @Post()
@@ -86,6 +92,18 @@ export class OrdersController {
     @Body() { status }: { status: OrderStatus },
   ): Promise<unknown> {
     return this.ordersService.updateStatus(id, status);
+  }
+
+  @Sse(':id/status-stream')
+  @Header('Cache-Control', 'no-cache')
+  @Header('X-Accel-Buffering', 'no')
+  @ApiOperation({ summary: 'SSE stream of real-time order status updates' })
+  @ApiResponse({ status: 200, description: 'Event stream (text/event-stream)' })
+  getStatusStream(
+    @Param('id') id: string,
+    @CurrentUser() _user: RequestUser,
+  ): Observable<MessageEvent> {
+    return this.orderStatusRegistry.getStream(id);
   }
 
   @Post(':id/cancel')

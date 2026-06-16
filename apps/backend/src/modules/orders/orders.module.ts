@@ -10,6 +10,7 @@ import { OrderSagaService } from './saga/order-saga.service';
 import { OrdersService } from './orders.service';
 import { OrdersController } from './orders.controller';
 import { OrderQueryService } from './queries/order-query.service';
+import { OrderStatusRegistry } from './order-status.registry';
 import { OrderReadModelHandler } from './handlers/order-read-model.handler';
 import { PaymentConfirmedHandler } from './handlers/payment-confirmed.handler';
 import { OrderNotificationHandler } from './handlers/order-notification.handler';
@@ -30,6 +31,7 @@ import { OrderAnalyticsHandler } from './handlers/order-analytics.handler';
     OrdersService,
     OrderSagaService,
     OrderQueryService,
+    OrderStatusRegistry,
     OrderReadModelHandler,
     PaymentConfirmedHandler,
     OrderNotificationHandler,
