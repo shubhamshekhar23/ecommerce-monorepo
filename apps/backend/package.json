@@ -94,6 +94,7 @@
     "class-validator": "^0.14.0",
     "compression": "^1.7.4",
     "csv-parse": "^6.2.1",
+    "dataloader": "^2.2.3",
     "graphql": "^16.14.2",
     "handlebars": "^4.7.8",
     "helmet": "^7.1.0",

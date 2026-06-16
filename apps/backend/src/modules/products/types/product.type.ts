@@ -1,4 +1,5 @@
 import { ObjectType, Field, Float, Int, ID } from '@nestjs/graphql';
+import { ReviewType } from '@/modules/reviews/types/review.type';
 
 @ObjectType()
 export class ProductImageType {
@@ -61,6 +62,9 @@ export class ProductType {
 
   @Field(() => Int)
   reviewCount!: number;
+
+  @Field(() => [ReviewType])
+  reviews!: ReviewType[];
 
   @Field(() => Date)
   createdAt!: Date;

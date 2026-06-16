@@ -1,11 +1,18 @@
-import { Resolver, Query, Args, ID } from '@nestjs/graphql';
+import { Injectable, Scope } from '@nestjs/common';
+import { Resolver, Query, Args, ID, ResolveField, Parent } from '@nestjs/graphql';
 import { Public } from '@/common/decorators';
+import { ReviewsLoader } from '@/modules/reviews/reviews.loader';
+import { ReviewType } from '@/modules/reviews/types/review.type';
 import { ProductsService } from './products.service';
 import { ProductType } from './types/product.type';
 
+@Injectable({ scope: Scope.REQUEST })
 @Resolver(() => ProductType)
 export class ProductsResolver {
-  constructor(private readonly productsService: ProductsService) {}
+  constructor(
+    private readonly productsService: ProductsService,
+    private readonly reviewsLoader: ReviewsLoader,
+  ) {}
 
   @Query(() => [ProductType], { name: 'products' })
   @Public()
@@ -23,5 +30,11 @@ export class ProductsResolver {
   @Public()
   async findOne(@Args('id', { type: () => ID }) id: string): Promise<ProductType> {
     return this.productsService.findById(id) as unknown as Promise<ProductType>;
+  }
+
+  @ResolveField(() => [ReviewType], { name: 'reviews' })
+  @Public()
+  async reviews(@Parent() product: ProductType): Promise<ReviewType[]> {
+    return this.reviewsLoader.load(product.id) as unknown as Promise<ReviewType[]>;
   }
 }
