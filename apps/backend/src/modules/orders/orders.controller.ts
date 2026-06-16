@@ -18,6 +18,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { OrdersService } from './orders.service';
 import { OrderQueryService } from './queries/order-query.service';
 import { OrderStatusRegistry } from './order-status.registry';
+import { OrderEventStore } from './order-event-store.service';
 import { CurrentUser, Roles } from '@/common/decorators';
 import { IdempotencyInterceptor } from '@/common/interceptors';
 import { RateLimit } from '@/modules/rate-limit/rate-limit.decorator';
@@ -39,6 +40,7 @@ export class OrdersController {
     private readonly ordersService: OrdersService,
     private readonly orderQueryService: OrderQueryService,
     private readonly orderStatusRegistry: OrderStatusRegistry,
+    private readonly orderEventStore: OrderEventStore,
   ) {}
 
   @Post()
@@ -104,6 +106,12 @@ export class OrdersController {
     @CurrentUser() _user: RequestUser,
   ): Observable<MessageEvent> {
     return this.orderStatusRegistry.getStream(id);
+  }
+
+  @Get(':id/events')
+  @ApiOperation({ summary: 'Get order event log (append-only audit trail)' })
+  async getEvents(@Param('id') id: string): Promise<unknown[]> {
+    return this.orderEventStore.getEvents(id);
   }
 
   @Post(':id/cancel')

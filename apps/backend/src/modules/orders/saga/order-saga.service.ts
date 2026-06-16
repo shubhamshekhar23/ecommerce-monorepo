@@ -1,4 +1,4 @@
-/* eslint-disable max-lines */
+/* eslint-disable max-lines, max-params */
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import type { Queue } from 'bullmq';
@@ -14,6 +14,7 @@ import { TaxService } from '@/modules/tax/tax.service';
 import type { NotificationJobPayload } from '@/modules/queue/dto/notification-job.dto';
 import { isRetriableStripeError } from '@/modules/stripe/stripe.helpers';
 import type { PaymentRetryJobData } from '@/modules/payments/payment-retry.processor';
+import { OrderEventStore } from '../order-event-store.service';
 
 type CartWithItems = Prisma.CartGetPayload<{
   include: { items: { include: { product: { include: { category: true } }; variant: true } } };
@@ -47,6 +48,7 @@ export class OrderSagaService {
     private readonly shippingService: ShippingService,
     private readonly taxService: TaxService,
     @InjectQueue('payment-retry') private readonly retryQueue: Queue,
+    private readonly orderEventStore: OrderEventStore,
   ) {}
 
   async execute(userId: string, cartId?: string): Promise<OrderWithItems> {
@@ -109,6 +111,12 @@ export class OrderSagaService {
         await this.decrementStock(tx, cart);
         await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
         await this.publishOrderCreatedEvent(tx, order, user, cart);
+        await this.orderEventStore.append(
+          order.id,
+          'ORDER_CREATED',
+          { userId, orderNumber: order.orderNumber, status: 'PENDING' },
+          tx,
+        );
         return order;
       },
       { timeout: 10_000, isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted },
@@ -272,6 +280,12 @@ export class OrderSagaService {
           eventType: 'ORDER_CANCELLED',
           payload: { orderId: order.id, userId: order.userId, orderNumber: order.orderNumber },
         });
+        await this.orderEventStore.append(
+          order.id,
+          'ORDER_CANCELLED',
+          { reason: 'payment_failed', from: 'PENDING', to: 'CANCELLED' },
+          tx,
+        );
       });
     } catch (compError) {
       this.logger.error(

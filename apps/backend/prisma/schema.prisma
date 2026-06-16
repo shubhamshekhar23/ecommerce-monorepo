@@ -355,6 +355,7 @@ model Order {
   user            User          @relation(fields: [userId], references: [id], onDelete: Restrict)
   items           OrderItem[]
   returnRequests  ReturnRequest[]
+  events          OrderEvent[]
   totalPrice      Decimal       @db.Decimal(10, 2)
   // Snapshot fields — stored at order time, never updated even if rates change later
   subtotal        Decimal?      @db.Decimal(10, 2)
@@ -382,6 +383,19 @@ model Order {
   @@index([createdAt])
   @@index([userId, createdAt])
   @@index([status, createdAt])
+}
+
+// Append-only event log for the Order aggregate. Each status transition writes
+// an immutable record here alongside the mutable status column.
+model OrderEvent {
+  id         String   @id @default(cuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  type       String
+  payload    Json
+  occurredAt DateTime @default(now())
+
+  @@index([orderId, occurredAt])
 }
 
 // ── Reliability (Phase 2) ─────────────────────────────────────────────────────

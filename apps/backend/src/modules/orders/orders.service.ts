@@ -1,4 +1,4 @@
-/* eslint-disable max-lines */
+/* eslint-disable max-lines, max-params */
 import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { OrderStatus, Prisma } from '@prisma/client';
@@ -11,6 +11,7 @@ import { BusinessMetricsService } from '@/modules/metrics/business-metrics.servi
 import { AuditService } from '@/modules/audit/audit.service';
 import { OrderResponseDto, OrderItemResponseDto } from './dto/order-response.dto';
 import { isBugScenario } from '@/modules/debug-scenarios/bug-scenario.guard';
+import { OrderEventStore } from './order-event-store.service';
 
 type OrderWithItems = Prisma.OrderGetPayload<{
   include: { items: { include: { product: true } } };
@@ -26,6 +27,7 @@ export class OrdersService {
     private readonly eventEmitter: EventEmitter2,
     private readonly businessMetrics: BusinessMetricsService,
     private readonly auditService: AuditService,
+    private readonly orderEventStore: OrderEventStore,
   ) {}
 
   async create(userId: string, cartId?: string): Promise<OrderResponseDto> {
@@ -158,6 +160,10 @@ export class OrdersService {
       before: { status: order.status },
       after: { status },
     });
+    void this.orderEventStore.append(orderId, 'ORDER_STATUS_CHANGED', {
+      from: order.status,
+      to: status,
+    });
     return this.mapToResponse(updated);
   }
 
@@ -204,6 +210,11 @@ export class OrdersService {
         updated.updatedAt,
       ),
     );
+    void this.orderEventStore.append(orderId, 'ORDER_CANCELLED', {
+      reason: 'user_request',
+      from: order.status,
+      to: 'CANCELLED',
+    });
     return this.mapToResponse(updated);
   }
 

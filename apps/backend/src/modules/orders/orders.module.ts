@@ -20,6 +20,7 @@ import { OrderNotificationHandler } from './handlers/order-notification.handler'
 import { OrderAnalyticsHandler } from './handlers/order-analytics.handler';
 import { OrdersResolver } from './orders.resolver';
 import { PaymentsModule } from '@/modules/payments/payments.module';
+import { OrderEventStore } from './order-event-store.service';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { PaymentsModule } from '@/modules/payments/payments.module';
     OrderNotificationHandler,
     OrderAnalyticsHandler,
     OrdersResolver,
+    OrderEventStore,
   ],
   exports: [OrdersService, OrderQueryService],
 })

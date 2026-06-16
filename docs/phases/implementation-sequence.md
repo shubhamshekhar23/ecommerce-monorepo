@@ -173,7 +173,7 @@ This file is the single source of truth for what to implement next in this monor
   → [phase-9.3-microservices-resilience.md](./phase-9.3-microservices-resilience.md)
   In `StripeService`, distinguish retriable errors (network, rate limit) from non-retriable (card declined). On retriable: enqueue `payment-retry` BullMQ job (3× exponential backoff). Order stays `PENDING` during retry. On exhaustion: emit `order.payment.failed` → saga cancels and restores cart.
 
-- [ ] **32. Order Event Log**
+- [x] **32. Order Event Log**
   → [phase-9.4-event-architecture.md](./phase-9.4-event-architecture.md)
   Add `OrderEvent` model (`id, orderId, type, payload Json, occurredAt`). `OrderEventStore` service with `append()` and `getEvents()`. Call `eventStore.append()` at every status transition in `OrderSagaService` (alongside existing `order.update`). Expose `GET /orders/:id/events`. The mutable `status` column stays as the materialized projection.
 
