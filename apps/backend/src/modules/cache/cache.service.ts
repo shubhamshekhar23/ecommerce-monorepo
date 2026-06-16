@@ -176,6 +176,54 @@ export class CacheService {
     }
   }
 
+  /*
+   - Refresh-ahead variant for designated hot keys (product listings, category tree).
+   - Stores { value, refreshAt } so a cache hit past the refresh threshold triggers a
+   - non-blocking background re-fetch, preventing callers from ever seeing an expired entry.
+   */
+  async getOrSetRefreshAhead<T>(
+    key: string,
+    ttlSeconds: number,
+    fetchFn: () => Promise<T>,
+    refreshThreshold = 0.8,
+  ): Promise<T> {
+    const wrapped = await this.get<{ value: T; refreshAt: number }>(key);
+    if (wrapped !== null) {
+      if (Date.now() > wrapped.refreshAt) {
+        setImmediate(
+          () => void this.doBackgroundRefresh(key, ttlSeconds, fetchFn, refreshThreshold),
+        );
+      }
+      return wrapped.value;
+    }
+    return this.fetchAndStoreRefreshAhead(key, ttlSeconds, fetchFn, refreshThreshold);
+  }
+
+  private async fetchAndStoreRefreshAhead<T>(
+    key: string,
+    ttlSeconds: number,
+    fetchFn: () => Promise<T>,
+    refreshThreshold: number,
+  ): Promise<T> {
+    const value = await fetchFn();
+    const refreshAt = Date.now() + ttlSeconds * refreshThreshold * 1000;
+    await this.set(key, { value, refreshAt }, ttlSeconds);
+    return value;
+  }
+
+  private async doBackgroundRefresh<T>(
+    key: string,
+    ttlSeconds: number,
+    fetchFn: () => Promise<T>,
+    refreshThreshold: number,
+  ): Promise<void> {
+    try {
+      await this.fetchAndStoreRefreshAhead(key, ttlSeconds, fetchFn, refreshThreshold);
+    } catch {
+      /* stale value remains valid until TTL expires; next explicit request will re-fetch */
+    }
+  }
+
   private async acquireLock(key: string): Promise<string | null> {
     const token = `${Date.now()}-${Math.random()}`;
     const result = await this.redis.getClient().set(`lock:${key}`, token, 'PX', LOCK_TTL_MS, 'NX');

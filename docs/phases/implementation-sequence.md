@@ -69,7 +69,7 @@ This file is the single source of truth for what to implement next in this monor
   → [phase-3.2-caching-patterns.md](./phase-3.2-caching-patterns.md)
   Add `inflight: Map<string, Promise<unknown>>` to `CacheService`. Concurrent cache misses for the same key share one in-flight DB promise instead of all hitting the DB independently.
 
-- [ ] **11. Refresh Ahead**
+- [x] **11. Refresh Ahead**
   → [phase-3.2-caching-patterns.md](./phase-3.2-caching-patterns.md)
   On cache hit, if `now > refreshAt` (80% of TTL elapsed), fire a background re-fetch via `setImmediate` and return the current value. Apply only to hot keys (featured products, category tree).
 

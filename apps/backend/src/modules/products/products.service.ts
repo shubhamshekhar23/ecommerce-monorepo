@@ -153,7 +153,7 @@ export class ProductsService implements OnApplicationBootstrap {
   private async withHotCache<T>(key: string, ttl: number, fetchFn: () => Promise<T>): Promise<T> {
     const l1 = this.getL1<T>(key);
     if (l1 !== null) return l1;
-    const result = await this.withCache(key, ttl, fetchFn);
+    const result = await this.cache.getOrSetRefreshAhead(key, ttl, fetchFn);
     this.setL1(key, result);
     return result;
   }
