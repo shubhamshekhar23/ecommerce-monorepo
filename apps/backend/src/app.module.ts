@@ -5,6 +5,13 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import type { Request } from 'express';
+import depthLimit from 'graphql-depth-limit';
+import {
+  createComplexityRule,
+  fieldExtensionsEstimator,
+  simpleEstimator,
+} from 'graphql-query-complexity';
+import { Logger } from '@nestjs/common';
 import { PrismaModule } from '@/modules/prisma/prisma.module';
 import { UsersModule } from '@/modules/users/users.module';
 import { SecurityModule } from '@/modules/security/security.module';
@@ -52,6 +59,16 @@ import { AppService } from './app.service';
       autoSchemaFile: true,
       playground: process.env.NODE_ENV !== 'production',
       context: ({ req }: { req: Request }) => ({ req }),
+      validationRules: [
+        depthLimit(5),
+        createComplexityRule({
+          estimators: [fieldExtensionsEstimator(), simpleEstimator({ defaultComplexity: 1 })],
+          maximumComplexity: 100,
+          onComplete: (complexity) => {
+            new Logger('GraphQL').debug(`Query complexity: ${complexity}`);
+          },
+        }),
+      ],
     }),
     CommonModule,
     AuditModule,

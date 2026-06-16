@@ -1,5 +1,5 @@
 import { Injectable, Scope } from '@nestjs/common';
-import { Resolver, Query, Args, ID, ResolveField, Parent } from '@nestjs/graphql';
+import { Resolver, Query, Args, ID, ResolveField, Parent, Extensions } from '@nestjs/graphql';
 import { Public } from '@/common/decorators';
 import { ReviewsLoader } from '@/modules/reviews/reviews.loader';
 import { ReviewType } from '@/modules/reviews/types/review.type';
@@ -33,6 +33,7 @@ export class ProductsResolver {
   }
 
   @ResolveField(() => [ReviewType], { name: 'reviews' })
+  @Extensions({ complexity: 10 })
   @Public()
   async reviews(@Parent() product: ProductType): Promise<ReviewType[]> {
     return this.reviewsLoader.load(product.id) as unknown as Promise<ReviewType[]>;

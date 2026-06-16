@@ -137,7 +137,7 @@ This file is the single source of truth for what to implement next in this monor
   → [phase-7.3-graphql.md](./phase-7.3-graphql.md)
   `ReviewsLoader` batches `reviewsByProductId` calls within one event loop tick into a single `WHERE productId IN (...)` query. REQUEST-scoped so batching is per-operation.
 
-- [ ] **24. Query Complexity + Depth Limiting**
+- [x] **24. Query Complexity + Depth Limiting**
   → [phase-7.3-graphql.md](./phase-7.3-graphql.md)
   Add `depthLimit(5)` and `createComplexityRule({ maximumComplexity: 100 })` to `GraphQLModule.forRoot validationRules`. Reject expensive queries before they reach resolvers.
 
