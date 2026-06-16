@@ -26,6 +26,7 @@ import { CreateProductDto, UpdateProductDto, ProductImageDto, FindProductsDto } 
 import { ProductResponseDto, ProductSearchResponseDto } from './dto/product-response.dto';
 import { buildPaginationResponse } from '@/common/utils/pagination.util';
 import { parseSortParam, SortDir } from '@/common/utils/sort.util';
+import { buildProductSelect } from '@/common/utils/field-select.util';
 import {
   buildCursorWhere,
   buildCursorResponse,
@@ -318,55 +319,59 @@ export class ProductsService implements OnApplicationBootstrap {
     cursor?: string,
     filters: FindProductsDto = {},
   ): Promise<CursorPageDto<ProductResponseDto>> {
-    const { minPrice, maxPrice, categoryId, inStock, sort } = filters;
+    const { minPrice, maxPrice, categoryId, inStock, sort, fields } = filters;
     const cacheKey = `products:cursor:${limit}:${cursor ?? ''}:${JSON.stringify(filters)}`;
     return this.withHotCache(cacheKey, PRODUCT_LIST_TTL, async () => {
       const take = Math.min(Math.max(limit, 1), MAX_CURSOR_LIMIT);
       const cursorWhere = buildCursorWhere(cursor);
       const sortOrder = parseSortParam(sort, mapProductSort);
+      const select = buildProductSelect(fields);
 
       const hasVariantFilter = inStock || minPrice !== undefined || maxPrice !== undefined;
-      const products = await this.prisma.product.findMany({
-        where: {
-          isActive: true,
-          deletedAt: null,
-          ...cursorWhere,
-          ...(categoryId && { categoryId }),
-          ...(hasVariantFilter && {
-            variants: {
-              some: {
-                isActive: true,
-                ...(inStock && { stock: { gt: 0 } }),
-                ...(minPrice !== undefined && { price: { gte: minPrice } }),
-                ...(maxPrice !== undefined && { price: { lte: maxPrice } }),
+      const where = {
+        isActive: true,
+        deletedAt: null,
+        ...cursorWhere,
+        ...(categoryId && { categoryId }),
+        ...(hasVariantFilter && {
+          variants: {
+            some: {
+              isActive: true,
+              ...(inStock && { stock: { gt: 0 } }),
+              ...(minPrice !== undefined && { price: { gte: minPrice } }),
+              ...(maxPrice !== undefined && { price: { lte: maxPrice } }),
+            },
+          },
+        }),
+      };
+      const orderBy: Prisma.ProductOrderByWithRelationInput[] =
+        sortOrder.length > 0
+          ? [...sortOrder, { id: Prisma.SortOrder.desc }]
+          : [{ createdAt: Prisma.SortOrder.desc }, { id: Prisma.SortOrder.desc }];
+      const products = select
+        ? await this.prisma.product.findMany({ where, take: take + 1, select, orderBy })
+        : await this.prisma.product.findMany({
+            where,
+            take: take + 1,
+            include: {
+              images: { where: { isMain: true } },
+              category: { select: { name: true } },
+              rating: true,
+              variants: {
+                where: { isActive: true },
+                select: { price: true },
+                orderBy: { price: 'asc' },
               },
             },
-          }),
-        },
-        take: take + 1,
-        include: {
-          images: { where: { isMain: true } },
-          category: { select: { name: true } },
-          rating: true,
-          variants: {
-            where: { isActive: true },
-            select: { price: true },
-            orderBy: { price: 'asc' },
-          },
-        },
-        orderBy:
-          sortOrder.length > 0
-            ? [...sortOrder, { id: 'desc' }]
-            : [{ createdAt: 'desc' }, { id: 'desc' }],
-      });
+            orderBy,
+          });
 
       const hasMore = products.length > take;
       const items = hasMore ? products.slice(0, take) : products;
-      return buildCursorResponse(
-        items.map((p) => this.mapToResponse(p)),
-        take,
-        hasMore,
-      );
+      const data = select
+        ? (items as unknown as ProductResponseDto[])
+        : items.map((p) => this.mapToResponse(p as Parameters<typeof this.mapToResponse>[0]));
+      return buildCursorResponse(data, take, hasMore);
     });
   }
 

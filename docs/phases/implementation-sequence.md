@@ -89,7 +89,7 @@ This file is the single source of truth for what to implement next in this monor
   → [phase-7.1-api-advanced.md](./phase-7.1-api-advanced.md)
   Add `sort?: string` to `FindProductsDto` with allowlist regex. Create `parseSortParam()` util that returns `Prisma.ProductOrderByWithRelationInput[]`. Pass to `findMany({ orderBy })`.
 
-- [ ] **15. ORM-level field selection (`?fields=id,name,price`)**
+- [x] **15. ORM-level field selection (`?fields=id,name,price`)**
   → [phase-7.1-api-advanced.md](./phase-7.1-api-advanced.md)
   Build Prisma `select` object from `fields` query param (allowlist-validated). Pass `select` to `findMany`. Unlike a response interceptor, this avoids fetching unused columns from the DB entirely.
 

@@ -35,4 +35,14 @@ export class FindProductsDto {
     example: 'avgRating:desc',
   })
   sort?: string;
+
+  @IsOptional()
+  @Matches(
+    /^(id|name|slug|categoryId|isActive|createdAt|updatedAt)(,(id|name|slug|categoryId|isActive|createdAt|updatedAt))*$/,
+  )
+  @ApiPropertyOptional({
+    description: 'Comma-separated scalar fields to fetch from the DB',
+    example: 'id,name,slug',
+  })
+  fields?: string;
 }

@@ -80,6 +80,12 @@ export class ProductsController {
     type: String,
     description: 'Sort fields: name:asc,avgRating:desc',
   })
+  @ApiQuery({
+    name: 'fields',
+    required: false,
+    type: String,
+    description: 'Scalar fields to fetch from DB: id,name,slug',
+  })
   async findAllCursor(
     @Query('limit') limit = 20,
     @Query('cursor') cursor?: string,
@@ -88,6 +94,7 @@ export class ProductsController {
     @Query('categoryId') categoryId?: string,
     @Query('inStock') inStockStr?: string,
     @Query('sort') sort?: string,
+    @Query('fields') fields?: string,
   ): Promise<CursorPageDto<any>> {
     const minPrice = minPriceStr !== undefined ? parseFloat(minPriceStr) : undefined;
     const maxPrice = maxPriceStr !== undefined ? parseFloat(maxPriceStr) : undefined;
@@ -98,6 +105,7 @@ export class ProductsController {
       categoryId,
       inStock,
       sort,
+      fields,
     });
   }
 
