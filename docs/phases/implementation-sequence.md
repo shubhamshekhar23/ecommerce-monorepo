@@ -141,7 +141,7 @@ This file is the single source of truth for what to implement next in this monor
   → [phase-7.3-graphql.md](./phase-7.3-graphql.md)
   Add `depthLimit(5)` and `createComplexityRule({ maximumComplexity: 100 })` to `GraphQLModule.forRoot validationRules`. Reject expensive queries before they reach resolvers.
 
-- [ ] **25. Persisted Queries (APQ)**
+- [x] **25. Persisted Queries (APQ)**
   → [phase-7.3-graphql.md](./phase-7.3-graphql.md)
   Apollo Automatic Persisted Queries with Redis as APQ cache store. Client sends SHA256 hash; server looks up cached query. Reduces request size and enables query whitelisting in production.
 

@@ -12,6 +12,8 @@ import {
   simpleEstimator,
 } from 'graphql-query-complexity';
 import { Logger } from '@nestjs/common';
+import { RedisService } from '@/modules/cache/redis.service';
+import { ApolloCacheAdapter } from '@/modules/cache/apollo-cache-adapter';
 import { PrismaModule } from '@/modules/prisma/prisma.module';
 import { UsersModule } from '@/modules/users/users.module';
 import { SecurityModule } from '@/modules/security/security.module';
@@ -54,21 +56,27 @@ import { AppService } from './app.service';
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: ['.env', '.env.local'] }),
     EventEmitterModule.forRoot({ wildcard: false }),
-    GraphQLModule.forRoot<ApolloDriverConfig>({
+    GraphQLModule.forRootAsync<ApolloDriverConfig>({
       driver: ApolloDriver,
-      autoSchemaFile: true,
-      playground: process.env.NODE_ENV !== 'production',
-      context: ({ req }: { req: Request }) => ({ req }),
-      validationRules: [
-        depthLimit(5),
-        createComplexityRule({
-          estimators: [fieldExtensionsEstimator(), simpleEstimator({ defaultComplexity: 1 })],
-          maximumComplexity: 100,
-          onComplete: (complexity) => {
-            new Logger('GraphQL').debug(`Query complexity: ${complexity}`);
-          },
-        }),
-      ],
+      inject: [RedisService],
+      useFactory: (redis: RedisService) => ({
+        autoSchemaFile: true,
+        playground: process.env.NODE_ENV !== 'production',
+        context: ({ req }: { req: Request }) => ({ req }),
+        validationRules: [
+          depthLimit(5),
+          createComplexityRule({
+            estimators: [fieldExtensionsEstimator(), simpleEstimator({ defaultComplexity: 1 })],
+            maximumComplexity: 100,
+            onComplete: (complexity) => {
+              new Logger('GraphQL').debug(`Query complexity: ${complexity}`);
+            },
+          }),
+        ],
+        persistedQueries: {
+          cache: new ApolloCacheAdapter(redis),
+        },
+      }),
     }),
     CommonModule,
     AuditModule,
