@@ -193,7 +193,7 @@ This file is the single source of truth for what to implement next in this monor
   → [phase-12-testing.md](./phase-12-testing.md)
   Consumer (`apps/frontend`): `PactV3` defines expected `GET /api/v1/products` response shape → generates `pacts/frontend-backend.json`. Provider (`apps/backend/test/pact/`): `Verifier` runs against the pact file. Commit pact file. Add to CI: consumer → provider verification.
 
-- [ ] **36. Mutation Testing (Stryker)**
+- [x] **36. Mutation Testing (Stryker)**
   → [phase-12-testing.md](./phase-12-testing.md)
   `stryker.config.json` targets `orders/**` and `products/**`. Run `npx stryker run` — it mutates operators/conditions and checks if tests catch them. Add as a weekly CI schedule job (too slow for per-PR). Reveals which tests assert on nothing.
 
