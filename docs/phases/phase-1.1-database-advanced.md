@@ -1,6 +1,6 @@
 # Phase 1.1 — Database Advanced
 
-**Status:** 🔲 Pending
+**Status:** 🔲 Partial — categoryName denormalization ✅ done; vertical partitioning, concurrent indexes, ID-range batching pending
 **Builds on:** [Phase 1 — Database Deep Dive](./phase-1-database.md)
 **Concept cluster:** Four patterns that separate a production data layer from a dev one — split hot/cold columns to shrink index page footprint, migrate data without locking the table (using ID-range batching, not `NOT IN`), build indexes without blocking reads, and snapshot immutable facts at write time so history never lies.
 

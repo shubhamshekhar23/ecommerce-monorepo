@@ -414,6 +414,7 @@ model OrderItem {
   quantity          Int
   price             Decimal         @db.Decimal(10, 2)
   variantAttributes Json?
+  categoryName      String?
   returnItems       ReturnItem[]
 
   @@index([orderId])

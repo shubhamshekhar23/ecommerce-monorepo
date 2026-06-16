@@ -2,6 +2,7 @@ export interface OrderItemReadModel {
   id: string;
   productId: string;
   productName: string;
+  categoryName: string | null;
   quantity: number;
   price: string;
   subtotal: number;

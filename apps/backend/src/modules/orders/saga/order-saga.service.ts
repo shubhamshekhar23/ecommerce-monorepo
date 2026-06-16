@@ -12,7 +12,7 @@ import { TaxService } from '@/modules/tax/tax.service';
 import type { NotificationJobPayload } from '@/modules/queue/dto/notification-job.dto';
 
 type CartWithItems = Prisma.CartGetPayload<{
-  include: { items: { include: { product: true; variant: true } } };
+  include: { items: { include: { product: { include: { category: true } }; variant: true } } };
 }>;
 type OrderWithItems = Prisma.OrderGetPayload<{
   include: { items: { include: { product: true } } };
@@ -161,6 +161,7 @@ export class OrderSagaService {
               quantity: item.quantity,
               price: item.variant!.price,
               variantAttributes: this.buildAttributeSnapshot(item.variant),
+              categoryName: item.product.category?.name ?? null,
             })),
           },
         },
@@ -269,7 +270,7 @@ export class OrderSagaService {
       include: {
         items: {
           include: {
-            product: true,
+            product: { include: { category: true } },
             variant: {
               include: {
                 attributeValues: { include: { option: { include: { variantType: true } } } },

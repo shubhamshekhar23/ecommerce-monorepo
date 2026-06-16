@@ -17,6 +17,9 @@ export class OrderItemResponseDto {
   @ApiProperty({ description: 'Unit price at time of order', example: '74.99' })
   price!: string;
 
+  @ApiProperty({ example: 'Electronics', nullable: true })
+  categoryName!: string | null;
+
   @ApiProperty({
     description: 'Variant attributes snapshot at order time',
     example: { Size: 'M', Color: 'White' },

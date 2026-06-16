@@ -32,7 +32,7 @@ This file is the single source of truth for what to implement next in this monor
 
 ## Wave 2 — Database
 
-- [ ] **4. `categoryName` denormalization on `OrderItem`**
+- [x] **4. `categoryName` denormalization on `OrderItem`**
   → [phase-1.1-database-advanced.md](./phase-1.1-database-advanced.md)
   Add `categoryName String?` to `OrderItem` schema. Migration + backfill. Pass `product.category.name` in `OrderSagaService.createOrderItems()`.
 

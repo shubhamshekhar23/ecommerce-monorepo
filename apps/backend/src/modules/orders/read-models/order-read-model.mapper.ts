@@ -18,6 +18,7 @@ export function mapToOrderReadModel(order: OrderWithDetails): OrderReadModel {
       id: item.id,
       productId: item.productId,
       productName: item.product.name,
+      categoryName: item.categoryName ?? null,
       quantity: item.quantity,
       price: String(item.price),
       subtotal: parseFloat(String(item.price)) * item.quantity,

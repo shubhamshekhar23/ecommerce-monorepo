@@ -218,6 +218,7 @@ export class OrdersService {
           id: item.id,
           productId: item.productId,
           productName: item.product?.name ?? null,
+          categoryName: item.categoryName ?? null,
           quantity: item.quantity,
           price: String(item.price),
           variantAttributes: item.variantAttributes as Record<string, string> | null,
