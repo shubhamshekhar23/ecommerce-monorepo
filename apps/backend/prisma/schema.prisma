@@ -82,6 +82,12 @@ model User {
   totpSecret    String?
   totpEnabled   Boolean  @default(false)
 
+  // PII — stored as AES-256-GCM ciphertext ({version}:{iv}:{authTag}:{data}).
+  // Never searchable; decrypted in the application layer by EncryptionService.
+  phone         String?
+  dateOfBirth   String?
+  taxId         String?
+
   refreshTokens       RefreshToken[]
   oauthAccounts       OAuthAccount[]
   addresses           Address[]

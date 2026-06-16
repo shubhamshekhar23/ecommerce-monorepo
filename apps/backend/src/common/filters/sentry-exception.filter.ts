@@ -1,5 +1,5 @@
 import { ExceptionFilter, Catch, ArgumentsHost, HttpException } from '@nestjs/common';
-import * as Sentry from '@sentry/nestjs';
+import * as Sentry from '@sentry/node';
 import type { Request, Response } from 'express';
 import { HttpExceptionFilter } from './http-exception.filter';
 

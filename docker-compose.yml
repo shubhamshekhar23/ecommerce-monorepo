@@ -462,6 +462,7 @@ services:
       KAFKA_BROKERS: redpanda:9092
       BUG_SCENARIO: ${BUG_SCENARIO:-}
       API_PREFIX: api/v1
+      DB_ENCRYPTION_KEY: ${DB_ENCRYPTION_KEY:-}
     volumes:
       - .:/app
       - node_modules:/app/node_modules

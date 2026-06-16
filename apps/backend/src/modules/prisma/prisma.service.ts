@@ -5,6 +5,9 @@ import type { ITXClientDenyList } from '@prisma/client/runtime/library';
 import { AsyncLocalStorage } from 'async_hooks';
 import { Histogram } from 'prom-client';
 import * as api from '@opentelemetry/api';
+import { EncryptionService } from '@/modules/encryption/encryption.service';
+
+const ENCRYPTED_FIELDS = ['phone', 'dateOfBirth', 'taxId'] as const;
 
 type TransactionClient = Omit<PrismaClient, ITXClientDenyList>;
 
@@ -33,11 +36,13 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
   constructor(
     @InjectMetric('db_client_operation_duration') private readonly dbDuration: Histogram<string>,
+    private readonly encryption: EncryptionService,
   ) {
     super();
   }
 
   async onModuleInit(): Promise<void> {
+    this.registerEncryptionMiddleware();
     this.registerTracingMiddleware();
     try {
       await this.$connect();
@@ -46,6 +51,50 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       this.logger.error('Failed to connect to database:', error);
       throw error;
     }
+  }
+
+  private encryptFields(data: Record<string, unknown>): void {
+    for (const field of ENCRYPTED_FIELDS) {
+      if (typeof data[field] === 'string') {
+        data[field] = this.encryption.encrypt(data[field] as string);
+      }
+    }
+  }
+
+  private decryptRow(row: Record<string, unknown>): void {
+    for (const field of ENCRYPTED_FIELDS) {
+      const v = row[field];
+      if (typeof v === 'string' && this.encryption.isEncrypted(v)) {
+        row[field] = this.encryption.decrypt(v);
+      }
+    }
+  }
+
+  private decryptResult(result: unknown): void {
+    if (!result) return;
+    if (Array.isArray(result)) {
+      result.forEach((r) => this.decryptRow(r as Record<string, unknown>));
+    } else {
+      this.decryptRow(result as Record<string, unknown>);
+    }
+  }
+
+  private registerEncryptionMiddleware(): void {
+    if (!this.encryption.isEnabled) return;
+    this.$use(async (params: Prisma.MiddlewareParams, next) => {
+      if (params.model === 'User') {
+        if (['create', 'update'].includes(params.action) && params.args.data) {
+          this.encryptFields(params.args.data as Record<string, unknown>);
+        }
+        if (params.action === 'upsert') {
+          this.encryptFields((params.args.create ?? {}) as Record<string, unknown>);
+          this.encryptFields((params.args.update ?? {}) as Record<string, unknown>);
+        }
+      }
+      const result = await next(params);
+      if (params.model === 'User') this.decryptResult(result);
+      return result;
+    });
   }
 
   /*

@@ -28,4 +28,13 @@ export class UserResponseDto {
 
   @ApiProperty()
   updatedAt!: Date;
+
+  @ApiProperty({ required: false, nullable: true })
+  phone?: string | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  dateOfBirth?: string | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  taxId?: string | null;
 }

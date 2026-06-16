@@ -98,6 +98,9 @@ export class UsersService {
       emailVerified: user.emailVerified,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
+      phone: user.phone,
+      dateOfBirth: user.dateOfBirth,
+      taxId: user.taxId,
     };
   }
 }

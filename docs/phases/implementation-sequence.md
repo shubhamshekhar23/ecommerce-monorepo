@@ -105,7 +105,7 @@ This file is the single source of truth for what to implement next in this monor
   → [phase-5.1-observability-advanced.md](./phase-5.1-observability-advanced.md)
   `Sentry.init()` in `tracing.ts` with configurable `SENTRY_TRACES_SAMPLE_RATE` and `APP_VERSION` (for release tracking). `SentryExceptionFilter` captures 5xx errors with user context. Register as outermost global filter.
 
-- [ ] **18. Encryption at Rest for sensitive fields**
+- [x] **18. Encryption at Rest for sensitive fields**
   → [phase-6.1-security-advanced.md](./phase-6.1-security-advanced.md)
   New `EncryptionService` (AES-256-GCM, key versioning via `{version}:{iv}:{authTag}:{data}` format). Prisma `$use` middleware encrypts on write, decrypts on read for `phone`, `taxId` columns.
 
