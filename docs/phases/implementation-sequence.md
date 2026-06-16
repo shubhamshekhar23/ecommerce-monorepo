@@ -121,7 +121,7 @@ This file is the single source of truth for what to implement next in this monor
   → [phase-7.2-realtime.md](./phase-7.2-realtime.md)
   `@Sse(':id/status-stream')` on `OrdersController` returning `Observable<MessageEvent>`. `OrderStatusRegistry` holds `Subject` per orderId. `OrderSagaService` emits on each status transition. For multi-replica: use Redis Pub/Sub instead of in-process Subject.
 
-- [ ] **21. WebSocket Admin Real-Time Order Feed**
+- [x] **21. WebSocket Admin Real-Time Order Feed**
   → [phase-7.2-realtime.md](./phase-7.2-realtime.md)
   `@WebSocketGateway({ namespace: '/admin/orders' })`. Verify ADMIN role on connection from `handshake.auth.token`. `OrderSagaService` calls `gateway.server.emit('order:created', order)` after placement. Redis adapter for multi-replica.
 

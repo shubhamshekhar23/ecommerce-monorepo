@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { PrismaModule } from '@/modules/prisma/prisma.module';
 import { OutboxModule } from '@/modules/outbox/outbox.module';
 import { CircuitBreakerModule } from '@/modules/circuit-breaker/circuit-breaker.module';
@@ -11,6 +13,7 @@ import { OrdersService } from './orders.service';
 import { OrdersController } from './orders.controller';
 import { OrderQueryService } from './queries/order-query.service';
 import { OrderStatusRegistry } from './order-status.registry';
+import { OrdersGateway } from './orders.gateway';
 import { OrderReadModelHandler } from './handlers/order-read-model.handler';
 import { PaymentConfirmedHandler } from './handlers/payment-confirmed.handler';
 import { OrderNotificationHandler } from './handlers/order-notification.handler';
@@ -25,6 +28,13 @@ import { OrderAnalyticsHandler } from './handlers/order-analytics.handler';
     ShippingModule,
     TaxModule,
     KafkaProducerModule,
+    JwtModule.registerAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        publicKey: config.get<string>('JWT_PUBLIC_KEY')?.replace(/\\n/g, '\n'),
+        signOptions: { algorithm: 'RS256' },
+      }),
+    }),
   ],
   controllers: [OrdersController],
   providers: [
@@ -32,6 +42,7 @@ import { OrderAnalyticsHandler } from './handlers/order-analytics.handler';
     OrderSagaService,
     OrderQueryService,
     OrderStatusRegistry,
+    OrdersGateway,
     OrderReadModelHandler,
     PaymentConfirmedHandler,
     OrderNotificationHandler,
