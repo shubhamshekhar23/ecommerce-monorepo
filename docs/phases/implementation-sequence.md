@@ -101,7 +101,7 @@ This file is the single source of truth for what to implement next in this monor
 
 ## Wave 6 — Observability & Security
 
-- [ ] **17. Sentry Global Exception Filter**
+- [x] **17. Sentry Global Exception Filter**
   → [phase-5.1-observability-advanced.md](./phase-5.1-observability-advanced.md)
   `Sentry.init()` in `tracing.ts` with configurable `SENTRY_TRACES_SAMPLE_RATE` and `APP_VERSION` (for release tracking). `SentryExceptionFilter` captures 5xx errors with user context. Register as outermost global filter.
 

@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/nestjs';
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
@@ -15,6 +16,14 @@ import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic
  - Instead, PrismaService registers a $use middleware that creates spans
  - using the public OTEL API — see src/modules/prisma/prisma.service.ts.
  */
+
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  environment: process.env.NODE_ENV,
+  release: process.env.APP_VERSION,
+  tracesSampleRate: parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE ?? '0.1'),
+  profilesSampleRate: 0.05,
+});
 
 const sdk = new NodeSDK({
   resource: resourceFromAttributes({

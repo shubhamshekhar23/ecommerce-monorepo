@@ -23,7 +23,7 @@ import { RateLimitModule } from '@/modules/rate-limit/rate-limit.module';
 import { RateLimitGuard } from '@/modules/rate-limit/rate-limit.guard';
 import { JwtAuthGuard, RolesGuard } from '@/common/guards';
 import { HttpMetricsInterceptor } from '@/modules/metrics/http-metrics.interceptor';
-import { HttpExceptionFilter } from '@/common/filters/http-exception.filter';
+import { SentryExceptionFilter } from '@/common/filters/sentry-exception.filter';
 import { CommonModule } from '@/common/common.module';
 import { AuditModule } from '@/modules/audit/audit.module';
 import { AddressesModule } from '@/modules/addresses/addresses.module';
@@ -77,7 +77,7 @@ import { AppService } from './app.service';
   controllers: [AppController],
   providers: [
     AppService,
-    { provide: APP_FILTER, useClass: HttpExceptionFilter },
+    { provide: APP_FILTER, useClass: SentryExceptionFilter },
     { provide: APP_INTERCEPTOR, useClass: HttpMetricsInterceptor },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
