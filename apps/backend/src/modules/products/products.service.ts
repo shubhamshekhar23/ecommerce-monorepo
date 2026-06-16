@@ -36,6 +36,7 @@ import {
 } from '@/common/utils/cursor-pagination.util';
 import { PaginationDto } from '@/common/types/pagination.interface';
 import { CursorPageDto } from '@/common/types/cursor-pagination.interface';
+import { SearchGrpcService } from '@/modules/search/search-grpc.service';
 
 const PRODUCT_DETAIL_TTL = 300;
 const PRODUCT_LIST_TTL = 60;
@@ -127,6 +128,7 @@ export class ProductsService implements OnApplicationBootstrap {
     private readonly prisma: PrismaService,
     private readonly cache: CacheService,
     private readonly amqp: AmqpConnection,
+    private readonly searchGrpc: SearchGrpcService,
   ) {}
 
   onApplicationBootstrap(): void {
@@ -230,6 +232,7 @@ export class ProductsService implements OnApplicationBootstrap {
       slug: product.slug,
     };
     await this.amqp.publish(EXCHANGES.PRODUCT, ROUTING_KEYS.PRODUCT.CREATED, event);
+    void this.searchGrpc.indexProduct(product.id, product.name, Number(price));
 
     const created = await this.fetchById(product.id);
     await this.cache.set(`products:detail:id:${product.id}`, created, PRODUCT_DETAIL_TTL);

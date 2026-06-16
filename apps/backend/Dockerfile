@@ -107,6 +107,7 @@ COPY --from=builder /app/packages/shared-types/dist ./packages/shared-types/dist
 COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
 # prisma schema + migrations needed for `prisma migrate deploy` in the migrate job
 COPY --from=deps /app/apps/backend/prisma ./apps/backend/prisma
+COPY proto ./proto
 
 # Create non-root user "nestjs" for security.
 RUN addgroup -g 1001 -S nodejs && adduser -S nestjs -u 1001

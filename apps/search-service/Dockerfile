@@ -46,6 +46,7 @@ COPY --from=deps /app/apps/search-service/node_modules/. ./node_modules/
 COPY --from=builder /app/packages/shared-types/package.json ./packages/shared-types/package.json
 COPY --from=builder /app/packages/shared-types/dist ./packages/shared-types/dist
 COPY --from=builder /app/apps/search-service/dist ./apps/search-service/dist
+COPY proto ./proto
 
 RUN addgroup -g 1001 -S nodejs && adduser -S nestjs -u 1001
 USER nestjs

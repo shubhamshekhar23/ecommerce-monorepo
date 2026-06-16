@@ -463,6 +463,7 @@ services:
       BUG_SCENARIO: ${BUG_SCENARIO:-}
       API_PREFIX: api/v1
       DB_ENCRYPTION_KEY: ${DB_ENCRYPTION_KEY:-}
+      SEARCH_GRPC_URL: search-service:5005
     volumes:
       - .:/app
       - node_modules:/app/node_modules
@@ -520,6 +521,8 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318/v1/traces
       OPENSEARCH_URL: http://opensearch:9200
       KAFKA_BROKERS: redpanda:9092
+    ports:
+      - '5005:5005'  # gRPC port
     depends_on:
       redpanda:
         condition: service_healthy

@@ -11,9 +11,12 @@
   },
   "dependencies": {
     "@ecommerce/shared-types": "*",
+    "@grpc/grpc-js": "^1.14.4",
+    "@grpc/proto-loader": "^0.8.1",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.0.0",
     "@nestjs/core": "^10.0.0",
+    "@nestjs/microservices": "^10.4.22",
     "@nestjs/platform-express": "^10.0.0",
     "@opensearch-project/opensearch": "^2.5.0",
     "@opentelemetry/api": "^1.9.0",

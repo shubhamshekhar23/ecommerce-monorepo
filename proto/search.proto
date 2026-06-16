@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package search;
+
+service SearchService {
+  rpc IndexProduct (ProductPayload) returns (IndexResult);
+}
+
+message ProductPayload {
+  string id = 1;
+  string name = 2;
+  float price = 3;
+}
+
+message IndexResult {
+  bool success = 1;
+}

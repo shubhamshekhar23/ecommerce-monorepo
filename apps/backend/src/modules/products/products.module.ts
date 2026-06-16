@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { PrismaModule } from '@/modules/prisma/prisma.module';
 import { OutboxModule } from '@/modules/outbox/outbox.module';
 import { ReviewsModule } from '@/modules/reviews/reviews.module';
+import { SearchGrpcClientModule } from '@/modules/search/search-grpc-client.module';
 import { ProductsService } from './products.service';
 import { ProductsController } from './products.controller';
 import { VariantsService } from './variants/variants.service';
@@ -10,7 +11,7 @@ import { CsvImportService } from './csv-import.service';
 import { ProductsResolver } from './products.resolver';
 
 @Module({
-  imports: [PrismaModule, OutboxModule, ReviewsModule],
+  imports: [PrismaModule, OutboxModule, ReviewsModule, SearchGrpcClientModule],
   controllers: [ProductsController, VariantsController],
   providers: [ProductsService, VariantsService, CsvImportService, ProductsResolver],
   exports: [ProductsService, VariantsService],
