@@ -17,7 +17,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   onModuleInit(): void {
     const url = this.config.get<string>('REDIS_URL') ?? 'redis://localhost:6379';
     this.client = new Redis(url, { lazyConnect: false, maxRetriesPerRequest: 1 });
-    this.subscriber = new Redis(url, { lazyConnect: true, maxRetriesPerRequest: 1 });
+    this.subscriber = new Redis(url, { lazyConnect: true, maxRetriesPerRequest: null });
     this.client.on('error', (err: Error) => this.logger.error('Redis error', err.message));
     this.subscriber.on('error', (err: Error) => this.logger.error('Redis sub error', err.message));
   }

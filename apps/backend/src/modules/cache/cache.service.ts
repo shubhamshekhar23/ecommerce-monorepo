@@ -141,9 +141,39 @@ export class CacheService {
     return null;
   }
 
+  async bloomAdd(key: string, value: string): Promise<void> {
+    try {
+      await this.redis.getClient().call('BF.ADD', key, value);
+    } catch {
+      /* RedisBloom not loaded — no-op */
+    }
+  }
+
+  async bloomExists(key: string, value: string): Promise<boolean> {
+    try {
+      const result = (await this.redis.getClient().call('BF.EXISTS', key, value)) as number;
+      return result === 1;
+    } catch {
+      return true; /* filter unavailable → allow through to DB */
+    }
+  }
+
+  async bloomAddMany(key: string, values: string[]): Promise<void> {
+    if (values.length === 0) return;
+    try {
+      const pipeline = this.redis.getClient().pipeline();
+      for (const value of values) pipeline.call('BF.ADD', key, value);
+      await pipeline.exec();
+    } catch {
+      /* no-op */
+    }
+  }
+
   subscribe(channel: string, handler: () => void): void {
     const sub = this.redis.getSubscriber();
-    void sub.subscribe(channel);
+    sub.subscribe(channel).catch((err: Error) => {
+      this.logger.warn(`Subscribe failed channel=${channel}: ${err.message}`);
+    });
     sub.on('message', (ch: string) => {
       if (ch === channel) handler();
     });

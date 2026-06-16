@@ -94,6 +94,7 @@ const VARIANT_INCLUDE = {
 const L1_TTL_MS = 5_000;
 
 const L1_INVALIDATE_CHANNEL = 'products:invalidate';
+const BLOOM_FILTER_KEY = 'products:bloom';
 
 @Injectable()
 export class ProductsService implements OnApplicationBootstrap {
@@ -115,14 +116,21 @@ export class ProductsService implements OnApplicationBootstrap {
   ) {}
 
   onApplicationBootstrap(): void {
-    /*
-     - Called after all onModuleInit hooks complete, so RedisService.subscriber is ready.
-     - Each replica subscribes to the invalidation channel on boot.
-     - When any replica publishes (on mutation), all replicas clear their L1 map.
-     */
     this.cache.subscribe(L1_INVALIDATE_CHANNEL, () => {
       this.l1Cache.clear();
     });
+    void this.seedBloomFilter();
+  }
+
+  private async seedBloomFilter(): Promise<void> {
+    const products = await this.prisma.product.findMany({
+      where: { isActive: true, deletedAt: null },
+      select: { id: true },
+    });
+    await this.cache.bloomAddMany(
+      BLOOM_FILTER_KEY,
+      products.map((p) => p.id),
+    );
   }
 
   private getL1<T>(key: string): T | null {
@@ -212,6 +220,7 @@ export class ProductsService implements OnApplicationBootstrap {
     const created = await this.fetchById(product.id);
     await this.cache.set(`products:detail:id:${product.id}`, created, PRODUCT_DETAIL_TTL);
     await this.cache.set(`products:detail:slug:${created.slug}`, created, PRODUCT_DETAIL_TTL);
+    await this.cache.bloomAdd(BLOOM_FILTER_KEY, product.id);
     return created;
   }
 
@@ -534,6 +543,8 @@ export class ProductsService implements OnApplicationBootstrap {
   }
 
   async findById(id: string): Promise<ProductResponseDto> {
+    const exists = await this.cache.bloomExists(BLOOM_FILTER_KEY, id);
+    if (!exists) throw new NotFoundException(`Product with ID ${id} not found`);
     return this.withCache(`products:detail:id:${id}`, PRODUCT_DETAIL_TTL, () => this.fetchById(id));
   }
 

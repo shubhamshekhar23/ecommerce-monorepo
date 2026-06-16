@@ -53,7 +53,7 @@ This file is the single source of truth for what to implement next in this monor
   → [phase-3.1-caching-advanced.md](./phase-3.1-caching-advanced.md)
   Two ioredis instances (publisher + subscriber). On `invalidateProducts()`, publish to `products:invalidate`. Subscriber handler calls `l1Cache.clear()` on all replicas.
 
-- [ ] **8. Bloom Filter for non-existent product IDs**
+- [x] **8. Bloom Filter for non-existent product IDs**
   → [phase-3.1-caching-advanced.md](./phase-3.1-caching-advanced.md)
   Switch `docker-compose.yml` to `redis/redis-stack`. Add `bloomAdd`/`bloomExists` helpers to `CacheService`. Check `BF.EXISTS` in `ProductsService.findOne()` before cache/DB hit.
 

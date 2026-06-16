@@ -122,9 +122,9 @@ services:
 
   # ── Redis ───────────────────────────────────────────────────────────────────
   redis:
-    image: redis:7-alpine
+    image: redis/redis-stack-server:7.4.0-v3
     container_name: ecommerce_redis
-    command: redis-server --appendonly yes --appendfsync everysec --maxmemory 256mb --maxmemory-policy allkeys-lru
+    command: redis-server --appendonly yes --appendfsync everysec --maxmemory 256mb --maxmemory-policy allkeys-lru --protected-mode no --loadmodule /opt/redis-stack/lib/redisbloom.so
     ports:
       - '6379:6379'
     volumes:
