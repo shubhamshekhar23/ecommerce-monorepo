@@ -49,7 +49,7 @@ This file is the single source of truth for what to implement next in this monor
   → [phase-3.1-caching-advanced.md](./phase-3.1-caching-advanced.md)
   After `prisma.product.update()` / `create()`, call `cacheService.set(cacheKey, updatedProduct, ttl)` before returning. List/cursor keys still use invalidation.
 
-- [ ] **7. Redis Pub/Sub for cross-replica L1 cache invalidation**
+- [x] **7. Redis Pub/Sub for cross-replica L1 cache invalidation**
   → [phase-3.1-caching-advanced.md](./phase-3.1-caching-advanced.md)
   Two ioredis instances (publisher + subscriber). On `invalidateProducts()`, publish to `products:invalidate`. Subscriber handler calls `l1Cache.clear()` on all replicas.
 

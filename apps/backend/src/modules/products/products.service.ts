@@ -9,6 +9,7 @@ import {
   NotFoundException,
   ConflictException,
   Logger,
+  OnApplicationBootstrap,
 } from '@nestjs/common';
 import { isBugScenario } from '@/modules/debug-scenarios/bug-scenario.guard';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
@@ -92,8 +93,10 @@ const VARIANT_INCLUDE = {
 
 const L1_TTL_MS = 5_000;
 
+const L1_INVALIDATE_CHANNEL = 'products:invalidate';
+
 @Injectable()
-export class ProductsService {
+export class ProductsService implements OnApplicationBootstrap {
   private readonly logger = new Logger(ProductsService.name);
   /*
    - L1 in-memory cache sits above Redis for hot-key relief.
@@ -110,6 +113,17 @@ export class ProductsService {
     private readonly cache: CacheService,
     private readonly amqp: AmqpConnection,
   ) {}
+
+  onApplicationBootstrap(): void {
+    /*
+     - Called after all onModuleInit hooks complete, so RedisService.subscriber is ready.
+     - Each replica subscribes to the invalidation channel on boot.
+     - When any replica publishes (on mutation), all replicas clear their L1 map.
+     */
+    this.cache.subscribe(L1_INVALIDATE_CHANNEL, () => {
+      this.l1Cache.clear();
+    });
+  }
 
   private getL1<T>(key: string): T | null {
     const entry = this.l1Cache.get(key);
@@ -139,6 +153,7 @@ export class ProductsService {
   private async invalidateProducts(): Promise<void> {
     this.l1Cache.clear();
     await this.cache.invalidateByPattern('products:*');
+    await this.cache.publish(L1_INVALIDATE_CHANNEL);
   }
 
   // eslint-disable-next-line max-lines-per-function

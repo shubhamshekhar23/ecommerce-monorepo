@@ -140,4 +140,20 @@ export class CacheService {
     }
     return null;
   }
+
+  subscribe(channel: string, handler: () => void): void {
+    const sub = this.redis.getSubscriber();
+    void sub.subscribe(channel);
+    sub.on('message', (ch: string) => {
+      if (ch === channel) handler();
+    });
+  }
+
+  async publish(channel: string): Promise<void> {
+    try {
+      await this.redis.getClient().publish(channel, '');
+    } catch (err) {
+      this.logger.warn(`Cache publish failed channel=${channel}: ${(err as Error).message}`);
+    }
+  }
 }
