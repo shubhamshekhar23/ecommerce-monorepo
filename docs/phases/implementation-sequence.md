@@ -181,11 +181,11 @@ This file is the single source of truth for what to implement next in this monor
 
 ## Wave 10 — Testing
 
-- [ ] **33. Testcontainers**
+- [x] **33. Testcontainers**
   → [phase-12-testing.md](./phase-12-testing.md)
   `global-setup.ts` spins up a fresh `PostgreSqlContainer`, sets `process.env.DATABASE_URL`, runs `prisma migrate deploy`. `global-teardown.ts` stops the container. Register in `jest-e2e.json`. Do this first so items 34–35 use isolated containers.
 
-- [ ] **34. E2E User Journey Test**
+- [x] **34. E2E User Journey Test**
   → [phase-12-testing.md](./phase-12-testing.md)
   Expand `test/app.e2e-spec.ts`: register → login → `GET /products` → add to cart → `POST /orders`. Assert HTTP responses AND business side effects (order row in DB, stock decremented, audit log written). Use Testcontainers DB from item 33.
 
