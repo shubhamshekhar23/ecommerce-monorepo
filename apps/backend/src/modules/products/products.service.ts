@@ -59,12 +59,13 @@ interface ProductFtsRow {
 
 /*
  - Minimum shape required by mapToResponse — satisfied by both list and detail includes.
+ - detail is optional: listing paths omit it (returns null description); fetchById/Slug include it.
  */
 interface ProductForResponse {
   id: string;
   name: string;
   slug: string;
-  description: string | null;
+  detail?: { description: string | null } | null;
   categoryId: string;
   isActive: boolean;
   createdAt: Date;
@@ -146,7 +147,8 @@ export class ProductsService {
     actorId?: string,
     actorRole?: UserRole,
   ): Promise<ProductResponseDto> {
-    const { categoryId, images, price, cost, stock, ...productData } = createProductDto;
+    const { categoryId, images, price, cost, stock, description, ...productData } =
+      createProductDto;
 
     await this.validateCategoryExists(categoryId);
 
@@ -157,6 +159,10 @@ export class ProductsService {
     const product = await this.prisma.product.create({
       data: { ...productData, categoryId, vendorId: vendorId ?? undefined },
       include: { images: true },
+    });
+
+    await this.prisma.productDetail.create({
+      data: { productId: product.id, description: description ?? null },
     });
 
     if (images && images.length > 0) {
@@ -181,7 +187,7 @@ export class ProductsService {
     const event: ProductCreatedEvent = {
       productId: product.id,
       name: product.name,
-      description: product.description,
+      description: description ?? null,
       price: Number(price),
       categoryId: product.categoryId,
       slug: product.slug,
@@ -216,13 +222,28 @@ export class ProductsService {
 
     // price/cost/stock are no longer Product fields — strip them from the update.
     // Use the variants API to change pricing/stock on specific variants.
-    const { images, price: _p, cost: _c, stock: _s, ...productData } = updateProductDto;
+    const {
+      images,
+      price: _p,
+      cost: _c,
+      stock: _s,
+      description,
+      ...productData
+    } = updateProductDto;
 
     const updated = await this.prisma.product.update({
       where: { id },
       data: productData,
       include: { images: true },
     });
+
+    if (description !== undefined) {
+      await this.prisma.productDetail.upsert({
+        where: { productId: id },
+        create: { productId: id, description: description ?? null },
+        update: { description: description ?? null },
+      });
+    }
 
     if (images && images.length > 0) {
       await this.addImages(id, images);
@@ -235,7 +256,7 @@ export class ProductsService {
     const event: ProductUpdatedEvent = {
       productId: updated.id,
       name: updated.name,
-      description: updated.description,
+      description,
       price: defaultVariant ? Number(defaultVariant.price) : 0,
       categoryId: updated.categoryId,
       slug: updated.slug,
@@ -324,7 +345,7 @@ export class ProductsService {
 
     const rows = await this.prisma.$queryRaw<ProductFtsRow[]>(Prisma.sql`
       SELECT
-        p.id, p.name, p.slug, p.description,
+        p.id, p.name, p.slug, pd.description,
         p."categoryId", p."isActive", p."createdAt", p."updatedAt",
         MIN(v.price) AS "minPrice",
         MAX(v.price) AS "maxPrice",
@@ -332,13 +353,14 @@ export class ProductsService {
         pr."avgRating",
         COALESCE(pr."reviewCount", 0) AS "reviewCount"
       FROM "Product" p
+      LEFT JOIN "ProductDetail" pd ON pd."productId" = p.id
       LEFT JOIN "ProductVariant" v ON v."productId" = p.id AND v."isActive" = true
       LEFT JOIN "ProductRating" pr ON pr."productId" = p.id
       WHERE
         p."isActive" = true
         AND p."searchVector" @@ plainto_tsquery('english', ${term})
         ${cursorClause}
-      GROUP BY p.id, p.name, p.slug, p.description, p."categoryId", p."isActive", p."createdAt", p."updatedAt", pr."avgRating", pr."reviewCount"
+      GROUP BY p.id, p.name, p.slug, pd.description, p."categoryId", p."isActive", p."createdAt", p."updatedAt", pr."avgRating", pr."reviewCount"
       ORDER BY rank DESC, p."createdAt" DESC, p.id DESC
       LIMIT ${take + 1}
     `);
@@ -416,7 +438,7 @@ export class ProductsService {
       ...(text && {
         OR: [
           { name: { contains: text, mode: 'insensitive' as const } },
-          { description: { contains: text, mode: 'insensitive' as const } },
+          { detail: { description: { contains: text, mode: 'insensitive' as const } } },
         ],
       }),
     };
@@ -493,7 +515,13 @@ export class ProductsService {
   private async fetchById(id: string): Promise<ProductResponseDto> {
     const product = await this.prisma.product.findUnique({
       where: { id },
-      include: { images: true, category: true, rating: true, variants: VARIANT_INCLUDE },
+      include: {
+        images: true,
+        category: true,
+        rating: true,
+        variants: VARIANT_INCLUDE,
+        detail: true,
+      },
     });
     if (!product) throw new NotFoundException(`Product with ID ${id} not found`);
     return this.mapToResponse(product);
@@ -508,7 +536,13 @@ export class ProductsService {
   private async fetchBySlug(slug: string): Promise<ProductResponseDto> {
     const product = await this.prisma.product.findUnique({
       where: { slug },
-      include: { images: true, category: true, rating: true, variants: VARIANT_INCLUDE },
+      include: {
+        images: true,
+        category: true,
+        rating: true,
+        variants: VARIANT_INCLUDE,
+        detail: true,
+      },
     });
     if (!product) throw new NotFoundException(`Product with slug ${slug} not found`);
     return this.mapToResponse(product);
@@ -571,7 +605,7 @@ export class ProductsService {
       id: product.id,
       name: product.name,
       slug: product.slug,
-      description: product.description,
+      description: product.detail?.description ?? null,
       priceRange,
       categoryId: product.categoryId,
       categoryName: product.category?.name ?? null,

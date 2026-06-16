@@ -36,7 +36,7 @@ This file is the single source of truth for what to implement next in this monor
   → [phase-1.1-database-advanced.md](./phase-1.1-database-advanced.md)
   Add `categoryName String?` to `OrderItem` schema. Migration + backfill. Pass `product.category.name` in `OrderSagaService.createOrderItems()`.
 
-- [ ] **5. Vertical Partitioning — `ProductDetail` hot/cold split**
+- [x] **5. Vertical Partitioning — `ProductDetail` hot/cold split**
   → [phase-1.1-database-advanced.md](./phase-1.1-database-advanced.md)
   Move `description` and `specifications` to a new `ProductDetail` 1:1 table. Use ID-range cursor batching for data copy (not `NOT IN`). Update `findOne` to `include: { detail: true }`, listing queries omit it.
   *Apply concurrent index creation pattern to any new indexes in this migration.*

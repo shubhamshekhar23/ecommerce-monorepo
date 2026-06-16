@@ -64,13 +64,17 @@ export class CsvImportService {
             id: crypto.randomUUID(),
             name: row.name,
             slug: row.slug,
-            description: row.description ?? null,
             categoryId: row.categoryId,
           },
           update: {
             name: row.name,
-            description: row.description ?? null,
           },
+        });
+
+        await tx.productDetail.upsert({
+          where: { productId: product.id },
+          create: { productId: product.id, description: row.description ?? null },
+          update: { description: row.description ?? null },
         });
 
         const defaultSku = `${product.id.slice(-8).toUpperCase()}-DEFAULT`;

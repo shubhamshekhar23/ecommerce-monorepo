@@ -177,9 +177,9 @@ model Product {
   id          String         @id @default(cuid())
   name        String
   slug        String         @unique
-  description String?
   categoryId  String
   category    Category       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  detail      ProductDetail?
   images      ProductImage[]
   cartItems   CartItem[]
   orderItems  OrderItem[]
@@ -206,6 +206,12 @@ model Product {
   @@index([vendorId])
   @@index([createdAt])
   @@index([isActive, createdAt])
+}
+
+model ProductDetail {
+  productId   String  @id
+  product     Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  description String?
 }
 
 model ProductImage {
