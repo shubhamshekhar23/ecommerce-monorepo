@@ -30,12 +30,45 @@ export class CacheService {
    - share one DB promise instead of each creating a separate fetch.
    */
   private readonly inflight = new Map<string, Promise<unknown>>();
+  /*
+   - In-process version cache: avoids a Redis round-trip on every cache op.
+   - Refreshed from Redis when expired (1 s TTL).
+   */
+  private versionCache: { v: number; expiresAt: number } | null = null;
 
   constructor(
     private readonly redis: RedisService,
     @InjectMetric('cache_operations_total') private readonly cacheOps: Counter<string>,
     @InjectMetric('redis_client_duration') private readonly redisDuration: Histogram<string>,
   ) {}
+
+  /*
+   - Reads the global cache version from Redis (lazy) with a 1-second in-process TTL.
+   - Default is 0 so the first INCR via bumpVersion creates version 1, making v0:* orphans.
+   */
+  private async getVersion(): Promise<number> {
+    if (this.versionCache && Date.now() < this.versionCache.expiresAt) {
+      return this.versionCache.v;
+    }
+    const raw = await this.redis.getClient().get('cache:version');
+    const v = raw ? parseInt(raw, 10) : 0;
+    this.versionCache = { v, expiresAt: Date.now() + 1000 };
+    return v;
+  }
+
+  private async buildKey(key: string): Promise<string> {
+    const v = await this.getVersion();
+    return `v${v}:${key}`;
+  }
+
+  /*
+   - Bumps the global version so all existing versioned keys become unreachable orphans.
+   - Old keys expire naturally on their TTLs — no SCAN + DEL sweep required.
+   */
+  async bumpVersion(): Promise<void> {
+    await this.redis.getClient().incr('cache:version');
+    this.versionCache = null;
+  }
 
   async get<T>(key: string): Promise<T | null> {
     /*
@@ -44,9 +77,10 @@ export class CacheService {
     */
     if (isBugScenario(4)) return null;
 
+    const vKey = await this.buildKey(key);
     const start = Date.now();
     try {
-      const raw = await this.redis.getClient().get(key);
+      const raw = await this.redis.getClient().get(vKey);
       const namespace = key.split(':')[0];
       this.cacheOps.labels({ result: raw ? 'hit' : 'miss', namespace }).inc();
       return raw ? (JSON.parse(raw) as T) : null;
@@ -58,9 +92,10 @@ export class CacheService {
   }
 
   async set(key: string, value: unknown, ttlSeconds = 60): Promise<void> {
+    const vKey = await this.buildKey(key);
     const start = Date.now();
     try {
-      await this.redis.getClient().set(key, JSON.stringify(value), 'EX', ttlSeconds);
+      await this.redis.getClient().set(vKey, JSON.stringify(value), 'EX', ttlSeconds);
     } catch (err) {
       this.logger.warn(`Cache set failed key=${key}: ${(err as Error).message}`);
     } finally {
@@ -70,7 +105,10 @@ export class CacheService {
 
   async del(...keys: string[]): Promise<void> {
     try {
-      if (keys.length > 0) await this.redis.getClient().del(...keys);
+      if (keys.length > 0) {
+        const vKeys = await Promise.all(keys.map((k) => this.buildKey(k)));
+        await this.redis.getClient().del(...vKeys);
+      }
     } catch {
       /* no-op */
     }
@@ -78,14 +116,16 @@ export class CacheService {
 
   /*
    - SCAN cursor instead of KEYS * to avoid blocking the Redis event loop on large keyspaces.
+   - Pattern is prefixed with the current version so only live-era keys are targeted.
    */
   async invalidateByPattern(pattern: string): Promise<void> {
     try {
+      const v = await this.getVersion();
       let cursor = '0';
       do {
         const [next, keys] = await this.redis
           .getClient()
-          .scan(cursor, 'MATCH', pattern, 'COUNT', '100');
+          .scan(cursor, 'MATCH', `v${v}:${pattern}`, 'COUNT', '100');
         cursor = next;
         if (keys.length > 0) await this.redis.getClient().del(...keys);
       } while (cursor !== '0');

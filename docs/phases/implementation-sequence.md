@@ -77,7 +77,7 @@ This file is the single source of truth for what to implement next in this monor
   → [phase-3.2-caching-patterns.md](./phase-3.2-caching-patterns.md)
   Dual-key pattern: `cache:{key}` (short TTL) + `cache:stale:{key}` (10× TTL). On short-key miss but stale-key hit, return stale and trigger background refresh.
 
-- [ ] **13. Cache Versioning**
+- [x] **13. Cache Versioning**
   → [phase-3.2-caching-patterns.md](./phase-3.2-caching-patterns.md)
   Store global version in Redis (`cache:version`). Prefix all cache keys with `v{N}:`. To invalidate everything: `INCR cache:version`. Old keys expire naturally. Do this last in Wave 4 — it changes the key structure across the board.
 

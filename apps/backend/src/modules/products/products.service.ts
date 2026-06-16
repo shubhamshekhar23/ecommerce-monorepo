@@ -160,8 +160,7 @@ export class ProductsService implements OnApplicationBootstrap {
 
   private async invalidateProducts(): Promise<void> {
     this.l1Cache.clear();
-    await this.cache.invalidateByPattern('products:*');
-    await this.cache.invalidateByPattern('stale:products:*');
+    await this.cache.bumpVersion();
     await this.cache.publish(L1_INVALIDATE_CHANNEL);
   }
 
