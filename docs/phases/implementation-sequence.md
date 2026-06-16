@@ -149,27 +149,27 @@ This file is the single source of truth for what to implement next in this monor
 
 ## Wave 9 — Microservices
 
-- [ ] **26. BFF Aggregation Module in Gateway**
+- [x] **26. BFF Aggregation Module in Gateway**
   → [phase-9.1-microservices-communication.md](./phase-9.1-microservices-communication.md)
   New `BffModule` in `apps/gateway/src/bff/`. `GET /bff/product/:id` fans out to product + reviews + variants via `Promise.allSettled` (partial failure tolerant). Forward `x-user-id`/`x-user-email` headers.
 
-- [ ] **27. gRPC Inter-Service Communication + Deadlines**
+- [x] **27. gRPC Inter-Service Communication + Deadlines**
   → [phase-9.1-microservices-communication.md](./phase-9.1-microservices-communication.md)
   `proto/search.proto` defines `SearchService.IndexProduct`. search-service gets a `@GrpcMethod` handler on port 5005. Backend gets a gRPC client module. Every call sets a 2s deadline. Coexists with Kafka path.
 
-- [ ] **28. Saga Choreography — Review Approval Flow**
+- [x] **28. Saga Choreography — Review Approval Flow**
   → [phase-9.2-microservices-coordination.md](./phase-9.2-microservices-coordination.md)
   `ReviewsService.approve()` publishes `review.approved` to RabbitMQ. `ProductsService` subscribes → recalculates `avgRating`. `NotificationService` subscribes → emails reviewer. `AuditService` subscribes → logs event. No orchestrator.
 
-- [ ] **29. Inbox / Idempotent Consumer Pattern**
+- [x] **29. Inbox / Idempotent Consumer Pattern**
   → [phase-9.2-microservices-coordination.md](./phase-9.2-microservices-coordination.md)
   `InboxMessage` table (`messageId PK, processedAt`). Wrap every `@RabbitSubscribe` handler: check `isProcessed(messageId)` before handling, call `markProcessed(messageId)` after. Prevents double-processing on RabbitMQ redelivery. Implement immediately after item 28.
 
-- [ ] **30. Graceful Degradation — Search Fallback**
+- [x] **30. Graceful Degradation — Search Fallback**
   → [phase-9.3-microservices-resilience.md](./phase-9.3-microservices-resilience.md)
   Wrap search-service HTTP call in try/catch. On failure, fall back to `prisma.product.findMany({ where: { name: { contains: q } } })`. Wire existing `CircuitBreakerService` to open after 5 consecutive failures. Set `X-Search-Source: fallback` response header.
 
-- [ ] **31. Graceful Degradation — Payment Retry Queue**
+- [x] **31. Graceful Degradation — Payment Retry Queue**
   → [phase-9.3-microservices-resilience.md](./phase-9.3-microservices-resilience.md)
   In `StripeService`, distinguish retriable errors (network, rate limit) from non-retriable (card declined). On retriable: enqueue `payment-retry` BullMQ job (3× exponential backoff). Order stays `PENDING` during retry. On exhaustion: emit `order.payment.failed` → saga cancels and restores cart.
 

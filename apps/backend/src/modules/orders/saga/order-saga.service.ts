@@ -1,5 +1,7 @@
 /* eslint-disable max-lines */
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import type { Queue } from 'bullmq';
 import { Prisma, OrderStatus } from '@prisma/client';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 import { isBugScenario } from '@/modules/debug-scenarios/bug-scenario.guard';
@@ -10,6 +12,8 @@ import { CorrelationIdService } from '@/common/services/correlation-id.service';
 import { ShippingService } from '@/modules/shipping/shipping.service';
 import { TaxService } from '@/modules/tax/tax.service';
 import type { NotificationJobPayload } from '@/modules/queue/dto/notification-job.dto';
+import { isRetriableStripeError } from '@/modules/stripe/stripe.helpers';
+import type { PaymentRetryJobData } from '@/modules/payments/payment-retry.processor';
 
 type CartWithItems = Prisma.CartGetPayload<{
   include: { items: { include: { product: { include: { category: true } }; variant: true } } };
@@ -42,6 +46,7 @@ export class OrderSagaService {
     private readonly correlationId: CorrelationIdService,
     private readonly shippingService: ShippingService,
     private readonly taxService: TaxService,
+    @InjectQueue('payment-retry') private readonly retryQueue: Queue,
   ) {}
 
   async execute(userId: string, cartId?: string): Promise<OrderWithItems> {
@@ -72,8 +77,20 @@ export class OrderSagaService {
     try {
       await this.circuitBreaker.createPaymentIntent(order.id, parseFloat(String(order.totalPrice)));
     } catch (error) {
-      await this.compensate(order);
-      throw error;
+      if (isRetriableStripeError(error)) {
+        const jobData: PaymentRetryJobData = {
+          orderId: order.id,
+          amount: parseFloat(String(order.totalPrice)),
+        };
+        await this.retryQueue.add('retry', jobData, {
+          attempts: 3,
+          backoff: { type: 'exponential', delay: 5_000 },
+        });
+        this.logger.warn(`Payment queued for retry: orderId=${order.id}`);
+      } else {
+        await this.compensate(order);
+        throw error;
+      }
     }
 
     return order;

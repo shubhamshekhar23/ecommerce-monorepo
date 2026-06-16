@@ -19,6 +19,7 @@ import { PaymentConfirmedHandler } from './handlers/payment-confirmed.handler';
 import { OrderNotificationHandler } from './handlers/order-notification.handler';
 import { OrderAnalyticsHandler } from './handlers/order-analytics.handler';
 import { OrdersResolver } from './orders.resolver';
+import { PaymentsModule } from '@/modules/payments/payments.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { OrdersResolver } from './orders.resolver';
     ShippingModule,
     TaxModule,
     KafkaProducerModule,
+    PaymentsModule,
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({

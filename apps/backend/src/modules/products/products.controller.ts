@@ -10,9 +10,11 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  Res,
   UseInterceptors,
   UploadedFile,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { isBugScenario } from '@/modules/debug-scenarios/bug-scenario.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiConsumes } from '@nestjs/swagger';
@@ -120,9 +122,12 @@ export class ProductsController {
   async search(
     @Query('q') term: string,
     @Query('limit') limit = 20,
+    @Res({ passthrough: true }) res: Response,
     @Query('cursor') cursor?: string,
   ): Promise<CursorPageDto<any>> {
-    return this.productsService.search(term, Number(limit), cursor);
+    const { data, source } = await this.productsService.search(term, Number(limit), cursor);
+    res.setHeader('X-Search-Source', source);
+    return data;
   }
 
   // Legacy offset pagination — kept for backward compat. Use /products/cursor instead.

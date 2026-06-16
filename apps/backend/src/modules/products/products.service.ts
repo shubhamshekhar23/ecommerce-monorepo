@@ -34,9 +34,26 @@ import {
   DEFAULT_CURSOR_LIMIT,
   MAX_CURSOR_LIMIT,
 } from '@/common/utils/cursor-pagination.util';
+import CircuitBreaker from 'opossum';
 import { PaginationDto } from '@/common/types/pagination.interface';
 import { CursorPageDto } from '@/common/types/cursor-pagination.interface';
 import { SearchGrpcService } from '@/modules/search/search-grpc.service';
+
+interface SearchServiceHit {
+  productId: string;
+  name: string;
+  description: string | null;
+  price: number;
+  categoryId: string | null;
+  slug: string;
+}
+
+const SEARCH_BREAKER_OPTIONS: CircuitBreaker.Options = {
+  timeout: 3_000,
+  errorThresholdPercentage: 50,
+  resetTimeout: 30_000,
+  volumeThreshold: 5,
+};
 
 const PRODUCT_DETAIL_TTL = 300;
 const PRODUCT_LIST_TTL = 60;
@@ -123,6 +140,7 @@ export class ProductsService implements OnApplicationBootstrap {
    - Cleared on every write-path invalidation so stale window stays bounded.
    */
   private readonly l1Cache = new Map<string, { value: unknown; expiry: number }>();
+  private searchBreaker!: CircuitBreaker;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -136,6 +154,52 @@ export class ProductsService implements OnApplicationBootstrap {
       this.l1Cache.clear();
     });
     void this.seedBloomFilter();
+    this.initSearchBreaker();
+  }
+
+  private initSearchBreaker(): void {
+    this.searchBreaker = new CircuitBreaker(
+      (term: string, limit: number) => this.callSearchService(term, limit),
+      SEARCH_BREAKER_OPTIONS,
+    );
+    this.searchBreaker.on('open', () =>
+      this.logger.warn('Search circuit OPEN — falling back to DB FTS'),
+    );
+    this.searchBreaker.on('close', () =>
+      this.logger.log('Search circuit CLOSED — search-service recovered'),
+    );
+  }
+
+  private async callSearchService(
+    term: string,
+    limit: number,
+  ): Promise<CursorPageDto<ProductSearchResponseDto>> {
+    const base = process.env.SEARCH_SERVICE_URL ?? 'http://localhost:3005';
+    const url = new URL('/api/v1/search', base);
+    url.searchParams.set('q', term);
+    url.searchParams.set('limit', String(limit));
+    const res = await fetch(url.toString());
+    if (!res.ok) throw new Error(`Search service error: ${res.status}`);
+    const body = (await res.json()) as { hits: SearchServiceHit[] };
+    return buildCursorResponse(this.mapSearchHits(body.hits), limit, false);
+  }
+
+  private mapSearchHits(hits: SearchServiceHit[]): ProductSearchResponseDto[] {
+    const now = new Date();
+    return hits.map((h) => ({
+      id: h.productId,
+      name: h.name,
+      slug: h.slug,
+      description: h.description,
+      categoryId: h.categoryId ?? '',
+      isActive: true,
+      priceRange: { min: h.price, max: h.price },
+      searchRank: 1,
+      avgRating: null,
+      reviewCount: 0,
+      createdAt: now,
+      updatedAt: now,
+    }));
   }
 
   private async seedBloomFilter(): Promise<void> {
@@ -382,9 +446,21 @@ export class ProductsService implements OnApplicationBootstrap {
     term: string,
     limit = DEFAULT_CURSOR_LIMIT,
     cursor?: string,
-  ): Promise<CursorPageDto<ProductSearchResponseDto>> {
+  ): Promise<{ data: CursorPageDto<ProductSearchResponseDto>; source: 'primary' | 'fallback' }> {
+    try {
+      const data = (await this.searchBreaker.fire(
+        term,
+        limit,
+      )) as CursorPageDto<ProductSearchResponseDto>;
+      return { data, source: 'primary' };
+    } catch {
+      this.logger.warn(`Search fallback activated for term="${term}"`);
+    }
     const cacheKey = `products:search:${term}:${limit}:${cursor ?? ''}`;
-    return this.withHotCache(cacheKey, PRODUCT_LIST_TTL, () => this.runSearch(term, limit, cursor));
+    const data = await this.withHotCache(cacheKey, PRODUCT_LIST_TTL, () =>
+      this.runSearch(term, limit, cursor),
+    );
+    return { data, source: 'fallback' };
   }
 
   // eslint-disable-next-line max-lines-per-function
