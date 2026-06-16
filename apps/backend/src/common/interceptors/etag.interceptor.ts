@@ -7,6 +7,8 @@ import type { Request, Response } from 'express';
 @Injectable()
 export class EtagInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+    if (context.getType() !== 'http') return next.handle();
+
     const req = context.switchToHttp().getRequest<Request>();
     if (req.method !== 'GET') return next.handle();
 

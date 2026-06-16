@@ -18,6 +18,7 @@ import { OrderReadModelHandler } from './handlers/order-read-model.handler';
 import { PaymentConfirmedHandler } from './handlers/payment-confirmed.handler';
 import { OrderNotificationHandler } from './handlers/order-notification.handler';
 import { OrderAnalyticsHandler } from './handlers/order-analytics.handler';
+import { OrdersResolver } from './orders.resolver';
 
 @Module({
   imports: [
@@ -47,7 +48,8 @@ import { OrderAnalyticsHandler } from './handlers/order-analytics.handler';
     PaymentConfirmedHandler,
     OrderNotificationHandler,
     OrderAnalyticsHandler,
+    OrdersResolver,
   ],
-  exports: [OrdersService],
+  exports: [OrdersService, OrderQueryService],
 })
 export class OrdersModule {}

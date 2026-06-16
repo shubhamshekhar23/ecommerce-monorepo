@@ -2,6 +2,9 @@ import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { APP_GUARD, APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { GraphQLModule } from '@nestjs/graphql';
+import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
+import type { Request } from 'express';
 import { PrismaModule } from '@/modules/prisma/prisma.module';
 import { UsersModule } from '@/modules/users/users.module';
 import { SecurityModule } from '@/modules/security/security.module';
@@ -44,6 +47,12 @@ import { AppService } from './app.service';
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: ['.env', '.env.local'] }),
     EventEmitterModule.forRoot({ wildcard: false }),
+    GraphQLModule.forRoot<ApolloDriverConfig>({
+      driver: ApolloDriver,
+      autoSchemaFile: true,
+      playground: process.env.NODE_ENV !== 'production',
+      context: ({ req }: { req: Request }) => ({ req }),
+    }),
     CommonModule,
     AuditModule,
     LoggerModule,

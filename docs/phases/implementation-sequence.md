@@ -129,7 +129,7 @@ This file is the single source of truth for what to implement next in this monor
 
 ## Wave 8 — GraphQL
 
-- [ ] **22. GraphQL endpoint (code-first)**
+- [x] **22. GraphQL endpoint (code-first)**
   → [phase-7.3-graphql.md](./phase-7.3-graphql.md)
   Install `@nestjs/graphql`, `@apollo/server`, `graphql`. `GraphQLModule.forRoot` with `autoSchemaFile: true`. `ProductsResolver` + `OrdersResolver`. `@ObjectType()` types mirror existing DTOs. REST endpoints unchanged — GraphQL is additive.
 

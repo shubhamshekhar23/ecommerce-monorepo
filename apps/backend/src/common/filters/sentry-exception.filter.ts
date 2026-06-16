@@ -13,18 +13,27 @@ function getStatus(exception: unknown): number {
  - Outermost global filter — wraps HttpExceptionFilter.
  - Captures exceptions in Sentry when status >= 500; skips client errors (< 500).
  - Sets user context from x-user-id header so errors are attributable in Sentry.
+ - For non-HTTP contexts (GraphQL) we skip HTTP-specific handling and let the
+ - GraphQL layer propagate the error naturally.
  */
 @Catch()
 export class SentryExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): void {
     if (getStatus(exception) >= 500) {
-      const req = host.switchToHttp().getRequest<Request>();
+      const isHttp = host.getType() === 'http';
       Sentry.withScope((scope) => {
-        scope.setUser({ id: req.headers['x-user-id'] as string | undefined });
-        scope.setExtra('method', req.method);
-        scope.setExtra('url', req.url);
+        if (isHttp) {
+          const req = host.switchToHttp().getRequest<Request>();
+          scope.setUser({ id: req.headers['x-user-id'] as string | undefined });
+          scope.setExtra('method', req.method);
+          scope.setExtra('url', req.url);
+        }
         Sentry.captureException(exception);
       });
+    }
+
+    if (host.getType() !== 'http') {
+      throw exception;
     }
 
     if (exception instanceof HttpException) {
