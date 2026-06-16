@@ -61,7 +61,7 @@ This file is the single source of truth for what to implement next in this monor
 
 ## Wave 4 — Cache Patterns
 
-- [ ] **9. Negative Caching**
+- [x] **9. Negative Caching**
   → [phase-3.2-caching-patterns.md](./phase-3.2-caching-patterns.md)
   Store `'__NULL__'` sentinel with 30s TTL when DB returns null. On cache hit of sentinel, throw `NotFoundException` immediately without hitting DB.
 

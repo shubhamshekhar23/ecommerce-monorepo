@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectMetric } from '@willsoto/nestjs-prometheus';
 import { Counter, Histogram } from 'prom-client';
 import { RedisService } from './redis.service';
@@ -7,6 +7,8 @@ import { isBugScenario } from '@/modules/debug-scenarios/bug-scenario.guard';
 const LOCK_TTL_MS = 5000;
 const LOCK_RETRY_MS = 50;
 const LOCK_MAX_RETRIES = 10;
+const NEGATIVE_SENTINEL = '__NULL__';
+const NEGATIVE_TTL_S = 30;
 
 /*
  - Atomically releases a lock only if the caller still owns it (token matches).
@@ -88,13 +90,14 @@ export class CacheService {
   }
 
   /*
-   - Cache-aside with stampede prevention: the first caller on a miss acquires a Redis lock
-   - (SET NX PX), fetches from the source, and populates the cache. Concurrent misses poll
-   - until the winner populates the key. We re-check after acquiring the lock in case the
-   - previous winner already finished. Falls back to a direct fetch if the lock expires.
+   - Cache-aside with stampede prevention and negative caching.
+   - On miss the first caller acquires a Redis lock, fetches, and populates the cache.
+   - If fetchFn throws NotFoundException, a sentinel is cached so subsequent requests skip the DB.
+   - Concurrent misses poll until the winner populates the key.
    */
   async getOrSet<T>(key: string, ttlSeconds: number, fetchFn: () => Promise<T>): Promise<T> {
     const cached = await this.get<T>(key);
+    if (this.isSentinel(cached)) throw new NotFoundException();
     if (cached !== null) return cached;
 
     /*
@@ -103,23 +106,48 @@ export class CacheService {
     */
     if (!isBugScenario(17)) {
       const token = await this.acquireLock(key);
-      if (token) {
-        try {
-          const doubleCheck = await this.get<T>(key);
-          if (doubleCheck !== null) return doubleCheck;
-          const value = await fetchFn();
-          await this.set(key, value, ttlSeconds);
-          return value;
-        } finally {
-          await this.releaseLock(key, token);
-        }
-      }
-      return (await this.pollUntilCached<T>(key)) ?? fetchFn();
+      if (token) return this.fetchAndCache(key, ttlSeconds, fetchFn, token);
+      const polled = await this.pollUntilCached<T>(key);
+      if (this.isSentinel(polled)) throw new NotFoundException();
+      return polled ?? fetchFn();
     }
 
     const value = await fetchFn();
     await this.set(key, value, ttlSeconds);
     return value;
+  }
+
+  private isSentinel(value: unknown): boolean {
+    return value === NEGATIVE_SENTINEL;
+  }
+
+  /*
+   - Called when this replica wins the lock. Double-checks the cache, fetches if still a miss,
+   - and stores a negative sentinel when fetchFn throws NotFoundException.
+   */
+  private async fetchAndCache<T>(
+    key: string,
+    ttlSeconds: number,
+    fetchFn: () => Promise<T>,
+    token: string,
+  ): Promise<T> {
+    let fromFetch = false;
+    try {
+      const doubleCheck = await this.get<T>(key);
+      if (this.isSentinel(doubleCheck)) throw new NotFoundException();
+      if (doubleCheck !== null) return doubleCheck;
+      fromFetch = true;
+      const value = await fetchFn();
+      await this.set(key, value, ttlSeconds);
+      return value;
+    } catch (err) {
+      if (fromFetch && err instanceof NotFoundException) {
+        await this.set(key, NEGATIVE_SENTINEL, NEGATIVE_TTL_S);
+      }
+      throw err;
+    } finally {
+      await this.releaseLock(key, token);
+    }
   }
 
   private async acquireLock(key: string): Promise<string | null> {
