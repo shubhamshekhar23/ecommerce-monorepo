@@ -25,6 +25,11 @@ const RELEASE_LOCK_LUA = `
 @Injectable()
 export class CacheService {
   private readonly logger = new Logger(CacheService.name);
+  /*
+   - In-process singleflight map: concurrent cache misses on the same key within one replica
+   - share one DB promise instead of each creating a separate fetch.
+   */
+  private readonly inflight = new Map<string, Promise<unknown>>();
 
   constructor(
     private readonly redis: RedisService,
@@ -90,10 +95,10 @@ export class CacheService {
   }
 
   /*
-   - Cache-aside with stampede prevention and negative caching.
+   - Cache-aside with stampede prevention, negative caching, and in-process request coalescing.
    - On miss the first caller acquires a Redis lock, fetches, and populates the cache.
    - If fetchFn throws NotFoundException, a sentinel is cached so subsequent requests skip the DB.
-   - Concurrent misses poll until the winner populates the key.
+   - Concurrent misses on the same replica share one in-flight promise (singleflight).
    */
   async getOrSet<T>(key: string, ttlSeconds: number, fetchFn: () => Promise<T>): Promise<T> {
     const cached = await this.get<T>(key);
@@ -104,17 +109,38 @@ export class CacheService {
      - S17: lock acquisition skipped — all concurrent cache-miss requests call fetchFn at once.
      - Signal: on burst after cache flush, Jaeger shows many parallel prisma spans for the same key.
     */
-    if (!isBugScenario(17)) {
-      const token = await this.acquireLock(key);
-      if (token) return this.fetchAndCache(key, ttlSeconds, fetchFn, token);
-      const polled = await this.pollUntilCached<T>(key);
-      if (this.isSentinel(polled)) throw new NotFoundException();
-      return polled ?? fetchFn();
-    }
+    if (!isBugScenario(17)) return this.coalescedFetch(key, ttlSeconds, fetchFn);
 
     const value = await fetchFn();
     await this.set(key, value, ttlSeconds);
     return value;
+  }
+
+  /*
+   - Singleflight: if a fetch is already in-flight for this key on this replica, join it.
+   - Otherwise acquire the Redis lock (cross-replica guard) and start a new fetch.
+   - Falls back to polling if this replica loses the lock race.
+   */
+  private async coalescedFetch<T>(
+    key: string,
+    ttlSeconds: number,
+    fetchFn: () => Promise<T>,
+  ): Promise<T> {
+    const inflight = this.inflight.get(key);
+    if (inflight) return inflight as Promise<T>;
+
+    const token = await this.acquireLock(key);
+    if (token) {
+      const promise = this.fetchAndCache(key, ttlSeconds, fetchFn, token).finally(() => {
+        this.inflight.delete(key);
+      });
+      this.inflight.set(key, promise);
+      return promise;
+    }
+
+    const polled = await this.pollUntilCached<T>(key);
+    if (this.isSentinel(polled)) throw new NotFoundException();
+    return polled ?? fetchFn();
   }
 
   private isSentinel(value: unknown): boolean {

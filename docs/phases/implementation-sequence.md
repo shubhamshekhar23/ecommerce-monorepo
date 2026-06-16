@@ -65,7 +65,7 @@ This file is the single source of truth for what to implement next in this monor
   → [phase-3.2-caching-patterns.md](./phase-3.2-caching-patterns.md)
   Store `'__NULL__'` sentinel with 30s TTL when DB returns null. On cache hit of sentinel, throw `NotFoundException` immediately without hitting DB.
 
-- [ ] **10. Request Coalescing (singleflight)**
+- [x] **10. Request Coalescing (singleflight)**
   → [phase-3.2-caching-patterns.md](./phase-3.2-caching-patterns.md)
   Add `inflight: Map<string, Promise<unknown>>` to `CacheService`. Concurrent cache misses for the same key share one in-flight DB promise instead of all hitting the DB independently.
 

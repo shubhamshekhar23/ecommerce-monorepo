@@ -1,6 +1,6 @@
 # Phase 3.2 — Caching Patterns
 
-**Status:** 🔲 Partial — Negative Caching ✅ done; Request Coalescing pending; Refresh Ahead pending; Stale-While-Revalidate pending; Cache Versioning pending
+**Status:** 🔲 Partial — Negative Caching ✅ done; Request Coalescing ✅ done; Refresh Ahead pending; Stale-While-Revalidate pending; Cache Versioning pending
 **Builds on:** [Phase 3.1 — Caching Advanced](./phase-3.1-caching-advanced.md)
 **Concept cluster:** Five distinct caching strategies beyond cache-aside and write-through. Each solves a different failure mode — null result stampedes, thundering herd on cache miss, premature expiry, serving stale while refreshing, and safe cache invalidation across deployments.
 
