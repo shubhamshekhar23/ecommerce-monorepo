@@ -45,7 +45,7 @@ This file is the single source of truth for what to implement next in this monor
 
 ## Wave 3 — Cache Hardening
 
-- [ ] **6. Write-Through Cache on product mutations**
+- [x] **6. Write-Through Cache on product mutations**
   → [phase-3.1-caching-advanced.md](./phase-3.1-caching-advanced.md)
   After `prisma.product.update()` / `create()`, call `cacheService.set(cacheKey, updatedProduct, ttl)` before returning. List/cursor keys still use invalidation.
 

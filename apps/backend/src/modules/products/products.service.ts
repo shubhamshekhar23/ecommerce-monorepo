@@ -194,7 +194,10 @@ export class ProductsService {
     };
     await this.amqp.publish(EXCHANGES.PRODUCT, ROUTING_KEYS.PRODUCT.CREATED, event);
 
-    return this.fetchById(product.id);
+    const created = await this.fetchById(product.id);
+    await this.cache.set(`products:detail:id:${product.id}`, created, PRODUCT_DETAIL_TTL);
+    await this.cache.set(`products:detail:slug:${created.slug}`, created, PRODUCT_DETAIL_TTL);
+    return created;
   }
 
   async update(
@@ -262,7 +265,14 @@ export class ProductsService {
       slug: updated.slug,
     };
     await this.amqp.publish(EXCHANGES.PRODUCT, ROUTING_KEYS.PRODUCT.UPDATED, event);
-    return this.fetchById(id);
+    const updatedResult = await this.fetchById(id);
+    await this.cache.set(`products:detail:id:${id}`, updatedResult, PRODUCT_DETAIL_TTL);
+    await this.cache.set(
+      `products:detail:slug:${updatedResult.slug}`,
+      updatedResult,
+      PRODUCT_DETAIL_TTL,
+    );
+    return updatedResult;
   }
 
   // eslint-disable-next-line max-lines-per-function
