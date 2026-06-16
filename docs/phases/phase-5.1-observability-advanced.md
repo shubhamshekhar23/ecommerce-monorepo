@@ -1,6 +1,6 @@
 # Phase 5.1 — Observability Advanced
 
-**Status:** 🔲 Pending
+**Status:** 🔲 Partial — Pino PII redaction ✅ done; Sentry global exception filter pending
 **Builds on:** [Phase 5 — Observability](./phase-5-observability.md)
 **Concept cluster:** Two gaps in the current observability stack — unhandled exceptions disappear into log streams with no grouping or error-rate alerting, and PII can leak into those same streams.
 

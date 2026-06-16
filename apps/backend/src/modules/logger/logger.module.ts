@@ -38,6 +38,23 @@ function getOtelContext(): Record<string, string> {
   };
 }
 
+const redact = {
+  paths: [
+    'req.body.password',
+    'req.body.currentPassword',
+    'req.body.newPassword',
+    'req.body.confirmPassword',
+    'req.body.email',
+    'req.body.cardNumber',
+    'req.body.cvv',
+    'req.headers.authorization',
+    'req.headers.cookie',
+    'req.headers["x-user-email"]',
+    'res.headers["set-cookie"]',
+  ],
+  censor: '[REDACTED]',
+};
+
 function createPinoConfig(configService: ConfigService) {
   return {
     pinoHttp: {
@@ -46,6 +63,7 @@ function createPinoConfig(configService: ConfigService) {
       customProps: (req: any) => ({ requestId: req.id }),
       mixin: getOtelContext,
       serializers,
+      redact,
     },
   };
 }

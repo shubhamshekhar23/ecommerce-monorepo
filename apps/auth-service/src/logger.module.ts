@@ -1,8 +1,8 @@
-import { Module } from '@nestjs/common';
-import { LoggerModule as PinoLoggerModule } from 'nestjs-pino';
-import { ConfigService } from '@nestjs/config';
-import { v4 as uuidv4 } from 'uuid';
-import * as api from '@opentelemetry/api';
+import { Module } from "@nestjs/common";
+import { LoggerModule as PinoLoggerModule } from "nestjs-pino";
+import { ConfigService } from "@nestjs/config";
+import { v4 as uuidv4 } from "uuid";
+import * as api from "@opentelemetry/api";
 
 const serializers = {
   req(request: any) {
@@ -37,14 +37,32 @@ function getOtelContext(): Record<string, string> {
   };
 }
 
+const redact = {
+  paths: [
+    "req.body.password",
+    "req.body.currentPassword",
+    "req.body.newPassword",
+    "req.body.confirmPassword",
+    "req.body.email",
+    "req.body.token",
+    "req.body.totpCode",
+    "req.headers.authorization",
+    "req.headers.cookie",
+    'req.headers["x-user-email"]',
+    'res.headers["set-cookie"]',
+  ],
+  censor: "[REDACTED]",
+};
+
 function createPinoConfig(configService: ConfigService) {
   return {
     pinoHttp: {
-      level: configService.get<string>('LOG_LEVEL') || 'info',
-      genReqId: (req: any) => req.headers['x-request-id'] || uuidv4(),
+      level: configService.get<string>("LOG_LEVEL") || "info",
+      genReqId: (req: any) => req.headers["x-request-id"] || uuidv4(),
       customProps: (req: any) => ({ requestId: req.id }),
       mixin: getOtelContext,
       serializers,
+      redact,
     },
   };
 }

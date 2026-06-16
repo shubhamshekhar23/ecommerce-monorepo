@@ -124,7 +124,7 @@ services:
   redis:
     image: redis:7-alpine
     container_name: ecommerce_redis
-    command: redis-server --appendonly yes --appendfsync everysec
+    command: redis-server --appendonly yes --appendfsync everysec --maxmemory 256mb --maxmemory-policy allkeys-lru
     ports:
       - '6379:6379'
     volumes:
@@ -461,6 +461,7 @@ services:
       JWT_REFRESH_SECRET: dev-refresh-secret-key-min-32-chars-do-not-use-in-production
       KAFKA_BROKERS: redpanda:9092
       BUG_SCENARIO: ${BUG_SCENARIO:-}
+      API_PREFIX: api/v1
     volumes:
       - .:/app
       - node_modules:/app/node_modules

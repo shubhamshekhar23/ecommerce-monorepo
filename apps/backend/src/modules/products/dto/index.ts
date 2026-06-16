@@ -2,3 +2,4 @@ export * from './create-product.dto';
 export * from './update-product.dto';
 export * from './product-image.dto';
 export * from './product-response.dto';
+export * from './find-products.dto';

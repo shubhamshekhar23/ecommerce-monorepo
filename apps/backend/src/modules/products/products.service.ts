@@ -21,7 +21,7 @@ import type {
   ProductDeletedEvent,
 } from '@ecommerce/shared-types';
 import { UserRole } from '@prisma/client';
-import { CreateProductDto, UpdateProductDto, ProductImageDto } from './dto';
+import { CreateProductDto, UpdateProductDto, ProductImageDto, FindProductsDto } from './dto';
 import { ProductResponseDto, ProductSearchResponseDto } from './dto/product-response.dto';
 import { buildPaginationResponse } from '@/common/utils/pagination.util';
 import {
@@ -248,14 +248,32 @@ export class ProductsService {
   async findAllCursor(
     limit = DEFAULT_CURSOR_LIMIT,
     cursor?: string,
+    filters: FindProductsDto = {},
   ): Promise<CursorPageDto<ProductResponseDto>> {
-    const cacheKey = `products:cursor:${limit}:${cursor ?? ''}`;
+    const { minPrice, maxPrice, categoryId, inStock } = filters;
+    const cacheKey = `products:cursor:${limit}:${cursor ?? ''}:${JSON.stringify(filters)}`;
     return this.withHotCache(cacheKey, PRODUCT_LIST_TTL, async () => {
       const take = Math.min(Math.max(limit, 1), MAX_CURSOR_LIMIT);
       const cursorWhere = buildCursorWhere(cursor);
 
+      const hasVariantFilter = inStock || minPrice !== undefined || maxPrice !== undefined;
       const products = await this.prisma.product.findMany({
-        where: { isActive: true, deletedAt: null, ...cursorWhere },
+        where: {
+          isActive: true,
+          deletedAt: null,
+          ...cursorWhere,
+          ...(categoryId && { categoryId }),
+          ...(hasVariantFilter && {
+            variants: {
+              some: {
+                isActive: true,
+                ...(inStock && { stock: { gt: 0 } }),
+                ...(minPrice !== undefined && { price: { gte: minPrice } }),
+                ...(maxPrice !== undefined && { price: { lte: maxPrice } }),
+              },
+            },
+          }),
+        },
         take: take + 1,
         include: {
           images: { where: { isMain: true } },

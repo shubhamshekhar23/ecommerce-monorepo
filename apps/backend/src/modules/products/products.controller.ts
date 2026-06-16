@@ -70,11 +70,27 @@ export class ProductsController {
     type: String,
     description: 'Opaque cursor from previous response meta.nextCursor',
   })
+  @ApiQuery({ name: 'minPrice', required: false, type: Number })
+  @ApiQuery({ name: 'maxPrice', required: false, type: Number })
+  @ApiQuery({ name: 'categoryId', required: false, type: String })
+  @ApiQuery({ name: 'inStock', required: false, type: Boolean })
   async findAllCursor(
     @Query('limit') limit = 20,
     @Query('cursor') cursor?: string,
+    @Query('minPrice') minPriceStr?: string,
+    @Query('maxPrice') maxPriceStr?: string,
+    @Query('categoryId') categoryId?: string,
+    @Query('inStock') inStockStr?: string,
   ): Promise<CursorPageDto<any>> {
-    return this.productsService.findAllCursor(Number(limit), cursor);
+    const minPrice = minPriceStr !== undefined ? parseFloat(minPriceStr) : undefined;
+    const maxPrice = maxPriceStr !== undefined ? parseFloat(maxPriceStr) : undefined;
+    const inStock = inStockStr !== undefined ? inStockStr === 'true' : undefined;
+    return this.productsService.findAllCursor(Number(limit), cursor, {
+      minPrice,
+      maxPrice,
+      categoryId,
+      inStock,
+    });
   }
 
   // Full-text search endpoint using PostgreSQL tsvector + GIN index.

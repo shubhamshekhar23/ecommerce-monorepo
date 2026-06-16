@@ -1,6 +1,6 @@
 # Phase 3.1 — Caching Advanced
 
-**Status:** 🔲 Pending
+**Status:** 🔲 Partial — Redis eviction policy ✅ done; write-through, Bloom filter, pub/sub invalidation pending
 **Builds on:** [Phase 3 — Caching & Performance](./phase-3-caching.md)
 **Concept cluster:** Four gaps in the current cache layer — writes still cause cold misses, Redis will OOM instead of evicting gracefully, non-existent keys hit the DB on every request, and L1 invalidation is local to one process.
 
