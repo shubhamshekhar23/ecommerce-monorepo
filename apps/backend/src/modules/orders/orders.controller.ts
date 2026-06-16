@@ -56,8 +56,9 @@ export class OrdersController {
     @CurrentUser() user: RequestUser,
     @Query('page') page = 1,
     @Query('limit') limit = 20,
+    @Query('sort') sort?: string,
   ): Promise<PaginationDto<unknown>> {
-    return this.orderQueryService.listUserOrders(user.id, page, limit);
+    return this.orderQueryService.listUserOrders(user.id, page, limit, sort);
   }
 
   @Get()
@@ -66,8 +67,9 @@ export class OrdersController {
   async getAllOrders(
     @Query('page') page = 1,
     @Query('limit') limit = 20,
+    @Query('sort') sort?: string,
   ): Promise<PaginationDto<unknown>> {
-    return this.orderQueryService.listAllOrders(page, limit);
+    return this.orderQueryService.listAllOrders(page, limit, sort);
   }
 
   @Get(':id')

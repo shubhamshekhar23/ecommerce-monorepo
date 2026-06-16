@@ -1,10 +1,21 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 import { CacheService } from '@/modules/cache/cache.service';
 import { calculatePagination, buildPaginationResponse } from '@/common/utils/pagination.util';
 import { PaginationDto } from '@/common/types/pagination.interface';
+import { parseSortParam, SortDir } from '@/common/utils/sort.util';
 import { mapToOrderReadModel } from '../read-models/order-read-model.mapper';
 import { OrderReadModel } from '../read-models/order-read-model.types';
+
+function mapOrderSort(field: string, dir: SortDir): Prisma.OrderOrderByWithRelationInput | null {
+  const map: Record<string, Prisma.OrderOrderByWithRelationInput> = {
+    createdAt: { createdAt: dir },
+    totalPrice: { totalPrice: dir },
+    status: { status: dir },
+  };
+  return map[field] ?? null;
+}
 
 const READ_MODEL_TTL = 3600;
 const ORDER_INCLUDE = { items: { include: { product: true } } } as const;
@@ -28,30 +39,30 @@ export class OrderQueryService {
     userId: string,
     page = 1,
     limit = 20,
+    sort?: string,
   ): Promise<PaginationDto<OrderReadModel>> {
     const { skip, take } = calculatePagination(page, limit);
+    const sortOrder = parseSortParam(sort, mapOrderSort);
+    const orderBy = sortOrder.length > 0 ? sortOrder : [{ createdAt: 'desc' as const }];
     const [orders, total] = await Promise.all([
       this.prisma.order.findMany({
         where: { userId },
         skip,
         take,
         include: ORDER_INCLUDE,
-        orderBy: { createdAt: 'desc' },
+        orderBy,
       }),
       this.prisma.order.count({ where: { userId } }),
     ]);
     return buildPaginationResponse(orders.map(mapToOrderReadModel), total, page, limit);
   }
 
-  async listAllOrders(page = 1, limit = 20): Promise<PaginationDto<OrderReadModel>> {
+  async listAllOrders(page = 1, limit = 20, sort?: string): Promise<PaginationDto<OrderReadModel>> {
     const { skip, take } = calculatePagination(page, limit);
+    const sortOrder = parseSortParam(sort, mapOrderSort);
+    const orderBy = sortOrder.length > 0 ? sortOrder : [{ createdAt: 'desc' as const }];
     const [orders, total] = await Promise.all([
-      this.prisma.order.findMany({
-        skip,
-        take,
-        include: ORDER_INCLUDE,
-        orderBy: { createdAt: 'desc' },
-      }),
+      this.prisma.order.findMany({ skip, take, include: ORDER_INCLUDE, orderBy }),
       this.prisma.order.count(),
     ]);
     return buildPaginationResponse(orders.map(mapToOrderReadModel), total, page, limit);

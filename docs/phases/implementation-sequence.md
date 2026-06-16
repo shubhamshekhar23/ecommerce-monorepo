@@ -85,7 +85,7 @@ This file is the single source of truth for what to implement next in this monor
 
 ## Wave 5 — REST API Improvements
 
-- [ ] **14. Dynamic multi-field sorting (`?sort=price:asc,name:desc`)**
+- [x] **14. Dynamic multi-field sorting (`?sort=price:asc,name:desc`)**
   → [phase-7.1-api-advanced.md](./phase-7.1-api-advanced.md)
   Add `sort?: string` to `FindProductsDto` with allowlist regex. Create `parseSortParam()` util that returns `Prisma.ProductOrderByWithRelationInput[]`. Pass to `findMany({ orderBy })`.
 

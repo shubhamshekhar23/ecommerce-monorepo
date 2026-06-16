@@ -25,6 +25,7 @@ import { UserRole } from '@prisma/client';
 import { CreateProductDto, UpdateProductDto, ProductImageDto, FindProductsDto } from './dto';
 import { ProductResponseDto, ProductSearchResponseDto } from './dto/product-response.dto';
 import { buildPaginationResponse } from '@/common/utils/pagination.util';
+import { parseSortParam, SortDir } from '@/common/utils/sort.util';
 import {
   buildCursorWhere,
   buildCursorResponse,
@@ -37,6 +38,18 @@ import { CursorPageDto } from '@/common/types/cursor-pagination.interface';
 
 const PRODUCT_DETAIL_TTL = 300;
 const PRODUCT_LIST_TTL = 60;
+
+function mapProductSort(
+  field: string,
+  dir: SortDir,
+): Prisma.ProductOrderByWithRelationInput | null {
+  const map: Record<string, Prisma.ProductOrderByWithRelationInput> = {
+    name: { name: dir },
+    createdAt: { createdAt: dir },
+    avgRating: { rating: { avgRating: dir } },
+  };
+  return map[field] ?? null;
+}
 
 /*
  - FTS row no longer includes price/cost/stock — those live on ProductVariant.
@@ -305,11 +318,12 @@ export class ProductsService implements OnApplicationBootstrap {
     cursor?: string,
     filters: FindProductsDto = {},
   ): Promise<CursorPageDto<ProductResponseDto>> {
-    const { minPrice, maxPrice, categoryId, inStock } = filters;
+    const { minPrice, maxPrice, categoryId, inStock, sort } = filters;
     const cacheKey = `products:cursor:${limit}:${cursor ?? ''}:${JSON.stringify(filters)}`;
     return this.withHotCache(cacheKey, PRODUCT_LIST_TTL, async () => {
       const take = Math.min(Math.max(limit, 1), MAX_CURSOR_LIMIT);
       const cursorWhere = buildCursorWhere(cursor);
+      const sortOrder = parseSortParam(sort, mapProductSort);
 
       const hasVariantFilter = inStock || minPrice !== undefined || maxPrice !== undefined;
       const products = await this.prisma.product.findMany({
@@ -340,7 +354,10 @@ export class ProductsService implements OnApplicationBootstrap {
             orderBy: { price: 'asc' },
           },
         },
-        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        orderBy:
+          sortOrder.length > 0
+            ? [...sortOrder, { id: 'desc' }]
+            : [{ createdAt: 'desc' }, { id: 'desc' }],
       });
 
       const hasMore = products.length > take;
@@ -433,16 +450,21 @@ export class ProductsService implements OnApplicationBootstrap {
   }
 
   // eslint-disable-next-line max-lines-per-function
-  async findAll(page = 1, limit = 20, text?: string): Promise<PaginationDto<ProductResponseDto>> {
+  async findAll(
+    page = 1,
+    limit = 20,
+    text?: string,
+    sort?: string,
+  ): Promise<PaginationDto<ProductResponseDto>> {
     /*
      - S1: throws before cache/DB — every request returns 500.
      - Signal: Grafana HighErrorRate alert; Jaeger spans have error=true with no DB child spans.
     */
     if (isBugScenario(1)) throw new InternalServerErrorException('Database connection lost');
 
-    const cacheKey = `products:list:${page}:${limit}:${text ?? ''}`;
+    const cacheKey = `products:list:${page}:${limit}:${text ?? ''}:${sort ?? ''}`;
     return this.cache.getOrSetSWR(cacheKey, PRODUCT_LIST_TTL, () =>
-      this.runFindAll(page, limit, text),
+      this.runFindAll(page, limit, text, sort),
     );
   }
 
@@ -450,10 +472,12 @@ export class ProductsService implements OnApplicationBootstrap {
     page: number,
     limit: number,
     text?: string,
+    sort?: string,
   ): Promise<PaginationDto<ProductResponseDto>> {
     const validPage = Math.max(page, 1);
     const validLimit = Math.min(Math.max(limit, 1), 100);
     const skip = (validPage - 1) * validLimit;
+    const sortOrder = parseSortParam(sort, mapProductSort);
 
     /*
      - S2: single pg_sleep(0.5) makes every listing request take ~500 ms.
@@ -501,7 +525,7 @@ export class ProductsService implements OnApplicationBootstrap {
                 },
               }),
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: sortOrder.length > 0 ? sortOrder : [{ createdAt: 'desc' as const }],
       }),
       this.prisma.product.count({ where }),
     ]);

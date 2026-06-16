@@ -74,6 +74,12 @@ export class ProductsController {
   @ApiQuery({ name: 'maxPrice', required: false, type: Number })
   @ApiQuery({ name: 'categoryId', required: false, type: String })
   @ApiQuery({ name: 'inStock', required: false, type: Boolean })
+  @ApiQuery({
+    name: 'sort',
+    required: false,
+    type: String,
+    description: 'Sort fields: name:asc,avgRating:desc',
+  })
   async findAllCursor(
     @Query('limit') limit = 20,
     @Query('cursor') cursor?: string,
@@ -81,6 +87,7 @@ export class ProductsController {
     @Query('maxPrice') maxPriceStr?: string,
     @Query('categoryId') categoryId?: string,
     @Query('inStock') inStockStr?: string,
+    @Query('sort') sort?: string,
   ): Promise<CursorPageDto<any>> {
     const minPrice = minPriceStr !== undefined ? parseFloat(minPriceStr) : undefined;
     const maxPrice = maxPriceStr !== undefined ? parseFloat(maxPriceStr) : undefined;
@@ -90,6 +97,7 @@ export class ProductsController {
       maxPrice,
       categoryId,
       inStock,
+      sort,
     });
   }
 
@@ -119,13 +127,14 @@ export class ProductsController {
     @Query('page') page = 1,
     @Query('limit') limit = 20,
     @Query('text') text?: string,
+    @Query('sort') sort?: string,
   ): Promise<PaginationDto<any>> {
     /*
      - S19: returns 400 for all product listing requests.
      - Signal: Grafana ErrorRateByClass shows 4xx band (not 5xx); Loki needs status-code query, not level=error.
     */
     if (isBugScenario(19)) throw new BadRequestException('Invalid request parameters');
-    return this.productsService.findAll(page, limit, text);
+    return this.productsService.findAll(page, limit, text, sort);
   }
 
   @Get('slug/:slug')
