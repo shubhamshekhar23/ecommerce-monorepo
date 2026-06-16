@@ -73,7 +73,7 @@ This file is the single source of truth for what to implement next in this monor
   → [phase-3.2-caching-patterns.md](./phase-3.2-caching-patterns.md)
   On cache hit, if `now > refreshAt` (80% of TTL elapsed), fire a background re-fetch via `setImmediate` and return the current value. Apply only to hot keys (featured products, category tree).
 
-- [ ] **12. Stale-While-Revalidate**
+- [x] **12. Stale-While-Revalidate**
   → [phase-3.2-caching-patterns.md](./phase-3.2-caching-patterns.md)
   Dual-key pattern: `cache:{key}` (short TTL) + `cache:stale:{key}` (10× TTL). On short-key miss but stale-key hit, return stale and trigger background refresh.
 

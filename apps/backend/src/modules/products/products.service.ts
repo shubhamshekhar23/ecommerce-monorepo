@@ -161,6 +161,7 @@ export class ProductsService implements OnApplicationBootstrap {
   private async invalidateProducts(): Promise<void> {
     this.l1Cache.clear();
     await this.cache.invalidateByPattern('products:*');
+    await this.cache.invalidateByPattern('stale:products:*');
     await this.cache.publish(L1_INVALIDATE_CHANNEL);
   }
 
@@ -441,7 +442,9 @@ export class ProductsService implements OnApplicationBootstrap {
     if (isBugScenario(1)) throw new InternalServerErrorException('Database connection lost');
 
     const cacheKey = `products:list:${page}:${limit}:${text ?? ''}`;
-    return this.withCache(cacheKey, PRODUCT_LIST_TTL, () => this.runFindAll(page, limit, text));
+    return this.cache.getOrSetSWR(cacheKey, PRODUCT_LIST_TTL, () =>
+      this.runFindAll(page, limit, text),
+    );
   }
 
   private async runFindAll(
