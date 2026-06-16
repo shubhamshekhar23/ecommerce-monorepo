@@ -17,6 +17,12 @@ enum UserRole {
   VENDOR
 }
 
+enum ErasureStatus {
+  PENDING
+  CANCELLED
+  COMPLETED
+}
+
 enum OrderStatus {
   PENDING
   CONFIRMED
@@ -97,6 +103,7 @@ model User {
   stockAlerts         StockAlert[]
   passwordResetTokens PasswordResetToken[]
   returnRequests      ReturnRequest[]
+  dataErasureRequest  DataErasureRequest?
 
   // Partial index (role, createdAt DESC) WHERE isActive = true is managed by raw SQL migration.
   @@index([email])
@@ -627,4 +634,17 @@ model RequestMetric {
   @@index([timestamp])
   @@index([path, statusCode])
   @@index([userId])
+}
+
+model DataErasureRequest {
+  id          String        @id @default(cuid())
+  userId      String        @unique
+  requestedAt DateTime      @default(now())
+  scheduledAt DateTime
+  status      ErasureStatus @default(PENDING)
+  completedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([status, scheduledAt])
 }

@@ -109,7 +109,7 @@ This file is the single source of truth for what to implement next in this monor
   → [phase-6.1-security-advanced.md](./phase-6.1-security-advanced.md)
   New `EncryptionService` (AES-256-GCM, key versioning via `{version}:{iv}:{authTag}:{data}` format). Prisma `$use` middleware encrypts on write, decrypts on read for `phone`, `taxId` columns.
 
-- [ ] **19. GDPR right-to-erasure with grace period**
+- [x] **19. GDPR right-to-erasure with grace period**
   → [phase-6.2-privacy-compliance.md](./phase-6.2-privacy-compliance.md)
   `DELETE /users/me/data` schedules erasure (7-day grace period). BullMQ processor runs anonymization: `email → erased.{sha256(userId).slice(12)}@deleted.invalid`, name → `[Deleted]`. Requires password confirmation. Logs audit event.
 

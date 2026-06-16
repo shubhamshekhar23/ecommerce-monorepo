@@ -1,12 +1,27 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  UnauthorizedException,
+  BadRequestException,
+} from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 import { hashPassword, comparePassword } from '@/common/utils/password.util';
+import { QUEUE_NAMES } from '@/modules/queue/queue.constants';
 import { CreateUserDto, UpdateUserDto, UserResponseDto } from './dto';
+import type { ErasureJobData } from './erasure.processor';
 import { User } from '@prisma/client';
+
+const ERASURE_GRACE_DAYS = 7;
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @InjectQueue(QUEUE_NAMES.DATA_ERASURE) private readonly erasureQueue: Queue,
+  ) {}
 
   async create(createUserDto: CreateUserDto): Promise<UserResponseDto> {
     const { email, password, firstName, lastName } = createUserDto;
@@ -85,6 +100,49 @@ export class UsersService {
     });
 
     return users.map((user) => this.mapToResponseDto(user));
+  }
+
+  async scheduleErasure(userId: string, password: string): Promise<{ scheduledAt: Date }> {
+    const user = await this.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
+
+    const isValid = await comparePassword(password, user.password);
+    if (!isValid) throw new UnauthorizedException('Invalid password');
+
+    const existing = await this.prisma.dataErasureRequest.findUnique({ where: { userId } });
+    if (existing?.status === 'PENDING') {
+      throw new BadRequestException('An erasure request is already pending');
+    }
+
+    const scheduledAt = new Date(Date.now() + ERASURE_GRACE_DAYS * 24 * 60 * 60 * 1000);
+
+    await this.prisma.dataErasureRequest.upsert({
+      where: { userId },
+      create: { userId, scheduledAt },
+      update: { scheduledAt, status: 'PENDING', completedAt: null },
+    });
+
+    const delayMs = ERASURE_GRACE_DAYS * 24 * 60 * 60 * 1000;
+    await this.erasureQueue.add('erase', { userId } satisfies ErasureJobData, {
+      delay: delayMs,
+      jobId: `erasure-${userId}`,
+      attempts: 3,
+      backoff: { type: 'exponential', delay: 10_000 },
+    });
+
+    return { scheduledAt };
+  }
+
+  async cancelErasure(userId: string): Promise<void> {
+    const request = await this.prisma.dataErasureRequest.findUnique({ where: { userId } });
+    if (!request || request.status !== 'PENDING') {
+      throw new BadRequestException('No pending erasure request found');
+    }
+
+    await this.prisma.dataErasureRequest.update({
+      where: { userId },
+      data: { status: 'CANCELLED' },
+    });
   }
 
   private mapToResponseDto(user: User): UserResponseDto {
