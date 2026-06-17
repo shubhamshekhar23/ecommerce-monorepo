@@ -6,94 +6,94 @@ All phases are complete. This index maps every phase to its documentation and th
 
 ## Phases
 
-- **[Phase 0 — Infrastructure Foundation](./infrastructure/phase-0-infra.md)** ✅
+- **[Phase 0 — Infrastructure Foundation](./infrastructure/infra.md)** ✅
   Docker multi-stage build, Nginx reverse proxy, PgBouncer connection pooling, graceful shutdown, Terminus health checks.
 
-- **[Phase 1 — Database Deep Dive](./database/phase-1-database.md)** ✅
+- **[Phase 1 — Database Deep Dive](./database/database.md)** ✅
   Product variants schema, cursor-based pagination, PostgreSQL FTS (tsvector + GIN), pessimistic locking (`SELECT FOR UPDATE`), expand-contract migrations.
 
-- **[Phase 1.1 — Database Advanced](./database/phase-1.1-database-advanced.md)** ✅
+- **[Phase 1.1 — Database Advanced](./database/database-advanced.md)** ✅
   Vertical partitioning (hot/cold column split), batched migration with ID-range cursor, concurrent index creation, soft delete pattern (`deletedAt` + Prisma middleware + purge cron).
 
-- **[Phase 2 — Reliability Patterns](./reliability/phase-2-reliability.md)** ✅
+- **[Phase 2 — Reliability Patterns](./reliability/reliability.md)** ✅
   Idempotency (`X-Idempotency-Key`), Outbox pattern, Saga for order placement, BullMQ, circuit breaker (opossum), exponential backoff + jitter, dead letter queue.
 
-- **[Phase 2.1 — Resilience Patterns](./reliability/phase-2.1-resilience-patterns.md)** ✅
+- **[Phase 2.1 — Resilience Patterns](./reliability/resilience-patterns.md)** ✅
   Bulkhead (separate Redis instances per concern + `p-limit` concurrency cap on Stripe), Token Bucket rate limiting (Redis Lua script), Fan-In (`Promise.allSettled` with timeout in OrderSaga).
 
-- **[Phase 3 — Caching & Performance](./caching/phase-3-caching.md)** ✅
+- **[Phase 3 — Caching & Performance](./caching/caching.md)** ✅
   Cache-aside, pattern-based invalidation (SCAN + glob), cache stampede prevention (SET NX mutex), rate limiting (Redis sorted set + Lua sliding window), Prometheus hit/miss metrics.
 
-- **[Phase 3.1 — Caching Advanced](./caching/phase-3.1-caching-advanced.md)** ✅
+- **[Phase 3.1 — Caching Advanced](./caching/caching-advanced.md)** ✅
   Write-through cache, Redis `maxmemory-policy allkeys-lru`, Bloom filter for non-existent IDs, Redis Pub/Sub for cross-replica L1 invalidation.
 
-- **[Phase 3.2 — Caching Patterns](./caching/phase-3.2-caching-patterns.md)** ✅
+- **[Phase 3.2 — Caching Patterns](./caching/caching-patterns.md)** ✅
   Negative caching (null sentinel TTL), request coalescing (singleflight), refresh-ahead, stale-while-revalidate, cache versioning (global version prefix).
 
-- **[Phase 4 — Event-Driven Architecture](./events/phase-4-events.md)** ✅
+- **[Phase 4 — Event-Driven Architecture](./events/events.md)** ✅
   Domain events (EventEmitter2), CQRS read model (`ProductRating` aggregate), order state machine with validated transitions.
 
-- **[Phase 5 — Observability](./observability/phase-5-observability.md)** ✅
+- **[Phase 5 — Observability](./observability/observability.md)** ✅
   Correlation IDs (`X-Correlation-ID`), OpenTelemetry auto-instrumentation, Jaeger distributed tracing, Prometheus metrics, Grafana dashboards (RED + Business + DB), Pino structured logging.
 
-- **[Phase 5.1 — Observability Advanced](./observability/phase-5.1-observability-advanced.md)** ✅
+- **[Phase 5.1 — Observability Advanced](./observability/observability-advanced.md)** ✅
   Sentry global exception filter (configurable sampling, release tracking), Pino PII redaction (password, email, auth headers, cookies).
 
-- **[Phase 6 — Security Depth](./security/phase-6-security.md)** ✅
+- **[Phase 6 — Security Depth](./security/security.md)** ✅
   RS256 JWT, Google OAuth2 + PKCE, TOTP 2FA, append-only audit log (PostgreSQL RULE), RBAC (USER / ADMIN / VENDOR).
 
-- **[Phase 6.1 — Security Advanced](./security/phase-6.1-security-advanced.md)** ✅
+- **[Phase 6.1 — Security Advanced](./security/security-advanced.md)** ✅
   Encryption at rest for sensitive fields (AES-256-GCM via Prisma middleware, key versioning).
 
-- **[Phase 6.2 — Privacy & Compliance](./security/phase-6.2-privacy-compliance.md)** ✅
+- **[Phase 6.2 — Privacy & Compliance](./security/privacy-compliance.md)** ✅
   GDPR right-to-erasure with grace period (schedule → cancel window → background anonymization job, hash-based pseudonymization).
 
-- **[Phase 7 — Core Feature Backfill](./api/phase-7-features.md)** ✅
+- **[Phase 7 — Core Feature Backfill](./api/features.md)** ✅
   Address management (snapshot), coupon system (optimistic locking), shipping, tax engine, reviews + moderation, back-in-stock alerts (fan-out), return/refund (state machine), PDF invoices (pdfkit + BullMQ).
 
-- **[Phase 7.1 — API Advanced](./api/phase-7.1-api-advanced.md)** ✅
+- **[Phase 7.1 — API Advanced](./api/api-advanced.md)** ✅
   Dynamic multi-field sorting (`?sort=price:asc,name:desc`), ORM-level field selection (`?fields=`), advanced filtering, ETag / conditional requests (`304 Not Modified`).
 
-- **[Phase 7.2 — Realtime APIs](./api/phase-7.2-realtime.md)** ✅
+- **[Phase 7.2 — Realtime APIs](./api/realtime.md)** ✅
   SSE order status stream (`EventSource` + Redis Pub/Sub for multi-replica), WebSocket admin feed (Socket.IO namespace, auth guard, Redis adapter).
 
-- **[Phase 7.3 — GraphQL](./api/phase-7.3-graphql.md)** ✅
+- **[Phase 7.3 — GraphQL](./api/graphql.md)** ✅
   GraphQL endpoint (code-first, additive alongside REST), DataLoader (N+1 prevention via batching), query complexity + depth limiting, persisted queries (APQ with Redis cache).
 
-- **[Phase 7.4 — Business Rules Engine](./api/phase-7.4-business-rules.md)** ✅
+- **[Phase 7.4 — Business Rules Engine](./api/business-rules.md)** ✅
   Rule-Based Architecture (DB-driven `PromotionRule` table, `RulesEngineService.evaluate()`), Interpreter/DSL (Lexer → Parser → AST → Interpreter pipeline for human-readable discount rules).
 
-- **[Phase 8 — CI/CD & Production Readiness](./cicd/phase-8-cicd.md)** ✅
+- **[Phase 8 — CI/CD & Production Readiness](./cicd/cicd.md)** ✅
   GitHub Actions pipeline, zero-downtime blue-green deploy, migration safety check, automated DB backups.
 
-- **[Phase 8.1 — Deployment Advanced](./cicd/phase-8.1-deployment-advanced.md)** ✅
+- **[Phase 8.1 — Deployment Advanced](./cicd/deployment-advanced.md)** ✅
   Canary Deployment (Argo Rollouts + Istio weighted traffic splitting + Prometheus `CanaryAnalysis`), Leader Election (long-lived Redis lease, `@Cron()` singleton coordination across replicas).
 
-- **[Phase 9 — Microservices Extraction](./microservices/phase-9-microservices.md)** ✅
+- **[Phase 9 — Microservices Extraction](./microservices/microservices.md)** ✅
   Notification Service, Search Service (OpenSearch), Auth Service (RS256 + 2FA + OAuth), API Gateway (JWT verify + HTTP proxy).
 
-- **[Phase 9.1 — Microservices: Communication](./microservices/phase-9.1-microservices-communication.md)** ✅
+- **[Phase 9.1 — Microservices: Communication](./microservices/communication.md)** ✅
   BFF aggregation in gateway (`Promise.allSettled` fan-out), gRPC inter-service RPC with hard deadlines (proto contract, binary wire format).
 
-- **[Phase 9.2 — Microservices: Coordination](./microservices/phase-9.2-microservices-coordination.md)** ✅
+- **[Phase 9.2 — Microservices: Coordination](./microservices/coordination.md)** ✅
   Saga choreography for review approval flow (event-driven, no orchestrator), Inbox / Idempotent Consumer pattern (exactly-once processing via `InboxMessage` deduplication table).
 
-- **[Phase 9.3 — Microservices: Resilience](./microservices/phase-9.3-microservices-resilience.md)** ✅
+- **[Phase 9.3 — Microservices: Resilience](./microservices/resilience.md)** ✅
   Graceful degradation: search fallback to Postgres FTS (circuit breaker), payment retry queue (retriable vs non-retriable Stripe errors, BullMQ + exponential backoff).
 
-- **[Phase 9.4 — Microservices: Event Architecture](./microservices/phase-9.4-event-architecture.md)** ✅
+- **[Phase 9.4 — Microservices: Event Architecture](./microservices/event-architecture.md)** ✅
   Order event log (append-only `OrderEvent` table, replay, `GET /orders/:id/events`) coexisting with mutable `status` as materialized projection.
 
-- **[Phase 9.5 — Advanced Architectural Patterns](./microservices/phase-9.5-architectural-patterns.md)** ✅
+- **[Phase 9.5 — Advanced Architectural Patterns](./microservices/architectural-patterns.md)** ✅
   True Event Sourcing (`OrderProjectionService` folds over events, `OrderSnapshot` for fast reads), Microkernel for payments (`IPaymentProvider` interface + `PaymentPluginRegistry`), Pipe and Filter order pipeline (11 named `IOrderFilter` steps replacing monolithic `OrderSagaService`).
 
-- **[Phase 10 — Advanced Database](./database/phase-10-advanced-db.md)** ✅
+- **[Phase 10 — Advanced Database](./database/advanced-db.md)** ✅
   `pg_stat_statements`, `RequestMetric` range-partitioned table (quarterly), streaming replication read replica, VACUUM/bloat monitoring, `ReadReplicaService`.
 
-- **[Phase 11 — Kubernetes Platform](./kubernetes/phase-11-kubernetes.md)** ✅
+- **[Phase 11 — Kubernetes Platform](./kubernetes/kubernetes.md)** ✅
   Kustomize overlays (local / staging / production / multi-region), KEDA autoscaling, PodDisruptionBudgets, network policies, Istio service mesh, ArgoCD GitOps.
 
-- **[Phase 12 — Testing Strategy](./testing/phase-12-testing.md)** ✅
+- **[Phase 12 — Testing Strategy](./testing/testing.md)** ✅
   Pact contract tests (consumer-driven, Pact Broker noted), E2E user-journey test (business side-effect assertions), Testcontainers (isolated per-run DB), mutation testing (Stryker).
 
 ---
