@@ -1,6 +1,6 @@
 # Phase 2.1 — Resilience Patterns
 
-**Status:** 🔲 Pending
+**Status:** ✅ Done
 **Builds on:** [Phase 2 — Reliability Patterns](./phase-2-reliability.md)
 **Concept cluster:** Three additions to the existing resilience layer — isolate dependency failures with Bulkheads so one slow service can't starve others, supplement the sliding-window rate limiter with Token Bucket to allow legitimate bursts, and use Fan-In to make the order saga's success condition explicit rather than optimistic.
 

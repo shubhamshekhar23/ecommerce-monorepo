@@ -1,6 +1,6 @@
 # Phase 9.3 — Microservices: Resilience
 
-**Status:** 🔲 Pending
+**Status:** ✅ Done
 **Builds on:** [Phase 9.2 — Microservices: Coordination](./phase-9.2-microservices-coordination.md)
 **Concept cluster:** Keeping the system usable when a dependency is down — search falls back to a DB full-text query, and transient payment failures queue a retry instead of immediately cancelling the order.
 

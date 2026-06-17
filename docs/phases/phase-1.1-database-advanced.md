@@ -1,6 +1,6 @@
 # Phase 1.1 — Database Advanced
 
-**Status:** 🔲 Partial — vertical partitioning ✅, concurrent indexes ✅, ID-range batching ✅, categoryName denormalization ✅; soft delete (Category model + Prisma $use middleware) pending
+**Status:** ✅ Done
 **Builds on:** [Phase 1 — Database Deep Dive](./phase-1-database.md)
 **Concept cluster:** Five patterns that separate a production data layer from a dev one — split hot/cold columns to shrink index page footprint, migrate data without locking the table (using ID-range batching, not `NOT IN`), build indexes without blocking reads, snapshot immutable facts at write time so history never lies, and protect against accidental data loss with soft delete.
 

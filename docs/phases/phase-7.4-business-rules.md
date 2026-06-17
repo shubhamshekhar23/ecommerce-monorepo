@@ -1,6 +1,6 @@
 # Phase 7.4 — Business Rules Engine
 
-**Status:** 🔲 Pending
+**Status:** ✅ Done
 **Builds on:** [Phase 7 — Core Feature Backfill](./phase-7-features.md)
 **Concept cluster:** Two tightly coupled items — a Rule-Based Architecture that externalises promotion and discount logic into a DB-driven engine, and an Interpreter/DSL that gives the engine a human-readable expression language. Build the engine first; the DSL is the natural next layer on top.
 

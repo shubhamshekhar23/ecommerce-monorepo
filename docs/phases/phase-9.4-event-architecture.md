@@ -1,6 +1,6 @@
 # Phase 9.4 — Microservices: Event Architecture
 
-**Status:** 🔲 Pending
+**Status:** ✅ Done
 **Builds on:** [Phase 9.3 — Microservices: Resilience](./phase-9.3-microservices-resilience.md)
 **Concept cluster:** Append-only event logging for the order domain — capturing every state transition as an immutable record so order history can be replayed, audited, or projected into any shape without querying the mutable state table.
 
