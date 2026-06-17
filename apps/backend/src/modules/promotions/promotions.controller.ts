@@ -14,6 +14,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 import { Roles } from '@/common/decorators';
 import { UserRole } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { CreatePromotionRuleDto } from './dto/create-promotion-rule.dto';
 import { UpdatePromotionRuleDto } from './dto/update-promotion-rule.dto';
 
@@ -34,7 +35,9 @@ export class PromotionsController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a promotion rule' })
   async create(@Body() dto: CreatePromotionRuleDto) {
-    return this.prisma.promotionRule.create({ data: dto });
+    return this.prisma.promotionRule.create({
+      data: dto as unknown as Prisma.PromotionRuleCreateInput,
+    });
   }
 
   @Patch(':id')
@@ -42,7 +45,10 @@ export class PromotionsController {
   async update(@Param('id') id: string, @Body() dto: UpdatePromotionRuleDto) {
     const rule = await this.prisma.promotionRule.findUnique({ where: { id } });
     if (!rule) throw new NotFoundException(`Promotion rule ${id} not found`);
-    return this.prisma.promotionRule.update({ where: { id }, data: dto });
+    return this.prisma.promotionRule.update({
+      where: { id },
+      data: dto as unknown as Prisma.PromotionRuleUpdateInput,
+    });
   }
 
   @Delete(':id')

@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import type { OrderEvent } from '@prisma/client';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 import { OrderEventStore } from './order-event-store.service';
@@ -57,8 +58,8 @@ export class OrderProjectionService {
     const state = await this.project(orderId);
     await this.prisma.orderSnapshot.upsert({
       where: { orderId },
-      update: { state: state as unknown as Record<string, unknown>, eventSeq },
-      create: { orderId, state: state as unknown as Record<string, unknown>, eventSeq },
+      update: { state: state as unknown as Prisma.InputJsonValue, eventSeq },
+      create: { orderId, state: state as unknown as Prisma.InputJsonValue, eventSeq },
     });
   }
 

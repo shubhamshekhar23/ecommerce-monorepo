@@ -43,6 +43,7 @@ export class SentryExceptionFilter implements ExceptionFilter {
 
     const res = host.switchToHttp().getResponse<Response>();
     const req = host.switchToHttp().getRequest<Request>();
+    if (res.headersSent) return;
     res.status(500).json({
       statusCode: 500,
       timestamp: new Date().toISOString(),

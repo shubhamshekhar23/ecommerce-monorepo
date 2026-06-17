@@ -25,6 +25,11 @@ export class JwtAuthGuard extends AuthGuard('jwt') implements CanActivate {
       return true;
     }
 
+    const type = context.getType<string>();
+    if (type !== 'http' && type !== 'graphql') {
+      return true;
+    }
+
     return super.canActivate(context);
   }
 

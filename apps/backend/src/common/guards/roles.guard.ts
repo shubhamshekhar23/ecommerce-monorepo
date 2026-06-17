@@ -21,6 +21,11 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
+    const type = context.getType<string>();
+    if (type !== 'http' && type !== 'graphql') {
+      return true;
+    }
+
     const request = context.switchToHttp().getRequest();
     const user = request.user;
     if (!user) {

@@ -16,6 +16,7 @@ export class ApplyPromotionsFilter implements IOrderFilter {
     const actions = await this.rulesEngine.evaluate(
       { subtotal: rawSubtotal, itemCount: ctx.cart.items.length, productIds },
       { tier: ctx.user.tier, orderCount: ctx.user.orderCount },
+      ctx.tx,
     );
     ctx.rawSubtotal = rawSubtotal;
     ctx.subtotal = this.rulesEngine.applyToSubtotal(rawSubtotal, actions);

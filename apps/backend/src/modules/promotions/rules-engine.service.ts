@@ -39,9 +39,14 @@ export class RulesEngineService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async evaluate(cart: CartContext, customer: CustomerContext): Promise<AppliedAction[]> {
+  async evaluate(
+    cart: CartContext,
+    customer: CustomerContext,
+    tx?: Prisma.TransactionClient,
+  ): Promise<AppliedAction[]> {
+    const client = tx ?? this.prisma;
     const now = new Date();
-    const rules = await this.prisma.promotionRule.findMany({
+    const rules = await client.promotionRule.findMany({
       where: {
         active: true,
         OR: [{ startsAt: null }, { startsAt: { lte: now } }],

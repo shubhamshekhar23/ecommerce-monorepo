@@ -19,6 +19,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const error = this.formatError(status, exception.getResponse());
 
     this.logger.error(`${request.method} ${request.url} - ${status}`, exception.stack);
+    if (response.headersSent) return;
     response.status(status).json({
       statusCode: status,
       timestamp: new Date().toISOString(),

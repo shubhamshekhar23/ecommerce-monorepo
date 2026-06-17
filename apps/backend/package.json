@@ -67,6 +67,7 @@
     "@apollo/server": "^4.13.0",
     "@bull-board/api": "^8.0.0",
     "@bull-board/express": "^8.0.0",
+    "@bull-board/nestjs": "^8.0.0",
     "@ecommerce/shared-types": "*",
     "@golevelup/nestjs-rabbitmq": "^8.1.0",
     "@grpc/grpc-js": "^1.14.4",
