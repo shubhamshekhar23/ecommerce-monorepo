@@ -1,8 +1,8 @@
 // src/features/checkout/api/checkout.api.ts
 
-'use client';
+"use client";
 
-import apiClient, { ApiRequestError } from '@/shared/apiClient';
+import apiClient from "@/shared/apiClient";
 
 export interface PaymentIntentResponse {
   paymentIntentId: string;
@@ -12,17 +12,12 @@ export interface PaymentIntentResponse {
   orderId: string;
 }
 
-export async function getClientSecretApi(orderId: string): Promise<PaymentIntentResponse> {
-  try {
-    const response = await apiClient.post<PaymentIntentResponse>(
-      '/stripe/create-payment-intent',
-      { orderId },
-    );
-    return response.data;
-  } catch (error) {
-    if (error instanceof ApiRequestError) {
-      throw error;
-    }
-    throw new ApiRequestError(500, 'Failed to get payment intent');
-  }
+export async function getClientSecretApi(
+  orderId: string,
+): Promise<PaymentIntentResponse> {
+  const response = await apiClient.post<PaymentIntentResponse>(
+    "/stripe/create-payment-intent",
+    { orderId },
+  );
+  return response.data;
 }

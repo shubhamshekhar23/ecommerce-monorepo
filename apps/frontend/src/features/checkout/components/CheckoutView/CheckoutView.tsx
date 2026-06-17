@@ -7,13 +7,13 @@ import { useCart } from '@/features/cart/hooks';
 import { useCreateOrder } from '@/features/orders/hooks';
 import { useGetClientSecret } from '../../hooks';
 import { CheckoutForm } from '../CheckoutForm/CheckoutForm';
-import { ApiRequestError } from '@/shared/apiClient';
+import { AppError } from '@/shared/errors';
 import styles from './CheckoutView.module.scss';
 
 type Stage = 'review' | 'payment' | 'success';
 
 function resolveOrderError(error: unknown): string {
-  if (!(error instanceof ApiRequestError)) return 'Something went wrong. Please try again.';
+  if (!(error instanceof AppError)) return 'Something went wrong. Please try again.';
 
   if (error.statusCode === 503) {
     return 'Payment service is temporarily unavailable. Please try again in a few minutes.';
@@ -24,7 +24,7 @@ function resolveOrderError(error: unknown): string {
   if (error.statusCode === 429) {
     return 'Too many orders placed recently. Please wait a while before trying again.';
   }
-  return error.message || 'Failed to place order. Please try again.';
+  return error.userMessage || 'Failed to place order. Please try again.';
 }
 
 export function CheckoutView() {

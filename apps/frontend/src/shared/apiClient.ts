@@ -1,70 +1,94 @@
 // src/shared/apiClient.ts
-// Axios client with JWT interceptors and auto-refresh on 401
+// Axios client with JWT interceptors and auto-refresh on 401.
+// All errors are normalised to AppError before they reach hooks or components.
 
-import axios, { AxiosError, AxiosInstance, AxiosResponse } from 'axios';
-import { API_URL } from './config';
+import axios, { AxiosError, AxiosInstance } from "axios";
+import { API_URL } from "./config";
+import { AppError, type ErrorCategory } from "./errors";
 
 // === TOKEN STORAGE ===
 
 export const tokenStorage = {
   getAccess(): string | null {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem('accessToken');
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("accessToken");
   },
 
   getRefresh(): string | null {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem('refreshToken');
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("refreshToken");
   },
 
   setTokens(accessToken: string, refreshToken: string): void {
-    if (typeof window === 'undefined') return;
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('refreshToken', refreshToken);
+    if (typeof window === "undefined") return;
+    localStorage.setItem("accessToken", accessToken);
+    localStorage.setItem("refreshToken", refreshToken);
   },
 
   clearTokens(): void {
-    if (typeof window === 'undefined') return;
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
+    if (typeof window === "undefined") return;
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
   },
 };
 
-// === API ERROR TYPE ===
+// === ERROR NORMALISATION ===
 
-export class ApiRequestError extends Error {
-  constructor(
-    public statusCode: number,
-    public message: string,
-    public path?: string,
-  ) {
-    super(message);
-    this.name = 'ApiRequestError';
+function normaliseError(status: number, serverMessage?: string): AppError {
+  let category: ErrorCategory;
+  let userMessage: string;
+
+  if (status === 422) {
+    category = "validation";
+    userMessage = serverMessage ?? "Please check your input and try again.";
+  } else if (status === 401 || status === 403) {
+    category = "auth";
+    userMessage = "Session expired. Please sign in again.";
+  } else if (status >= 400 && status < 500) {
+    category = "business";
+    userMessage = serverMessage ?? "Request failed. Please try again.";
+  } else if (status >= 500) {
+    category = "server";
+    userMessage = "Something went wrong on our end. Please try again.";
+  } else {
+    category = "unknown";
+    userMessage = "An unexpected error occurred.";
   }
+
+  return new AppError(category, userMessage, status);
 }
 
 // === REFRESH QUEUE ===
-// Prevents concurrent refresh calls when multiple 401s occur simultaneously
+// Prevents concurrent refresh calls when multiple 401s occur simultaneously.
 
-let refreshPromise: Promise<{ accessToken: string; refreshToken: string }> | null = null;
+let refreshPromise: Promise<{
+  accessToken: string;
+  refreshToken: string;
+}> | null = null;
 
-async function performRefresh(): Promise<{ accessToken: string; refreshToken: string }> {
+async function performRefresh(): Promise<{
+  accessToken: string;
+  refreshToken: string;
+}> {
   const refreshToken = tokenStorage.getRefresh();
   if (!refreshToken) {
-    throw new ApiRequestError(401, 'No refresh token available');
+    throw new AppError("auth", "Session expired. Please sign in again.", 401);
   }
 
   try {
-    // Use plain fetch to avoid re-entering the axios interceptor
     const response = await fetch(`${API_URL}/auth/refresh`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refreshToken }),
-      credentials: 'include',
+      credentials: "include",
     });
 
     if (!response.ok) {
-      throw new ApiRequestError(response.status, 'Token refresh failed');
+      throw new AppError(
+        "auth",
+        "Session expired. Please sign in again.",
+        response.status,
+      );
     }
 
     const data = await response.json();
@@ -75,8 +99,8 @@ async function performRefresh(): Promise<{ accessToken: string; refreshToken: st
     return { accessToken: newAccessToken, refreshToken: newRefreshToken };
   } catch (error) {
     tokenStorage.clearTokens();
-    if (typeof window !== 'undefined') {
-      window.location.href = '/login';
+    if (typeof window !== "undefined") {
+      window.location.href = "/login";
     }
     throw error;
   }
@@ -88,12 +112,11 @@ const apiClient: AxiosInstance = axios.create({
   baseURL: API_URL,
   withCredentials: true,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
 // === REQUEST INTERCEPTOR ===
-// Inject access token into Authorization header
 
 apiClient.interceptors.request.use(
   (config) => {
@@ -107,55 +130,57 @@ apiClient.interceptors.request.use(
 );
 
 // === RESPONSE INTERCEPTOR ===
-// Handle 401 with auto-refresh and retry logic
 
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const originalRequest = error.config;
 
-    // Only handle 401 errors
-    if (error.response?.status !== 401 || !originalRequest) {
-      // Transform other errors to our custom error type
-      if (error.response) {
-        const errorData = error.response.data as Record<string, unknown>;
-        throw new ApiRequestError(
-          error.response.status,
-          (errorData?.message as string) || error.message,
-          (errorData?.path as string) || originalRequest?.url,
+    // No HTTP response — network error or timeout
+    if (!error.response) {
+      throw new AppError("network", "Check your connection and try again.");
+    }
+
+    const { status, data } = error.response;
+    const serverMessage = (data as Record<string, unknown>)?.message as
+      | string
+      | undefined;
+
+    // 401 → attempt token refresh, then retry
+    if (status === 401 && originalRequest) {
+      const req = originalRequest as unknown as Record<string, unknown>;
+      if (req._retried) {
+        tokenStorage.clearTokens();
+        if (typeof window !== "undefined") {
+          window.location.href = "/login";
+        }
+        throw new AppError(
+          "auth",
+          "Session expired. Please sign in again.",
+          401,
         );
       }
-      throw error;
-    }
 
-    // Prevent infinite retry loops
-    if ((originalRequest as any)._retried) {
-      tokenStorage.clearTokens();
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login';
+      try {
+        if (!refreshPromise) {
+          refreshPromise = performRefresh();
+        }
+
+        const { accessToken } = await refreshPromise;
+        refreshPromise = null;
+
+        req._retried = true;
+        originalRequest.headers!.Authorization = `Bearer ${accessToken}`;
+
+        return apiClient(originalRequest);
+      } catch (refreshError) {
+        refreshPromise = null;
+        throw refreshError;
       }
-      throw new ApiRequestError(401, 'Authentication failed');
     }
 
-    try {
-      // Reuse refresh promise if already in flight
-      if (!refreshPromise) {
-        refreshPromise = performRefresh();
-      }
-
-      const { accessToken } = await refreshPromise;
-      refreshPromise = null;
-
-      // Mark request as retried and update token
-      (originalRequest as any)._retried = true;
-      originalRequest.headers!.Authorization = `Bearer ${accessToken}`;
-
-      // Retry original request
-      return apiClient(originalRequest);
-    } catch (refreshError) {
-      refreshPromise = null;
-      throw refreshError;
-    }
+    // All other HTTP errors → normalise to AppError
+    throw normaliseError(status, serverMessage);
   },
 );
 

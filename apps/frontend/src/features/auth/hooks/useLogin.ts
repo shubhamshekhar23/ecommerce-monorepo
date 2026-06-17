@@ -1,13 +1,14 @@
 // src/features/auth/hooks/useLogin.ts
 // Login mutation hook
 
-'use client';
+"use client";
 
-import { useMutation } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
-import { loginApi } from '../api/auth.api';
-import { useAuthStore } from '@/store/auth.store';
-import type { LoginPayload } from '../interfaces';
+import { useMutation } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { loginApi } from "../api/auth.api";
+import { useAuthStore } from "@/store/auth.store";
+import { logger } from "@/shared/logger";
+import type { LoginPayload } from "../interfaces";
 
 export function useLogin() {
   const router = useRouter();
@@ -17,7 +18,8 @@ export function useLogin() {
     mutationFn: (payload: LoginPayload) => loginApi(payload),
     onSuccess: (data) => {
       setAuth(data.user, data.accessToken, data.refreshToken);
-      router.push('/');
+      logger.setUser({ id: data.user.id, email: data.user.email });
+      router.push("/");
     },
   });
 }

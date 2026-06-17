@@ -13,7 +13,7 @@ Everything downstream reads from validated env, uses `AppError`, and hits the up
 - [x] **Environment Configuration** → [architecture/environment-config.md](./architecture/environment-config.md)
   - Zod schema in `src/shared/env.ts`, derive semantic constants in `src/shared/config.ts`, startup validation check in `next.config.ts`
 
-- [ ] **Error Handling Strategy** → [observability/error-handling.md](./observability/error-handling.md)
+- [x] **Error Handling Strategy** → [observability/error-handling.md](./observability/error-handling.md)
   - `AppError` class with `ErrorCategory` enum (validation / business / auth / network / server / unknown), upgrade `apiClient.ts` response interceptor to normalize all HTTP errors, logger utility wrapping console + Sentry
 
 - [ ] **API & Network Strategy** → [data-and-state/api-and-network.md](./data-and-state/api-and-network.md)

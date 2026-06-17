@@ -1,54 +1,34 @@
 // src/features/cart/api/cart.api.ts
 
-'use client';
+"use client";
 
-import apiClient, { ApiRequestError } from '@/shared/apiClient';
-import type { Cart, AddToCartPayload } from '../interfaces';
+import apiClient from "@/shared/apiClient";
+import type { Cart, AddToCartPayload } from "../interfaces";
 
 export async function getCartApi(): Promise<Cart | null> {
-  try {
-    const res = await apiClient.get<Cart | null>('/cart');
-    return res.data;
-  } catch (error) {
-    if (error instanceof ApiRequestError) throw error;
-    throw new ApiRequestError(500, 'Failed to fetch cart');
-  }
+  const res = await apiClient.get<Cart | null>("/cart");
+  return res.data;
 }
 
 export async function addToCartApi(payload: AddToCartPayload): Promise<Cart> {
-  try {
-    const res = await apiClient.post<Cart>('/cart/items', payload);
-    return res.data;
-  } catch (error) {
-    if (error instanceof ApiRequestError) throw error;
-    throw new ApiRequestError(500, 'Failed to add item to cart');
-  }
+  const res = await apiClient.post<Cart>("/cart/items", payload);
+  return res.data;
 }
 
-export async function updateCartItemApi(itemId: string, quantity: number): Promise<Cart> {
-  try {
-    const res = await apiClient.patch<Cart>(`/cart/items/${itemId}`, { quantity });
-    return res.data;
-  } catch (error) {
-    if (error instanceof ApiRequestError) throw error;
-    throw new ApiRequestError(500, 'Failed to update cart item');
-  }
+export async function updateCartItemApi(
+  itemId: string,
+  quantity: number,
+): Promise<Cart> {
+  const res = await apiClient.patch<Cart>(`/cart/items/${itemId}`, {
+    quantity,
+  });
+  return res.data;
 }
 
 export async function removeCartItemApi(itemId: string): Promise<void> {
-  try {
-    await apiClient.delete(`/cart/items/${itemId}`);
-  } catch (error) {
-    if (error instanceof ApiRequestError) throw error;
-    throw new ApiRequestError(500, 'Failed to remove cart item');
-  }
+  await apiClient.delete(`/cart/items/${itemId}`);
 }
 
 export async function clearCartApi(): Promise<void> {
-  try {
-    await apiClient.delete('/cart');
-  } catch (error) {
-    if (error instanceof ApiRequestError) throw error;
-    throw new ApiRequestError(500, 'Failed to clear cart');
-  }
+  await apiClient.delete("/cart");
 }

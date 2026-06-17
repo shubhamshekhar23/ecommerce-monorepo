@@ -1,13 +1,14 @@
 // src/features/auth/hooks/useLogout.ts
 // Logout mutation hook
 
-'use client';
+"use client";
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
-import { logoutApi } from '../api/auth.api';
-import { useAuthStore } from '@/store/auth.store';
-import { tokenStorage } from '@/shared/apiClient';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { logoutApi } from "../api/auth.api";
+import { useAuthStore } from "@/store/auth.store";
+import { tokenStorage } from "@/shared/apiClient";
+import { logger } from "@/shared/logger";
 
 export function useLogout() {
   const router = useRouter();
@@ -22,10 +23,10 @@ export function useLogout() {
       }
     },
     onSettled: () => {
-      // Always clear local state regardless of API success/failure
       clearAuth();
+      logger.setUser(null);
       queryClient.clear();
-      router.push('/login');
+      router.push("/login");
     },
   });
 }

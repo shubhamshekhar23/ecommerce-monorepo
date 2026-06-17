@@ -21,7 +21,7 @@ Every error the frontend encounters falls into one of these categories. The cate
 
 ### Error Classification Layer
 
-- [ ] **Typed API error class** — create a custom error class that carries the error category and a user-facing message:
+- [x] **Typed API error class** — create a custom error class that carries the error category and a user-facing message:
   ```ts
   // src/shared/errors.ts
   export type ErrorCategory = 
@@ -40,7 +40,7 @@ Every error the frontend encounters falls into one of these categories. The cate
   - Complexity: Easy
   - File: `src/shared/errors.ts`
 
-- [ ] **API error normalizer** — in `apiClient.ts`, intercept all error responses and convert them to `AppError` before they reach any hook or component:
+- [x] **API error normalizer** — in `apiClient.ts`, intercept all error responses and convert them to `AppError` before they reach any hook or component:
   ```ts
   // axios interceptor
   error.response?.status === 400 → AppError('business', server message)
@@ -68,7 +68,7 @@ Every error the frontend encounters falls into one of these categories. The cate
 
 Replace all `console.log`, `console.error`, and `console.warn` calls with a structured logger.
 
-- [ ] **Create a `logger` utility** — thin wrapper around console (dev) and Sentry (prod):
+- [x] **Create a `logger` utility** — thin wrapper around console (dev) and Sentry (prod):
   ```ts
   // src/shared/logger.ts
   export const logger = {
@@ -88,14 +88,14 @@ Replace all `console.log`, `console.error`, and `console.warn` calls with a stru
   - Complexity: Easy
   - File: `src/shared/logger.ts`
 
-- [ ] **Replace all `console.*` calls** — search and replace across `src/`:
+- [x] **Replace all `console.*` calls** — search and replace across `src/`:
   ```
   grep -r "console\." src/
   ```
   Replace with `logger.*`. This makes it trivial to add structured context (user ID, request ID) to all logs later.
   - Complexity: Easy (mechanical, but thorough)
 
-- [ ] **Add user and request context to Sentry** — after login, set the Sentry user context so errors are associated with the specific user:
+- [x] **Add user and request context to Sentry** — after login, set the Sentry user context so errors are associated with the specific user:
   ```ts
   Sentry.setUser({ id: user.id, email: user.email });
   ```
