@@ -17,7 +17,14 @@ const logger = new Logger('Bootstrap');
 
 function setupMiddleware(app: NestExpressApplication): void {
   app.use(helmet());
-  app.use(compression());
+  app.use(
+    compression({
+      filter: (req, res) => {
+        if ((req.headers.accept ?? '').includes('text/event-stream')) return false;
+        return compression.filter(req, res);
+      },
+    }),
+  );
   app.enableCors({
     origin: process.env.CORS_ORIGIN?.split(',') ?? 'http://localhost:3000',
     credentials: true,
