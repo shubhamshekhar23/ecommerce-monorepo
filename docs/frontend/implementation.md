@@ -10,7 +10,7 @@ Each item links to its topic file for full implementation detail.
 
 Everything downstream reads from validated env, uses `AppError`, and hits the upgraded API client. Do this first to avoid retrofitting 40+ query hooks.
 
-- [ ] **Environment Configuration** → [architecture/environment-config.md](./architecture/environment-config.md)
+- [x] **Environment Configuration** → [architecture/environment-config.md](./architecture/environment-config.md)
   - Zod schema in `src/shared/env.ts`, derive semantic constants in `src/shared/config.ts`, startup validation check in `next.config.ts`
 
 - [ ] **Error Handling Strategy** → [observability/error-handling.md](./observability/error-handling.md)

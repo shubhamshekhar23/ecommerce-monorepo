@@ -18,7 +18,7 @@ If `NEXT_PUBLIC_API_URL` is missing from `.env`, the app starts fine and only fa
 
 ## Items to Implement
 
-- [ ] **`src/shared/config/env.ts` — Zod-validated environment schema** — define all environment variables in one place and parse them with Zod at module load time:
+- [x] **`src/shared/config/env.ts` — Zod-validated environment schema** — define all environment variables in one place and parse them with Zod at module load time:
   ```ts
   import { z } from 'zod';
 
@@ -42,7 +42,7 @@ If `NEXT_PUBLIC_API_URL` is missing from `.env`, the app starts fine and only fa
   - Complexity: Easy
   - File: `src/shared/config/env.ts`
 
-- [ ] **Replace all `process.env` access with `env.*`** — find and replace across the codebase:
+- [x] **Replace all `process.env` access with `env.*`** — find and replace across the codebase:
   ```
   grep -r "process.env" src/
   ```
@@ -50,7 +50,7 @@ If `NEXT_PUBLIC_API_URL` is missing from `.env`, the app starts fine and only fa
   - Complexity: Easy (mechanical)
   - Files: `src/shared/config.ts`, `src/shared/apiClient.ts`, `src/lib/stripe.ts`, any feature using env vars
 
-- [ ] **`src/shared/config/config.ts` — derived constants** — separate from raw env vars, have a config file that derives app-level constants from the validated env:
+- [x] **`src/shared/config/config.ts` — derived constants** — separate from raw env vars, have a config file that derives app-level constants from the validated env:
   ```ts
   import { env } from './env';
 
@@ -70,7 +70,7 @@ If `NEXT_PUBLIC_API_URL` is missing from `.env`, the app starts fine and only fa
   - Complexity: Easy
   - File: `src/shared/config/config.ts`
 
-- [ ] **`.env.example` file** — maintain a committed `.env.example` with all required variable names (no values). New developers know exactly what to set up:
+- [x] **`.env.example` file** — maintain a committed `.env.example` with all required variable names (no values). New developers know exactly what to set up:
   ```
   NEXT_PUBLIC_API_URL=
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
@@ -80,7 +80,7 @@ If `NEXT_PUBLIC_API_URL` is missing from `.env`, the app starts fine and only fa
   - Complexity: Easy
   - File: `.env.example` at repo root (or `apps/frontend/.env.example`)
 
-- [ ] **Type-safe env in `next.config.js`** — Next.js allows remapping env vars in the config. Use `env` here too (with a simpler Node.js-level schema check since Zod may not be available before the app boots):
+- [x] **Type-safe env in `next.config.js`** — Next.js allows remapping env vars in the config. Use `env` here too (with a simpler Node.js-level schema check since Zod may not be available before the app boots):
   ```js
   if (!process.env.NEXT_PUBLIC_API_URL) {
     throw new Error('NEXT_PUBLIC_API_URL is required');
