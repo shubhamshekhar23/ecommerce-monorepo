@@ -1,6 +1,12 @@
 // src/features/products/api/products.api.ts
 
 import apiClient from "@/shared/apiClient";
+import { parseResponse } from "@/shared/parseResponse";
+import {
+  ProductSchema,
+  PaginatedProductsSchema,
+  CursorPageProductsSchema,
+} from "../schemas/product.schemas";
 import type {
   PaginatedProducts,
   Product,
@@ -12,15 +18,16 @@ import type {
 export async function getProductsApi(
   params: ProductsQueryParams,
 ): Promise<PaginatedProducts> {
-  const response = await apiClient.get<PaginatedProducts>("/products", {
-    params,
-  });
-  return response.data;
+  const response = await apiClient.get("/products", { params });
+  return parseResponse<PaginatedProducts>(
+    PaginatedProductsSchema,
+    response.data,
+  );
 }
 
 export async function getProductBySlugApi(slug: string): Promise<Product> {
-  const response = await apiClient.get<Product>(`/products/slug/${slug}`);
-  return response.data;
+  const response = await apiClient.get(`/products/slug/${slug}`);
+  return parseResponse<Product>(ProductSchema, response.data);
 }
 
 // Cursor-based pagination — O(log n) regardless of page depth.
@@ -28,10 +35,11 @@ export async function getProductBySlugApi(slug: string): Promise<Product> {
 export async function getProductsCursorApi(
   params: CursorQueryParams,
 ): Promise<CursorPageProducts> {
-  const response = await apiClient.get<CursorPageProducts>("/products/cursor", {
-    params,
-  });
-  return response.data;
+  const response = await apiClient.get("/products/cursor", { params });
+  return parseResponse<CursorPageProducts>(
+    CursorPageProductsSchema,
+    response.data,
+  );
 }
 
 // Full-text search using PostgreSQL tsvector + GIN index.
@@ -40,8 +48,11 @@ export async function searchProductsApi(
   q: string,
   params?: CursorQueryParams,
 ): Promise<CursorPageProducts> {
-  const response = await apiClient.get<CursorPageProducts>("/products/search", {
+  const response = await apiClient.get("/products/search", {
     params: { q, ...params },
   });
-  return response.data;
+  return parseResponse<CursorPageProducts>(
+    CursorPageProductsSchema,
+    response.data,
+  );
 }

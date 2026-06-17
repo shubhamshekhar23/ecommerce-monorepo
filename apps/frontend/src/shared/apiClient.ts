@@ -111,6 +111,7 @@ async function performRefresh(): Promise<{
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_URL,
   withCredentials: true,
+  timeout: 10_000, // 10 s — a hanging request keeps the UI stuck indefinitely without this
   headers: {
     "Content-Type": "application/json",
   },

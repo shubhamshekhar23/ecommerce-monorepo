@@ -16,7 +16,7 @@ Everything downstream reads from validated env, uses `AppError`, and hits the up
 - [x] **Error Handling Strategy** → [observability/error-handling.md](./observability/error-handling.md)
   - `AppError` class with `ErrorCategory` enum (validation / business / auth / network / server / unknown), upgrade `apiClient.ts` response interceptor to normalize all HTTP errors, logger utility wrapping console + Sentry
 
-- [ ] **API & Network Strategy** → [data-and-state/api-and-network.md](./data-and-state/api-and-network.md)
+- [x] **API & Network Strategy** → [data-and-state/api-and-network.md](./data-and-state/api-and-network.md)
   - Zod response schemas for every API endpoint (validate at the boundary), retry with exponential backoff for network errors, 10s `AbortController` timeout, `staleTime` decisions documented per query
 
 ---

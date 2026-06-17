@@ -13,3 +13,8 @@ export const config = {
 } as const;
 
 export const API_URL = config.apiUrl;
+
+// Version-prefixed base URLs. Individual API functions reference these so
+// components never know the version. Use API_V2 when a breaking v2 endpoint exists.
+export const API_V1 = `${config.apiUrl}/v1`;
+export const API_V2 = `${config.apiUrl}/v2`;
