@@ -11,7 +11,11 @@ import { resolveAuthError } from '../../utils/auth.utils';
 import { FormField } from '@/components/FormField/FormField';
 import styles from './LoginForm.module.scss';
 
-export function LoginForm() {
+interface LoginFormProps {
+  sessionExpired?: boolean;
+}
+
+export function LoginForm({ sessionExpired = false }: LoginFormProps) {
   const { mutate: login, isPending, error } = useLogin();
 
   const {
@@ -29,6 +33,12 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className={styles.form} noValidate>
       <h1 className={styles.title}>Sign in</h1>
+
+      {sessionExpired && (
+        <div role="alert" className={styles.sessionExpiredBanner}>
+          Your session expired. Please sign in again.
+        </div>
+      )}
 
       {error && (
         <div role="alert" className={styles.serverError}>

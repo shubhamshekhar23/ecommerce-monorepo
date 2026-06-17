@@ -28,7 +28,7 @@ Security headers and auth hardening are legal/compliance requirements. Payment d
 - [x] **Security Headers** → [security/security-headers.md](./security/security-headers.md)
   - CSP, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy` in `next.config.ts` `headers()`. Audit all `<a target="_blank">` for `rel="noopener noreferrer"`
 
-- [ ] **Authentication Strategy** → [security/authentication.md](./security/authentication.md)
+- [x] **Authentication Strategy** → [security/authentication.md](./security/authentication.md)
   - Silent refresh at 80% token lifetime (setTimeout in auth store), multi-tab logout sync via `storage` event, session expiry toast with `?redirect=` URL preservation
 
 - [ ] **Payment UX** → [security/payment-ux.md](./security/payment-ux.md)

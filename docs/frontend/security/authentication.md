@@ -17,7 +17,7 @@ The current auth implementation handles login/logout and stores a token. This fi
 
 ### Token Lifecycle
 
-- [ ] **Refresh token rotation** — the backend issues a short-lived access token (e.g. 15 min) and a long-lived refresh token (e.g. 7 days). When the access token expires, the frontend silently requests a new one using the refresh token — without making the user log in again.
+- [x] **Refresh token rotation** — the backend issues a short-lived access token (e.g. 15 min) and a long-lived refresh token (e.g. 7 days). When the access token expires, the frontend silently requests a new one using the refresh token — without making the user log in again.
   
   Flow:
   1. API call fails with 401
@@ -29,7 +29,7 @@ The current auth implementation handles login/logout and stores a token. This fi
   - Complexity: Medium
   - File: `src/shared/apiClient.ts` (add axios/fetch interceptor)
 
-- [ ] **Silent refresh before expiry** — proactively refresh the access token before it expires (e.g. at 80% of its lifetime). Prevents the user hitting a 401 mid-flow (e.g. during checkout):
+- [x] **Silent refresh before expiry** — proactively refresh the access token before it expires (e.g. at 80% of its lifetime). Prevents the user hitting a 401 mid-flow (e.g. during checkout):
   ```ts
   const tokenExpiresAt = decodeJwt(token).exp * 1000;
   const refreshAt = tokenExpiresAt - 3 * 60 * 1000; // 3 min before expiry
@@ -38,7 +38,7 @@ The current auth implementation handles login/logout and stores a token. This fi
   - Complexity: Medium
   - File: `src/features/auth/hooks/useAuthHydration.ts`
 
-- [ ] **Session expiry handling** — if the refresh token has also expired (user was inactive for 7+ days), the app must:
+- [x] **Session expiry handling** — if the refresh token has also expired (user was inactive for 7+ days), the app must:
   1. Clear all auth state in the Zustand store
   2. Show a "Your session has expired. Please log in again." message (not a silent redirect)
   3. Preserve the current URL so after login the user is returned to where they were
@@ -47,7 +47,7 @@ The current auth implementation handles login/logout and stores a token. This fi
 
 ### Multi-Tab
 
-- [ ] **Multi-tab logout sync** — if the user logs out in one tab, all other open tabs should also log out. Use the `storage` event to listen for auth state changes:
+- [x] **Multi-tab logout sync** — if the user logs out in one tab, all other open tabs should also log out. Use the `storage` event to listen for auth state changes:
   ```ts
   window.addEventListener('storage', (event) => {
     if (event.key === 'auth-logout') {
@@ -60,13 +60,13 @@ The current auth implementation handles login/logout and stores a token. This fi
   - Complexity: Easy
   - File: `src/features/auth/hooks/useAuthHydration.ts`
 
-- [ ] **Multi-tab login sync** — conversely, if the user logs in on one tab, other tabs should pick up the session without requiring a page reload.
+- [x] **Multi-tab login sync** — conversely, if the user logs in on one tab, other tabs should pick up the session without requiring a page reload.
   - Same pattern: listen for `auth-login` storage event, re-hydrate auth state.
   - Complexity: Easy
 
 ### Route Protection
 
-- [ ] **Middleware auth guard audit** — `src/middleware.ts` likely protects `/admin/*`, `/cart`, `/orders`, `/checkout`. Verify:
+- [x] **Middleware auth guard audit** — `src/middleware.ts` likely protects `/admin/*`, `/cart`, `/orders`, `/checkout`. Verify:
   - Unauthenticated users trying to access protected routes are redirected to `/login?redirect=<original-url>`
   - After login, the user is redirected back to their original destination (not always to `/`)
   - Admin routes additionally check the user's role, not just auth status

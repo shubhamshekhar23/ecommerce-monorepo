@@ -25,6 +25,11 @@ export function useLogout() {
     onSettled: () => {
       clearAuth();
       logger.setUser(null);
+
+      // Broadcast to other tabs so they also clear their session immediately.
+      localStorage.setItem("auth-logout", Date.now().toString());
+      localStorage.removeItem("auth-logout");
+
       queryClient.clear();
       router.push("/login");
     },

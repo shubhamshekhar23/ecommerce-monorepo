@@ -100,10 +100,19 @@ async function performRefresh(): Promise<{
   } catch (error) {
     tokenStorage.clearTokens();
     if (typeof window !== "undefined") {
-      window.location.href = "/login";
+      window.location.href = "/login?session_expired=1";
     }
     throw error;
   }
+}
+
+// Exported for proactive silent refresh from useAuthHydration.
+// Wraps performRefresh so the calling hook doesn't need to import the private function.
+export async function silentRefresh(): Promise<{
+  accessToken: string;
+  refreshToken: string;
+}> {
+  return performRefresh();
 }
 
 // === AXIOS INSTANCE ===
@@ -153,7 +162,7 @@ apiClient.interceptors.response.use(
       if (req._retried) {
         tokenStorage.clearTokens();
         if (typeof window !== "undefined") {
-          window.location.href = "/login";
+          window.location.href = "/login?session_expired=1";
         }
         throw new AppError(
           "auth",

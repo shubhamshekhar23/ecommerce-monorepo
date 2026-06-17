@@ -19,7 +19,15 @@ export function useLogin() {
     onSuccess: (data) => {
       setAuth(data.user, data.accessToken, data.refreshToken);
       logger.setUser({ id: data.user.id, email: data.user.email });
-      router.push("/");
+
+      // Broadcast to other tabs that a login occurred so they pick up the session.
+      localStorage.setItem("auth-login", Date.now().toString());
+      localStorage.removeItem("auth-login");
+
+      // Honor the callbackUrl middleware set when redirecting unauthenticated users.
+      const callbackUrl =
+        new URLSearchParams(window.location.search).get("callbackUrl") ?? "/";
+      router.push(callbackUrl);
     },
   });
 }

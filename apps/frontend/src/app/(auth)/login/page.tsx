@@ -8,6 +8,11 @@ export const metadata: Metadata = {
   description: 'Sign in to your account',
 };
 
-export default function LoginPage() {
-  return <LoginForm />;
+interface LoginPageProps {
+  searchParams: Promise<{ session_expired?: string }>;
+}
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const params = await searchParams;
+  return <LoginForm sessionExpired={params.session_expired === '1'} />;
 }

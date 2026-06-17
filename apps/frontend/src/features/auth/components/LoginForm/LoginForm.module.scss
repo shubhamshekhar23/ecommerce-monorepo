@@ -9,6 +9,15 @@
   font-size: var(--font-size-2xl);
 }
 
+.sessionExpiredBanner {
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: #fffbeb;
+  color: #92400e;
+  border: 1px solid #fde68a;
+  font-size: var(--font-size-sm);
+}
+
 .serverError {
   padding: var(--space-3);
   border-radius: var(--radius-md);
