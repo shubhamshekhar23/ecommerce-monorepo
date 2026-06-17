@@ -2,6 +2,7 @@ import { Injectable, BadRequestException, NotFoundException, Logger } from '@nes
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import Stripe from 'stripe';
+import pLimit from 'p-limit';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 import { PaymentStatus } from '@prisma/client';
 import { PaymentConfirmedEvent } from '@/modules/events/order.events';
@@ -12,6 +13,12 @@ type StripeClient = InstanceType<typeof Stripe>;
 type StripePaymentIntent = Awaited<ReturnType<StripeClient['paymentIntents']['create']>>;
 type StripeRefund = Awaited<ReturnType<StripeClient['refunds']['create']>>;
 type StripeEvent = ReturnType<StripeClient['webhooks']['constructEvent']>;
+
+/*
+ - Bulkhead: cap concurrent Stripe API calls at 10 so a Stripe slowdown cannot
+ - exhaust all pending promises and starve unrelated request paths (e.g. product listing).
+ */
+const stripeLimit = pLimit(10);
 
 @Injectable()
 export class StripeService {
@@ -51,11 +58,13 @@ export class StripeService {
       throw new Error('Stripe API timeout');
     }
 
-    const paymentIntent = await this.stripe.paymentIntents.create({
-      amount: Math.round(amount * 100),
-      currency: 'usd',
-      metadata: { orderId },
-    });
+    const paymentIntent = await stripeLimit(() =>
+      this.stripe!.paymentIntents.create({
+        amount: Math.round(amount * 100),
+        currency: 'usd',
+        metadata: { orderId },
+      }),
+    );
 
     await this.prisma.order.update({
       where: { id: orderId },

@@ -732,6 +732,25 @@ export class ProductsService implements OnApplicationBootstrap {
     await this.amqp.publish(EXCHANGES.PRODUCT, ROUTING_KEYS.PRODUCT.DELETED, event);
   }
 
+  async restore(id: string): Promise<void> {
+    const affected = await this.prisma.$executeRaw`
+      UPDATE "Product" SET "deletedAt" = NULL, "isActive" = true
+      WHERE id = ${id} AND "deletedAt" IS NOT NULL
+    `;
+    if (affected === 0) throw new NotFoundException(`No soft-deleted product found with ID ${id}`);
+    await this.invalidateProducts();
+  }
+
+  async purge(id: string): Promise<void> {
+    const affected = await this.prisma.$executeRaw`
+      DELETE FROM "Product" WHERE id = ${id} AND "deletedAt" IS NOT NULL
+    `;
+    if (affected === 0) {
+      throw new NotFoundException(`Product not found or not soft-deleted — soft delete it first`);
+    }
+    await this.invalidateProducts();
+  }
+
   private async validateCategoryExists(categoryId: string): Promise<void> {
     const category = await this.prisma.category.findUnique({ where: { id: categoryId } });
     if (!category || !category.isActive) {

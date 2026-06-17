@@ -65,6 +65,8 @@
   },
   "dependencies": {
     "@apollo/server": "^4.13.0",
+    "@bull-board/api": "^8.0.0",
+    "@bull-board/express": "^8.0.0",
     "@ecommerce/shared-types": "*",
     "@golevelup/nestjs-rabbitmq": "^8.1.0",
     "@grpc/grpc-js": "^1.14.4",
@@ -112,6 +114,7 @@
     "nodemailer": "^8.0.0",
     "opossum": "^9.0.0",
     "otplib": "^13.4.0",
+    "p-limit": "^3.1.0",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "passport-jwt": "^4.0.1",

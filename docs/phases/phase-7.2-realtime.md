@@ -1,6 +1,6 @@
 # Phase 7.2 — Realtime APIs
 
-**Status:** 🔲 Pending
+**Status:** ✅ Done
 **Builds on:** [Phase 7.1 — API Advanced](./phase-7.1-api-advanced.md)
 **Concept cluster:** Two server-push channels — SSE for unidirectional status updates to individual users, and WebSockets for bidirectional real-time feeds to admin dashboards. Different protocols for different access patterns.
 

@@ -1,6 +1,6 @@
 # Phase 7.3 — GraphQL
 
-**Status:** 🔲 Pending
+**Status:** ✅ Done
 **Builds on:** [Phase 7.2 — Realtime APIs](./phase-7.2-realtime.md)
 **Concept cluster:** A GraphQL layer on top of the existing REST API — starting with basic queries, then solving the N+1 problem with DataLoader, then protecting the server from expensive queries with complexity limits and persisted queries.
 

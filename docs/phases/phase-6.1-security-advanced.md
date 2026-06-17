@@ -1,6 +1,6 @@
 # Phase 6.1 — Security Advanced
 
-**Status:** 🔲 Pending
+**Status:** ✅ Done
 **Builds on:** [Phase 6 — Security Depth](./phase-6-security.md)
 **Concept cluster:** Encryption at rest for sensitive database fields — complementing the existing bcrypt password hashing and RS256 JWT signing with application-layer column encryption for PII that needs to be readable but not exposed in a DB dump.
 

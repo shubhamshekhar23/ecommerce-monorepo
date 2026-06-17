@@ -1,6 +1,6 @@
 # Phase 12 — Testing Strategy
 
-**Status:** 🔲 Pending
+**Status:** ✅ Done
 **Concept cluster:** Four testing layers that sit above unit tests — contract tests that verify service compatibility without a shared environment, E2E tests that cover the critical user journey end-to-end, Testcontainers that replace shared test databases with isolated per-run containers, and mutation testing that measures how well your tests actually catch bugs.
 
 ---

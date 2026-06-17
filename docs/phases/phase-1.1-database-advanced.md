@@ -1,8 +1,8 @@
 # Phase 1.1 — Database Advanced
 
-**Status:** 🔲 Partial — categoryName denormalization ✅ done; vertical partitioning, concurrent indexes, ID-range batching pending
+**Status:** 🔲 Partial — vertical partitioning ✅, concurrent indexes ✅, ID-range batching ✅, categoryName denormalization ✅; soft delete (Category model + Prisma $use middleware) pending
 **Builds on:** [Phase 1 — Database Deep Dive](./phase-1-database.md)
-**Concept cluster:** Four patterns that separate a production data layer from a dev one — split hot/cold columns to shrink index page footprint, migrate data without locking the table (using ID-range batching, not `NOT IN`), build indexes without blocking reads, and snapshot immutable facts at write time so history never lies.
+**Concept cluster:** Five patterns that separate a production data layer from a dev one — split hot/cold columns to shrink index page footprint, migrate data without locking the table (using ID-range batching, not `NOT IN`), build indexes without blocking reads, snapshot immutable facts at write time so history never lies, and protect against accidental data loss with soft delete.
 
 ---
 
@@ -110,3 +110,41 @@ CREATE INDEX CONCURRENTLY "Product_name_gin_idx"
 - `apps/backend/prisma/migrations/<timestamp>_orderitem_category_name/migration.sql`
 - `apps/backend/src/modules/orders/saga/order-saga.service.ts` — pass `categoryName` on item create
 - `apps/backend/src/modules/orders/dto/order-response.dto.ts` — expose in response
+
+---
+
+## Soft Delete Pattern
+
+**What:** Mark records as `deletedAt DateTime?` instead of physically removing them. Normal queries automatically exclude soft-deleted rows. Hard delete becomes an explicit admin-only action with an additional privilege check.
+
+**Why:** Hard-deleting a `Product` that has fulfilled orders corrupts order history — `OrderItem.productId` becomes a dangling reference or cascades into deleting the order. Hard-deleting a `User` orphans their reviews and audit log entries. Soft delete makes destruction reversible and keeps referential integrity intact. It also provides a natural grace period: an admin who accidentally deletes a product can recover it before the next purge cycle.
+
+**What does NOT get soft delete:**
+- `OrderItem`, `CartItem` — child records that cascade from their parent; protect the parent instead
+- `InboxMessage`, `RefreshToken` — short-lived records with intentional hard expiry
+- `AuditLog` — must never be deleted (append-only by design)
+
+**Approach:**
+- Add `deletedAt DateTime?` to `Product`, `Category`, `User` in `schema.prisma`.
+- Migration: `ALTER TABLE "Product" ADD COLUMN "deletedAt" TIMESTAMP(3)` (same for Category, User).
+- Prisma middleware (`$use`) intercepts all `findMany`, `findFirst`, `findUnique` calls on these models and appends `{ where: { deletedAt: null } }` automatically — callers never need to remember the filter.
+- `DELETE /products/:id` (ADMIN role) → sets `deletedAt = new Date()`, returns `204`.
+- `PATCH /products/:id/restore` (ADMIN role) → sets `deletedAt = null`, returns the restored record.
+- `DELETE /products/:id/purge` (SUPER_ADMIN role) → hard deletes, only allowed if `deletedAt` is already set (two-step safety).
+- Background cron (wrapped with Distributed Lock) purges records where `deletedAt < now - 90 days`.
+
+**Soft delete vs deactivation:**
+The project already has `isActive: boolean` on `Product`. These serve different purposes:
+- `isActive = false` — merchant hides the product from the storefront (reversible, business intent)
+- `deletedAt` — admin removes the record from the system (destructive, operational action)
+
+Both can be true simultaneously. Queries should filter `isActive: true AND deletedAt IS NULL` for public-facing endpoints.
+
+**Key files:**
+- `apps/backend/prisma/schema.prisma` — add `deletedAt DateTime?` to `Product`, `Category`, `User`
+- `apps/backend/prisma/migrations/<timestamp>_soft_delete/migration.sql`
+- `apps/backend/src/modules/prisma/prisma.service.ts` — add `$use` middleware for auto-filter
+- `apps/backend/src/modules/products/products.service.ts` — add `restore()` and `purge()` methods
+- `apps/backend/src/modules/products/products.controller.ts` — `PATCH /:id/restore`, `DELETE /:id/purge`
+- `apps/backend/src/modules/users/users.service.ts` — same restore/purge pattern
+- Background cron: wrap existing cleanup job or add new one in `apps/backend/src/modules/tasks/`

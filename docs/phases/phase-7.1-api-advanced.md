@@ -1,6 +1,6 @@
 # Phase 7.1 — API Advanced
 
-**Status:** 🔲 Partial — Advanced filtering ✅ done; dynamic sorting, field selection, ETag pending
+**Status:** ✅ Done
 **Builds on:** [Phase 7 — Core Feature Backfill](./phase-7-features.md)
 **Concept cluster:** Four REST API features that give clients control over what they receive — sorting by any field, filtering on any dimension, selecting only needed fields (at the ORM layer, not post-fetch), and conditional requests that skip bandwidth when nothing changed.
 

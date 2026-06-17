@@ -29,7 +29,7 @@ export class RateLimiterService {
     const now = Date.now();
     const member = `${now}-${Math.random()}`;
     const count = await this.redis
-      .getClient()
+      .getRateLimitClient()
       .eval(SLIDING_WINDOW_LUA, 1, key, String(now), String(windowMs), member);
     return Number(count);
   }

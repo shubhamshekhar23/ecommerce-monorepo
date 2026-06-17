@@ -43,6 +43,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
   async onModuleInit(): Promise<void> {
     this.registerEncryptionMiddleware();
+    this.registerSoftDeleteMiddleware();
     this.registerTracingMiddleware();
     try {
       await this.$connect();
@@ -94,6 +95,29 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       const result = await next(params);
       if (params.model === 'User') this.decryptResult(result);
       return result;
+    });
+  }
+
+  /*
+   - Auto-appends deletedAt: null to all find operations on soft-deletable models.
+   - Restore and purge operations bypass this by using $executeRaw directly.
+   */
+  private registerSoftDeleteMiddleware(): void {
+    const SOFT_DELETE_MODELS = new Set(['Product', 'Category', 'User']);
+    const FIND_ACTIONS = new Set([
+      'findMany',
+      'findFirst',
+      'findUnique',
+      'findFirstOrThrow',
+      'findUniqueOrThrow',
+      'count',
+    ]);
+    this.$use(async (params: Prisma.MiddlewareParams, next) => {
+      if (SOFT_DELETE_MODELS.has(params.model ?? '') && FIND_ACTIONS.has(params.action)) {
+        params.args = params.args ?? {};
+        params.args.where = { ...params.args.where, deletedAt: null };
+      }
+      return next(params);
     });
   }
 

@@ -11,6 +11,7 @@ import compression from 'compression';
 import { join } from 'path';
 import { AppModule } from './app.module';
 import { EtagInterceptor } from '@/common/interceptors';
+import { setupBullBoard } from './bull-board.setup';
 
 const logger = new Logger('Bootstrap');
 
@@ -82,6 +83,7 @@ async function bootstrap(): Promise<void> {
   app.setGlobalPrefix(process.env.API_PREFIX ?? 'api/v1');
   app.useStaticAssets(join(__dirname, '..', 'uploads'), { prefix: '/uploads/' });
   setupSwagger(app);
+  setupBullBoard(app);
 
   // enableShutdownHooks: NestJS listens for SIGTERM/SIGINT and calls
   // onModuleDestroy on all providers (PrismaService closes DB, RedisHealthIndicator

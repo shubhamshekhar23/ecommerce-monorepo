@@ -1,6 +1,6 @@
 # Phase 9.2 — Microservices: Coordination
 
-**Status:** 🔲 Pending
+**Status:** ✅ Done
 **Builds on:** [Phase 9.1 — Microservices: Communication](./phase-9.1-microservices-communication.md)
 **Concept cluster:** Two patterns for coordinating work across services without tight coupling — choreography-based sagas where each service reacts to events independently, and the Inbox pattern that makes message consumers idempotent so duplicate deliveries are safe.
 

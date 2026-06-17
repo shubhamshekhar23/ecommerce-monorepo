@@ -173,6 +173,7 @@ model Category {
   children    Category[] @relation("CategoryHierarchy")
   products    Product[]
   isActive    Boolean    @default(true)
+  deletedAt   DateTime?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
@@ -668,4 +669,16 @@ model InboxMessage {
   processedAt DateTime @default(now())
 
   @@index([processedAt])
+}
+
+model FeatureFlag {
+  id                String   @id @default(cuid())
+  name              String   @unique
+  enabled           Boolean  @default(false)
+  rolloutPercentage Int      @default(100)
+  description       String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([name])
 }

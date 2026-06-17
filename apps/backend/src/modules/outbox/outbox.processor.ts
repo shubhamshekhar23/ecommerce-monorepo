@@ -1,7 +1,9 @@
 import { Injectable, Logger, OnApplicationBootstrap, OnApplicationShutdown } from '@nestjs/common';
 import { OutboxService } from './outbox.service';
+import { DistributedLockService } from '@/common/services/distributed-lock.service';
 
 const POLL_INTERVAL_MS = 5_000;
+const LOCK_TTL_MS = 8_000;
 
 // Why polling instead of database LISTEN/NOTIFY?
 // LISTEN/NOTIFY is session-scoped and incompatible with PgBouncer transaction
@@ -14,7 +16,10 @@ export class OutboxProcessor implements OnApplicationBootstrap, OnApplicationShu
   private readonly logger = new Logger(OutboxProcessor.name);
   private intervalId?: ReturnType<typeof setInterval>;
 
-  constructor(private readonly outboxService: OutboxService) {}
+  constructor(
+    private readonly outboxService: OutboxService,
+    private readonly lock: DistributedLockService,
+  ) {}
 
   onApplicationBootstrap(): void {
     this.intervalId = setInterval(() => {
@@ -33,7 +38,9 @@ export class OutboxProcessor implements OnApplicationBootstrap, OnApplicationShu
 
   private async tick(): Promise<void> {
     try {
-      await this.outboxService.processPendingBatch();
+      await this.lock.withLock('outbox:poll', LOCK_TTL_MS, () =>
+        this.outboxService.processPendingBatch(),
+      );
     } catch (error) {
       this.logger.error(
         `Outbox poll failed: ${error instanceof Error ? error.message : String(error)}`,

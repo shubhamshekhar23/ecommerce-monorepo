@@ -1,13 +1,12 @@
 import { Global, Module } from '@nestjs/common';
 import { CorrelationIdService } from './services/correlation-id.service';
+import { DistributedLockService } from './services/distributed-lock.service';
 
-// @Global makes CorrelationIdService available in every module without
-// explicit import — similar to how ConfigModule.forRoot({ isGlobal: true }) works.
-// Appropriate here because correlation IDs are a cross-cutting concern used
-// everywhere (services, workers, outgoing HTTP).
+// @Global makes services available in every module without explicit import.
+// Appropriate for cross-cutting concerns used everywhere (correlation IDs, locks).
 @Global()
 @Module({
-  providers: [CorrelationIdService],
-  exports: [CorrelationIdService],
+  providers: [CorrelationIdService, DistributedLockService],
+  exports: [CorrelationIdService, DistributedLockService],
 })
 export class CommonModule {}

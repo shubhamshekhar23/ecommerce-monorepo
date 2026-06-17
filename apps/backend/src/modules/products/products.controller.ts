@@ -4,6 +4,7 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Body,
   Param,
   Delete,
@@ -189,6 +190,24 @@ export class ProductsController {
   @ApiOperation({ summary: 'Soft delete product (admin or owning vendor)' })
   async softDelete(@CurrentUser() user: RequestUser, @Param('id') id: string): Promise<void> {
     await this.productsService.softDelete(id, user.id, user.role);
+  }
+
+  @Patch(':id/restore')
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Restore a soft-deleted product (admin only)' })
+  async restore(@Param('id') id: string): Promise<void> {
+    await this.productsService.restore(id);
+  }
+
+  @Delete(':id/purge')
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Hard delete a soft-deleted product (admin only, irreversible)' })
+  async purge(@Param('id') id: string): Promise<void> {
+    await this.productsService.purge(id);
   }
 
   // Bulk CSV import — stream processing + validation pipeline.

@@ -50,6 +50,8 @@ import { InvoiceModule } from '@/modules/invoices/invoice.module';
 import { CorrelationIdMiddleware } from '@/common/middleware/correlation-id.middleware';
 import { RequestMetricsMiddleware } from '@/common/middleware/request-metrics.middleware';
 import { DbAnalyticsModule } from '@/modules/db-analytics/db-analytics.module';
+import { FeatureFlagsModule } from '@/modules/feature-flags/feature-flags.module';
+import { TasksModule } from '@/modules/tasks/tasks.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -109,6 +111,8 @@ import { AppService } from './app.service';
     CacheModule,
     RateLimitModule,
     DbAnalyticsModule,
+    FeatureFlagsModule,
+    TasksModule,
   ],
   controllers: [AppController],
   providers: [

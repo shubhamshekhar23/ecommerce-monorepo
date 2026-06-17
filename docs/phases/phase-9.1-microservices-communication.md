@@ -1,6 +1,6 @@
 # Phase 9.1 — Microservices: Communication
 
-**Status:** 🔲 Pending
+**Status:** ✅ Done
 **Builds on:** [Phase 9 — Microservices Extraction](./phase-9-microservices.md)
 **Concept cluster:** Two synchronous communication patterns that complement the existing async RabbitMQ/Kafka channels — a BFF aggregation layer that eliminates N client round-trips, and gRPC for typed, low-latency internal RPC with hard deadlines.
 

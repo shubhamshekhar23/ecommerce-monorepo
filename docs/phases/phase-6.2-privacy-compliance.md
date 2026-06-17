@@ -1,6 +1,6 @@
 # Phase 6.2 — Privacy & Compliance
 
-**Status:** 🔲 Pending
+**Status:** ✅ Done
 **Builds on:** [Phase 6.1 — Security Advanced](./phase-6.1-security-advanced.md)
 **Concept cluster:** GDPR right-to-erasure — the soft-delete added in Phase 1 backfill deactivates accounts but leaves all PII in the database indefinitely. Article 17 requires the ability to erase it on request, with a grace period before the irreversible step.
 
