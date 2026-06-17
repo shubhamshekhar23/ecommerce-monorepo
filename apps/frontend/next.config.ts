@@ -15,6 +15,54 @@ for (const key of requiredEnvVars) {
   }
 }
 
+// Content-Security-Policy in report-only mode.
+// Collect browser violation reports without blocking anything.
+// Once violations are reviewed and resolved, move to Content-Security-Policy.
+//
+// Notes on directives:
+//   script-src 'unsafe-inline' — Next.js injects inline hydration scripts; required until nonce-based CSP is set up
+//   connect-src https:         — covers the dynamic API URL (env var); tighten to the specific origin in production
+//   frame-src js.stripe.com   — Stripe Elements render inside a cross-origin iframe
+const cspDirectives = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' js.stripe.com",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self' data:",
+  "connect-src 'self' https: wss:",
+  "frame-src js.stripe.com",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+].join("; ");
+
+const securityHeaders = [
+  // Prevent the app from being embedded in any iframe (blocks clickjacking).
+  { key: "X-Frame-Options", value: "DENY" },
+
+  // Stop browsers from MIME-sniffing a response away from its declared content-type.
+  { key: "X-Content-Type-Options", value: "nosniff" },
+
+  // Send full URL only for same-origin requests; send just the origin cross-origin.
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+
+  // Force HTTPS for 1 year on all sub-domains.
+  // Only active once the deployment is confirmed HTTPS-only.
+  {
+    key: "Strict-Transport-Security",
+    value: "max-age=31536000; includeSubDomains",
+  },
+
+  // Disable browser features the app does not use.
+  {
+    key: "Permissions-Policy",
+    value: "camera=(), microphone=(), geolocation=()",
+  },
+
+  // CSP in report-only mode — logs violations, does not enforce.
+  { key: "Content-Security-Policy-Report-Only", value: cspDirectives },
+];
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
@@ -23,6 +71,16 @@ const nextConfig: NextConfig = {
         hostname: "picsum.photos",
       },
     ],
+  },
+
+  async headers() {
+    return [
+      {
+        // Apply to every route.
+        source: "/(.*)",
+        headers: securityHeaders,
+      },
+    ];
   },
 };
 

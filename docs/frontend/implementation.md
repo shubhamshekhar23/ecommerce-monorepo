@@ -25,7 +25,7 @@ Everything downstream reads from validated env, uses `AppError`, and hits the up
 
 Security headers and auth hardening are legal/compliance requirements. Payment double-charge prevention protects real money. GDPR gates script loading for Phases 9/10.
 
-- [ ] **Security Headers** → [security/security-headers.md](./security/security-headers.md)
+- [x] **Security Headers** → [security/security-headers.md](./security/security-headers.md)
   - CSP, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy` in `next.config.ts` `headers()`. Audit all `<a target="_blank">` for `rel="noopener noreferrer"`
 
 - [ ] **Authentication Strategy** → [security/authentication.md](./security/authentication.md)
