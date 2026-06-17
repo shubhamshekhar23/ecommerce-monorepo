@@ -1,11 +1,18 @@
 import { Injectable, Logger, OnApplicationBootstrap, OnApplicationShutdown } from '@nestjs/common';
 import { PrismaService } from '@/modules/prisma/prisma.service';
-import { DistributedLockService } from '@/common/services/distributed-lock.service';
+import { LeaderElectionService } from '@/common/services/leader-election.service';
 
 const PURGE_INTERVAL_MS = 24 * 60 * 60 * 1_000; // once per day
-const LOCK_TTL_MS = 5 * 60 * 1_000; // 5 minutes
 const GRACE_PERIOD_DAYS = 90;
 
+/*
+ - Uses LeaderElectionService as the coordination primitive instead of per-tick
+ - DistributedLock: if this replica is not the current leader it skips the tick
+ - entirely, avoiding even the cost of a lock attempt. The distributed lock was
+ - appropriate for the outbox (short-lived, any replica can run it); leader
+ - election is appropriate here because the purge is infrequent, expensive,
+ - and meaningless to run in parallel across replicas.
+ */
 @Injectable()
 export class SoftDeletePurgeService implements OnApplicationBootstrap, OnApplicationShutdown {
   private readonly logger = new Logger(SoftDeletePurgeService.name);
@@ -13,7 +20,7 @@ export class SoftDeletePurgeService implements OnApplicationBootstrap, OnApplica
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly lock: DistributedLockService,
+    private readonly leader: LeaderElectionService,
   ) {}
 
   onApplicationBootstrap(): void {
@@ -26,7 +33,11 @@ export class SoftDeletePurgeService implements OnApplicationBootstrap, OnApplica
   }
 
   private async tick(): Promise<void> {
-    await this.lock.withLock('soft-delete:purge', LOCK_TTL_MS, () => this.runPurge());
+    if (!this.leader.isCurrentLeader) {
+      this.logger.debug('Skipping purge tick — not the leader');
+      return;
+    }
+    await this.runPurge();
   }
 
   private async runPurge(): Promise<void> {

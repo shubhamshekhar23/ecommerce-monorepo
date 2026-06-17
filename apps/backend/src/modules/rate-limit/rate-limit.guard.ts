@@ -11,20 +11,16 @@ import type { Request } from 'express';
 import { RateLimiterService } from './rate-limiter.service';
 import { RATE_LIMIT_KEY, RateLimitOptions } from './rate-limit.decorator';
 
-// Sliding window counter algorithm:
-//   1. Redis sorted set per bucket key — members are timestamps of past requests
-//   2. On each request: prune entries older than windowMs, add current timestamp, count remaining
-//   3. If count > limit → 429; else allow
-//
-// Why sliding window over fixed window?
-//   Fixed window resets at wall-clock boundaries (e.g. every minute at :00).
-//   A burst of 10 requests at :59 + 10 more at :01 = 20 in 2 seconds but both pass a
-//   limit-10 fixed window. Sliding window counts only the rolling last `windowMs` — no boundary attack.
-//
-// Why not token bucket?
-//   Token bucket allows short bursts (up to the bucket capacity) then smooths to a steady rate.
-//   Good for API throughput shaping; overkill for brute-force protection where we want hard limits.
-//   Sliding window is simpler and sufficient for auth endpoints.
+/*
+ - Supports two algorithms, selected at startup via RATE_LIMIT_ALGORITHM env var:
+ -
+ - sliding_window (default): counts requests in a rolling time window. Hard limit —
+ -   every request in the window is counted equally. Good for auth brute-force protection.
+ -
+ - token_bucket: tokens refill at a steady rate; short bursts are allowed up to capacity.
+ -   Good for human-facing API paths where adding 5 cart items quickly is legitimate.
+ -   Refill rate derived from options: capacity = limit, rate = limit / (windowMs / 1000) t/s.
+ */
 
 interface AuthenticatedRequest extends Request {
   user?: { id: string };
@@ -48,12 +44,10 @@ export class RateLimitGuard implements CanActivate {
 
     const req = ctx.switchToHttp().getRequest<AuthenticatedRequest>();
     const bucketKey = this.buildKey(req, ctx, options);
-    const count = await this.rateLimiter.addAndCountInWindow(bucketKey, options.windowMs);
+    const denied = await this.isDenied(bucketKey, options);
 
-    if (count > options.limit) {
-      this.logger.warn(
-        `Rate limit exceeded: key=${bucketKey} count=${count} limit=${options.limit}`,
-      );
+    if (denied) {
+      this.logger.warn(`Rate limit exceeded: key=${bucketKey} algo=${this.rateLimiter.algorithm}`);
       throw new HttpException(
         'Too many requests. Please try again later.',
         HttpStatus.TOO_MANY_REQUESTS,
@@ -61,6 +55,16 @@ export class RateLimitGuard implements CanActivate {
     }
 
     return true;
+  }
+
+  private async isDenied(key: string, opts: RateLimitOptions): Promise<boolean> {
+    if (this.rateLimiter.algorithm === 'token_bucket') {
+      const refillRate = opts.limit / (opts.windowMs / 1000);
+      const allowed = await this.rateLimiter.checkTokenBucket(key, opts.limit, refillRate);
+      return !allowed;
+    }
+    const count = await this.rateLimiter.addAndCountInWindow(key, opts.windowMs);
+    return count > opts.limit;
   }
 
   private buildKey(

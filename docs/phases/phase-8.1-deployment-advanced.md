@@ -1,6 +1,6 @@
 # Phase 8.1 — Deployment Advanced
 
-**Status:** 🔲 Pending
+**Status:** ✅ Done
 **Builds on:** [Phase 8 — CI/CD & Production](./phase-8-cicd.md), [Phase 11 — Kubernetes Platform](./phase-11-kubernetes.md)
 **Concept cluster:** Two operational maturity patterns that build on the already-deployed Istio and Argo CD infrastructure — Canary Deployment for metric-driven progressive rollout, and Leader Election for safe singleton job coordination across replicas.
 

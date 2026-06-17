@@ -1,0 +1,29 @@
+# VirtualService for canary traffic splitting.
+# Argo Rollouts updates the weights on this VS at each step automatically.
+# Kept separate from the main virtual-services.yaml to avoid conflicts
+# between the canary-managed VS and the baseline Istio routing config.
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: backend-canary-vs
+spec:
+  hosts:
+    - backend
+  http:
+    - name: primary
+      route:
+        - destination:
+            host: backend-stable
+            port:
+              number: 4000
+          weight: 100
+        - destination:
+            host: backend-canary
+            port:
+              number: 4000
+          weight: 0
+      timeout: 15s
+      retries:
+        attempts: 3
+        perTryTimeout: 5s
+        retryOn: gateway-error,connect-failure,retriable-4xx

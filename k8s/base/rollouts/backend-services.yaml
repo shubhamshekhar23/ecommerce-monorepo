@@ -1,0 +1,32 @@
+# Two Services required by Argo Rollouts canary strategy.
+# Argo Rollouts manages pod label selectors on these services automatically —
+# backend-stable always points to the current stable pods,
+# backend-canary points to the canary pods during a rollout.
+# Istio VirtualService (backend-canary-vs) routes traffic between them by weight.
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-stable
+  labels:
+    app: backend
+spec:
+  selector:
+    app: backend
+  ports:
+    - port: 4000
+      targetPort: 4000
+      name: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-canary
+  labels:
+    app: backend
+spec:
+  selector:
+    app: backend
+  ports:
+    - port: 4000
+      targetPort: 4000
+      name: http

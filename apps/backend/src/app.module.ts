@@ -52,6 +52,7 @@ import { RequestMetricsMiddleware } from '@/common/middleware/request-metrics.mi
 import { DbAnalyticsModule } from '@/modules/db-analytics/db-analytics.module';
 import { FeatureFlagsModule } from '@/modules/feature-flags/feature-flags.module';
 import { TasksModule } from '@/modules/tasks/tasks.module';
+import { PromotionsModule } from '@/modules/promotions/promotions.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -113,6 +114,7 @@ import { AppService } from './app.service';
     DbAnalyticsModule,
     FeatureFlagsModule,
     TasksModule,
+    PromotionsModule,
   ],
   controllers: [AppController],
   providers: [

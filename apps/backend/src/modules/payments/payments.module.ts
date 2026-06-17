@@ -4,7 +4,11 @@ import { PrismaModule } from '@/modules/prisma/prisma.module';
 import { OutboxModule } from '@/modules/outbox/outbox.module';
 import { CircuitBreakerModule } from '@/modules/circuit-breaker/circuit-breaker.module';
 import { QueueModule } from '@/modules/queue/queue.module';
+import { StripeModule } from '@/modules/stripe/stripe.module';
 import { PaymentRetryProcessor } from './payment-retry.processor';
+import { PaymentPluginRegistry } from './registry/payment-plugin.registry';
+import { StripeProvider } from './providers/stripe.provider';
+import { PaymentService } from './payment.service';
 
 @Module({
   imports: [
@@ -13,8 +17,9 @@ import { PaymentRetryProcessor } from './payment-retry.processor';
     PrismaModule,
     OutboxModule,
     CircuitBreakerModule,
+    StripeModule,
   ],
-  providers: [PaymentRetryProcessor],
-  exports: [BullModule],
+  providers: [PaymentRetryProcessor, PaymentPluginRegistry, StripeProvider, PaymentService],
+  exports: [BullModule, PaymentPluginRegistry, PaymentService],
 })
 export class PaymentsModule {}

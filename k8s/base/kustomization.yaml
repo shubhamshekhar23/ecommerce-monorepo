@@ -19,3 +19,4 @@ resources:
   - ingress/
   - monitoring/
   - jobs/
+  - rollouts/

@@ -1,0 +1,61 @@
+# Replaces k8s/base/backend/deployment.yaml.
+# Argo Rollouts manages the progressive traffic split; Istio enforces the weights.
+# To apply: kubectl apply -f k8s/base/rollouts/ -n ecommerce
+# To promote: kubectl argo rollouts promote backend -n ecommerce
+# To abort:   kubectl argo rollouts abort backend -n ecommerce
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: backend
+  labels:
+    app: backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: ecommerce-backend:latest
+          ports:
+            - containerPort: 4000
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 4000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+  strategy:
+    canary:
+      canaryService: backend-canary
+      stableService: backend-stable
+      trafficRouting:
+        istio:
+          virtualService:
+            name: backend-canary-vs
+            routes:
+              - primary
+      steps:
+        - setWeight: 10
+        - pause:
+            duration: 5m
+        - setWeight: 30
+        - pause:
+            duration: 5m
+        - setWeight: 60
+        - pause:
+            duration: 5m
+      analysis:
+        templates:
+          - templateName: backend-success-rate
+        startingStep: 1

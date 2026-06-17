@@ -399,6 +399,17 @@ model OrderEvent {
   @@index([orderId, occurredAt])
 }
 
+// Snapshot of the projected order state at eventSeq events.
+// Avoids replaying all events on every read — projection loads the latest snapshot
+// then replays only events that occurred after it.
+model OrderSnapshot {
+  id        String   @id @default(cuid())
+  orderId   String   @unique
+  state     Json
+  eventSeq  Int
+  createdAt DateTime @default(now())
+}
+
 // ── Reliability (Phase 2) ─────────────────────────────────────────────────────
 
 // Idempotency: stores request key + cached response so retries return the same
@@ -682,3 +693,27 @@ model FeatureFlag {
 
   @@index([name])
 }
+
+// ── Promotions Engine (Phase 7.4) ─────────────────────────────────────────────
+// Rules are evaluated at cart/order time; matching rules produce AppliedActions
+// that reduce the total price, waive shipping, or add a free item.
+// conditionDsl is the human-readable form; condition is the pre-compiled JSON
+// used for fast evaluation. JSON-only rules (no conditionDsl) are also valid.
+model PromotionRule {
+  id           String    @id @default(cuid())
+  name         String
+  description  String?
+  condition    Json      // RuleCondition — evaluated at runtime
+  conditionDsl String?   // Optional human-readable DSL string (compiled to condition at save)
+  action       Json      // RuleAction — applied when condition matches
+  priority     Int       @default(0)
+  active       Boolean   @default(true)
+  stackable    Boolean   @default(true)  // false = stop evaluating further rules after match
+  startsAt     DateTime?
+  expiresAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([active, priority])
+}
+

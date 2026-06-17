@@ -1,6 +1,6 @@
 # Phase 9.5 — Advanced Architectural Patterns
 
-**Status:** 🔲 Pending
+**Status:** ✅ Done
 **Builds on:** [Phase 9 — Microservices Extraction](./phase-9-microservices.md), [Phase 9.4 — Event Architecture](./phase-9.4-event-architecture.md)
 **Concept cluster:** Three deep architectural refactors of existing modules — evolve the OrderEvent log into true Event Sourcing, restructure payment providers as swappable Microkernel plugins, and decompose the OrderSagaService into a testable Pipe and Filter pipeline.
 

@@ -3,7 +3,6 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaModule } from '@/modules/prisma/prisma.module';
 import { OutboxModule } from '@/modules/outbox/outbox.module';
-import { CircuitBreakerModule } from '@/modules/circuit-breaker/circuit-breaker.module';
 import { MetricsModule } from '@/modules/metrics/metrics.module';
 import { ShippingModule } from '@/modules/shipping/shipping.module';
 import { TaxModule } from '@/modules/tax/tax.module';
@@ -21,17 +20,28 @@ import { OrderAnalyticsHandler } from './handlers/order-analytics.handler';
 import { OrdersResolver } from './orders.resolver';
 import { PaymentsModule } from '@/modules/payments/payments.module';
 import { OrderEventStore } from './order-event-store.service';
+import { OrderProjectionService } from './order-projection.service';
+import { PromotionsModule } from '@/modules/promotions/promotions.module';
+import { OrderProcessingPipeline } from './pipeline/order-processing.pipeline';
+import { AcquireLocksFilter } from './pipeline/filters/acquire-locks.filter';
+import { ValidateStockFilter } from './pipeline/filters/validate-stock.filter';
+import { ApplyPromotionsFilter } from './pipeline/filters/apply-promotions.filter';
+import { CalculateTotalsFilter } from './pipeline/filters/calculate-totals.filter';
+import { CreateOrderFilter } from './pipeline/filters/create-order.filter';
+import { DecrementStockFilter } from './pipeline/filters/decrement-stock.filter';
+import { ClearCartFilter } from './pipeline/filters/clear-cart.filter';
+import { PublishEventsFilter } from './pipeline/filters/publish-events.filter';
 
 @Module({
   imports: [
     PrismaModule,
     OutboxModule,
-    CircuitBreakerModule,
     MetricsModule,
     ShippingModule,
     TaxModule,
     KafkaProducerModule,
     PaymentsModule,
+    PromotionsModule,
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
@@ -53,7 +63,17 @@ import { OrderEventStore } from './order-event-store.service';
     OrderAnalyticsHandler,
     OrdersResolver,
     OrderEventStore,
+    OrderProjectionService,
+    OrderProcessingPipeline,
+    AcquireLocksFilter,
+    ValidateStockFilter,
+    ApplyPromotionsFilter,
+    CalculateTotalsFilter,
+    CreateOrderFilter,
+    DecrementStockFilter,
+    ClearCartFilter,
+    PublishEventsFilter,
   ],
-  exports: [OrdersService, OrderQueryService],
+  exports: [OrdersService, OrderQueryService, OrderProjectionService],
 })
 export class OrdersModule {}
