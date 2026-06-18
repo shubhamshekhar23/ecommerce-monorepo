@@ -5,12 +5,23 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
+import { resolveStripeError } from '../../utils/stripe-errors';
 import styles from './CheckoutForm.module.scss';
 
 interface CheckoutFormProps {
   orderId: string;
   amount: number;
   clientSecret: string;
+}
+
+// Clear all checkout session data after a confirmed payment so a fresh
+// checkout starts clean (new idempotency key, no stale clientSecret).
+function clearCheckoutSession(): void {
+  try {
+    sessionStorage.removeItem('checkout-idempotency-key');
+    sessionStorage.removeItem('checkout-order-id');
+    sessionStorage.removeItem('checkout-client-secret');
+  } catch { /* ignore */ }
 }
 
 export function CheckoutForm({ orderId, amount, clientSecret }: CheckoutFormProps) {
@@ -35,25 +46,30 @@ export function CheckoutForm({ orderId, amount, clientSecret }: CheckoutFormProp
 
     const cardElement = elements.getElement(CardElement);
     if (!cardElement) {
-      setError('Card element not found');
+      setError('Card element not found. Please refresh and try again.');
       setProcessing(false);
       return;
     }
 
-    const { error: confirmError } = await stripe.confirmCardPayment(clientSecret, {
-      payment_method: {
-        card: cardElement,
-      },
+    const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+      payment_method: { card: cardElement },
     });
 
     if (confirmError) {
-      setError(confirmError.message || 'Payment failed. Please try again.');
+      setError(resolveStripeError(confirmError));
       setProcessing(false);
       return;
     }
 
-    // Payment succeeded
-    router.push('/orders?success=true');
+    // Some payment methods (bank debits, certain cards) don't confirm immediately.
+    // Redirect to the order page either way — it will show the current status.
+    clearCheckoutSession();
+
+    if (paymentIntent?.status === 'processing') {
+      router.push(`/orders/${orderId}?payment_processing=1`);
+    } else {
+      router.push(`/orders/${orderId}`);
+    }
   };
 
   return (
@@ -99,7 +115,7 @@ export function CheckoutForm({ orderId, amount, clientSecret }: CheckoutFormProp
           className={styles.submitBtn}
           disabled={!stripe || processing}
         >
-          {processing ? 'Processing...' : `Pay $${total}`}
+          {processing ? 'Processing payment…' : `Pay $${total}`}
         </button>
       </form>
 

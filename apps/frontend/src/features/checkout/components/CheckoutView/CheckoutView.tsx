@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Elements } from '@stripe/react-stripe-js';
 import { stripePromise } from '@/lib/stripe';
 import { useCart } from '@/features/cart/hooks';
@@ -10,7 +10,10 @@ import { CheckoutForm } from '../CheckoutForm/CheckoutForm';
 import { AppError } from '@/shared/errors';
 import styles from './CheckoutView.module.scss';
 
-type Stage = 'review' | 'payment' | 'success';
+const SESSION_ORDER_ID = 'checkout-order-id';
+const SESSION_CLIENT_SECRET = 'checkout-client-secret';
+
+type Stage = 'review' | 'payment';
 
 function resolveOrderError(error: unknown): string {
   if (!(error instanceof AppError)) return 'Something went wrong. Please try again.';
@@ -36,6 +39,22 @@ export function CheckoutView() {
   const { data: cart, isLoading: cartLoading } = useCart();
   const { mutate: createOrder, isPending: isCreatingOrder } = useCreateOrder();
   const { mutate: getClientSecret, isPending: isGettingSecret } = useGetClientSecret();
+
+  // Resume an interrupted checkout: if the user refreshed mid-payment, the
+  // clientSecret is still valid — skip directly to the Stripe form.
+  useEffect(() => {
+    try {
+      const savedOrderId = sessionStorage.getItem(SESSION_ORDER_ID);
+      const savedClientSecret = sessionStorage.getItem(SESSION_CLIENT_SECRET);
+      if (savedOrderId && savedClientSecret) {
+        setOrderId(savedOrderId);
+        setClientSecret(savedClientSecret);
+        setStage('payment');
+      }
+    } catch {
+      // sessionStorage blocked
+    }
+  }, []);
 
   if (cartLoading) {
     return (
@@ -64,6 +83,12 @@ export function CheckoutView() {
         setOrderId(order.id);
         getClientSecret(order.id, {
           onSuccess: (response) => {
+            // Persist so a page refresh can resume without creating a new payment intent.
+            try {
+              sessionStorage.setItem(SESSION_ORDER_ID, order.id);
+              sessionStorage.setItem(SESSION_CLIENT_SECRET, response.clientSecret);
+            } catch { /* ignore */ }
+
             setClientSecret(response.clientSecret);
             setStage('payment');
           },
@@ -78,6 +103,7 @@ export function CheckoutView() {
 
   const total = Number(cart.totalPrice).toFixed(2);
   const itemLabel = cart.itemCount === 1 ? '1 item' : `${cart.itemCount} items`;
+  const isProcessing = isCreatingOrder || isGettingSecret;
 
   return (
     <div className={styles.container}>
@@ -122,9 +148,9 @@ export function CheckoutView() {
           <button
             className={styles.placeOrderBtn}
             onClick={handlePlaceOrder}
-            disabled={isCreatingOrder || isGettingSecret}
+            disabled={isProcessing}
           >
-            {isCreatingOrder || isGettingSecret ? 'Processing...' : 'Place Order & Pay'}
+            {isProcessing ? 'Processing…' : 'Place Order & Pay'}
           </button>
         </div>
       )}
@@ -133,12 +159,6 @@ export function CheckoutView() {
         <Elements stripe={stripePromise} options={{ clientSecret }}>
           <CheckoutForm orderId={orderId} amount={cart.totalPrice} clientSecret={clientSecret} />
         </Elements>
-      )}
-
-      {stage === 'success' && (
-        <div className={styles.successMessage}>
-          <p>Payment processing... Redirecting to your orders.</p>
-        </div>
       )}
     </div>
   );

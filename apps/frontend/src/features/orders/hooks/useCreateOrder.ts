@@ -1,22 +1,34 @@
-'use client';
+"use client";
 
-import { useRef } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createOrderApi } from '../api/orders.api';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createOrderApi } from "../api/orders.api";
+
+const IDEMPOTENCY_KEY_STORAGE = "checkout-idempotency-key";
+
+// Read from sessionStorage so the same key is reused if the page is refreshed
+// mid-checkout. The backend deduplicates on this key and returns the cached order.
+// Key is intentionally NOT cleared on order creation — only cleared after confirmed
+// payment so that retries after a declined card reuse the same order rather than
+// creating a duplicate.
+function getOrCreateIdempotencyKey(): string {
+  try {
+    const existing = sessionStorage.getItem(IDEMPOTENCY_KEY_STORAGE);
+    if (existing) return existing;
+    const key = crypto.randomUUID();
+    sessionStorage.setItem(IDEMPOTENCY_KEY_STORAGE, key);
+    return key;
+  } catch {
+    // sessionStorage blocked (rare — private mode with strict settings)
+    return crypto.randomUUID();
+  }
+}
 
 export function useCreateOrder() {
   const queryClient = useQueryClient();
-
-  // One UUID per checkout intent — stable across retries so the backend returns
-  // the cached response rather than creating a duplicate order.
-  // Rotated after a successful order so the next checkout gets a fresh key.
-  const idempotencyKeyRef = useRef(crypto.randomUUID());
-
   return useMutation({
-    mutationFn: () => createOrderApi(idempotencyKeyRef.current),
+    mutationFn: () => createOrderApi(getOrCreateIdempotencyKey()),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['cart'] });
-      idempotencyKeyRef.current = crypto.randomUUID();
+      void queryClient.invalidateQueries({ queryKey: ["cart"] });
     },
   });
 }

@@ -31,7 +31,7 @@ Security headers and auth hardening are legal/compliance requirements. Payment d
 - [x] **Authentication Strategy** → [security/authentication.md](./security/authentication.md)
   - Silent refresh at 80% token lifetime (setTimeout in auth store), multi-tab logout sync via `storage` event, session expiry toast with `?redirect=` URL preservation
 
-- [ ] **Payment UX** → [security/payment-ux.md](./security/payment-ux.md)
+- [x] **Payment UX** → [security/payment-ux.md](./security/payment-ux.md)
   - Disable submit button immediately on first click, `crypto.randomUUID()` idempotency key stored in `sessionStorage` sent as `X-Idempotency-Key`, Stripe error code → user-friendly message mapping, restore checkout form on refresh
 
 - [ ] **GDPR & Cookie Consent** → [security/gdpr-and-privacy.md](./security/gdpr-and-privacy.md)
