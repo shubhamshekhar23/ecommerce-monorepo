@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { createOrderApi } from "../api/orders.api";
 import { eventBus } from "@/shared/eventBus";
+import { trackPurchase } from "@/shared/analytics/trackEvent";
 
 const IDEMPOTENCY_KEY_STORAGE = "checkout-idempotency-key";
 
@@ -34,6 +35,12 @@ export function useCreateOrder() {
       eventBus.emit("order:placed", {
         orderId: order.id,
         orderNumber: order.orderNumber,
+      });
+      trackPurchase({
+        id: order.id,
+        orderNumber: order.orderNumber,
+        total: Number(order.totalPrice),
+        itemCount: order.items.length,
       });
     },
     onError: () => {

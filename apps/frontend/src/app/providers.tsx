@@ -4,6 +4,7 @@
 "use client";
 
 import { useEffect } from "react";
+import * as Sentry from "@sentry/nextjs";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { Toaster, toast } from "sonner";
@@ -12,9 +13,8 @@ import { AuthProvider } from "@/features/auth";
 import { FeatureFlagProvider } from "@/shared/featureFlags";
 import { CookieConsentBanner } from "@/components/CookieConsent/CookieConsentBanner";
 import { eventBus } from "@/shared/eventBus";
-// Phase 10: import { useCookieConsent } from '@/shared/cookieConsent/useCookieConsent';
-// Phase 10: import { GoogleAnalyticsScript } from '@/components/Analytics/GoogleAnalytics';
-// Phase 10: import { SentryInit } from '@/components/Analytics/SentryInit';
+import { useCookieConsent } from "@/shared/cookieConsent/useCookieConsent";
+import { useAuthStore } from "@/store/auth.store";
 
 // Subscribes to cross-feature events and renders feedback (toasts, etc.).
 // Lives here so event-emitting hooks stay decoupled from the toast library.
@@ -44,25 +44,40 @@ function EventBusSubscriber() {
   return null;
 }
 
+// Syncs the logged-in user's identity to Sentry when error tracking is consented.
+// Clears Sentry user context on logout to avoid cross-session leakage.
+function SentryUserSync() {
+  const user = useAuthStore((s) => s.user);
+  const { consent } = useCookieConsent();
+
+  useEffect(() => {
+    if (!consent.errorTracking) {
+      Sentry.setUser(null);
+      return;
+    }
+    if (user) {
+      Sentry.setUser({ id: user.id, email: user.email });
+    } else {
+      Sentry.setUser(null);
+    }
+  }, [user, consent.errorTracking]);
+
+  return null;
+}
+
 interface ProvidersProps {
   children: React.ReactNode;
 }
 
 export function Providers({ children }: ProvidersProps) {
-  // Phase 10: const { consent } = useCookieConsent();
-
   return (
     <QueryClientProvider client={queryClient}>
       <FeatureFlagProvider>
         <AuthProvider>{children}</AuthProvider>
       </FeatureFlagProvider>
 
-      {/* Phase 10: conditionally load analytics/Sentry based on consent
-          {consent.analytics && <GoogleAnalyticsScript />}
-          {consent.errorTracking && <SentryInit />}
-      */}
-
       <EventBusSubscriber />
+      <SentryUserSync />
       <CookieConsentBanner />
       <Toaster position="top-right" richColors closeButton />
       <ReactQueryDevtools initialIsOpen={false} />

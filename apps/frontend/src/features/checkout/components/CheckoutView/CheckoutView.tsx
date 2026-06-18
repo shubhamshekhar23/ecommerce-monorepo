@@ -10,6 +10,7 @@ import { useGetClientSecret } from "../../hooks";
 import { CheckoutForm } from "../CheckoutForm/CheckoutForm";
 import { CheckoutSkeleton } from "../CheckoutSkeleton/CheckoutSkeleton";
 import { AppError } from "@/shared/errors";
+import { trackBeginCheckout } from "@/shared/analytics/trackEvent";
 import styles from "./CheckoutView.module.scss";
 
 const SESSION_ORDER_ID = "checkout-order-id";
@@ -43,6 +44,12 @@ export function CheckoutView() {
   const { mutate: createOrder, isPending: isCreatingOrder } = useCreateOrder();
   const { mutate: getClientSecret, isPending: isGettingSecret } =
     useGetClientSecret();
+
+  // Track begin_checkout once when a cart with items is loaded.
+  useEffect(() => {
+    if (!cart || cart.items.length === 0) return;
+    trackBeginCheckout(Number(cart.totalPrice), cart.itemCount);
+  }, [cart?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Resume an interrupted checkout: if the user refreshed mid-payment, the
   // clientSecret is still valid — skip directly to the Stripe form.

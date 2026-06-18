@@ -160,7 +160,7 @@ All components exist by now. Expanding the design system has full context. Dark 
 
 Additive features. The app works without them. Implement once all core patterns are solid.
 
-- [ ] **Analytics & Monitoring** → [observability/analytics-and-monitoring.md](./observability/analytics-and-monitoring.md)
+- [x] **Analytics & Monitoring** → [observability/analytics-and-monitoring.md](./observability/analytics-and-monitoring.md)
   - `@sentry/nextjs`, Vercel Analytics + Speed Insights in layout, GA4 funnel events (`view_item`, `add_to_cart`, `begin_checkout`, `purchase`), Sentry user context on login/logout
   - Depends on: Phase 2.4 (GDPR consent gates GA4 + Sentry loading)
 

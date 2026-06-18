@@ -9,7 +9,7 @@ Source: `others.md`
 
 ### Error Monitoring
 
-- [ ] **Sentry for frontend error tracking** — the notes list Sentry as the standard tool. Captures:
+- [x] **Sentry for frontend error tracking** — the notes list Sentry as the standard tool. Captures:
   - Unhandled JS errors and promise rejections
   - React component errors (via the Error Boundary integration)
   - API call failures (via Sentry's network instrumentation)
@@ -25,7 +25,7 @@ Source: `others.md`
 
 ### Performance Monitoring
 
-- [ ] **Vercel Analytics for Core Web Vitals** — since the app deploys on Vercel (or compatible), `@vercel/analytics` is the easiest way to track LCP, FID, CLS, TTFB, and FCP per page in production.
+- [x] **Vercel Analytics for Core Web Vitals** — since the app deploys on Vercel (or compatible), `@vercel/analytics` is the easiest way to track LCP, FID, CLS, TTFB, and FCP per page in production.
   
   Setup:
   ```tsx
@@ -38,7 +38,7 @@ Source: `others.md`
   - Complexity: Easy (one import, one component)
   - File: `src/app/layout.tsx`
 
-- [ ] **Vercel Speed Insights** — separate from Analytics. Tracks real-user performance scores (not just lab scores from Lighthouse). Install `@vercel/speed-insights` alongside Analytics.
+- [x] **Vercel Speed Insights** — separate from Analytics. Tracks real-user performance scores (not just lab scores from Lighthouse). Install `@vercel/speed-insights` alongside Analytics.
   - Complexity: Easy
   - File: `src/app/layout.tsx`
 
@@ -46,7 +46,7 @@ Source: `others.md`
 
 ### User Behavior Analytics
 
-- [ ] **Page view and funnel tracking** — track the conversion funnel: Product View → Add to Cart → Checkout Start → Order Placed. This surfaces where users drop off.
+- [x] **Page view and funnel tracking** — track the conversion funnel: Product View → Add to Cart → Checkout Start → Order Placed. This surfaces where users drop off.
   
   Options:
   - Google Analytics 4 (GA4) — free, widely used

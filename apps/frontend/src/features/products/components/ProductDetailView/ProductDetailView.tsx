@@ -1,16 +1,17 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState, useCallback } from 'react';
-import { useAuthStore } from '@/store/auth.store';
-import { useAddToCart } from '@/features/cart/hooks';
-import { useProduct } from '../../hooks';
-import { ProductImageGallery } from '../ProductImageGallery/ProductImageGallery';
-import { VariantSelector } from '../VariantSelector/VariantSelector';
-import { Breadcrumb } from '@/components/Breadcrumb/Breadcrumb';
-import type { ProductVariant } from '../../interfaces';
-import styles from './ProductDetailView.module.scss';
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState, useCallback, useEffect } from "react";
+import { trackViewItem } from "@/shared/analytics/trackEvent";
+import { useAuthStore } from "@/store/auth.store";
+import { useAddToCart } from "@/features/cart/hooks";
+import { useProduct } from "../../hooks";
+import { ProductImageGallery } from "../ProductImageGallery/ProductImageGallery";
+import { VariantSelector } from "../VariantSelector/VariantSelector";
+import { Breadcrumb } from "@/components/Breadcrumb/Breadcrumb";
+import type { ProductVariant } from "../../interfaces";
+import styles from "./ProductDetailView.module.scss";
 
 interface ProductDetailViewProps {
   slug: string;
@@ -21,10 +22,24 @@ export function ProductDetailView({ slug }: ProductDetailViewProps) {
   const router = useRouter();
   const status = useAuthStore((state) => state.status);
   const { mutate: addToCart, isPending } = useAddToCart();
-  const [buttonState, setButtonState] = useState<'idle' | 'success' | 'error'>('idle');
+  const [buttonState, setButtonState] = useState<"idle" | "success" | "error">(
+    "idle",
+  );
+
+  useEffect(() => {
+    if (!product) return;
+    trackViewItem({
+      id: product.id,
+      name: product.name,
+      price: Number(product.price),
+      category: product.category?.name,
+    });
+  }, [product?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Variant selection state — null until a complete combination is chosen
-  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
+    null,
+  );
   const [isVariantFullySelected, setIsVariantFullySelected] = useState(false);
 
   const handleVariantChange = useCallback(
@@ -39,20 +54,20 @@ export function ProductDetailView({ slug }: ProductDetailViewProps) {
     (e: React.MouseEvent) => {
       e.preventDefault();
       if (!product) return;
-      if (status !== 'authenticated') {
-        router.push('/login');
+      if (status !== "authenticated") {
+        router.push("/login");
         return;
       }
       addToCart(
         { productId: product.id, quantity: 1 },
         {
           onSuccess: () => {
-            setButtonState('success');
-            setTimeout(() => setButtonState('idle'), 2000);
+            setButtonState("success");
+            setTimeout(() => setButtonState("idle"), 2000);
           },
           onError: () => {
-            setButtonState('error');
-            setTimeout(() => setButtonState('idle'), 2000);
+            setButtonState("error");
+            setTimeout(() => setButtonState("idle"), 2000);
           },
         },
       );
@@ -61,12 +76,12 @@ export function ProductDetailView({ slug }: ProductDetailViewProps) {
   );
 
   const getButtonLabel = (): string => {
-    if (isPending) return 'Adding...';
-    if (buttonState === 'success') return 'Added ✓';
-    if (buttonState === 'error') return 'Failed';
+    if (isPending) return "Adding...";
+    if (buttonState === "success") return "Added ✓";
+    if (buttonState === "error") return "Failed";
     const hasVariants = (product?.variants?.length ?? 0) > 0;
-    if (hasVariants && !isVariantFullySelected) return 'Select options';
-    return 'Add to Cart';
+    if (hasVariants && !isVariantFullySelected) return "Select options";
+    return "Add to Cart";
   };
 
   if (isLoading) {
@@ -90,14 +105,20 @@ export function ProductDetailView({ slug }: ProductDetailViewProps) {
   const hasVariants = (product.variants?.length ?? 0) > 0;
 
   // When a variant is selected show its values; otherwise fall back to the base product.
-  const displayPrice = Number(selectedVariant?.price ?? product.price).toFixed(2);
-  const displayStock = selectedVariant ? selectedVariant.stock : (hasVariants ? null : product.stock);
+  const displayPrice = Number(selectedVariant?.price ?? product.price).toFixed(
+    2,
+  );
+  const displayStock = selectedVariant
+    ? selectedVariant.stock
+    : hasVariants
+      ? null
+      : product.stock;
 
   // null means "variants exist but none selected yet" — show a prompt instead of a count
   const inStock = displayStock !== null && displayStock > 0;
   const isButtonDisabled =
     isPending ||
-    buttonState === 'success' ||
+    buttonState === "success" ||
     (hasVariants && (!isVariantFullySelected || !selectedVariant)) ||
     (!hasVariants && !inStock);
 
@@ -113,10 +134,15 @@ export function ProductDetailView({ slug }: ProductDetailViewProps) {
       : product.images;
 
   const breadcrumbs = [
-    { label: 'Home', href: '/' },
-    { label: 'Products', href: '/products' },
+    { label: "Home", href: "/" },
+    { label: "Products", href: "/products" },
     ...(product.category
-      ? [{ label: product.category.name, href: `/products?category=${product.category.slug}` }]
+      ? [
+          {
+            label: product.category.name,
+            href: `/products?category=${product.category.slug}`,
+          },
+        ]
       : []),
     { label: product.name },
   ];
@@ -127,7 +153,10 @@ export function ProductDetailView({ slug }: ProductDetailViewProps) {
 
       <div className={styles.content}>
         <div className={styles.gallery}>
-          <ProductImageGallery images={galleryImages} productName={product.name} />
+          <ProductImageGallery
+            images={galleryImages}
+            productName={product.name}
+          />
         </div>
 
         <div className={styles.info}>
@@ -141,7 +170,9 @@ export function ProductDetailView({ slug }: ProductDetailViewProps) {
 
           {/* Stock badge — adapts to variant selection state */}
           {displayStock === null ? (
-            <div className={styles.selectOptions}>Select options to see availability</div>
+            <div className={styles.selectOptions}>
+              Select options to see availability
+            </div>
           ) : inStock ? (
             <div className={styles.inStock}>
               <span className={styles.badge}>✓</span>
@@ -157,7 +188,10 @@ export function ProductDetailView({ slug }: ProductDetailViewProps) {
           {/* Variant selector — only rendered when the product has variants */}
           {hasVariants && (
             <div className={styles.section}>
-              <VariantSelector variants={product.variants} onVariantChange={handleVariantChange} />
+              <VariantSelector
+                variants={product.variants}
+                onVariantChange={handleVariantChange}
+              />
             </div>
           )}
 
@@ -179,7 +213,7 @@ export function ProductDetailView({ slug }: ProductDetailViewProps) {
           )}
 
           <button
-            className={`${styles.addToCart} ${buttonState === 'success' ? styles.addToCartSuccess : ''} ${buttonState === 'error' ? styles.addToCartError : ''}`}
+            className={`${styles.addToCart} ${buttonState === "success" ? styles.addToCartSuccess : ""} ${buttonState === "error" ? styles.addToCartError : ""}`}
             disabled={isButtonDisabled}
             onClick={handleAddToCart}
           >

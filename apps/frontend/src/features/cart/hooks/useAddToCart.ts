@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth.store";
 import { eventBus } from "@/shared/eventBus";
+import { trackAddToCart } from "@/shared/analytics/trackEvent";
 import { addToCartApi } from "../api/cart.api";
 import type { Cart, AddToCartPayload } from "../interfaces";
 import {
@@ -64,6 +65,14 @@ export function useAddToCart() {
       eventBus.emit("cart:item-added", {
         productName: addedItem?.product.name ?? "Item",
       });
+      if (addedItem) {
+        trackAddToCart({
+          id: addedItem.productId,
+          name: addedItem.product.name,
+          price: Number(addedItem.product.price),
+          quantity: payload.quantity ?? 1,
+        });
+      }
     },
     onError: (_err, _vars, context) => {
       if (context?.previousCart !== undefined) {

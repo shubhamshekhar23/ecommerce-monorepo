@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import NextTopLoader from "nextjs-toploader";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Providers } from "./providers";
 import { Header } from "@/components/Header/Header";
 import { Navbar } from "@/components/Navbar/Navbar";
@@ -8,6 +11,7 @@ import "@/styles/globals.scss";
 import styles from "./layout.module.scss";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
 export const metadata: Metadata = {
   title: { template: "%s | ShopHub", default: "ShopHub - Online Shopping" },
@@ -65,6 +69,21 @@ export default function RootLayout({
         />
       </head>
       <body>
+        {/* GA4 — loaded only when NEXT_PUBLIC_GA_MEASUREMENT_ID is set.
+            strategy="afterInteractive" defers execution until page is interactive
+            so it does not block the critical rendering path. */}
+        {GA_ID && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="ga4-init" strategy="afterInteractive">
+              {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','${GA_ID}',{send_page_view:false})`}
+            </Script>
+          </>
+        )}
+
         <NextTopLoader color="var(--color-accent)" showSpinner={false} />
         <script
           type="application/ld+json"
@@ -81,6 +100,11 @@ export default function RootLayout({
           </main>
           <Footer />
         </Providers>
+
+        {/* Vercel Analytics tracks Core Web Vitals and page view data. */}
+        <Analytics />
+        {/* Vercel Speed Insights tracks real-user performance scores. */}
+        <SpeedInsights />
       </body>
     </html>
   );

@@ -1,7 +1,8 @@
-'use client';
+"use client";
 
-import { Component, type ReactNode } from 'react';
-import styles from './ErrorBoundary.module.scss';
+import { Component, type ReactNode } from "react";
+import * as Sentry from "@sentry/nextjs";
+import styles from "./ErrorBoundary.module.scss";
 
 interface Props {
   children: ReactNode;
@@ -22,18 +23,26 @@ export class ErrorBoundary extends Component<Props, State> {
     return { hasError: true };
   }
 
+  override componentDidCatch(error: Error, info: React.ErrorInfo): void {
+    Sentry.captureException(error, {
+      extra: { componentStack: info.componentStack },
+    });
+  }
+
   override render() {
     if (this.state.hasError) {
-      return this.props.fallback ?? (
-        <div className={styles.fallback}>
-          <p className={styles.message}>Something went wrong.</p>
-          <button
-            className={styles.retry}
-            onClick={() => this.setState({ hasError: false })}
-          >
-            Try again
-          </button>
-        </div>
+      return (
+        this.props.fallback ?? (
+          <div className={styles.fallback}>
+            <p className={styles.message}>Something went wrong.</p>
+            <button
+              className={styles.retry}
+              onClick={() => this.setState({ hasError: false })}
+            >
+              Try again
+            </button>
+          </div>
+        )
       );
     }
 
