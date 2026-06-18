@@ -24,7 +24,7 @@ export function RegisterForm() {
 
   const onSubmit = (values: RegisterFormValues): void => {
     // Strip confirmPassword before sending to API
-    const { confirmPassword: _, ...payload } = values;
+    const { confirmPassword: _confirmPassword, ...payload } = values;
     register(payload);
   };
 

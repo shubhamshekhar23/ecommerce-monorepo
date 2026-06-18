@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Elements } from '@stripe/react-stripe-js';
 import { stripePromise } from '@/lib/stripe';
 import { useCart } from '@/features/cart/hooks';
@@ -47,6 +48,7 @@ export function CheckoutView() {
       const savedOrderId = sessionStorage.getItem(SESSION_ORDER_ID);
       const savedClientSecret = sessionStorage.getItem(SESSION_CLIENT_SECRET);
       if (savedOrderId && savedClientSecret) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setOrderId(savedOrderId);
         setClientSecret(savedClientSecret);
         setStage('payment');
@@ -69,7 +71,7 @@ export function CheckoutView() {
       <div className={styles.container}>
         <div className={styles.errorMessage}>
           <p>Your cart is empty.</p>
-          <a href="/products" className={styles.linkBtn}>Continue Shopping</a>
+          <Link href="/products" className={styles.linkBtn}>Continue Shopping</Link>
         </div>
       </div>
     );

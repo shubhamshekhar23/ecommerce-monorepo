@@ -14,11 +14,11 @@ The monorepo already has a CI matrix workflow (`paths-filter` on all 5 services)
 
 ### Static Analysis Gates
 
-- [ ] **TypeScript type-check** — run `tsc --noEmit` as a CI step. Catches type errors that ESLint misses. Currently the dev server may ignore type errors; CI must not.
+- [x] **TypeScript type-check** — run `tsc --noEmit` as a CI step. Catches type errors that ESLint misses. Currently the dev server may ignore type errors; CI must not.
   - Command: `npx tsc --noEmit`
   - Complexity: Easy
 
-- [ ] **ESLint** — run `eslint src/` in CI. Include the `eslint-plugin-jsx-a11y` rules from `15-accessibility.md`. Zero warnings allowed (use `--max-warnings 0`).
+- [x] **ESLint** — run `eslint src/` in CI. Include the `eslint-plugin-jsx-a11y` rules from `15-accessibility.md`. Zero warnings allowed (use `--max-warnings 0`).
   - Command: `npx eslint src/ --max-warnings 0`
   - Complexity: Easy
 
@@ -31,11 +31,11 @@ The monorepo already has a CI matrix workflow (`paths-filter` on all 5 services)
 
 ### Test Gates
 
-- [ ] **Unit + component tests** — run Jest in CI. Fail if any test fails.
+- [x] **Unit + component tests** — run Jest in CI. Fail if any test fails.
   - Command: `npx jest --ci --coverage`
   - Complexity: Easy
 
-- [ ] **Coverage threshold** — enforce minimum coverage in `jest.config.ts`:
+- [x] **Coverage threshold** — enforce minimum coverage in `jest.config.ts`:
   ```ts
   coverageThreshold: {
     global: { branches: 70, functions: 70, lines: 70, statements: 70 }
@@ -53,7 +53,7 @@ The monorepo already has a CI matrix workflow (`paths-filter` on all 5 services)
 
 ### Build & Bundle Gates
 
-- [ ] **Build verification** — `next build` must succeed with zero errors. Any TypeScript error or import issue that slips past type-check will fail here.
+- [x] **Build verification** — `next build` must succeed with zero errors. Any TypeScript error or import issue that slips past type-check will fail here.
   - Command: `npx next build`
   - Complexity: Easy
 
@@ -68,7 +68,7 @@ The monorepo already has a CI matrix workflow (`paths-filter` on all 5 services)
 
 ### Security & Dependency Gates
 
-- [ ] **`npm audit`** — run `npm audit --audit-level=high` in CI. Fails if any high or critical severity vulnerability is found in dependencies.
+- [x] **`npm audit`** — run `npm audit --audit-level=high` in CI. Fails if any high or critical severity vulnerability is found in dependencies.
   - Complexity: Easy
 
 - [ ] **Dependabot or Renovate** — auto-open PRs when dependencies have new versions or security patches. Configure in `.github/dependabot.yml`.
@@ -91,7 +91,7 @@ The monorepo already has a CI matrix workflow (`paths-filter` on all 5 services)
 
 ### CI Workflow Structure
 
-- [ ] **Parallel job structure in GitHub Actions** — organize the CI workflow so fast gates (type-check, lint, format) run in parallel, and slower gates (build, E2E, Lighthouse) run after fast gates pass. Minimizes wall-clock time:
+- [x] **Parallel job structure in GitHub Actions** — organize the CI workflow so fast gates (type-check, lint, format) run in parallel, and slower gates (build, E2E, Lighthouse) run after fast gates pass. Minimizes wall-clock time:
   ```
   [lint + typecheck + format] → parallel
         ↓ (if all pass)

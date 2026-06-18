@@ -36,22 +36,22 @@ From fastest/cheapest to slowest/most realistic:
 
 ### Component Tests
 
-- [ ] **Set up React Testing Library** — install `@testing-library/react`, `@testing-library/user-event`, `@testing-library/jest-dom`. Configure in `jest.config.ts`.
+- [x] **Set up React Testing Library** — install `@testing-library/react`, `@testing-library/user-event`, `@testing-library/jest-dom`. Configure in `jest.config.ts`.
   - Complexity: Easy (setup)
 
-- [ ] **MSW (Mock Service Worker) for API mocking** — use MSW to intercept network requests in tests. This means components are tested against realistic API responses without a real server. Define handlers in `src/__tests__/mocks/handlers.ts`.
+- [x] **MSW (Mock Service Worker) for API mocking** — use MSW to intercept network requests in tests. This means components are tested against realistic API responses without a real server. Define handlers in `src/__tests__/mocks/handlers.ts`.
   - Install: `msw`
   - Define: one handler file per feature (`products.handlers.ts`, `cart.handlers.ts`)
   - Complexity: Medium
 
-- [ ] **Test `ProductCard`** — render with a mock product, assert:
+- [x] **Test `ProductCard`** — render with a mock product, assert:
   - Product name, price, stock status are visible
   - "Add to Cart" button is disabled when `stock === 0`
   - Clicking "Add to Cart" when unauthenticated redirects to `/login`
   - Clicking "Add to Cart" when authenticated calls the mutation
   - Complexity: Medium
 
-- [ ] **Test `LoginForm` / `RegisterForm`** — assert:
+- [x] **Test `LoginForm` / `RegisterForm`** — assert:
   - Submitting with empty fields shows validation errors
   - Submitting valid data calls the API mutation
   - Error response from API renders the error message
@@ -63,7 +63,7 @@ From fastest/cheapest to slowest/most realistic:
   - Remove button calls the correct mutation
   - Complexity: Medium
 
-- [ ] **Accessibility tests with `jest-axe`** — in every component test, add:
+- [x] **Accessibility tests with `jest-axe`** — in every component test, add:
   ```ts
   import { axe, toHaveNoViolations } from 'jest-axe';
   expect.extend(toHaveNoViolations);
@@ -86,7 +86,7 @@ From fastest/cheapest to slowest/most realistic:
 
 ### E2E Tests
 
-- [ ] **Set up Playwright** — preferred over Cypress for Next.js App Router. Supports multiple browsers, is faster, and has better TypeScript support.
+- [x] **Set up Playwright** — preferred over Cypress for Next.js App Router. Supports multiple browsers, is faster, and has better TypeScript support.
   - Install: `@playwright/test`
   - Config: `playwright.config.ts` pointing to `localhost:3000`
   - Complexity: Medium (setup)
@@ -108,7 +108,7 @@ From fastest/cheapest to slowest/most realistic:
   6. Assert order confirmation page
   - Complexity: Complex (requires Stripe test mode setup)
 
-- [ ] **E2E: Auth flow** — register new user, login, logout, verify redirects.
+- [x] **E2E: Auth flow** — register new user, login, logout, verify redirects.
   - Complexity: Medium
 
 - [ ] **E2E: Admin product CRUD** — login as admin, create product, verify it appears in listing, edit it, delete it.
@@ -122,7 +122,7 @@ From fastest/cheapest to slowest/most realistic:
 
 ### Performance Tests
 
-- [ ] **Render time budget with React Testing Library** — measure how long a component takes to mount and assert it stays within a budget. Catches regressions where a component becomes unexpectedly slow (e.g. a heavy `useMemo` or accidental re-render cascade):
+- [x] **Render time budget with React Testing Library** — measure how long a component takes to mount and assert it stays within a budget. Catches regressions where a component becomes unexpectedly slow (e.g. a heavy `useMemo` or accidental re-render cascade):
   ```ts
   it('renders ProductGrid within performance budget', () => {
     const start = performance.now();

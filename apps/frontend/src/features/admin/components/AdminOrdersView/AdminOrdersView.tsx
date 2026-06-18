@@ -3,7 +3,6 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
 import { useAdminOrders, useUpdateOrderStatus } from '../../hooks';
 import type { OrderStatus } from '@/features/orders/interfaces';
 import styles from './AdminOrdersView.module.scss';

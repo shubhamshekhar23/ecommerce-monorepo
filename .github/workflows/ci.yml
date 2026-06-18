@@ -35,6 +35,7 @@ jobs:
       gateway: ${{ steps.filter.outputs.gateway }}
       notification-service: ${{ steps.filter.outputs.notification-service }}
       search-service: ${{ steps.filter.outputs.search-service }}
+      frontend: ${{ steps.filter.outputs.frontend }}
       any-service: ${{ steps.filter.outputs.any-service }}
     steps:
       - uses: actions/checkout@v4
@@ -58,6 +59,8 @@ jobs:
             search-service:
               - 'apps/search-service/**'
               - 'packages/shared-types/**'
+            frontend:
+              - 'apps/frontend/**'
             any-service:
               - 'apps/**'
               - 'packages/**'
@@ -350,7 +353,115 @@ jobs:
           SEARCH_GRPC_URL: localhost:5005
         run: npm run test:pact
 
-  # ── Job 6: Mutation Testing (weekly only) ────────────────────────────────────
+  # ── Jobs 6a–6c: Frontend CI ──────────────────────────────────────────────────
+  # Three-stage pipeline that only runs when apps/frontend/** changes.
+  # Stage 1 (lint + typecheck) runs first — fastest feedback, no install of
+  # Playwright browsers needed.
+  # Stage 2 (unit tests) needs stage 1 to pass — runs Jest with coverage gate.
+  # Stage 3 (build) needs stage 2 to pass — `next build` validates that TSC
+  # errors, missing env vars, and bad imports don't sneak past the type-checker.
+  frontend-lint-typecheck:
+    name: Frontend — Lint & Type Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.frontend == 'true'
+    defaults:
+      run:
+        working-directory: apps/frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: .
+
+      - name: TypeScript type-check
+        run: npm run type-check
+
+      - name: ESLint (zero warnings)
+        run: npm run lint:check
+
+      - name: Dependency audit
+        run: npm audit --audit-level=high
+        working-directory: .
+
+  frontend-test:
+    name: Frontend — Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [detect-changes, frontend-lint-typecheck]
+    if: needs.detect-changes.outputs.frontend == 'true'
+    defaults:
+      run:
+        working-directory: apps/frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: .
+
+      - name: Run tests with coverage
+        run: npm run test:ci
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:4000/api/v1
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_placeholder
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: apps/frontend/coverage/
+          retention-days: 7
+
+  frontend-build:
+    name: Frontend — Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [detect-changes, frontend-test]
+    if: needs.detect-changes.outputs.frontend == 'true'
+    defaults:
+      run:
+        working-directory: apps/frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: .
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:4000/api/v1
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_placeholder
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+
+  # ── Job 7: Mutation Testing (weekly only) ────────────────────────────────────
   # Stryker mutates operators/conditions in orders/** and products/** then re-runs
   # unit tests to see if the mutation is caught (killed) or slips through (survived).
   # Too slow for per-PR (~5–15 min per module) — scheduled weekly on Monday 03:00 UTC.

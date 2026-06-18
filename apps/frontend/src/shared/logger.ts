@@ -26,5 +26,5 @@ export const logger = {
 
   // Call after login; cleared on logout.
   // Phase 10: Sentry.setUser({ id, email }) / Sentry.setUser(null)
-  setUser(_user: { id: string; email: string } | null): void {},
+  setUser(_: { id: string; email: string } | null): void {},
 };

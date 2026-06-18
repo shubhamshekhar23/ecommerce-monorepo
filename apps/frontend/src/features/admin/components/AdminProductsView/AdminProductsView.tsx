@@ -72,7 +72,7 @@ export function AdminProductsView({ page = 1 }: AdminProductsViewProps) {
                     <td className={styles.name}>{product.name}</td>
                     <td>${Number(product.price).toFixed(2)}</td>
                     <td>{product.stock}</td>
-                    <td>{(product as any).categoryName || product.category?.name || '—'}</td>
+                    <td>{product.category?.name || '—'}</td>
                     <td className={styles.actions}>
                       {showConfirmId === product.id ? (
                         <div className={styles.confirm}>

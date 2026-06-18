@@ -66,6 +66,7 @@ export function useCookieConsent(): UseCookieConsentResult {
   useEffect(() => {
     // Respect Do-Not-Track: treat it as "reject non-essential" without prompting.
     if (navigator.doNotTrack === "1") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setConsent(DEFAULT_CONSENT);
       setHasDecided(true);
       return;

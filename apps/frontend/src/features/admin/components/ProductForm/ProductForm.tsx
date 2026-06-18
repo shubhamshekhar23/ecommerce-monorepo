@@ -38,6 +38,7 @@ export function ProductForm({ product }: ProductFormProps) {
   // Initialize form data on product load (for edit mode)
   useEffect(() => {
     if (product) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData({
         name: product.name,
         slug: product.slug,

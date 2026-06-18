@@ -16,6 +16,7 @@ export function OrdersView() {
 
   useEffect(() => {
     if (searchParams.get('success') === 'true') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowSuccess(true);
       const timer = setTimeout(() => setShowSuccess(false), 5000);
       return () => clearTimeout(timer);
@@ -50,7 +51,7 @@ export function OrdersView() {
 
       {!hasOrders ? (
         <div className={styles.emptyState}>
-          <p className={styles.emptyMessage}>You haven't placed any orders yet.</p>
+          <p className={styles.emptyMessage}>You haven&apos;t placed any orders yet.</p>
           <Link href="/products" className={styles.continueShopping}>
             Continue Shopping
           </Link>
@@ -63,11 +64,5 @@ export function OrdersView() {
         </div>
       )}
     </div>
-  );
-}
-
-function OrdersViewSkeleton() {
-  return (
-    <div className={styles.skeleton} />
   );
 }

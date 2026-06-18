@@ -27,7 +27,7 @@ export function Pagination({ meta }: PaginationProps) {
     const half = Math.floor(range / 2);
 
     let start = Math.max(1, currentPage - half);
-    let end = Math.min(pages, start + range - 1);
+    const end = Math.min(pages, start + range - 1);
 
     if (end - start + 1 < range) {
       start = Math.max(1, end - range + 1);

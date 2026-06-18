@@ -44,7 +44,7 @@ export function OrderDetailView({ id }: OrderDetailViewProps) {
       <div className={styles.container}>
         <div className={styles.error}>
           <h1>Order Not Found</h1>
-          <p>This order doesn't exist or you don't have permission to view it.</p>
+          <p>This order doesn&apos;t exist or you don&apos;t have permission to view it.</p>
           <Link href="/orders">← Back to Orders</Link>
         </div>
       </div>

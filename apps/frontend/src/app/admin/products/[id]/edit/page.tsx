@@ -2,7 +2,6 @@
 
 'use client';
 
-import type { Metadata } from 'next';
 import { useParams } from 'next/navigation';
 import { useAdminProduct } from '@/features/admin/hooks';
 import { ProductForm } from '@/features/admin/components/ProductForm/ProductForm';

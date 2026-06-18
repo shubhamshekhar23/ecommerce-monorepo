@@ -32,6 +32,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
   // Initialize form data on category load (for edit mode)
   useEffect(() => {
     if (category) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData({
         name: category.name,
         slug: category.slug,
@@ -50,7 +51,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
 
-    const payload: any = {
+    const payload: { name: string; slug: string; description?: string; image?: string; parentId?: string } = {
       name: formData.name,
       slug: formData.slug,
     };

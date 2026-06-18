@@ -64,10 +64,10 @@ A11Y is a WCAG requirement. Testing setup must come early — all future phases 
 - [x] **Accessibility** → [ux/accessibility.md](./ux/accessibility.md)
   - Skip-to-content link in layout, heading hierarchy audit, ARIA labels on icon-only buttons (cart, search), focus trap in modals/dropdowns, visible focus ring (CSS), `aria-live` for toast, `prefers-reduced-motion`, `eslint-plugin-jsx-a11y`
 
-- [ ] **Testing Strategy** → [testing/testing-strategy.md](./testing/testing-strategy.md)
+- [x] **Testing Strategy** → [testing/testing-strategy.md](./testing/testing-strategy.md)
   - Install RTL + `@testing-library/user-event` + `jest-dom`, MSW handlers per feature, tests for `ProductCard`/`LoginForm`/`CartView`, Playwright E2E (browse→cart, full checkout, auth, admin CRUD), `jest-axe` in every component test
 
-- [ ] **CI/CD Quality Gates** → [testing/ci-cd-quality-gates.md](./testing/ci-cd-quality-gates.md)
+- [x] **CI/CD Quality Gates** → [testing/ci-cd-quality-gates.md](./testing/ci-cd-quality-gates.md)
   - GitHub Actions: `tsc --noEmit`, ESLint `--max-warnings 0`, Stylelint, Prettier `--check`, Jest `--ci --coverage` (70% threshold), Playwright E2E, `next build`, bundle size gate, `npm audit`, Dependabot, Lighthouse CI
 
 ---
