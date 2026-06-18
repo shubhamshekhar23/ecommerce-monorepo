@@ -1,47 +1,9 @@
-// src/features/orders/interfaces/index.ts
-
-export interface OrderItem {
-  id: string;
-  productId: string;
-  productName: string;
-  quantity: number;
-  price: number;
-  subtotal: number;
-}
-
-export type OrderStatus =
-  | 'PENDING'
-  | 'CONFIRMED'
-  | 'PROCESSING'
-  | 'SHIPPED'
-  | 'DELIVERED'
-  | 'CANCELLED'
-  | 'REFUNDED';
-
-export type PaymentStatus = 'PENDING' | 'SUCCEEDED' | 'FAILED' | 'CANCELED' | 'REFUNDED';
-
-export interface Order {
-  id: string;
-  orderNumber: string;
-  userId: string;
-  items: OrderItem[];
-  totalPrice: number;
-  status: OrderStatus;
-  paymentStatus: PaymentStatus;
-  notes?: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface PaginationMeta {
-  total: number;
-  page: number;
-  limit: number;
-  pages: number;
-  hasMore: boolean;
-}
-
-export interface PaginatedOrders {
-  data: Order[];
-  meta: PaginationMeta;
-}
+// Core types come from the shared package — single source of truth with the backend
+export type {
+  Order,
+  OrderItem,
+  OrderStatus,
+  PaymentStatus,
+  PaginatedOrders,
+  PaginationMeta,
+} from "@ecommerce/shared-types";

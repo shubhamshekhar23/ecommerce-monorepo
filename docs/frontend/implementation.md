@@ -133,7 +133,7 @@ Structural refactors are best deferred until features stabilize. Bundle analysis
 - [x] **Project Structure** → [architecture/project-structure.md](./architecture/project-structure.md)
   - `constants/` + `mocks/` dirs per feature, `src/hooks/` for global hooks (`useDebounce`, `useScrollRestoration`, `useIntersectionObserver`, `useLocalStorage`), feature `index.ts` public API files, Husky + lint-staged, `.editorconfig`
 
-- [ ] **Shared Types** → [architecture/shared-types.md](./architecture/shared-types.md)
+- [x] **Shared Types** → [architecture/shared-types.md](./architecture/shared-types.md)
   - `packages/shared-types/` monorepo package with `product.types.ts` / `order.types.ts` / `cart.types.ts` / `user.types.ts` / `auth.types.ts`, `@ecommerce/shared-types` package name, frontend imports from shared, backend DTOs implement shared interfaces
 
 - [ ] **Bundle Optimization** → [performance/bundle-optimization.md](./performance/bundle-optimization.md)

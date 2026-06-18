@@ -20,7 +20,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@ecommerce/shared-types": ["../../packages/shared-types/src/index.ts"]
     }
   },
   "include": [

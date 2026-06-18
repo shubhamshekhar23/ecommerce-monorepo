@@ -18,7 +18,7 @@ Two sources of truth. If the backend renames `product.imageUrl` to `product.imag
 
 ## Items to Implement
 
-- [ ] **Create `packages/shared-types/`** — a new package in the monorepo that both apps import:
+- [x] **Create `packages/shared-types/`** — a new package in the monorepo that both apps import:
   ```
   packages/
     shared-types/
@@ -36,7 +36,7 @@ Two sources of truth. If the backend renames `product.imageUrl` to `product.imag
   - No runtime dependencies (types only, erased at compile time)
   - Complexity: Medium (monorepo workspace setup)
 
-- [ ] **Define canonical types in `shared-types`** — the types here are the single source of truth. They should match what the API actually returns (not what either app assumes):
+- [x] **Define canonical types in `shared-types`** — the types here are the single source of truth. They should match what the API actually returns (not what either app assumes):
   ```ts
   // packages/shared-types/src/product.types.ts
   export interface Product {
@@ -60,7 +60,7 @@ Two sources of truth. If the backend renames `product.imageUrl` to `product.imag
   ```
   - Complexity: Easy (moving existing types)
 
-- [ ] **Frontend imports from shared-types** — replace feature-level interface definitions with imports from the shared package:
+- [x] **Frontend imports from shared-types** — replace feature-level interface definitions with imports from the shared package:
   ```ts
   // Before
   // src/features/products/interfaces/index.ts (defines Product locally)
@@ -75,7 +75,7 @@ Two sources of truth. If the backend renames `product.imageUrl` to `product.imag
   - Complexity: Medium (backend change)
   - File: backend DTO files
 
-- [ ] **Add `shared-types` to the CI matrix** — the monorepo CI workflow filters by service path. Add `packages/shared-types/**` as a trigger for both the frontend and backend CI jobs — a change to shared types runs both test suites.
+- [x] **Add `shared-types` to the CI matrix** — the monorepo CI workflow filters by service path. Add `packages/shared-types/**` as a trigger for both the frontend and backend CI jobs — a change to shared types runs both test suites.
   - Complexity: Easy
   - File: `.github/workflows/*.yml`
 
