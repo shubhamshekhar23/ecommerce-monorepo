@@ -59,10 +59,11 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
+        <a href="#main-content" className="skip-link">Skip to main content</a>
         <Providers>
           <Header />
           <Navbar />
-          <main className={styles.main}>{children}</main>
+          <main id="main-content" className={styles.main}>{children}</main>
           <Footer />
         </Providers>
       </body>

@@ -61,7 +61,7 @@ Rendering strategy affects every page — change it late and you're rewriting co
 
 A11Y is a WCAG requirement. Testing setup must come early — all future phases should have tests from the start. CI gates enforce quality on every merge going forward.
 
-- [ ] **Accessibility** → [ux/accessibility.md](./ux/accessibility.md)
+- [x] **Accessibility** → [ux/accessibility.md](./ux/accessibility.md)
   - Skip-to-content link in layout, heading hierarchy audit, ARIA labels on icon-only buttons (cart, search), focus trap in modals/dropdowns, visible focus ring (CSS), `aria-live` for toast, `prefers-reduced-motion`, `eslint-plugin-jsx-a11y`
 
 - [ ] **Testing Strategy** → [testing/testing-strategy.md](./testing/testing-strategy.md)

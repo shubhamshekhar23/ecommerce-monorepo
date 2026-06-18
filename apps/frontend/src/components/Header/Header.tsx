@@ -81,7 +81,15 @@ export function Header() {
             Orders
           </Link>
 
-          <Link href="/cart" className={styles.cartLink}>
+          <Link
+            href="/cart"
+            className={styles.cartLink}
+            aria-label={
+              cartItemCount > 0
+                ? `Cart, ${cartItemCount} item${cartItemCount !== 1 ? 's' : ''}`
+                : 'Cart'
+            }
+          >
             <span className={styles.cartIcon} aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none">
                 <path d="M3 5h2l2.2 10.2A2 2 0 0 0 9.2 17H18a2 2 0 0 0 1.94-1.5L21 8H7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -89,10 +97,18 @@ export function Header() {
                 <circle cx="18" cy="20" r="1" fill="currentColor" />
               </svg>
             </span>
-            <span>Cart</span>
+            <span aria-hidden="true">Cart</span>
             {cartItemCount > 0 && (
-              <span className={styles.cartBadge}>{cartItemCount > 99 ? '99+' : cartItemCount}</span>
+              <span className={styles.cartBadge} aria-hidden="true">
+                {cartItemCount > 99 ? '99+' : cartItemCount}
+              </span>
             )}
+            {/* Persistent live region — announces count changes to screen readers. */}
+            <span className="sr-only" aria-live="polite" aria-atomic="true">
+              {cartItemCount > 0
+                ? `${cartItemCount} item${cartItemCount !== 1 ? 's' : ''} in cart`
+                : ''}
+            </span>
           </Link>
         </div>
       </div>

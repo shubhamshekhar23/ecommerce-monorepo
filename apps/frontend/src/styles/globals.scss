@@ -82,6 +82,12 @@ select {
 button {
   cursor: pointer;
 
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
   &:disabled {
     opacity: 0.65;
     cursor: not-allowed;
@@ -150,6 +156,55 @@ tr:last-child td {
   max-width: var(--container-max-width);
   margin-inline: auto;
   padding-inline: var(--space-4);
+}
+
+// Visually hidden but accessible to screen readers.
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+// Skip link: hidden until focused, then floats above all content.
+// Allows keyboard users to jump past repeated header/nav on every page.
+.skip-link {
+  @extend .sr-only;
+
+  &:focus {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    width: auto;
+    height: auto;
+    clip: auto;
+    overflow: visible;
+    margin: 0;
+    padding: 0.75rem 1.5rem;
+    background: var(--color-accent);
+    color: #fff;
+    font-weight: var(--font-weight-semibold);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    z-index: 9999;
+  }
+}
+
+// Respect OS-level "Reduce Motion" setting.
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 .hide-scrollbar {

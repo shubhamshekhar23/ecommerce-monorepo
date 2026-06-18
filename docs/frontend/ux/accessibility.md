@@ -28,7 +28,7 @@ All items target WCAG 2.1 Level AA.
 - [ ] **Heading hierarchy** — every page must have exactly one `<h1>`. Headings must not skip levels (`h1` → `h3` without `h2`). Audit all pages.
   - Complexity: Easy (audit)
 
-- [ ] **Skip to content link** — add a visually hidden link as the very first element in `<body>` that becomes visible on focus and jumps to `<main>`. Allows keyboard users to skip the Header and Navbar on every page:
+- [x] **Skip to content link** — add a visually hidden link as the very first element in `<body>` that becomes visible on focus and jumps to `<main>`. Allows keyboard users to skip the Header and Navbar on every page:
   ```tsx
   <a href="#main-content" className="skip-link">Skip to main content</a>
   <main id="main-content">...</main>
@@ -47,7 +47,7 @@ All items target WCAG 2.1 Level AA.
   - Complexity: Easy
   - Files: `Navbar.tsx`, `ProductImageGallery.tsx`, any icon-only button
 
-- [ ] **`aria-live` for dynamic content** — when cart count updates, toast notifications appear, or form errors are injected, screen readers need to be informed. Add `aria-live="polite"` to the cart count badge and toast container.
+- [x] **`aria-live` for dynamic content** — when cart count updates, toast notifications appear, or form errors are injected, screen readers need to be informed. Add `aria-live="polite"` to the cart count badge and toast container.
   - Complexity: Easy
   - Files: `Navbar.tsx` (cart badge), toast provider
 
@@ -72,7 +72,7 @@ All items target WCAG 2.1 Level AA.
   - Complexity: Medium
   - Library option: `@radix-ui/react-dialog` (already planned in CLAUDE.md)
 
-- [ ] **Visible focus ring on all interactive elements** — the `globals.scss` already has a `focus-visible` outline for links. Audit that buttons, inputs, and custom interactive components also show a visible focus indicator. Never use `outline: none` without providing an equivalent visual indicator.
+- [x] **Visible focus ring on all interactive elements** — the `globals.scss` already has a `focus-visible` outline for links. Audit that buttons, inputs, and custom interactive components also show a visible focus indicator. Never use `outline: none` without providing an equivalent visual indicator.
   - Complexity: Easy (audit + CSS fix)
 
 - [ ] **Logical tab order** — the DOM order must match the visual order. If CSS repositions elements visually, check that Tab order still makes sense.
@@ -103,7 +103,7 @@ All items target WCAG 2.1 Level AA.
 - [ ] **Color contrast** — all text must meet AA contrast ratios: 4.5:1 for normal text, 3:1 for large text (18px+ or 14px+ bold). Audit using browser DevTools accessibility panel or the axe extension. The muted text colors (`--color-text-muted: #64748b`) on white are borderline — verify.
   - Complexity: Easy (audit, may need color value adjustments)
 
-- [ ] **`prefers-reduced-motion` support** — users who have set "Reduce Motion" in their OS should not see animations. Wrap all transitions and animations:
+- [x] **`prefers-reduced-motion` support** — users who have set "Reduce Motion" in their OS should not see animations. Wrap all transitions and animations:
   ```scss
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -127,7 +127,7 @@ All items target WCAG 2.1 Level AA.
 
 ## Testing Tools
 
-- [ ] **`eslint-plugin-jsx-a11y`** — ESLint plugin that catches accessibility issues at author time (missing alt text, invalid ARIA, etc.). Install and add to `.eslintrc`:
+- [x] **`eslint-plugin-jsx-a11y`** — ESLint plugin that catches accessibility issues at author time (missing alt text, invalid ARIA, etc.). Install and add to `.eslintrc`:
   ```
   npm install --save-dev eslint-plugin-jsx-a11y
   ```
