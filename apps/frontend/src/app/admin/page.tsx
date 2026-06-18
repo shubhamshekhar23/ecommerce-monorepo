@@ -6,6 +6,7 @@ import { AdminDashboard } from './AdminDashboard';
 export const metadata: Metadata = {
   title: 'Admin Dashboard | ShopHub',
   description: 'Manage your store',
+  robots: { index: false },
 };
 
 export default function AdminPage() {

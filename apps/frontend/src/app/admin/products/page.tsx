@@ -6,6 +6,7 @@ import { AdminProductsView } from '@/features/admin/components/AdminProductsView
 export const metadata: Metadata = {
   title: 'Products | Admin',
   description: 'Manage products',
+  robots: { index: false },
 };
 
 export default function ProductsAdminPage() {

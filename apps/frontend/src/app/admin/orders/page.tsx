@@ -6,6 +6,7 @@ import { AdminOrdersView } from '@/features/admin/components/AdminOrdersView/Adm
 export const metadata: Metadata = {
   title: 'Orders | Admin',
   description: 'Manage orders',
+  robots: { index: false },
 };
 
 export default function OrdersAdminPage() {

@@ -7,6 +7,7 @@ import { OrdersView } from '@/features/orders/components/OrdersView/OrdersView';
 export const metadata: Metadata = {
   title: 'My Orders | ShopHub',
   description: 'View your order history and details.',
+  robots: { index: false },
 };
 
 function OrdersPageSkeleton() {

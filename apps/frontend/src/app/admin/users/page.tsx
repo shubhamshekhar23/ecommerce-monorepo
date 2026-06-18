@@ -6,6 +6,7 @@ import { AdminUsersView } from '@/features/admin/components/AdminUsersView/Admin
 export const metadata: Metadata = {
   title: 'Users | Admin',
   description: 'Manage users',
+  robots: { index: false },
 };
 
 export default function UsersAdminPage() {

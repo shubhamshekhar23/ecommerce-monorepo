@@ -19,7 +19,7 @@ Source: `seo.md`, `index/seo.md`
 
 ### Per-Page Metadata
 
-- [ ] **`generateMetadata` for product detail pages** — `app/products/[slug]/page.tsx` currently uses the default root layout title. Add:
+- [x] **`generateMetadata` for product detail pages** — `app/products/[slug]/page.tsx` currently uses the default root layout title. Add:
   ```ts
   export async function generateMetadata({ params }: { params: { slug: string } }) {
     const product = await fetchProduct(params.slug);
@@ -38,11 +38,11 @@ Source: `seo.md`, `index/seo.md`
   - Complexity: Easy
   - File: `src/app/products/[slug]/page.tsx`
 
-- [ ] **`generateMetadata` for products listing page** — add a static metadata export describing the catalog (e.g. "Shop all products — ShopHub").
+- [x] **`generateMetadata` for products listing page** — add a static metadata export describing the catalog (e.g. "Shop all products — ShopHub").
   - Complexity: Easy
   - File: `src/app/products/page.tsx`
 
-- [ ] **`generateMetadata` for orders and cart pages** — mark these with `noindex` since they are user-specific and should never appear in search results:
+- [x] **`generateMetadata` for orders and cart pages** — mark these with `noindex` since they are user-specific and should never appear in search results:
   ```ts
   export const metadata = { robots: { index: false } };
   ```
@@ -57,7 +57,7 @@ Source: `seo.md`, `index/seo.md`
 
 ### Structured Data (JSON-LD)
 
-- [ ] **Product schema on product detail pages** — add a `<script type="application/ld+json">` tag to each product page with the Google Product schema:
+- [x] **Product schema on product detail pages** — add a `<script type="application/ld+json">` tag to each product page with the Google Product schema:
   ```json
   {
     "@context": "https://schema.org",
@@ -77,7 +77,7 @@ Source: `seo.md`, `index/seo.md`
   - Complexity: Easy–Medium
   - File: `src/app/products/[slug]/page.tsx`
 
-- [ ] **WebSite schema in root layout** — add a WebSite schema with a `SearchAction` so Google can display a search box directly in search results pointing to `/products?search={query}`.
+- [x] **WebSite schema in root layout** — add a WebSite schema with a `SearchAction` so Google can display a search box directly in search results pointing to `/products?search={query}`.
   - Complexity: Easy
   - File: `src/app/layout.tsx`
 
@@ -85,18 +85,18 @@ Source: `seo.md`, `index/seo.md`
 
 ### Discovery
 
-- [ ] **`sitemap.ts`** — Next.js App Router supports `app/sitemap.ts` that returns a list of URLs. Dynamically fetch all product slugs and category slugs at build/request time and return them. Exclude user-specific routes (`/cart`, `/orders`, `/admin`).
+- [x] **`sitemap.ts`** — Next.js App Router supports `app/sitemap.ts` that returns a list of URLs. Dynamically fetch all product slugs and category slugs at build/request time and return them. Exclude user-specific routes (`/cart`, `/orders`, `/admin`).
   - Complexity: Easy–Medium
   - File: `src/app/sitemap.ts`
 
-- [ ] **`robots.ts`** — add `app/robots.ts` to control crawler access:
+- [x] **`robots.ts`** — add `app/robots.ts` to control crawler access:
   - Allow: `/`, `/products/*`
   - Disallow: `/admin/*`, `/cart`, `/checkout`, `/orders`
   - Point to sitemap URL
   - Complexity: Easy
   - File: `src/app/robots.ts`
 
-- [ ] **Canonical URLs per page** — add `alternates: { canonical: 'https://yourdomain.com/products/slug' }` to each page's metadata to prevent duplicate content issues from query strings (e.g. `/products?page=1` vs `/products`).
+- [x] **Canonical URLs per page** — add `alternates: { canonical: 'https://yourdomain.com/products/slug' }` to each page's metadata to prevent duplicate content issues from query strings (e.g. `/products?page=1` vs `/products`).
   - Complexity: Easy
   - Implement alongside `generateMetadata` items above
 

@@ -6,6 +6,7 @@ import { ProductForm } from '@/features/admin/components/ProductForm/ProductForm
 export const metadata: Metadata = {
   title: 'Create Product | Admin',
   description: 'Create a new product',
+  robots: { index: false },
 };
 
 export default function NewProductPage() {

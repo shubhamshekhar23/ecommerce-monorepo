@@ -2,53 +2,102 @@
 
 import { ProductDetailView } from '@/features/products/components/ProductDetailView/ProductDetailView';
 
-// Re-generate at most once per hour. New products appear after the next
-// revalidation window; no deploy required.
 export const revalidate = 3600;
 
 interface Props {
   params: Promise<{ slug: string }>;
 }
 
-// Pre-generate a static page for every product at build time.
-// Each page becomes a CDN-cached HTML file — zero server cost per view.
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+async function fetchProduct(slug: string) {
+  try {
+    const res = await fetch(`${API_URL}/products/slug/${slug}`, {
+      next: { revalidate: 3600 },
+    });
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+
 export async function generateStaticParams() {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/products?limit=1000`,
-      { next: { revalidate: 3600 } },
-    );
+    const res = await fetch(`${API_URL}/products?limit=1000`, {
+      next: { revalidate: 3600 },
+    });
     if (!res.ok) return [];
     const data = await res.json();
     return (data.data as Array<{ slug: string }>).map((p) => ({ slug: p.slug }));
   } catch {
-    // If the API is unreachable at build time, fall back to on-demand SSR.
     return [];
   }
 }
 
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
-  try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/products/slug/${slug}`,
-      { next: { revalidate: 3600 } },
-    );
-    if (res.ok) {
-      const product = await res.json();
-      return {
-        title: `${product.name} | ShopHub`,
-        description: product.description ?? `Buy ${product.name} at ShopHub.`,
-      };
-    }
-  } catch { /* fall through to default */ }
+  const product = await fetchProduct(slug);
+
+  if (!product) {
+    return {
+      title: 'Product | ShopHub',
+      description: 'View product details at ShopHub.',
+    };
+  }
+
+  const description = (product.description ?? `Buy ${product.name} at ShopHub.`).slice(0, 155);
+  const image = product.images?.[0]?.url;
+  const canonical = `${APP_URL}/products/${slug}`;
+
   return {
-    title: 'Product | ShopHub',
-    description: 'View product details at ShopHub.',
+    title: `${product.name} | ShopHub`,
+    description,
+    alternates: { canonical },
+    openGraph: {
+      title: product.name,
+      description,
+      url: canonical,
+      type: 'website',
+      ...(image && { images: [{ url: image, alt: product.name }] }),
+    },
   };
 }
 
 export default async function ProductDetailPage({ params }: Props) {
   const { slug } = await params;
-  return <ProductDetailView slug={slug} />;
+  const product = await fetchProduct(slug);
+
+  // Product schema enables rich results (price, availability) in Google Search.
+  const jsonLd = product
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: product.name,
+        description: product.description ?? undefined,
+        image: product.images?.[0]?.url,
+        offers: {
+          '@type': 'Offer',
+          price: String(product.price),
+          priceCurrency: 'USD',
+          availability:
+            product.stock > 0
+              ? 'https://schema.org/InStock'
+              : 'https://schema.org/OutOfStock',
+        },
+      }
+    : null;
+
+  return (
+    <>
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
+      <ProductDetailView slug={slug} />
+    </>
+  );
 }

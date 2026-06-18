@@ -11,6 +11,7 @@ export const revalidate = 60;
 export const metadata = {
   title: 'Products | ShopHub',
   description: 'Browse our collection of products.',
+  alternates: { canonical: `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/products` },
 };
 
 function ProductsLoading() {

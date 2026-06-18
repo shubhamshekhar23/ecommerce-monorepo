@@ -6,6 +6,7 @@ import { CategoryForm } from '@/features/admin/components/CategoryForm/CategoryF
 export const metadata: Metadata = {
   title: 'Create Category | Admin',
   description: 'Create a new category',
+  robots: { index: false },
 };
 
 export default function NewCategoryPage() {

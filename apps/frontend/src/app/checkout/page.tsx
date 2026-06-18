@@ -6,6 +6,7 @@ import { CheckoutView } from '@/features/checkout/components/CheckoutView/Checko
 export const metadata: Metadata = {
   title: 'Checkout | ShopHub',
   description: 'Complete your purchase securely.',
+  robots: { index: false },
 };
 
 export default function CheckoutPage() {

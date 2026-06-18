@@ -46,7 +46,7 @@ Rendering strategy affects every page — change it late and you're rewriting co
 - [x] **Rendering Strategy** → [performance/rendering-strategy.md](./performance/rendering-strategy.md)
   - `generateStaticParams` for `/products/[slug]`, `revalidate = 3600` on `/products`, convert Header/Footer/Navbar to Server Components, `loading.tsx` per route, `<Suspense>` around data-dependent sections
 
-- [ ] **SEO** → [seo/seo.md](./seo/seo.md)
+- [x] **SEO** → [seo/seo.md](./seo/seo.md)
   - `generateMetadata` per page (product, category; `noindex` for orders/account), `opengraph-image.tsx`, Product JSON-LD schema, WebSite JSON-LD in root layout, `sitemap.ts`, `robots.ts`, canonical URLs
 
 - [ ] **Performance: Images** → [performance/images.md](./performance/images.md)

@@ -6,6 +6,7 @@ import { CartView } from '@/features/cart/components/CartView/CartView';
 export const metadata: Metadata = {
   title: 'Shopping Cart | ShopHub',
   description: 'Review your cart and proceed to checkout.',
+  robots: { index: false },
 };
 
 export default function CartPage() {
