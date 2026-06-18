@@ -91,7 +91,7 @@ Shared component primitives (form inputs, toast, skeletons, empty states) are us
 
 Infrastructure and shared components are in place. Now improve how data flows: normalized state, URL-driven filters, offline resilience, feature flags.
 
-- [ ] **State Management** → [data-and-state/state-management.md](./data-and-state/state-management.md)
+- [x] **State Management** → [data-and-state/state-management.md](./data-and-state/state-management.md)
   - Normalize cart store to `byId: Record<string, CartItem>` + `allIds: string[]`, optimistic updates for `addToCart` / `removeCartItem` / `updateCartItem` / `cancelOrder` (TanStack Query `onMutate`/`onError`/`onSettled`)
 
 - [ ] **URL as State** → [data-and-state/url-as-state.md](./data-and-state/url-as-state.md)

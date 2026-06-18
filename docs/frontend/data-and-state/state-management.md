@@ -26,7 +26,7 @@ Update the UI immediately before the server responds. If the server rejects, rol
 
 ### Normalized State
 
-- [ ] **Normalized cart store** — the cart items from TanStack Query come back as an array. When caching this locally (for optimistic updates), store it in normalized form. In the cart Zustand store or query cache, use:
+- [x] **Normalized cart store** — the cart items from TanStack Query come back as an array. When caching this locally (for optimistic updates), store it in normalized form. In the cart Zustand store or query cache, use:
   ```ts
   type CartState = {
     byId: Record<string, CartItem>;
@@ -37,7 +37,7 @@ Update the UI immediately before the server responds. If the server rejects, rol
   - Complexity: Medium
   - Files: `src/features/cart/` (store or query cache transform)
 
-- [ ] **Selector helpers for normalized cart** — add selector functions that derive the flat array when needed for rendering:
+- [x] **Selector helpers for normalized cart** — add selector functions that derive the flat array when needed for rendering:
   ```ts
   const cartItems = allIds.map((id) => byId[id]);
   ```
@@ -50,7 +50,7 @@ Update the UI immediately before the server responds. If the server rejects, rol
 
 TanStack Query provides `onMutate`, `onError`, and `onSettled` hooks on every `useMutation`. Use these for all cart and order mutations.
 
-- [ ] **Optimistic update: Add to Cart** — in `useAddToCart.ts`, implement:
+- [x] **Optimistic update: Add to Cart** — in `useAddToCart.ts`, implement:
   - `onMutate`: cancel in-flight cart queries, snapshot previous cart, add the new item to cache immediately
   - `onError`: roll back to snapshot, show error state
   - `onSettled`: re-fetch cart from server to sync
@@ -59,21 +59,21 @@ TanStack Query provides `onMutate`, `onError`, and `onSettled` hooks on every `u
   - Complexity: Medium
   - File: `src/features/cart/hooks/useAddToCart.ts`
 
-- [ ] **Optimistic update: Remove from Cart** — in `useRemoveCartItem.ts`:
+- [x] **Optimistic update: Remove from Cart** — in `useRemoveCartItem.ts`:
   - `onMutate`: remove item from cache immediately
   - `onError`: restore the item
   - User experience: item disappears from cart list instantly.
   - Complexity: Medium
   - File: `src/features/cart/hooks/useRemoveCartItem.ts`
 
-- [ ] **Optimistic update: Update Cart Quantity** — in `useUpdateCartItem.ts`:
+- [x] **Optimistic update: Update Cart Quantity** — in `useUpdateCartItem.ts`:
   - `onMutate`: update the item's quantity in cache immediately
   - `onError`: restore previous quantity
   - User experience: quantity field and subtotal update instantly.
   - Complexity: Medium
   - File: `src/features/cart/hooks/useUpdateCartItem.ts`
 
-- [ ] **Optimistic update: Cancel Order** — in `useCancelOrder.ts`:
+- [x] **Optimistic update: Cancel Order** — in `useCancelOrder.ts`:
   - `onMutate`: set order status to `CANCELLED` in cache immediately
   - `onError`: restore previous status
   - User experience: order status updates instantly in `OrderDetailView` without a loading spinner.

@@ -1,5 +1,3 @@
-// src/features/cart/hooks/useAddToCart.ts
-
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -7,7 +5,11 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth.store";
 import { addToCartApi } from "../api/cart.api";
-import type { AddToCartPayload } from "../interfaces";
+import type { Cart, AddToCartPayload } from "../interfaces";
+import {
+  selectCartItemByProductId,
+  recalcCartTotals,
+} from "../utils/cart.normalize";
 
 export function useAddToCart() {
   const queryClient = useQueryClient();
@@ -16,18 +18,55 @@ export function useAddToCart() {
 
   return useMutation({
     mutationFn: (payload: AddToCartPayload) => addToCartApi(payload),
-    onMutate: () => {
+    onMutate: async (payload) => {
       if (status !== "authenticated") {
         router.push("/login");
         throw new Error("Not authenticated");
       }
+
+      await queryClient.cancelQueries({ queryKey: ["cart"] });
+      const previousCart = queryClient.getQueryData<Cart | null>(["cart"]);
+
+      // Optimistic: if item is already in cart, increment quantity immediately.
+      // For new items, we don't have product data in cache, so skip optimistic add —
+      // onSuccess will populate from server response.
+      queryClient.setQueryData<Cart | null>(["cart"], (old) => {
+        if (!old) return old;
+        const existing = selectCartItemByProductId(old, payload.productId);
+        if (!existing) return old;
+
+        const newQty = existing.quantity + payload.quantity;
+        const updatedItems = old.items.map((item) =>
+          item.id === existing.id
+            ? {
+                ...item,
+                quantity: newQty,
+                subtotal: item.product.price * newQty,
+              }
+            : item,
+        );
+        return {
+          ...old,
+          items: updatedItems,
+          ...recalcCartTotals(updatedItems),
+        };
+      });
+
+      return { previousCart };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["cart"] });
+    onSuccess: (updatedCart) => {
+      // Server returns the full cart — use it directly for accuracy
+      queryClient.setQueryData(["cart"], updatedCart);
       toast.success("Added to cart");
     },
-    onError: () => {
+    onError: (_err, _vars, context) => {
+      if (context?.previousCart !== undefined) {
+        queryClient.setQueryData(["cart"], context.previousCart);
+      }
       toast.error("Failed to add to cart");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
     },
   });
 }
