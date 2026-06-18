@@ -136,7 +136,7 @@ Structural refactors are best deferred until features stabilize. Bundle analysis
 - [x] **Shared Types** → [architecture/shared-types.md](./architecture/shared-types.md)
   - `packages/shared-types/` monorepo package with `product.types.ts` / `order.types.ts` / `cart.types.ts` / `user.types.ts` / `auth.types.ts`, `@ecommerce/shared-types` package name, frontend imports from shared, backend DTOs implement shared interfaces
 
-- [ ] **Bundle Optimization** → [performance/bundle-optimization.md](./performance/bundle-optimization.md)
+- [x] **Bundle Optimization** → [performance/bundle-optimization.md](./performance/bundle-optimization.md)
   - `@next/bundle-analyzer` with `ANALYZE=true` script, dynamic import `@stripe/react-stripe-js`, barrel file anti-pattern audit, vendor chunk splitting in `next.config.ts`, tree shaking verification
 
 - [ ] **Architecture Patterns** → [architecture/architecture-patterns.md](./architecture/architecture-patterns.md)

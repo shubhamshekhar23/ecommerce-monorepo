@@ -14,7 +14,7 @@ Every byte of JavaScript the browser downloads must be parsed, compiled, and exe
 
 ### Analysis
 
-- [ ] **`@next/bundle-analyzer` setup** — the first step is knowing what's in the bundle. Without analysis, optimization is guesswork.
+- [x] **`@next/bundle-analyzer` setup** — the first step is knowing what's in the bundle. Without analysis, optimization is guesswork.
   ```ts
   // next.config.js
   const withBundleAnalyzer = require('@next/bundle-analyzer')({
@@ -34,7 +34,7 @@ Every byte of JavaScript the browser downloads must be parsed, compiled, and exe
 
 ### Code Splitting
 
-- [ ] **Dynamic imports for heavy third-party libraries** — libraries that aren't needed on first load should be dynamically imported:
+- [x] **Dynamic imports for heavy third-party libraries** — libraries that aren't needed on first load should be dynamically imported:
   ```ts
   // Stripe: only needed on checkout page
   const { loadStripe } = await import('@stripe/stripe-js');
@@ -55,7 +55,7 @@ Every byte of JavaScript the browser downloads must be parsed, compiled, and exe
   ```
   - Complexity: Easy (audit)
 
-- [ ] **Vendor chunk splitting** — configure Next.js/Webpack to split vendor code (node_modules) from application code. Vendors change less frequently → better CDN caching:
+- [x] **Vendor chunk splitting** — configure Next.js/Webpack to split vendor code (node_modules) from application code. Vendors change less frequently → better CDN caching:
   ```ts
   // next.config.js
   webpack: (config) => {

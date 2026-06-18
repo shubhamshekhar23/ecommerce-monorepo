@@ -1,17 +1,21 @@
 import type { NextConfig } from "next";
+import bundleAnalyzer from "@next/bundle-analyzer";
 
 // Fail fast at build/start time if required env vars are missing.
 // The full Zod validation runs in src/shared/config/env.ts at module load.
-const requiredEnvVars = [
-  "NEXT_PUBLIC_API_URL",
-  "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",
-] as const;
+// Skip validation when only running the bundle analyzer in CI (no server starts).
+if (process.env.ANALYZE !== "true") {
+  const requiredEnvVars = [
+    "NEXT_PUBLIC_API_URL",
+    "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",
+  ] as const;
 
-for (const key of requiredEnvVars) {
-  if (!process.env[key]) {
-    throw new Error(
-      `Missing required environment variable: ${key}\nSee apps/frontend/.env.example`,
-    );
+  for (const key of requiredEnvVars) {
+    if (!process.env[key]) {
+      throw new Error(
+        `Missing required environment variable: ${key}\nSee apps/frontend/.env.example`,
+      );
+    }
   }
 }
 
@@ -76,6 +80,18 @@ const nextConfig: NextConfig = {
     ],
   },
 
+  // Tell Next.js which packages to tree-shake at build time.
+  // Next.js will only bundle the specific named exports that are actually imported,
+  // instead of pulling in the entire package.
+  experimental: {
+    optimizePackageImports: [
+      "@tanstack/react-query",
+      "@tanstack/react-virtual",
+      "lucide-react",
+      "date-fns",
+    ],
+  },
+
   async headers() {
     return [
       {
@@ -87,4 +103,8 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === "true",
+});
+
+export default withBundleAnalyzer(nextConfig);
