@@ -1,25 +1,20 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useRef, useState, useTransition } from 'react';
-import { useVirtualizer } from '@tanstack/react-virtual';
-import { useAdminProducts, useDeleteProduct } from '../../hooks';
-import { AdminTableSkeleton } from '../AdminTableSkeleton/AdminTableSkeleton';
-import { EmptyState } from '@/components/EmptyState/EmptyState';
-import { useUrlState } from '@/hooks/useUrlState';
-import styles from './AdminProductsView.module.scss';
+import Link from "next/link";
+import { useRef, useState, useTransition } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { useAdminProducts, useDeleteProduct } from "../../hooks";
+import { AdminTableSkeleton } from "../AdminTableSkeleton/AdminTableSkeleton";
+import { EmptyState } from "@/components/EmptyState/EmptyState";
+import { useUrlState } from "@/hooks/useUrlState";
+import styles from "./AdminProductsView.module.scss";
 
 export function AdminProductsView() {
   const [isPending, startTransition] = useTransition();
-  const [urlSearch, setUrlSearch] = useUrlState('search');
-  const [localSearch, setLocalSearch] = useState(urlSearch ?? '');
-  const {
-    data,
-    isLoading,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useAdminProducts(urlSearch || undefined);
+  const [urlSearch, setUrlSearch] = useUrlState("search");
+  const [localSearch, setLocalSearch] = useState(urlSearch ?? "");
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useAdminProducts(urlSearch || undefined);
   const { mutate: deleteProduct, isPending: isDeleting } = useDeleteProduct();
   const [showConfirmId, setShowConfirmId] = useState<string | null>(null);
 
@@ -27,6 +22,7 @@ export function AdminProductsView() {
   const total = data?.pages[0]?.meta.total ?? 0;
 
   const parentRef = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line react-hooks/incompatible-library
   const rowVirtualizer = useVirtualizer({
     count: products.length,
     getScrollElement: () => parentRef.current,
@@ -55,7 +51,9 @@ export function AdminProductsView() {
   const totalSize = rowVirtualizer.getTotalSize();
   const paddingTop = virtualItems.length > 0 ? virtualItems[0].start : 0;
   const paddingBottom =
-    virtualItems.length > 0 ? totalSize - virtualItems[virtualItems.length - 1].end : 0;
+    virtualItems.length > 0
+      ? totalSize - virtualItems[virtualItems.length - 1].end
+      : 0;
 
   return (
     <div className={styles.container}>
@@ -84,12 +82,23 @@ export function AdminProductsView() {
       {products.length === 0 ? (
         <EmptyState
           title="No products yet"
-          description={urlSearch ? `No products match "${urlSearch}"` : undefined}
-          action={!urlSearch ? { label: 'Add your first product', href: '/admin/products/new' } : undefined}
+          description={
+            urlSearch ? `No products match "${urlSearch}"` : undefined
+          }
+          action={
+            !urlSearch
+              ? { label: "Add your first product", href: "/admin/products/new" }
+              : undefined
+          }
         />
       ) : (
         <>
-          <div style={{ opacity: isPending ? 0.6 : 1, transition: 'opacity 200ms' }}>
+          <div
+            style={{
+              opacity: isPending ? 0.6 : 1,
+              transition: "opacity 200ms",
+            }}
+          >
             <div ref={parentRef} className={styles.tableWrapper}>
               <table className={styles.table}>
                 <thead>
@@ -104,7 +113,10 @@ export function AdminProductsView() {
                 <tbody>
                   {paddingTop > 0 && (
                     <tr>
-                      <td colSpan={5} style={{ height: paddingTop, padding: 0 }} />
+                      <td
+                        colSpan={5}
+                        style={{ height: paddingTop, padding: 0 }}
+                      />
                     </tr>
                   )}
                   {virtualItems.map((virtualRow) => {
@@ -114,17 +126,19 @@ export function AdminProductsView() {
                         <td className={styles.name}>{product.name}</td>
                         <td>${Number(product.price).toFixed(2)}</td>
                         <td>{product.stock}</td>
-                        <td>{product.category?.name || '—'}</td>
+                        <td>{product.category?.name || "—"}</td>
                         <td className={styles.actions}>
                           {showConfirmId === product.id ? (
                             <div className={styles.confirm}>
-                              <span className={styles.confirmText}>Delete?</span>
+                              <span className={styles.confirmText}>
+                                Delete?
+                              </span>
                               <button
                                 className={styles.confirmYes}
                                 onClick={() => handleDelete(product.id)}
                                 disabled={isDeleting}
                               >
-                                {isDeleting ? '...' : 'Yes'}
+                                {isDeleting ? "..." : "Yes"}
                               </button>
                               <button
                                 className={styles.confirmNo}
@@ -136,7 +150,10 @@ export function AdminProductsView() {
                             </div>
                           ) : (
                             <div className={styles.actionButtons}>
-                              <Link href={`/admin/products/${product.id}/edit`} className={styles.editBtn}>
+                              <Link
+                                href={`/admin/products/${product.id}/edit`}
+                                className={styles.editBtn}
+                              >
                                 Edit
                               </Link>
                               <button
@@ -153,7 +170,10 @@ export function AdminProductsView() {
                   })}
                   {paddingBottom > 0 && (
                     <tr>
-                      <td colSpan={5} style={{ height: paddingBottom, padding: 0 }} />
+                      <td
+                        colSpan={5}
+                        style={{ height: paddingBottom, padding: 0 }}
+                      />
                     </tr>
                   )}
                 </tbody>
@@ -163,7 +183,8 @@ export function AdminProductsView() {
 
           <div className={styles.footer}>
             <span className={styles.count}>
-              Showing {products.length} of {total} product{total !== 1 ? 's' : ''}
+              Showing {products.length} of {total} product
+              {total !== 1 ? "s" : ""}
             </span>
 
             {hasNextPage && (
@@ -172,7 +193,7 @@ export function AdminProductsView() {
                 onClick={() => void fetchNextPage()}
                 disabled={isFetchingNextPage}
               >
-                {isFetchingNextPage ? 'Loading…' : 'Load More'}
+                {isFetchingNextPage ? "Loading…" : "Load More"}
               </button>
             )}
           </div>

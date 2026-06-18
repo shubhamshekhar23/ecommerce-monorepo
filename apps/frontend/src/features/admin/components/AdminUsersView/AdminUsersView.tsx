@@ -1,15 +1,16 @@
-'use client';
+"use client";
 
-import { useRef } from 'react';
-import { useVirtualizer } from '@tanstack/react-virtual';
-import { useAdminUsers } from '../../hooks';
-import styles from './AdminUsersView.module.scss';
+import { useRef } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { useAdminUsers } from "../../hooks";
+import styles from "./AdminUsersView.module.scss";
 
 export function AdminUsersView() {
   const { data: users, isLoading } = useAdminUsers();
   const userList = users ?? [];
 
   const parentRef = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line react-hooks/incompatible-library
   const rowVirtualizer = useVirtualizer({
     count: userList.length,
     getScrollElement: () => parentRef.current,
@@ -34,7 +35,9 @@ export function AdminUsersView() {
   const totalSize = rowVirtualizer.getTotalSize();
   const paddingTop = virtualItems.length > 0 ? virtualItems[0].start : 0;
   const paddingBottom =
-    virtualItems.length > 0 ? totalSize - virtualItems[virtualItems.length - 1].end : 0;
+    virtualItems.length > 0
+      ? totalSize - virtualItems[virtualItems.length - 1].end
+      : 0;
 
   return (
     <div className={styles.container}>
@@ -66,7 +69,7 @@ export function AdminUsersView() {
                   </td>
                   <td>{user.email}</td>
                   <td>{user.role}</td>
-                  <td>{user.isActive ? '✓' : '✗'}</td>
+                  <td>{user.isActive ? "✓" : "✗"}</td>
                   <td>{new Date(user.createdAt).toLocaleDateString()}</td>
                 </tr>
               );

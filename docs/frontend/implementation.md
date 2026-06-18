@@ -130,7 +130,7 @@ Polish items that build on Phase 5 component primitives and Phase 6 data pattern
 
 Structural refactors are best deferred until features stabilize. Bundle analysis is most useful once all features are in.
 
-- [ ] **Project Structure** → [architecture/project-structure.md](./architecture/project-structure.md)
+- [x] **Project Structure** → [architecture/project-structure.md](./architecture/project-structure.md)
   - `constants/` + `mocks/` dirs per feature, `src/hooks/` for global hooks (`useDebounce`, `useScrollRestoration`, `useIntersectionObserver`, `useLocalStorage`), feature `index.ts` public API files, Husky + lint-staged, `.editorconfig`
 
 - [ ] **Shared Types** → [architecture/shared-types.md](./architecture/shared-types.md)

@@ -1,5 +1,5 @@
-import { ErrorMessage } from './ErrorMessage';
-import styles from './RadioGroup.module.scss';
+import { ErrorMessage } from "./ErrorMessage";
+import styles from "./RadioGroup.module.scss";
 
 interface RadioOption {
   value: string;
@@ -16,11 +16,23 @@ interface RadioGroupProps {
   name: string;
 }
 
-export function RadioGroup({ id, legend, options, value, onChange, error, name }: RadioGroupProps) {
+export function RadioGroup({
+  id,
+  legend,
+  options,
+  value,
+  onChange,
+  error,
+  name,
+}: RadioGroupProps) {
   const errorId = `${id}-error`;
 
   return (
-    <fieldset className={styles.fieldset} aria-describedby={error ? errorId : undefined}>
+    <fieldset
+      className={styles.fieldset}
+      aria-describedby={error ? errorId : undefined}
+      aria-invalid={error ? "true" : undefined}
+    >
       <legend className={styles.legend}>{legend}</legend>
       <div className={styles.options}>
         {options.map((option) => (
@@ -32,7 +44,6 @@ export function RadioGroup({ id, legend, options, value, onChange, error, name }
               checked={value === option.value}
               onChange={() => onChange?.(option.value)}
               className={styles.radio}
-              aria-invalid={error ? 'true' : undefined}
             />
             <span className={styles.optionLabel}>{option.label}</span>
           </label>

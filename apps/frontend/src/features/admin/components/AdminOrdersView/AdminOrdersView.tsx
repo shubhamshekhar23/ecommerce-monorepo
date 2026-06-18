@@ -1,40 +1,42 @@
-'use client';
+"use client";
 
-import { useRef, useTransition } from 'react';
-import Link from 'next/link';
-import { useVirtualizer } from '@tanstack/react-virtual';
-import { useAdminOrders, useUpdateOrderStatus } from '../../hooks';
-import { AdminTableSkeleton } from '../AdminTableSkeleton/AdminTableSkeleton';
-import { EmptyState } from '@/components/EmptyState/EmptyState';
-import { useUrlState } from '@/hooks/useUrlState';
-import type { OrderStatus } from '@/features/orders/interfaces';
-import styles from './AdminOrdersView.module.scss';
+import { useRef, useTransition } from "react";
+import Link from "next/link";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { useAdminOrders, useUpdateOrderStatus } from "../../hooks";
+import { AdminTableSkeleton } from "../AdminTableSkeleton/AdminTableSkeleton";
+import { EmptyState } from "@/components/EmptyState/EmptyState";
+import { useUrlState } from "@/hooks/useUrlState";
+import type { OrderStatus } from "@/features/orders/interfaces";
+import styles from "./AdminOrdersView.module.scss";
 
 const ORDER_STATUSES: OrderStatus[] = [
-  'PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'REFUNDED',
+  "PENDING",
+  "CONFIRMED",
+  "PROCESSING",
+  "SHIPPED",
+  "DELIVERED",
+  "CANCELLED",
+  "REFUNDED",
 ];
 
 const TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  PENDING: ['CONFIRMED', 'CANCELLED'],
-  CONFIRMED: ['PROCESSING', 'CANCELLED'],
-  PROCESSING: ['SHIPPED', 'CANCELLED'],
-  SHIPPED: ['DELIVERED'],
-  DELIVERED: ['REFUNDED'],
-  CANCELLED: ['REFUNDED'],
+  PENDING: ["CONFIRMED", "CANCELLED"],
+  CONFIRMED: ["PROCESSING", "CANCELLED"],
+  PROCESSING: ["SHIPPED", "CANCELLED"],
+  SHIPPED: ["DELIVERED"],
+  DELIVERED: ["REFUNDED"],
+  CANCELLED: ["REFUNDED"],
   REFUNDED: [],
 };
 
 export function AdminOrdersView() {
   const [isPending, startTransition] = useTransition();
-  const [statusFilter, setStatusFilter] = useUrlState('status');
-  const {
-    data,
-    isLoading,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useAdminOrders();
-  const { mutate: updateStatus, isPending: isUpdating } = useUpdateOrderStatus();
+  const [statusFilter, setStatusFilter] = useUrlState("status");
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useAdminOrders();
+  const { mutate: updateStatus, isPending: isUpdating } =
+    useUpdateOrderStatus();
 
   const allOrders = data?.pages.flatMap((p) => p.data) ?? [];
   const total = data?.pages[0]?.meta.total ?? 0;
@@ -43,6 +45,7 @@ export function AdminOrdersView() {
     : allOrders;
 
   const parentRef = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line react-hooks/incompatible-library
   const rowVirtualizer = useVirtualizer({
     count: orders.length,
     getScrollElement: () => parentRef.current,
@@ -63,7 +66,9 @@ export function AdminOrdersView() {
   const totalSize = rowVirtualizer.getTotalSize();
   const paddingTop = virtualItems.length > 0 ? virtualItems[0].start : 0;
   const paddingBottom =
-    virtualItems.length > 0 ? totalSize - virtualItems[virtualItems.length - 1].end : 0;
+    virtualItems.length > 0
+      ? totalSize - virtualItems[virtualItems.length - 1].end
+      : 0;
 
   return (
     <div className={styles.container}>
@@ -73,18 +78,25 @@ export function AdminOrdersView() {
         <div className={styles.filters}>
           <select
             className={styles.statusFilter}
-            value={statusFilter ?? ''}
-            onChange={(e) => startTransition(() => setStatusFilter(e.target.value || null))}
+            value={statusFilter ?? ""}
+            onChange={(e) =>
+              startTransition(() => setStatusFilter(e.target.value || null))
+            }
             aria-label="Filter by status"
           >
             <option value="">All statuses</option>
             {ORDER_STATUSES.map((s) => (
-              <option key={s} value={s}>{s}</option>
+              <option key={s} value={s}>
+                {s}
+              </option>
             ))}
           </select>
 
           {statusFilter && (
-            <button className={styles.clearBtn} onClick={() => startTransition(() => setStatusFilter(null))}>
+            <button
+              className={styles.clearBtn}
+              onClick={() => startTransition(() => setStatusFilter(null))}
+            >
               Clear
             </button>
           )}
@@ -94,12 +106,28 @@ export function AdminOrdersView() {
       {orders.length === 0 ? (
         <EmptyState
           title="No orders yet"
-          description={statusFilter ? `No orders with status "${statusFilter}"` : 'Orders placed by customers will appear here.'}
-          action={statusFilter ? { label: 'Clear filter', onClick: () => startTransition(() => setStatusFilter(null)) } : undefined}
+          description={
+            statusFilter
+              ? `No orders with status "${statusFilter}"`
+              : "Orders placed by customers will appear here."
+          }
+          action={
+            statusFilter
+              ? {
+                  label: "Clear filter",
+                  onClick: () => startTransition(() => setStatusFilter(null)),
+                }
+              : undefined
+          }
         />
       ) : (
         <>
-          <div style={{ opacity: isPending ? 0.6 : 1, transition: 'opacity 200ms' }}>
+          <div
+            style={{
+              opacity: isPending ? 0.6 : 1,
+              transition: "opacity 200ms",
+            }}
+          >
             <div ref={parentRef} className={styles.tableWrapper}>
               <table className={styles.table}>
                 <thead>
@@ -114,7 +142,10 @@ export function AdminOrdersView() {
                 <tbody>
                   {paddingTop > 0 && (
                     <tr>
-                      <td colSpan={5} style={{ height: paddingTop, padding: 0 }} />
+                      <td
+                        colSpan={5}
+                        style={{ height: paddingTop, padding: 0 }}
+                      />
                     </tr>
                   )}
                   {virtualItems.map((virtualRow) => {
@@ -122,11 +153,16 @@ export function AdminOrdersView() {
                     return (
                       <tr key={order.id}>
                         <td>
-                          <Link href={`/orders/${order.id}`} className={styles.link}>
+                          <Link
+                            href={`/orders/${order.id}`}
+                            className={styles.link}
+                          >
                             {order.orderNumber}
                           </Link>
                         </td>
-                        <td>{new Date(order.createdAt).toLocaleDateString()}</td>
+                        <td>
+                          {new Date(order.createdAt).toLocaleDateString()}
+                        </td>
                         <td>${Number(order.totalPrice).toFixed(2)}</td>
                         <td className={styles.status}>{order.status}</td>
                         <td>
@@ -138,12 +174,17 @@ export function AdminOrdersView() {
                                 status: e.target.value as OrderStatus,
                               })
                             }
-                            disabled={isUpdating || TRANSITIONS[order.status].length === 0}
+                            disabled={
+                              isUpdating ||
+                              TRANSITIONS[order.status].length === 0
+                            }
                             className={styles.statusSelect}
                           >
                             <option value={order.status}>{order.status}</option>
                             {TRANSITIONS[order.status].map((status) => (
-                              <option key={status} value={status}>{status}</option>
+                              <option key={status} value={status}>
+                                {status}
+                              </option>
                             ))}
                           </select>
                         </td>
@@ -152,7 +193,10 @@ export function AdminOrdersView() {
                   })}
                   {paddingBottom > 0 && (
                     <tr>
-                      <td colSpan={5} style={{ height: paddingBottom, padding: 0 }} />
+                      <td
+                        colSpan={5}
+                        style={{ height: paddingBottom, padding: 0 }}
+                      />
                     </tr>
                   )}
                 </tbody>
@@ -164,7 +208,7 @@ export function AdminOrdersView() {
             <span className={styles.count}>
               {statusFilter
                 ? `${orders.length} of ${allOrders.length} loaded (${total} total)`
-                : `Showing ${orders.length} of ${total} order${total !== 1 ? 's' : ''}`}
+                : `Showing ${orders.length} of ${total} order${total !== 1 ? "s" : ""}`}
             </span>
 
             {hasNextPage && !statusFilter && (
@@ -173,7 +217,7 @@ export function AdminOrdersView() {
                 onClick={() => void fetchNextPage()}
                 disabled={isFetchingNextPage}
               >
-                {isFetchingNextPage ? 'Loading…' : 'Load More'}
+                {isFetchingNextPage ? "Loading…" : "Load More"}
               </button>
             )}
           </div>

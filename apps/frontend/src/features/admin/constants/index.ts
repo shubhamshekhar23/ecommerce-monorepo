@@ -1,0 +1,23 @@
+export const ADMIN_PAGE_SIZE = 20;
+export const ADMIN_TABLE_MAX_HEIGHT_PX = 600;
+export const ADMIN_ROW_HEIGHT_PX = 56;
+
+export const ADMIN_ORDER_STATUSES = [
+  "PENDING",
+  "CONFIRMED",
+  "PROCESSING",
+  "SHIPPED",
+  "DELIVERED",
+  "CANCELLED",
+  "REFUNDED",
+] as const;
+
+export const ADMIN_STATUS_TRANSITIONS: Record<string, string[]> = {
+  PENDING: ["CONFIRMED", "CANCELLED"],
+  CONFIRMED: ["PROCESSING", "CANCELLED"],
+  PROCESSING: ["SHIPPED", "CANCELLED"],
+  SHIPPED: ["DELIVERED"],
+  DELIVERED: ["REFUNDED"],
+  CANCELLED: ["REFUNDED"],
+  REFUNDED: [],
+};
