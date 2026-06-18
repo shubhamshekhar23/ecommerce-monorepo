@@ -164,7 +164,7 @@ Additive features. The app works without them. Implement once all core patterns 
   - `@sentry/nextjs`, Vercel Analytics + Speed Insights in layout, GA4 funnel events (`view_item`, `add_to_cart`, `begin_checkout`, `purchase`), Sentry user context on login/logout
   - Depends on: Phase 2.4 (GDPR consent gates GA4 + Sentry loading)
 
-- [ ] **Print CSS** → [ux/print-css.md](./ux/print-css.md)
+- [x] **Print CSS** → [ux/print-css.md](./ux/print-css.md)
   - `@media print` global reset (hide header/nav/footer/buttons), `@page` A4 margins, order detail print styles, "Print Receipt" button with `window.print()`
 
 - [ ] **PWA & Real-time** → [advanced/pwa-and-realtime.md](./advanced/pwa-and-realtime.md)

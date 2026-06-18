@@ -1,27 +1,27 @@
 // src/features/orders/components/OrderDetailView/OrderDetailView.tsx
 
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useState } from 'react';
-import { useOrder, useCancelOrder } from '../../hooks';
-import { Breadcrumb } from '@/components/Breadcrumb/Breadcrumb';
-import type { OrderStatus, PaymentStatus } from '../../interfaces';
+import Link from "next/link";
+import { useState } from "react";
+import { useOrder, useCancelOrder } from "../../hooks";
+import { Breadcrumb } from "@/components/Breadcrumb/Breadcrumb";
+import type { OrderStatus, PaymentStatus } from "../../interfaces";
 
 const PAYMENT_LABELS: Partial<Record<PaymentStatus, string>> = {
-  SUCCEEDED: 'Paid',
-  FAILED: 'Payment Failed',
-  REFUNDED: 'Refunded',
-  CANCELED: 'Payment Canceled',
+  SUCCEEDED: "Paid",
+  FAILED: "Payment Failed",
+  REFUNDED: "Refunded",
+  CANCELED: "Payment Canceled",
 };
 
 const PAYMENT_STYLE_MAP: Partial<Record<PaymentStatus, string>> = {
-  SUCCEEDED: 'paymentSucceeded',
-  FAILED: 'paymentFailed',
-  REFUNDED: 'paymentRefunded',
-  CANCELED: 'paymentCanceled',
+  SUCCEEDED: "paymentSucceeded",
+  FAILED: "paymentFailed",
+  REFUNDED: "paymentRefunded",
+  CANCELED: "paymentCanceled",
 };
-import styles from './OrderDetailView.module.scss';
+import styles from "./OrderDetailView.module.scss";
 
 interface OrderDetailViewProps {
   id: string;
@@ -45,24 +45,30 @@ export function OrderDetailView({ id }: OrderDetailViewProps) {
       <div className={styles.container}>
         <div className={styles.error}>
           <h1>Order Not Found</h1>
-          <p>This order doesn&apos;t exist or you don&apos;t have permission to view it.</p>
+          <p>
+            This order doesn&apos;t exist or you don&apos;t have permission to
+            view it.
+          </p>
           <Link href="/orders">← Back to Orders</Link>
         </div>
       </div>
     );
   }
 
-  const isCancellable = ['PENDING', 'CONFIRMED', 'PROCESSING'].includes(order.status);
+  const isCancellable = ["PENDING", "CONFIRMED", "PROCESSING"].includes(
+    order.status,
+  );
   const statuses: OrderStatus[] = [
-    'PENDING',
-    'CONFIRMED',
-    'PROCESSING',
-    'SHIPPED',
-    'DELIVERED',
+    "PENDING",
+    "CONFIRMED",
+    "PROCESSING",
+    "SHIPPED",
+    "DELIVERED",
   ];
   const statusTimeline = statuses.map((status) => ({
     status,
-    completed: statuses.indexOf(status) < statuses.indexOf(order.status as OrderStatus),
+    completed:
+      statuses.indexOf(status) < statuses.indexOf(order.status as OrderStatus),
     current: status === order.status,
   }));
 
@@ -74,36 +80,41 @@ export function OrderDetailView({ id }: OrderDetailViewProps) {
 
   return (
     <div className={styles.container}>
-      <Breadcrumb items={[
-        { label: 'Home', href: '/' },
-        { label: 'My Orders', href: '/orders' },
-        { label: order.orderNumber },
-      ]} />
+      <Breadcrumb
+        items={[
+          { label: "Home", href: "/" },
+          { label: "My Orders", href: "/orders" },
+          { label: order.orderNumber },
+        ]}
+      />
 
       <div className={styles.header}>
         <div className={styles.headerInfo}>
           <h1 className={styles.title}>{order.orderNumber}</h1>
           <p className={styles.date}>
-            {new Date(order.createdAt).toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
+            {new Date(order.createdAt).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
             })}
           </p>
         </div>
         <div className={styles.headerBadges}>
           <div className={styles.status}>{order.status}</div>
           {PAYMENT_LABELS[order.paymentStatus] && (
-            <div className={`${styles.paymentBadge} ${styles[PAYMENT_STYLE_MAP[order.paymentStatus] ?? ''] ?? ''}`}>
+            <div
+              className={`${styles.paymentBadge} ${styles[PAYMENT_STYLE_MAP[order.paymentStatus] ?? ""] ?? ""}`}
+            >
               {PAYMENT_LABELS[order.paymentStatus]}
             </div>
           )}
         </div>
       </div>
 
-      {order.paymentStatus === 'FAILED' && (
+      {order.paymentStatus === "FAILED" && (
         <div className={styles.paymentWarning}>
-          Payment was declined — your order has not been charged. Please contact support.
+          Payment was declined — your order has not been charged. Please contact
+          support.
         </div>
       )}
 
@@ -114,13 +125,17 @@ export function OrderDetailView({ id }: OrderDetailViewProps) {
             <div key={item.status} className={styles.timelineItem}>
               <div
                 className={`${styles.timelinePoint} ${
-                  item.completed ? styles.completed : item.current ? styles.current : ''
+                  item.completed
+                    ? styles.completed
+                    : item.current
+                      ? styles.current
+                      : ""
                 }`}
               />
               {idx < statusTimeline.length - 1 && (
                 <div
                   className={`${styles.timelineConnector} ${
-                    item.completed ? styles.completed : ''
+                    item.completed ? styles.completed : ""
                   }`}
                 />
               )}
@@ -152,7 +167,9 @@ export function OrderDetailView({ id }: OrderDetailViewProps) {
       <div className={styles.summary}>
         <div className={styles.summaryRow}>
           <span className={styles.label}>Total</span>
-          <span className={styles.value}>${Number(order.totalPrice).toFixed(2)}</span>
+          <span className={styles.value}>
+            ${Number(order.totalPrice).toFixed(2)}
+          </span>
         </div>
       </div>
 
@@ -163,7 +180,7 @@ export function OrderDetailView({ id }: OrderDetailViewProps) {
             onClick={() => setShowConfirm(true)}
             disabled={isCanceling}
           >
-            {isCanceling ? 'Canceling...' : 'Cancel Order'}
+            {isCanceling ? "Canceling..." : "Cancel Order"}
           </button>
         )
       ) : (
@@ -175,7 +192,7 @@ export function OrderDetailView({ id }: OrderDetailViewProps) {
               onClick={handleCancel}
               disabled={isCanceling}
             >
-              {isCanceling ? '...' : 'Yes, Cancel'}
+              {isCanceling ? "..." : "Yes, Cancel"}
             </button>
             <button
               className={styles.confirmNo}
@@ -187,6 +204,14 @@ export function OrderDetailView({ id }: OrderDetailViewProps) {
           </div>
         </div>
       )}
+
+      <button
+        className={`${styles.printBtn} no-print`}
+        onClick={() => window.print()}
+        aria-label="Print this receipt"
+      >
+        Print Receipt
+      </button>
     </div>
   );
 }
