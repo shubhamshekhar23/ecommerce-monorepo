@@ -52,7 +52,7 @@ Rendering strategy affects every page — change it late and you're rewriting co
 - [x] **Performance: Images** → [performance/images.md](./performance/images.md)
   - `formats: ['image/avif', 'image/webp']` in `next.config.ts`, `priority` prop on first ProductCard + hero images, `blurDataURL` placeholder, art direction with `<picture>` for editorial images, CDN URL helper in `config.ts`
 
-- [ ] **Performance: Loading** → [performance/loading-and-network.md](./performance/loading-and-network.md)
+- [x] **Performance: Loading** → [performance/loading-and-network.md](./performance/loading-and-network.md)
   - `<link rel="preconnect">` to API + font CDN in `layout.tsx`, `font-display: swap`, `React.lazy` + `Suspense` for below-fold components, `next/script strategy="lazyOnload"` for third-party scripts
 
 ---

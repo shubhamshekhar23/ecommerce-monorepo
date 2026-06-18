@@ -31,6 +31,14 @@ const websiteJsonLd = {
   },
 };
 
+const API_ORIGIN = (() => {
+  try {
+    return new URL(process.env.NEXT_PUBLIC_API_URL ?? '').origin;
+  } catch {
+    return '';
+  }
+})();
+
 export default function RootLayout({
   children,
 }: {
@@ -38,6 +46,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        {/* Open TCP+TLS connections early so the first API call pays no handshake cost. */}
+        {API_ORIGIN && <link rel="preconnect" href={API_ORIGIN} />}
+        {API_ORIGIN && <link rel="dns-prefetch" href={API_ORIGIN} />}
+        {/* Stripe JS is loaded on checkout — preconnect so the iframe is ready sooner. */}
+        <link rel="preconnect" href="https://js.stripe.com" />
+        <link rel="dns-prefetch" href="https://js.stripe.com" />
+      </head>
       <body>
         <script
           type="application/ld+json"

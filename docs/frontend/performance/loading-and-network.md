@@ -17,7 +17,7 @@ Source: `pre-load-fetch-connect.md`, `async-defer.md`, `performance-optimziation
 
 ## Items to Implement
 
-- [ ] **`<link rel="preconnect">` to API origin in `layout.tsx`** — the backend API domain is known at build time. Add to the `<head>` in `app/layout.tsx`:
+- [x] **`<link rel="preconnect">` to API origin in `layout.tsx`** — the backend API domain is known at build time. Add to the `<head>` in `app/layout.tsx`:
   ```html
   <link rel="preconnect" href="https://api.yourdomain.com" />
   ```
@@ -25,7 +25,7 @@ Source: `pre-load-fetch-connect.md`, `async-defer.md`, `performance-optimziation
   - Complexity: Easy
   - File: `src/app/layout.tsx`
 
-- [ ] **`<link rel="dns-prefetch">` as fallback** — add alongside preconnect for browsers that don't support it:
+- [x] **`<link rel="dns-prefetch">` as fallback** — add alongside preconnect for browsers that don't support it:
   ```html
   <link rel="dns-prefetch" href="https://api.yourdomain.com" />
   ```
@@ -45,7 +45,7 @@ Source: `pre-load-fetch-connect.md`, `async-defer.md`, `performance-optimziation
   - Complexity: Easy
   - File: `src/styles/globals.scss` or `src/app/layout.tsx` (depending on font loading method)
 
-- [ ] **`React.lazy` + `Suspense` for heavy route components** — these components include large dependencies and don't need to be in the initial bundle:
+- [x] **`React.lazy` + `Suspense` for heavy route components** — these components include large dependencies and don't need to be in the initial bundle:
   - `CheckoutView` — loads Stripe JS (`@stripe/stripe-js`)
   - Admin views (`AdminProductsView`, `AdminOrdersView`, `AdminUsersView`) — only accessible to admins
   - `ProductImageGallery` — image gallery with lightbox logic
@@ -54,7 +54,7 @@ Source: `pre-load-fetch-connect.md`, `async-defer.md`, `performance-optimziation
   - Complexity: Medium
   - Files: checkout page, admin pages
 
-- [ ] **`loading.tsx` per route segment** — Next.js App Router supports a `loading.tsx` file in any route segment. It automatically wraps the page in a Suspense boundary, showing the loading UI while the page component fetches data. Add:
+- [x] **`loading.tsx` per route segment** — Next.js App Router supports a `loading.tsx` file in any route segment. It automatically wraps the page in a Suspense boundary, showing the loading UI while the page component fetches data. Add:
   - `app/products/loading.tsx`
   - `app/orders/loading.tsx`
   - `app/cart/loading.tsx`
