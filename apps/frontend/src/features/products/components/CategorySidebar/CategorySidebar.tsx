@@ -1,18 +1,29 @@
-// src/features/products/components/CategorySidebar/CategorySidebar.tsx
-
 'use client';
 
-import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useCategories } from '../../hooks';
 import styles from './CategorySidebar.module.scss';
 
 export function CategorySidebar() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const activeCategory = searchParams.get('category');
   const { data, isLoading } = useCategories();
 
   const categories = data?.data || [];
+
+  const handleCategoryClick = (slug: string | null) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (slug) {
+      params.set('category', slug);
+    } else {
+      params.delete('category');
+    }
+    params.delete('page');
+    const query = params.toString();
+    router.push(query ? `${pathname}?${query}` : pathname);
+  };
 
   return (
     <aside className={styles.sidebar}>
@@ -24,16 +35,24 @@ export function CategorySidebar() {
         <div className={styles.empty}>No categories available</div>
       ) : (
         <ul className={styles.list}>
+          <li>
+            <button
+              className={`${styles.link} ${!activeCategory ? styles.active : ''}`}
+              onClick={() => handleCategoryClick(null)}
+            >
+              All
+            </button>
+          </li>
           {categories.map((category) => {
             const isActive = activeCategory === category.slug;
             return (
               <li key={category.id}>
-                <Link
-                  href={`/products?category=${category.slug}`}
+                <button
                   className={`${styles.link} ${isActive ? styles.active : ''}`}
+                  onClick={() => handleCategoryClick(category.slug)}
                 >
                   {category.name}
-                </Link>
+                </button>
               </li>
             );
           })}

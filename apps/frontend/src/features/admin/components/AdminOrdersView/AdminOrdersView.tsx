@@ -4,8 +4,13 @@ import Link from 'next/link';
 import { useAdminOrders, useUpdateOrderStatus } from '../../hooks';
 import { AdminTableSkeleton } from '../AdminTableSkeleton/AdminTableSkeleton';
 import { EmptyState } from '@/components/EmptyState/EmptyState';
+import { useUrlState } from '@/hooks/useUrlState';
 import type { OrderStatus } from '@/features/orders/interfaces';
 import styles from './AdminOrdersView.module.scss';
+
+const ORDER_STATUSES: OrderStatus[] = [
+  'PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'REFUNDED',
+];
 
 const TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   PENDING: ['CONFIRMED', 'CANCELLED'],
@@ -18,6 +23,7 @@ const TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
 };
 
 export function AdminOrdersView() {
+  const [statusFilter, setStatusFilter] = useUrlState('status');
   const { data, isLoading } = useAdminOrders(1);
   const { mutate: updateStatus, isPending } = useUpdateOrderStatus();
 
@@ -30,16 +36,42 @@ export function AdminOrdersView() {
     );
   }
 
-  const orders = data?.data || [];
+  const allOrders = data?.data || [];
+  const orders = statusFilter
+    ? allOrders.filter((o) => o.status === statusFilter)
+    : allOrders;
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>Orders</h1>
+      <div className={styles.header}>
+        <h1 className={styles.title}>Orders</h1>
+
+        <div className={styles.filters}>
+          <select
+            className={styles.statusFilter}
+            value={statusFilter ?? ''}
+            onChange={(e) => setStatusFilter(e.target.value || null)}
+            aria-label="Filter by status"
+          >
+            <option value="">All statuses</option>
+            {ORDER_STATUSES.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+
+          {statusFilter && (
+            <button className={styles.clearBtn} onClick={() => setStatusFilter(null)}>
+              Clear
+            </button>
+          )}
+        </div>
+      </div>
 
       {orders.length === 0 ? (
         <EmptyState
           title="No orders yet"
-          description="Orders placed by customers will appear here."
+          description={statusFilter ? `No orders with status "${statusFilter}"` : 'Orders placed by customers will appear here.'}
+          action={statusFilter ? { label: 'Clear filter', onClick: () => setStatusFilter(null) } : undefined}
         />
       ) : (
         <div className={styles.tableWrapper}>
@@ -78,9 +110,7 @@ export function AdminOrdersView() {
                     >
                       <option value={order.status}>{order.status}</option>
                       {TRANSITIONS[order.status].map((status) => (
-                        <option key={status} value={status}>
-                          {status}
-                        </option>
+                        <option key={status} value={status}>{status}</option>
                       ))}
                     </select>
                   </td>

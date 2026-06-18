@@ -137,4 +137,9 @@ export interface ProductsQueryParams {
 export interface CursorQueryParams {
   cursor?: string;
   limit?: number;
+  categoryId?: string;
+  sort?: "price_asc" | "price_desc" | "newest" | "oldest";
+  minPrice?: number;
+  maxPrice?: number;
+  inStock?: boolean;
 }

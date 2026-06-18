@@ -21,7 +21,7 @@ The products page currently handles `?search=` via `useSearchParams`. The patter
 
 ## Items to Implement
 
-- [ ] **Category filter in URL** — when user selects a category in `CategorySidebar`, push `?category=electronics` to the URL instead of keeping it in component state:
+- [x] **Category filter in URL** — when user selects a category in `CategorySidebar`, push `?category=electronics` to the URL instead of keeping it in component state:
   ```ts
   const router = useRouter();
   const handleCategorySelect = (slug: string) => {
@@ -32,16 +32,16 @@ The products page currently handles `?search=` via `useSearchParams`. The patter
   - Complexity: Easy
   - Files: `CategorySidebar.tsx`, `ProductsView.tsx`, `useProducts.ts`
 
-- [ ] **Sort order in URL** — when user changes sort (price asc/desc, newest, popularity), push `?sort=price_asc` to the URL:
+- [x] **Sort order in URL** — when user changes sort (price asc/desc, newest, popularity), push `?sort=price_asc` to the URL:
   ```ts
   router.push(`/products?${new URLSearchParams({ ...currentParams, sort: value }).toString()}`);
   ```
   - Complexity: Easy
 
-- [ ] **Price range filter in URL** — if a price range slider/input is added: `?minPrice=10&maxPrice=100`.
+- [x] **Price range filter in URL** — if a price range slider/input is added: `?minPrice=10&maxPrice=100`.
   - Complexity: Easy (when the filter UI exists)
 
-- [ ] **Preserve existing params when adding new ones** — when adding a filter, do not wipe existing filters. Use `URLSearchParams` to merge:
+- [x] **Preserve existing params when adding new ones** — when adding a filter, do not wipe existing filters. Use `URLSearchParams` to merge:
   ```ts
   const params = new URLSearchParams(searchParams.toString());
   params.set('category', slug);
@@ -50,7 +50,7 @@ The products page currently handles `?search=` via `useSearchParams`. The patter
   ```
   - Complexity: Easy
 
-- [ ] **`useUrlState` hook** — extract the pattern into a reusable hook to avoid repetition across filter controls:
+- [x] **`useUrlState` hook** — extract the pattern into a reusable hook to avoid repetition across filter controls:
   ```ts
   // src/hooks/useUrlState.ts
   function useUrlState<T extends string>(key: string): [T | null, (value: T | null) => void]
@@ -59,11 +59,11 @@ The products page currently handles `?search=` via `useSearchParams`. The patter
   - Complexity: Medium
   - File: `src/hooks/useUrlState.ts`
 
-- [ ] **Restore page component to reflect URL state on mount** — when the user navigates back, the URL already has the filter params. The components must initialize from URL params, not from local state defaults. This is natural when using `useSearchParams` correctly — just verify every filter reads from the URL on mount.
+- [x] **Restore page component to reflect URL state on mount** — when the user navigates back, the URL already has the filter params. The components must initialize from URL params, not from local state defaults. This is natural when using `useSearchParams` correctly — just verify every filter reads from the URL on mount.
   - Complexity: Easy (audit)
 
-- [ ] **Clear all filters button** — with all filters in the URL, "clear all" is `router.push('/products')`. Add this button when any filter is active.
+- [x] **Clear all filters button** — with all filters in the URL, "clear all" is `router.push('/products')`. Add this button when any filter is active.
   - Complexity: Easy
 
-- [ ] **Admin list views with URL state** — apply the same pattern to `/admin/products` (sort, filter by category, search), `/admin/orders` (filter by status, date range), and `/admin/users` (search). Admin views benefit from URL state for bookmarkable filtered admin workflows.
+- [x] **Admin list views with URL state** — apply the same pattern to `/admin/products` (sort, filter by category, search), `/admin/orders` (filter by status, date range), and `/admin/users` (search). Admin views benefit from URL state for bookmarkable filtered admin workflows.
   - Complexity: Easy (once the pattern is established for the customer-facing products page)

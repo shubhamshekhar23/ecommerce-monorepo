@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useAdminProducts, useDeleteProduct } from '../../hooks';
 import { AdminTableSkeleton } from '../AdminTableSkeleton/AdminTableSkeleton';
 import { EmptyState } from '@/components/EmptyState/EmptyState';
+import { useUrlState } from '@/hooks/useUrlState';
 import styles from './AdminProductsView.module.scss';
 
 interface AdminProductsViewProps {
@@ -12,8 +13,9 @@ interface AdminProductsViewProps {
 }
 
 export function AdminProductsView({ page = 1 }: AdminProductsViewProps) {
-  const [search, setSearch] = useState('');
-  const { data, isLoading } = useAdminProducts(page, search || undefined);
+  const [urlSearch, setUrlSearch] = useUrlState('search');
+  const [localSearch, setLocalSearch] = useState(urlSearch ?? '');
+  const { data, isLoading } = useAdminProducts(page, urlSearch || undefined);
   const { mutate: deleteProduct, isPending } = useDeleteProduct();
   const [showConfirmId, setShowConfirmId] = useState<string | null>(null);
 
@@ -50,8 +52,11 @@ export function AdminProductsView({ page = 1 }: AdminProductsViewProps) {
         <input
           type="text"
           placeholder="Search products..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          value={localSearch}
+          onChange={(e) => {
+            setLocalSearch(e.target.value);
+            setUrlSearch(e.target.value || null);
+          }}
           className={styles.searchInput}
         />
       </div>
@@ -59,8 +64,8 @@ export function AdminProductsView({ page = 1 }: AdminProductsViewProps) {
       {products.length === 0 ? (
         <EmptyState
           title="No products yet"
-          description={search ? `No products match "${search}"` : undefined}
-          action={!search ? { label: 'Add your first product', href: '/admin/products/new' } : undefined}
+          description={urlSearch ? `No products match "${urlSearch}"` : undefined}
+          action={!urlSearch ? { label: 'Add your first product', href: '/admin/products/new' } : undefined}
         />
       ) : (
         <>
