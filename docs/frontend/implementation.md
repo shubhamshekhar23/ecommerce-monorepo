@@ -100,7 +100,7 @@ Infrastructure and shared components are in place. Now improve how data flows: n
 - [x] **Web Storage** → [data-and-state/web-storage.md](./data-and-state/web-storage.md)
   - `sessionStorage` for scroll position (Phase 5) and product list cache, `localStorage` for user preferences and recently viewed, IndexedDB offline cart queue (mutations queued when offline, replayed on reconnect)
 
-- [ ] **Feature Flags** → [architecture/feature-flags.md](./architecture/feature-flags.md)
+- [x] **Feature Flags** → [architecture/feature-flags.md](./architecture/feature-flags.md)
   - `FeatureFlagProvider` with typed `Flags` interface, Level 1: env vars parsed via Zod (Phase 1), `useFeatureFlag` hook, `FlagGuard` component for route-level flags
 
 ---

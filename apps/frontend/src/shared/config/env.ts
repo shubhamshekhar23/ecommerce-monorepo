@@ -6,6 +6,10 @@ const envSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
   NEXT_PUBLIC_FLAG_WISHLIST: z.coerce.boolean().default(false),
   NEXT_PUBLIC_FLAG_RECOMMENDATIONS: z.coerce.boolean().default(false),
+  NEXT_PUBLIC_FLAG_NEW_CHECKOUT: z.coerce.boolean().default(false),
+  NEXT_PUBLIC_FLAG_NEW_SEARCH: z.coerce.boolean().default(false),
+  NEXT_PUBLIC_FLAG_DARK_MODE: z.coerce.boolean().default(false),
+  NEXT_PUBLIC_FLAG_ADMIN_V2: z.coerce.boolean().default(false),
 });
 
 // Explicit key access is required in Next.js — process.env spread does not work
@@ -18,6 +22,10 @@ const parsed = envSchema.safeParse({
   NEXT_PUBLIC_FLAG_WISHLIST: process.env.NEXT_PUBLIC_FLAG_WISHLIST,
   NEXT_PUBLIC_FLAG_RECOMMENDATIONS:
     process.env.NEXT_PUBLIC_FLAG_RECOMMENDATIONS,
+  NEXT_PUBLIC_FLAG_NEW_CHECKOUT: process.env.NEXT_PUBLIC_FLAG_NEW_CHECKOUT,
+  NEXT_PUBLIC_FLAG_NEW_SEARCH: process.env.NEXT_PUBLIC_FLAG_NEW_SEARCH,
+  NEXT_PUBLIC_FLAG_DARK_MODE: process.env.NEXT_PUBLIC_FLAG_DARK_MODE,
+  NEXT_PUBLIC_FLAG_ADMIN_V2: process.env.NEXT_PUBLIC_FLAG_ADMIN_V2,
 });
 
 if (!parsed.success) {

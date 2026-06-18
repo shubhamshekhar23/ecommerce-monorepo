@@ -8,6 +8,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Toaster } from 'sonner';
 import { queryClient } from '@/shared/queryClient';
 import { AuthProvider } from '@/features/auth/components/AuthProvider/AuthProvider';
+import { FeatureFlagProvider } from '@/shared/featureFlags';
 import { CookieConsentBanner } from '@/components/CookieConsent/CookieConsentBanner';
 // Phase 10: import { useCookieConsent } from '@/shared/cookieConsent/useCookieConsent';
 // Phase 10: import { GoogleAnalyticsScript } from '@/components/Analytics/GoogleAnalytics';
@@ -22,7 +23,9 @@ export function Providers({ children }: ProvidersProps) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>{children}</AuthProvider>
+      <FeatureFlagProvider>
+        <AuthProvider>{children}</AuthProvider>
+      </FeatureFlagProvider>
 
       {/* Phase 10: conditionally load analytics/Sentry based on consent
           {consent.analytics && <GoogleAnalyticsScript />}
