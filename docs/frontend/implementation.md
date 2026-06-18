@@ -34,7 +34,7 @@ Security headers and auth hardening are legal/compliance requirements. Payment d
 - [x] **Payment UX** → [security/payment-ux.md](./security/payment-ux.md)
   - Disable submit button immediately on first click, `crypto.randomUUID()` idempotency key stored in `sessionStorage` sent as `X-Idempotency-Key`, Stripe error code → user-friendly message mapping, restore checkout form on refresh
 
-- [ ] **GDPR & Cookie Consent** → [security/gdpr-and-privacy.md](./security/gdpr-and-privacy.md)
+- [x] **GDPR & Cookie Consent** → [security/gdpr-and-privacy.md](./security/gdpr-and-privacy.md)
   - `CookieConsentBanner` component, `useCookieConsent` hook (localStorage), conditional GA4 + Sentry script loading based on consent
 
 ---

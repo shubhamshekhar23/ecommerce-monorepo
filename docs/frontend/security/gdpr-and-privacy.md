@@ -17,14 +17,14 @@ If the app uses analytics, error tracking, or any cookies that aren't strictly n
 
 ### Consent Banner
 
-- [ ] **Cookie consent banner component** — shown on first visit to users from regions that require consent. Options:
+- [x] **Cookie consent banner component** — shown on first visit to users from regions that require consent. Options:
   - Build a simple one: a bottom banner with "Accept All", "Reject Non-Essential", and "Manage Preferences"
   - Use a library: `react-cookie-consent` (simple), or a consent management platform (CMP) like Cookiebot or OneTrust for full compliance
   - **Recommendation:** build a simple one for the learning project; document that a real production deployment would use a certified CMP.
   - Complexity: Medium
   - File: `src/components/CookieConsent/CookieConsent.tsx`
 
-- [ ] **Store consent in `localStorage`** — remember the user's choice so the banner doesn't appear on every visit:
+- [x] **Store consent in `localStorage`** — remember the user's choice so the banner doesn't appear on every visit:
   ```ts
   localStorage.setItem('cookie-consent', JSON.stringify({
     analytics: true,
@@ -34,7 +34,7 @@ If the app uses analytics, error tracking, or any cookies that aren't strictly n
   ```
   - Complexity: Easy
 
-- [ ] **Conditional script loading based on consent** — analytics and Sentry scripts from `13-analytics-monitoring.md` must only load if consent was given:
+- [x] **Conditional script loading based on consent** — analytics and Sentry scripts from `13-analytics-monitoring.md` must only load if consent was given:
   ```tsx
   // src/app/providers.tsx
   const consent = useCookieConsent();
@@ -51,7 +51,7 @@ If the app uses analytics, error tracking, or any cookies that aren't strictly n
   - Complexity: Medium
   - Depends on: `13-analytics-monitoring.md`
 
-- [ ] **`useCookieConsent` hook** — reads from `localStorage`, provides consent state and update functions:
+- [x] **`useCookieConsent` hook** — reads from `localStorage`, provides consent state and update functions:
   ```ts
   function useCookieConsent(): {
     consent: ConsentState;
@@ -65,11 +65,11 @@ If the app uses analytics, error tracking, or any cookies that aren't strictly n
 
 ### Privacy
 
-- [ ] **Privacy policy page** — link it from the cookie consent banner and the footer. Not a React-specific item, but it's a legal requirement that the banner must link to.
+- [x] **Privacy policy page** — link it from the cookie consent banner and the footer. Not a React-specific item, but it's a legal requirement that the banner must link to.
   - Complexity: Easy (static page)
   - File: `src/app/privacy/page.tsx`
 
-- [ ] **Do not track (`DNT`) header respect** — if the user's browser sends `DNT: 1`, do not load analytics:
+- [x] **Do not track (`DNT`) header respect** — if the user's browser sends `DNT: 1`, do not load analytics:
   ```ts
   if (navigator.doNotTrack === '1') {
     // skip analytics
