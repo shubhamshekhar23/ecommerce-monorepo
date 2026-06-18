@@ -1,10 +1,10 @@
-// src/features/admin/components/AdminProductsView/AdminProductsView.tsx
-
 'use client';
 
 import Link from 'next/link';
 import { useState } from 'react';
 import { useAdminProducts, useDeleteProduct } from '../../hooks';
+import { AdminTableSkeleton } from '../AdminTableSkeleton/AdminTableSkeleton';
+import { EmptyState } from '@/components/EmptyState/EmptyState';
 import styles from './AdminProductsView.module.scss';
 
 interface AdminProductsViewProps {
@@ -18,7 +18,14 @@ export function AdminProductsView({ page = 1 }: AdminProductsViewProps) {
   const [showConfirmId, setShowConfirmId] = useState<string | null>(null);
 
   if (isLoading) {
-    return <div className={styles.loading}>Loading products...</div>;
+    return (
+      <div className={styles.container}>
+        <div className={styles.header}>
+          <h1 className={styles.title}>Products</h1>
+        </div>
+        <AdminTableSkeleton rows={8} columns={5} />
+      </div>
+    );
   }
 
   const products = data?.data || [];
@@ -50,9 +57,11 @@ export function AdminProductsView({ page = 1 }: AdminProductsViewProps) {
       </div>
 
       {products.length === 0 ? (
-        <div className={styles.empty}>
-          <p>No products found. <Link href="/admin/products/new">Create one</Link>.</p>
-        </div>
+        <EmptyState
+          title="No products yet"
+          description={search ? `No products match "${search}"` : undefined}
+          action={!search ? { label: 'Add your first product', href: '/admin/products/new' } : undefined}
+        />
       ) : (
         <>
           <div className={styles.tableWrapper}>

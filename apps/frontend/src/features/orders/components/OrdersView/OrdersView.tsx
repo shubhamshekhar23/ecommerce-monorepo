@@ -1,12 +1,11 @@
-// src/features/orders/components/OrdersView/OrdersView.tsx
-
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useUserOrders } from '../../hooks';
 import { OrderCard } from '../OrderCard/OrderCard';
+import { OrderSkeleton } from '../OrderSkeleton/OrderSkeleton';
+import { EmptyState } from '@/components/EmptyState/EmptyState';
 import styles from './OrdersView.module.scss';
 
 export function OrdersView() {
@@ -28,16 +27,13 @@ export function OrdersView() {
       <div className={styles.container}>
         <h1 className={styles.title}>My Orders</h1>
         <div className={styles.loadingContainer}>
-          <div className={styles.skeleton} />
-          <div className={styles.skeleton} />
-          <div className={styles.skeleton} />
+          {[1, 2, 3].map((i) => <OrderSkeleton key={i} />)}
         </div>
       </div>
     );
   }
 
   const orders = data?.data || [];
-  const hasOrders = orders.length > 0;
 
   return (
     <div className={styles.container}>
@@ -49,13 +45,13 @@ export function OrdersView() {
         </div>
       )}
 
-      {!hasOrders ? (
-        <div className={styles.emptyState}>
-          <p className={styles.emptyMessage}>You haven&apos;t placed any orders yet.</p>
-          <Link href="/products" className={styles.continueShopping}>
-            Continue Shopping
-          </Link>
-        </div>
+      {orders.length === 0 ? (
+        <EmptyState
+          icon="📦"
+          title="No orders yet"
+          description="You haven't placed any orders yet."
+          action={{ label: 'Start shopping', href: '/products' }}
+        />
       ) : (
         <div className={styles.ordersList}>
           {orders.map((order) => (

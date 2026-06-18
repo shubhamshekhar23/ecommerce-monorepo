@@ -1,9 +1,9 @@
-// src/features/admin/components/AdminOrdersView/AdminOrdersView.tsx
-
 'use client';
 
 import Link from 'next/link';
 import { useAdminOrders, useUpdateOrderStatus } from '../../hooks';
+import { AdminTableSkeleton } from '../AdminTableSkeleton/AdminTableSkeleton';
+import { EmptyState } from '@/components/EmptyState/EmptyState';
 import type { OrderStatus } from '@/features/orders/interfaces';
 import styles from './AdminOrdersView.module.scss';
 
@@ -22,7 +22,12 @@ export function AdminOrdersView() {
   const { mutate: updateStatus, isPending } = useUpdateOrderStatus();
 
   if (isLoading) {
-    return <div className={styles.loading}>Loading orders...</div>;
+    return (
+      <div className={styles.container}>
+        <h1 className={styles.title}>Orders</h1>
+        <AdminTableSkeleton rows={10} columns={5} />
+      </div>
+    );
   }
 
   const orders = data?.data || [];
@@ -32,7 +37,10 @@ export function AdminOrdersView() {
       <h1 className={styles.title}>Orders</h1>
 
       {orders.length === 0 ? (
-        <div className={styles.empty}>No orders found.</div>
+        <EmptyState
+          title="No orders yet"
+          description="Orders placed by customers will appear here."
+        />
       ) : (
         <div className={styles.tableWrapper}>
           <table className={styles.table}>

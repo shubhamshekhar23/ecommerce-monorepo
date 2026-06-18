@@ -1,20 +1,28 @@
-// src/features/products/components/ProductGrid/ProductGrid.tsx
-
 'use client';
 
-import Link from 'next/link';
 import type { Product } from '../../interfaces';
 import { ProductCard } from '../ProductCard/ProductCard';
 import { ProductSkeleton } from '../ProductSkeleton/ProductSkeleton';
+import { EmptyState } from '@/components/EmptyState/EmptyState';
 import styles from './ProductGrid.module.scss';
 
 interface ProductGridProps {
   products?: Product[];
   isLoading: boolean;
   error?: Error | null;
+  emptyTitle?: string;
+  emptyDescription?: string;
+  emptyAction?: { label: string; href?: string; onClick?: () => void };
 }
 
-export function ProductGrid({ products, isLoading, error }: ProductGridProps) {
+export function ProductGrid({
+  products,
+  isLoading,
+  error,
+  emptyTitle = 'No products found',
+  emptyDescription,
+  emptyAction,
+}: ProductGridProps) {
   if (error) {
     return (
       <div className={styles.error}>
@@ -26,21 +34,20 @@ export function ProductGrid({ products, isLoading, error }: ProductGridProps) {
   if (isLoading) {
     return (
       <div className={styles.grid}>
-        {Array(8)
-          .fill(0)
-          .map((_, i) => (
-            <ProductSkeleton key={i} />
-          ))}
+        {Array(8).fill(0).map((_, i) => (
+          <ProductSkeleton key={i} />
+        ))}
       </div>
     );
   }
 
   if (!products || products.length === 0) {
     return (
-      <div className={styles.empty}>
-        <p>No products found.</p>
-        <Link href="/">Return to home</Link>
-      </div>
+      <EmptyState
+        title={emptyTitle}
+        description={emptyDescription}
+        action={emptyAction}
+      />
     );
   }
 

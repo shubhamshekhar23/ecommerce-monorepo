@@ -25,6 +25,7 @@
     "@tanstack/react-query-devtools": "^5.91.3",
     "axios": "^1.13.5",
     "next": "16.1.6",
+    "nextjs-toploader": "^3.9.17",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-hook-form": "^7.71.2",

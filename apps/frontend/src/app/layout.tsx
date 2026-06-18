@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import NextTopLoader from 'nextjs-toploader';
 import { Providers } from './providers';
 import { Header } from '@/components/Header/Header';
 import { Navbar } from '@/components/Navbar/Navbar';
@@ -55,6 +56,7 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://js.stripe.com" />
       </head>
       <body>
+        <NextTopLoader color="var(--color-accent)" showSpinner={false} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}

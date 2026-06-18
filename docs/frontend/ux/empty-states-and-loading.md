@@ -10,35 +10,35 @@ Blank screens feel broken. Every list view needs a designed empty state with a c
 
 ### Items to Implement
 
-- [ ] **Empty cart** — when `/cart` has no items:
+- [x] **Empty cart** — when `/cart` has no items:
   - Message: "Your cart is empty"
   - CTA: "Browse products" → links to `/products`
   - Illustration: optional (cart icon, shopping bag)
   - File: `src/features/cart/components/CartView/CartView.tsx`
 
-- [ ] **No orders** — when `/orders` returns an empty list:
+- [x] **No orders** — when `/orders` returns an empty list:
   - Message: "You haven't placed any orders yet"
   - CTA: "Start shopping" → links to `/products`
   - File: `src/features/orders/components/OrdersView/OrdersView.tsx`
 
-- [ ] **No search results** — covered in `32-search-optimization.md` but should use the same shared `EmptyState` component.
+- [x] **No search results** — covered in `32-search-optimization.md` but should use the same shared `EmptyState` component.
 
-- [ ] **No products in category** — when a category filter returns 0 products:
+- [x] **No products in category** — when a category filter returns 0 products:
   - Message: "No products in this category"
   - CTA: "Clear filter" → removes the category param from URL
   - File: `src/features/products/components/ProductGrid/ProductGrid.tsx`
 
-- [ ] **Admin: no products** — when the admin product list is empty (fresh setup):
+- [x] **Admin: no products** — when the admin product list is empty (fresh setup):
   - Message: "No products yet"
   - CTA: "Add your first product" → links to `/admin/products/new`
   - File: `src/features/admin/components/AdminProductsView/AdminProductsView.tsx`
 
-- [ ] **Admin: no orders** — when no orders exist:
+- [x] **Admin: no orders** — when no orders exist:
   - Message: "No orders yet"
   - CTA: none (orders are created by customers)
   - File: `src/features/admin/components/AdminOrdersView/AdminOrdersView.tsx`
 
-- [ ] **Shared `EmptyState` component** — instead of each view implementing its own empty state, create one reusable component:
+- [x] **Shared `EmptyState` component** — instead of each view implementing its own empty state, create one reusable component:
   ```tsx
   // src/components/EmptyState/EmptyState.tsx
   interface EmptyStateProps {
@@ -71,12 +71,12 @@ When to use which loading UI — using the wrong one creates jarring UX.
 
 ### Items to Implement
 
-- [ ] **Page transition progress bar** — add a thin progress bar at the top of the page during Next.js route navigation. Shows users that something is happening when pages take more than ~300ms to load:
+- [x] **Page transition progress bar** — add a thin progress bar at the top of the page during Next.js route navigation. Shows users that something is happening when pages take more than ~300ms to load:
   - Library: `nextjs-toploader` (zero-config Next.js integration) or `nprogress` with a Router event listener
   - Place in: `src/app/layout.tsx`
   - Complexity: Easy
 
-- [ ] **Spinner for button loading states** — the current pattern (`isPending ? 'Loading...' : 'Submit'`) is functional but could be more polished. Replace text with an accessible spinner icon inside the button:
+- [x] **Spinner for button loading states** — the current pattern (`isPending ? 'Loading...' : 'Submit'`) is functional but could be more polished. Replace text with an accessible spinner icon inside the button:
   ```tsx
   <button disabled={isPending}>
     {isPending ? <Spinner size="sm" aria-label="Loading" /> : 'Place Order'}
@@ -85,7 +85,7 @@ When to use which loading UI — using the wrong one creates jarring UX.
   - Complexity: Easy
   - File: `src/components/Spinner/Spinner.tsx`
 
-- [ ] **Audit all `isLoading` states** — go through every view and verify the correct loading UI is used:
+- [x] **Audit all `isLoading` states** — go through every view and verify the correct loading UI is used:
   - Full-page data load → skeleton
   - Button submit → spinner in button
   - Route navigation → progress bar (handled globally)

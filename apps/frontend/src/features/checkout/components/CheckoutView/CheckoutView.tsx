@@ -8,6 +8,7 @@ import { useCart } from '@/features/cart/hooks';
 import { useCreateOrder } from '@/features/orders/hooks';
 import { useGetClientSecret } from '../../hooks';
 import { CheckoutForm } from '../CheckoutForm/CheckoutForm';
+import { CheckoutSkeleton } from '../CheckoutSkeleton/CheckoutSkeleton';
 import { AppError } from '@/shared/errors';
 import styles from './CheckoutView.module.scss';
 
@@ -59,11 +60,7 @@ export function CheckoutView() {
   }, []);
 
   if (cartLoading) {
-    return (
-      <div className={styles.container}>
-        <div className={styles.loadingMessage}>Loading checkout...</div>
-      </div>
-    );
+    return <CheckoutSkeleton />;
   }
 
   if (!cart || cart.items.length === 0) {

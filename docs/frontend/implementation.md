@@ -82,7 +82,7 @@ Shared component primitives (form inputs, toast, skeletons, empty states) are us
 - [x] **User Experience** → [ux/user-experience.md](./ux/user-experience.md)
   - `useScrollRestoration` hook (sessionStorage keyed by route), global toast system, React Error Boundary component per feature route, skeletons for Orders/Cart/Checkout/Admin, `useDebounce` hook in `src/hooks/`
 
-- [ ] **Empty States & Loading** → [ux/empty-states-and-loading.md](./ux/empty-states-and-loading.md)
+- [x] **Empty States & Loading** → [ux/empty-states-and-loading.md](./ux/empty-states-and-loading.md)
   - `EmptyState` component with `{ icon, title, description, action }` props, empty states for cart/orders/category/admin results, `nextjs-toploader` page transition bar, `Spinner` for button loading states
 
 ---
