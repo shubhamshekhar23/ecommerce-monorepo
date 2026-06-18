@@ -1,7 +1,8 @@
 'use client';
 
-import { useTransition } from 'react';
+import { useRef, useTransition } from 'react';
 import Link from 'next/link';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { useAdminOrders, useUpdateOrderStatus } from '../../hooks';
 import { AdminTableSkeleton } from '../AdminTableSkeleton/AdminTableSkeleton';
 import { EmptyState } from '@/components/EmptyState/EmptyState';
@@ -35,6 +36,20 @@ export function AdminOrdersView() {
   } = useAdminOrders();
   const { mutate: updateStatus, isPending: isUpdating } = useUpdateOrderStatus();
 
+  const allOrders = data?.pages.flatMap((p) => p.data) ?? [];
+  const total = data?.pages[0]?.meta.total ?? 0;
+  const orders = statusFilter
+    ? allOrders.filter((o) => o.status === statusFilter)
+    : allOrders;
+
+  const parentRef = useRef<HTMLDivElement>(null);
+  const rowVirtualizer = useVirtualizer({
+    count: orders.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 52,
+    overscan: 5,
+  });
+
   if (isLoading) {
     return (
       <div className={styles.container}>
@@ -44,11 +59,11 @@ export function AdminOrdersView() {
     );
   }
 
-  const allOrders = data?.pages.flatMap((p) => p.data) ?? [];
-  const total = data?.pages[0]?.meta.total ?? 0;
-  const orders = statusFilter
-    ? allOrders.filter((o) => o.status === statusFilter)
-    : allOrders;
+  const virtualItems = rowVirtualizer.getVirtualItems();
+  const totalSize = rowVirtualizer.getTotalSize();
+  const paddingTop = virtualItems.length > 0 ? virtualItems[0].start : 0;
+  const paddingBottom =
+    virtualItems.length > 0 ? totalSize - virtualItems[virtualItems.length - 1].end : 0;
 
   return (
     <div className={styles.container}>
@@ -85,51 +100,64 @@ export function AdminOrdersView() {
       ) : (
         <>
           <div style={{ opacity: isPending ? 0.6 : 1, transition: 'opacity 200ms' }}>
-          <div className={styles.tableWrapper}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Order #</th>
-                  <th>Date</th>
-                  <th>Total</th>
-                  <th>Status</th>
-                  <th>Update</th>
-                </tr>
-              </thead>
-              <tbody>
-                {orders.map((order) => (
-                  <tr key={order.id}>
-                    <td>
-                      <Link href={`/orders/${order.id}`} className={styles.link}>
-                        {order.orderNumber}
-                      </Link>
-                    </td>
-                    <td>{new Date(order.createdAt).toLocaleDateString()}</td>
-                    <td>${Number(order.totalPrice).toFixed(2)}</td>
-                    <td className={styles.status}>{order.status}</td>
-                    <td>
-                      <select
-                        value={order.status}
-                        onChange={(e) =>
-                          updateStatus({
-                            id: order.id,
-                            status: e.target.value as OrderStatus,
-                          })
-                        }
-                        disabled={isUpdating || TRANSITIONS[order.status].length === 0}
-                        className={styles.statusSelect}
-                      >
-                        <option value={order.status}>{order.status}</option>
-                        {TRANSITIONS[order.status].map((status) => (
-                          <option key={status} value={status}>{status}</option>
-                        ))}
-                      </select>
-                    </td>
+            <div ref={parentRef} className={styles.tableWrapper}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Order #</th>
+                    <th>Date</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Update</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {paddingTop > 0 && (
+                    <tr>
+                      <td colSpan={5} style={{ height: paddingTop, padding: 0 }} />
+                    </tr>
+                  )}
+                  {virtualItems.map((virtualRow) => {
+                    const order = orders[virtualRow.index];
+                    return (
+                      <tr key={order.id}>
+                        <td>
+                          <Link href={`/orders/${order.id}`} className={styles.link}>
+                            {order.orderNumber}
+                          </Link>
+                        </td>
+                        <td>{new Date(order.createdAt).toLocaleDateString()}</td>
+                        <td>${Number(order.totalPrice).toFixed(2)}</td>
+                        <td className={styles.status}>{order.status}</td>
+                        <td>
+                          <select
+                            value={order.status}
+                            onChange={(e) =>
+                              updateStatus({
+                                id: order.id,
+                                status: e.target.value as OrderStatus,
+                              })
+                            }
+                            disabled={isUpdating || TRANSITIONS[order.status].length === 0}
+                            className={styles.statusSelect}
+                          >
+                            <option value={order.status}>{order.status}</option>
+                            {TRANSITIONS[order.status].map((status) => (
+                              <option key={status} value={status}>{status}</option>
+                            ))}
+                          </select>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {paddingBottom > 0 && (
+                    <tr>
+                      <td colSpan={5} style={{ height: paddingBottom, padding: 0 }} />
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <div className={styles.footer}>

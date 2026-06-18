@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useTransition } from 'react';
+import { useRef, useState, useTransition } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { useAdminProducts, useDeleteProduct } from '../../hooks';
 import { AdminTableSkeleton } from '../AdminTableSkeleton/AdminTableSkeleton';
 import { EmptyState } from '@/components/EmptyState/EmptyState';
@@ -22,6 +23,17 @@ export function AdminProductsView() {
   const { mutate: deleteProduct, isPending: isDeleting } = useDeleteProduct();
   const [showConfirmId, setShowConfirmId] = useState<string | null>(null);
 
+  const products = data?.pages.flatMap((p) => p.data) ?? [];
+  const total = data?.pages[0]?.meta.total ?? 0;
+
+  const parentRef = useRef<HTMLDivElement>(null);
+  const rowVirtualizer = useVirtualizer({
+    count: products.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 56,
+    overscan: 5,
+  });
+
   if (isLoading) {
     return (
       <div className={styles.container}>
@@ -33,14 +45,17 @@ export function AdminProductsView() {
     );
   }
 
-  const products = data?.pages.flatMap((p) => p.data) ?? [];
-  const total = data?.pages[0]?.meta.total ?? 0;
-
   const handleDelete = (id: string): void => {
     deleteProduct(id, {
       onSettled: () => setShowConfirmId(null),
     });
   };
+
+  const virtualItems = rowVirtualizer.getVirtualItems();
+  const totalSize = rowVirtualizer.getTotalSize();
+  const paddingTop = virtualItems.length > 0 ? virtualItems[0].start : 0;
+  const paddingBottom =
+    virtualItems.length > 0 ? totalSize - virtualItems[virtualItems.length - 1].end : 0;
 
   return (
     <div className={styles.container}>
@@ -57,9 +72,9 @@ export function AdminProductsView() {
           placeholder="Search products..."
           value={localSearch}
           onChange={(e) => {
-            setLocalSearch(e.target.value); // urgent: keep input responsive
+            setLocalSearch(e.target.value);
             startTransition(() => {
-              setUrlSearch(e.target.value || null); // non-urgent: drives query
+              setUrlSearch(e.target.value || null);
             });
           }}
           className={styles.searchInput}
@@ -75,62 +90,75 @@ export function AdminProductsView() {
       ) : (
         <>
           <div style={{ opacity: isPending ? 0.6 : 1, transition: 'opacity 200ms' }}>
-          <div className={styles.tableWrapper}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Price</th>
-                  <th>Stock</th>
-                  <th>Category</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {products.map((product) => (
-                  <tr key={product.id}>
-                    <td className={styles.name}>{product.name}</td>
-                    <td>${Number(product.price).toFixed(2)}</td>
-                    <td>{product.stock}</td>
-                    <td>{product.category?.name || '—'}</td>
-                    <td className={styles.actions}>
-                      {showConfirmId === product.id ? (
-                        <div className={styles.confirm}>
-                          <span className={styles.confirmText}>Delete?</span>
-                          <button
-                            className={styles.confirmYes}
-                            onClick={() => handleDelete(product.id)}
-                            disabled={isDeleting}
-                          >
-                            {isDeleting ? '...' : 'Yes'}
-                          </button>
-                          <button
-                            className={styles.confirmNo}
-                            onClick={() => setShowConfirmId(null)}
-                            disabled={isDeleting}
-                          >
-                            No
-                          </button>
-                        </div>
-                      ) : (
-                        <div className={styles.actionButtons}>
-                          <Link href={`/admin/products/${product.id}/edit`} className={styles.editBtn}>
-                            Edit
-                          </Link>
-                          <button
-                            className={styles.deleteBtn}
-                            onClick={() => setShowConfirmId(product.id)}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      )}
-                    </td>
+            <div ref={parentRef} className={styles.tableWrapper}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                    <th>Category</th>
+                    <th>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {paddingTop > 0 && (
+                    <tr>
+                      <td colSpan={5} style={{ height: paddingTop, padding: 0 }} />
+                    </tr>
+                  )}
+                  {virtualItems.map((virtualRow) => {
+                    const product = products[virtualRow.index];
+                    return (
+                      <tr key={product.id}>
+                        <td className={styles.name}>{product.name}</td>
+                        <td>${Number(product.price).toFixed(2)}</td>
+                        <td>{product.stock}</td>
+                        <td>{product.category?.name || '—'}</td>
+                        <td className={styles.actions}>
+                          {showConfirmId === product.id ? (
+                            <div className={styles.confirm}>
+                              <span className={styles.confirmText}>Delete?</span>
+                              <button
+                                className={styles.confirmYes}
+                                onClick={() => handleDelete(product.id)}
+                                disabled={isDeleting}
+                              >
+                                {isDeleting ? '...' : 'Yes'}
+                              </button>
+                              <button
+                                className={styles.confirmNo}
+                                onClick={() => setShowConfirmId(null)}
+                                disabled={isDeleting}
+                              >
+                                No
+                              </button>
+                            </div>
+                          ) : (
+                            <div className={styles.actionButtons}>
+                              <Link href={`/admin/products/${product.id}/edit`} className={styles.editBtn}>
+                                Edit
+                              </Link>
+                              <button
+                                className={styles.deleteBtn}
+                                onClick={() => setShowConfirmId(product.id)}
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {paddingBottom > 0 && (
+                    <tr>
+                      <td colSpan={5} style={{ height: paddingBottom, padding: 0 }} />
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <div className={styles.footer}>

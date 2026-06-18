@@ -47,15 +47,27 @@
 
 .tableWrapper {
   overflow-x: auto;
+  overflow-y: auto;
+  max-height: 600px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   background: var(--color-bg-surface);
 }
 
+.table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
 .table th {
+  position: sticky;
+  top: 0;
+  background: var(--color-bg-surface);
+  z-index: 1;
   font-size: var(--font-size-xs);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  box-shadow: 0 1px 0 var(--color-border);
 }
 
 .name {

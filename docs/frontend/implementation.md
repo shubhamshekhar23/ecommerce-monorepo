@@ -121,7 +121,7 @@ Polish items that build on Phase 5 component primitives and Phase 6 data pattern
 - [x] **Concurrent Features** → [performance/concurrent-features.md](./performance/concurrent-features.md)
   - `useTransition` on search input in Header (urgent: input update, non-urgent: query), `useDeferredValue` on category sidebar filter, `isPending` opacity indicator
 
-- [ ] **Virtualization** → [performance/virtualization.md](./performance/virtualization.md)
+- [x] **Virtualization** → [performance/virtualization.md](./performance/virtualization.md)
   - `@tanstack/react-virtual` on `AdminProductsView`, `AdminOrdersView`, `AdminUsersView`, `useVirtualizer` with `estimateSize`, absolute positioning layout
 
 ---

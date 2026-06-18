@@ -19,13 +19,13 @@ The `/products` page uses cursor-based infinite scroll with a "Load More" button
 
 ## Items to Implement
 
-- [ ] **Install `@tanstack/react-virtual`** — the same TanStack ecosystem the app already uses. Lightweight, zero dependencies, works with any scroll container.
+- [x] **Install `@tanstack/react-virtual`** — the same TanStack ecosystem the app already uses. Lightweight, zero dependencies, works with any scroll container.
   ```
   npm install @tanstack/react-virtual
   ```
   - Complexity: Easy (install)
 
-- [ ] **Virtualize `AdminProductsView`** — the admin product table can grow unbounded. Replace the direct `.map()` render with a virtualized list:
+- [x] **Virtualize `AdminProductsView`** — the admin product table can grow unbounded. Replace the direct `.map()` render with a virtualized list:
   ```tsx
   import { useVirtualizer } from '@tanstack/react-virtual';
 
@@ -51,11 +51,11 @@ The `/products` page uses cursor-based infinite scroll with a "Load More" button
   - Complexity: Medium
   - File: `src/features/admin/components/AdminProductsView/AdminProductsView.tsx`
 
-- [ ] **Virtualize `AdminOrdersView`** — same pattern for orders table.
+- [x] **Virtualize `AdminOrdersView`** — same pattern for orders table.
   - Complexity: Medium
   - File: `src/features/admin/components/AdminOrdersView/AdminOrdersView.tsx`
 
-- [ ] **Virtualize `AdminUsersView`** — same pattern for users table.
+- [x] **Virtualize `AdminUsersView`** — same pattern for users table.
   - Complexity: Medium
   - File: `src/features/admin/components/AdminUsersView/AdminUsersView.tsx`
 
