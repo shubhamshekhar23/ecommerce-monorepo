@@ -4,6 +4,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import { BLUR_PLACEHOLDER } from '@/shared/imagePlaceholder';
 import type { ProductImage } from '../../interfaces';
 import styles from './ProductImageGallery.module.scss';
 
@@ -42,6 +43,9 @@ export function ProductImageGallery({
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 40vw"
           className={styles.mainImage}
+          priority
+          placeholder="blur"
+          blurDataURL={BLUR_PLACEHOLDER}
         />
       </div>
 
@@ -62,6 +66,8 @@ export function ProductImageGallery({
                 fill
                 sizes="64px"
                 className={styles.thumbnailImage}
+                placeholder="blur"
+                blurDataURL={BLUR_PLACEHOLDER}
               />
             </button>
           ))}

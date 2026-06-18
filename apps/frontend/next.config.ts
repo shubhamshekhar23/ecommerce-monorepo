@@ -65,6 +65,9 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   images: {
+    // Serve AVIF first (20-30% smaller than WebP), then WebP as fallback.
+    // Next.js negotiates via Accept header — zero change required in <Image> props.
+    formats: ["image/avif", "image/webp"],
     remotePatterns: [
       {
         protocol: "https",

@@ -17,7 +17,7 @@ Source: `lazy-load-picture-tag.md`, `asset-optimization.md`
 
 ## Items to Implement
 
-- [ ] **AVIF format support in `next.config.js`** — Next.js Image converts to WebP by default. AVIF is 20–30% smaller than WebP and should be the first format tried. Add:
+- [x] **AVIF format support in `next.config.js`** — Next.js Image converts to WebP by default. AVIF is 20–30% smaller than WebP and should be the first format tried. Add:
   ```js
   images: { formats: ['image/avif', 'image/webp'] }
   ```
@@ -25,7 +25,7 @@ Source: `lazy-load-picture-tag.md`, `asset-optimization.md`
   - Complexity: Easy (one config line)
   - File: `apps/frontend/next.config.js`
 
-- [ ] **`priority` prop on LCP images** — the Largest Contentful Paint image should not be lazy-loaded. Candidates:
+- [x] **`priority` prop on LCP images** — the Largest Contentful Paint image should not be lazy-loaded. Candidates:
   - First ProductCard image in the grid on `/products` (the one above the fold)
   - Hero image on the homepage `/`
   - Main product image on `/products/[slug]`
@@ -34,7 +34,7 @@ Source: `lazy-load-picture-tag.md`, `asset-optimization.md`
   - Complexity: Easy
   - Files: `ProductCard.tsx`, `ProductDetailView.tsx`, homepage
 
-- [ ] **Blur placeholder while images load** — currently shows an empty grey `<div>` while images fetch. Replace with a blur-up effect:
+- [x] **Blur placeholder while images load** — currently shows an empty grey `<div>` while images fetch. Replace with a blur-up effect:
   - For static images: use `placeholder="blur"` with a `blurDataURL` (a tiny base64 JPEG of the same image)
   - For dynamic product images: generate a dominant-color placeholder using a `blurDataURL` that is a 1x1 pixel in the product's primary color, or use a low-res version of the image
   - Complexity: Medium (need to generate or fetch blurDataURL per product)
@@ -95,6 +95,6 @@ Source: `lazy-load-picture-tag.md`, `asset-optimization.md`
   - Complexity: Medium
   - Note: The Network Information API is not universally supported — treat it as progressive enhancement. Fall back to the default quality if the API is unavailable.
 
-- [ ] **Responsive `sizes` attribute audit** — `ProductCard` already has `sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"`. Audit all other `<Image>` usages in the app and ensure they have correct `sizes` — wrong values cause the browser to download images larger than needed.
+- [x] **Responsive `sizes` attribute audit** — `ProductCard` already has `sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"`. Audit all other `<Image>` usages in the app and ensure they have correct `sizes` — wrong values cause the browser to download images larger than needed.
   - Complexity: Easy (audit + fix)
   - Files: `ProductImageGallery.tsx`, admin product views, homepage

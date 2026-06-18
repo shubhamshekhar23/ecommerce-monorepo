@@ -8,14 +8,16 @@ import { useRouter } from 'next/navigation';
 import { useState, useCallback } from 'react';
 import { useAuthStore } from '@/store/auth.store';
 import { useAddToCart } from '@/features/cart/hooks';
+import { BLUR_PLACEHOLDER } from '@/shared/imagePlaceholder';
 import type { Product } from '../../interfaces';
 import styles from './ProductCard.module.scss';
 
 interface ProductCardProps {
   product: Product;
+  priority?: boolean;
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, priority = false }: ProductCardProps) {
   const router = useRouter();
   const status = useAuthStore((state) => state.status);
   const { mutate: addToCart, isPending } = useAddToCart();
@@ -76,6 +78,9 @@ export function ProductCard({ product }: ProductCardProps) {
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             className={styles.image}
+            priority={priority}
+            placeholder="blur"
+            blurDataURL={BLUR_PLACEHOLDER}
             onError={handleImageError}
           />
         ) : (

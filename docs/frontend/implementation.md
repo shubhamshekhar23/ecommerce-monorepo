@@ -49,7 +49,7 @@ Rendering strategy affects every page — change it late and you're rewriting co
 - [x] **SEO** → [seo/seo.md](./seo/seo.md)
   - `generateMetadata` per page (product, category; `noindex` for orders/account), `opengraph-image.tsx`, Product JSON-LD schema, WebSite JSON-LD in root layout, `sitemap.ts`, `robots.ts`, canonical URLs
 
-- [ ] **Performance: Images** → [performance/images.md](./performance/images.md)
+- [x] **Performance: Images** → [performance/images.md](./performance/images.md)
   - `formats: ['image/avif', 'image/webp']` in `next.config.ts`, `priority` prop on first ProductCard + hero images, `blurDataURL` placeholder, art direction with `<picture>` for editorial images, CDN URL helper in `config.ts`
 
 - [ ] **Performance: Loading** → [performance/loading-and-network.md](./performance/loading-and-network.md)
