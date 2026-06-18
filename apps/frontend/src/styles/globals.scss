@@ -79,6 +79,13 @@ select {
   color: inherit;
 }
 
+mark {
+  background: var(--color-accent-soft);
+  color: var(--color-accent-text);
+  border-radius: var(--radius-sm);
+  padding: 0 0.1em;
+}
+
 button {
   cursor: pointer;
 

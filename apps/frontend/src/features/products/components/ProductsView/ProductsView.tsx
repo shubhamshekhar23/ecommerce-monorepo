@@ -129,8 +129,16 @@ export function ProductsView() {
           products={products}
           isLoading={isLoading}
           error={null}
-          emptyTitle={categorySlug ? `No products in this category` : 'No products found'}
-          emptyAction={hasActiveFilters ? { label: 'Clear filters', onClick: handleClearFilters } : undefined}
+          searchQuery={isSearching ? search : undefined}
+          emptyTitle={isSearching ? `No results for "${search}"` : (categorySlug ? 'No products in this category' : 'No products found')}
+          emptyDescription={isSearching ? 'Try a different spelling or browse all products' : undefined}
+          emptyAction={
+            isSearching
+              ? { label: 'Browse all products', href: '/products' }
+              : hasActiveFilters
+                ? { label: 'Clear filters', onClick: handleClearFilters }
+                : undefined
+          }
         />
 
         {!isSearching && hasNextPage && (

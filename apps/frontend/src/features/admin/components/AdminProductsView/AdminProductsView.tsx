@@ -8,14 +8,16 @@ import { EmptyState } from '@/components/EmptyState/EmptyState';
 import { useUrlState } from '@/hooks/useUrlState';
 import styles from './AdminProductsView.module.scss';
 
-interface AdminProductsViewProps {
-  page?: number;
-}
-
-export function AdminProductsView({ page = 1 }: AdminProductsViewProps) {
+export function AdminProductsView() {
   const [urlSearch, setUrlSearch] = useUrlState('search');
   const [localSearch, setLocalSearch] = useState(urlSearch ?? '');
-  const { data, isLoading } = useAdminProducts(page, urlSearch || undefined);
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useAdminProducts(urlSearch || undefined);
   const { mutate: deleteProduct, isPending } = useDeleteProduct();
   const [showConfirmId, setShowConfirmId] = useState<string | null>(null);
 
@@ -30,8 +32,8 @@ export function AdminProductsView({ page = 1 }: AdminProductsViewProps) {
     );
   }
 
-  const products = data?.data || [];
-  const meta = data?.meta;
+  const products = data?.pages.flatMap((p) => p.data) ?? [];
+  const total = data?.pages[0]?.meta.total ?? 0;
 
   const handleDelete = (id: string): void => {
     deleteProduct(id, {
@@ -126,13 +128,21 @@ export function AdminProductsView({ page = 1 }: AdminProductsViewProps) {
             </table>
           </div>
 
-          {meta && meta.pages > 1 && (
-            <div className={styles.pagination}>
-              <span>
-                Page {meta.page} of {meta.pages}
-              </span>
-            </div>
-          )}
+          <div className={styles.footer}>
+            <span className={styles.count}>
+              Showing {products.length} of {total} product{total !== 1 ? 's' : ''}
+            </span>
+
+            {hasNextPage && (
+              <button
+                className={styles.loadMoreBtn}
+                onClick={() => void fetchNextPage()}
+                disabled={isFetchingNextPage}
+              >
+                {isFetchingNextPage ? 'Loading…' : 'Load More'}
+              </button>
+            )}
+          </div>
         </>
       )}
     </div>

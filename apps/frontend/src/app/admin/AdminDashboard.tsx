@@ -7,13 +7,13 @@ import styles from './page.module.scss';
 export function AdminDashboard() {
   const { data: productsData } = useProducts({ page: 1, limit: 1 });
   const { data: categoriesData } = useCategories();
-  const { data: ordersData } = useAdminOrders(1);
+  const { data: ordersData } = useAdminOrders();
   const { data: usersData } = useAdminUsers();
 
   const stats = [
     { label: 'Total Products', value: productsData?.meta.total ?? 0, accent: 'products' },
     { label: 'Total Categories', value: categoriesData?.meta.total ?? 0, accent: 'categories' },
-    { label: 'Total Orders', value: ordersData?.meta.total ?? 0, accent: 'orders' },
+    { label: 'Total Orders', value: ordersData?.pages[0]?.meta.total ?? 0, accent: 'orders' },
     { label: 'Total Users', value: usersData?.length ?? 0, accent: 'users' },
   ];
 

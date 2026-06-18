@@ -10,14 +10,16 @@ import { useAuthStore } from '@/store/auth.store';
 import { useAddToCart } from '@/features/cart/hooks';
 import { BLUR_PLACEHOLDER } from '@/shared/imagePlaceholder';
 import type { Product } from '../../interfaces';
+import { highlightMatch } from '../../utils/highlightMatch';
 import styles from './ProductCard.module.scss';
 
 interface ProductCardProps {
   product: Product;
   priority?: boolean;
+  searchQuery?: string;
 }
 
-export function ProductCard({ product, priority = false }: ProductCardProps) {
+export function ProductCard({ product, priority = false, searchQuery }: ProductCardProps) {
   const router = useRouter();
   const status = useAuthStore((state) => state.status);
   const { mutate: addToCart, isPending } = useAddToCart();
@@ -89,7 +91,9 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
       </div>
 
       <div className={styles.content}>
-        <h3 className={styles.name}>{product.name}</h3>
+        <h3 className={styles.name}>
+          {searchQuery ? highlightMatch(product.name, searchQuery) : product.name}
+        </h3>
 
         <div className={styles.price}>${price}</div>
 

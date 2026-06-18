@@ -5,6 +5,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useOrder, useCancelOrder } from '../../hooks';
+import { Breadcrumb } from '@/components/Breadcrumb/Breadcrumb';
 import type { OrderStatus, PaymentStatus } from '../../interfaces';
 
 const PAYMENT_LABELS: Partial<Record<PaymentStatus, string>> = {
@@ -73,9 +74,11 @@ export function OrderDetailView({ id }: OrderDetailViewProps) {
 
   return (
     <div className={styles.container}>
-      <Link href="/orders" className={styles.backLink}>
-        ← Back to Orders
-      </Link>
+      <Breadcrumb items={[
+        { label: 'Home', href: '/' },
+        { label: 'My Orders', href: '/orders' },
+        { label: order.orderNumber },
+      ]} />
 
       <div className={styles.header}>
         <div className={styles.headerInfo}>

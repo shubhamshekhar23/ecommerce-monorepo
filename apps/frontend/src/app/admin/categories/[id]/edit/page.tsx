@@ -5,6 +5,7 @@
 import { useParams } from 'next/navigation';
 import { useAdminCategory } from '@/features/admin/hooks';
 import { CategoryForm } from '@/features/admin/components/CategoryForm/CategoryForm';
+import { Breadcrumb } from '@/components/Breadcrumb/Breadcrumb';
 
 export default function EditCategoryPage() {
   const params = useParams();
@@ -27,5 +28,14 @@ export default function EditCategoryPage() {
     return <div style={{ padding: '24px', textAlign: 'center' }}>Category not found</div>;
   }
 
-  return <CategoryForm category={category} />;
+  return (
+    <>
+      <Breadcrumb items={[
+        { label: 'Admin', href: '/admin' },
+        { label: 'Categories', href: '/admin/categories' },
+        { label: `Edit: ${category.name}` },
+      ]} />
+      <CategoryForm category={category} />
+    </>
+  );
 }

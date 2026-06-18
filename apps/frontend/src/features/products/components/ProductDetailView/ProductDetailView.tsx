@@ -8,6 +8,7 @@ import { useAddToCart } from '@/features/cart/hooks';
 import { useProduct } from '../../hooks';
 import { ProductImageGallery } from '../ProductImageGallery/ProductImageGallery';
 import { VariantSelector } from '../VariantSelector/VariantSelector';
+import { Breadcrumb } from '@/components/Breadcrumb/Breadcrumb';
 import type { ProductVariant } from '../../interfaces';
 import styles from './ProductDetailView.module.scss';
 
@@ -111,15 +112,18 @@ export function ProductDetailView({ slug }: ProductDetailViewProps) {
         }))
       : product.images;
 
+  const breadcrumbs = [
+    { label: 'Home', href: '/' },
+    { label: 'Products', href: '/products' },
+    ...(product.category
+      ? [{ label: product.category.name, href: `/products?category=${product.category.slug}` }]
+      : []),
+    { label: product.name },
+  ];
+
   return (
     <div className={styles.container}>
-      <div className={styles.breadcrumb}>
-        <Link href="/">Home</Link>
-        <span>{' > '}</span>
-        <Link href="/products">Products</Link>
-        <span>{' > '}</span>
-        <span>{product.name}</span>
-      </div>
+      <Breadcrumb items={breadcrumbs} />
 
       <div className={styles.content}>
         <div className={styles.gallery}>

@@ -109,13 +109,13 @@ Infrastructure and shared components are in place. Now improve how data flows: n
 
 Polish items that build on Phase 5 component primitives and Phase 6 data patterns.
 
-- [ ] **Search** → [ux/search.md](./ux/search.md)
+- [x] **Search** → [ux/search.md](./ux/search.md)
   - Recent searches in `localStorage` (last 10), autocomplete suggestions dropdown with keyboard nav (Escape/arrows/Enter), highlight matched terms with `<mark>`, empty results state with CTA
 
-- [ ] **Pagination** → [ux/pagination.md](./ux/pagination.md)
+- [x] **Pagination** → [ux/pagination.md](./ux/pagination.md)
   - Dynamic page size based on viewport height, "Showing X–Y of Z results" label, cursor pagination for admin product/order/user tables
 
-- [ ] **Breadcrumbs** → [ux/breadcrumbs.md](./ux/breadcrumbs.md)
+- [x] **Breadcrumbs** → [ux/breadcrumbs.md](./ux/breadcrumbs.md)
   - `Breadcrumb` component (`<nav aria-label="Breadcrumb"><ol>`), add to product detail / order detail / admin edit pages, JSON-LD `BreadcrumbList` in `generateMetadata`
 
 - [ ] **Concurrent Features** → [performance/concurrent-features.md](./performance/concurrent-features.md)

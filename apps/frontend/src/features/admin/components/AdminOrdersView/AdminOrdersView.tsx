@@ -24,7 +24,13 @@ const TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
 
 export function AdminOrdersView() {
   const [statusFilter, setStatusFilter] = useUrlState('status');
-  const { data, isLoading } = useAdminOrders(1);
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useAdminOrders();
   const { mutate: updateStatus, isPending } = useUpdateOrderStatus();
 
   if (isLoading) {
@@ -36,7 +42,8 @@ export function AdminOrdersView() {
     );
   }
 
-  const allOrders = data?.data || [];
+  const allOrders = data?.pages.flatMap((p) => p.data) ?? [];
+  const total = data?.pages[0]?.meta.total ?? 0;
   const orders = statusFilter
     ? allOrders.filter((o) => o.status === statusFilter)
     : allOrders;
@@ -74,51 +81,71 @@ export function AdminOrdersView() {
           action={statusFilter ? { label: 'Clear filter', onClick: () => setStatusFilter(null) } : undefined}
         />
       ) : (
-        <div className={styles.tableWrapper}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Order #</th>
-                <th>Date</th>
-                <th>Total</th>
-                <th>Status</th>
-                <th>Update</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map((order) => (
-                <tr key={order.id}>
-                  <td>
-                    <Link href={`/orders/${order.id}`} className={styles.link}>
-                      {order.orderNumber}
-                    </Link>
-                  </td>
-                  <td>{new Date(order.createdAt).toLocaleDateString()}</td>
-                  <td>${Number(order.totalPrice).toFixed(2)}</td>
-                  <td className={styles.status}>{order.status}</td>
-                  <td>
-                    <select
-                      value={order.status}
-                      onChange={(e) =>
-                        updateStatus({
-                          id: order.id,
-                          status: e.target.value as OrderStatus,
-                        })
-                      }
-                      disabled={isPending || TRANSITIONS[order.status].length === 0}
-                      className={styles.statusSelect}
-                    >
-                      <option value={order.status}>{order.status}</option>
-                      {TRANSITIONS[order.status].map((status) => (
-                        <option key={status} value={status}>{status}</option>
-                      ))}
-                    </select>
-                  </td>
+        <>
+          <div className={styles.tableWrapper}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Order #</th>
+                  <th>Date</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                  <th>Update</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {orders.map((order) => (
+                  <tr key={order.id}>
+                    <td>
+                      <Link href={`/orders/${order.id}`} className={styles.link}>
+                        {order.orderNumber}
+                      </Link>
+                    </td>
+                    <td>{new Date(order.createdAt).toLocaleDateString()}</td>
+                    <td>${Number(order.totalPrice).toFixed(2)}</td>
+                    <td className={styles.status}>{order.status}</td>
+                    <td>
+                      <select
+                        value={order.status}
+                        onChange={(e) =>
+                          updateStatus({
+                            id: order.id,
+                            status: e.target.value as OrderStatus,
+                          })
+                        }
+                        disabled={isPending || TRANSITIONS[order.status].length === 0}
+                        className={styles.statusSelect}
+                      >
+                        <option value={order.status}>{order.status}</option>
+                        {TRANSITIONS[order.status].map((status) => (
+                          <option key={status} value={status}>{status}</option>
+                        ))}
+                      </select>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className={styles.footer}>
+            <span className={styles.count}>
+              {statusFilter
+                ? `${orders.length} of ${allOrders.length} loaded (${total} total)`
+                : `Showing ${orders.length} of ${total} order${total !== 1 ? 's' : ''}`}
+            </span>
+
+            {hasNextPage && !statusFilter && (
+              <button
+                className={styles.loadMoreBtn}
+                onClick={() => void fetchNextPage()}
+                disabled={isFetchingNextPage}
+              >
+                {isFetchingNextPage ? 'Loading…' : 'Load More'}
+              </button>
+            )}
+          </div>
+        </>
       )}
     </div>
   );

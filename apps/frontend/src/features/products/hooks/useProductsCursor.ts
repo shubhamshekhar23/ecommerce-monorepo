@@ -1,23 +1,33 @@
 "use client";
 
+import { useMemo } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { getProductsCursorApi } from "../api/products.api";
 import type { CursorQueryParams } from "../interfaces";
 
-const LIMIT = 20;
+const FALLBACK_LIMIT = 20;
+const CARD_HEIGHT_PX = 320;
+
+function computeInitialLimit(): number {
+  if (typeof window === "undefined") return FALLBACK_LIMIT;
+  return Math.max(
+    FALLBACK_LIMIT,
+    Math.ceil(window.innerHeight / CARD_HEIGHT_PX) * 2,
+  );
+}
 
 type FilterParams = Omit<CursorQueryParams, "cursor" | "limit">;
 
 // Infinite-scroll / "Load More" hook backed by cursor pagination.
-// Each page fetches via GET /products/cursor?cursor=<token>&limit=20.
-// The cursor is an opaque base64 token — never parse it on the client.
-// TanStack Query accumulates pages: data.pages[0], data.pages[1], …
-// Flatten with pages.flatMap(p => p.data) to get a single product list.
+// Initial limit fills the visible viewport (2 rows of cards) so the first
+// render has no empty space below the fold. Subsequent pages keep the same limit.
 export function useProductsCursor(enabled = true, filters: FilterParams = {}) {
+  const limit = useMemo(() => computeInitialLimit(), []);
+
   return useInfiniteQuery({
     queryKey: ["products", "cursor", filters],
     queryFn: ({ pageParam }: { pageParam: string | undefined }) =>
-      getProductsCursorApi({ cursor: pageParam, limit: LIMIT, ...filters }),
+      getProductsCursorApi({ cursor: pageParam, limit, ...filters }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.meta.nextCursor ?? undefined,
     staleTime: 2 * 60 * 1000,

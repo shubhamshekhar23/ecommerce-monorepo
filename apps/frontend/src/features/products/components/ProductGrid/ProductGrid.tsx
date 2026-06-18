@@ -13,6 +13,7 @@ interface ProductGridProps {
   emptyTitle?: string;
   emptyDescription?: string;
   emptyAction?: { label: string; href?: string; onClick?: () => void };
+  searchQuery?: string;
 }
 
 export function ProductGrid({
@@ -22,6 +23,7 @@ export function ProductGrid({
   emptyTitle = 'No products found',
   emptyDescription,
   emptyAction,
+  searchQuery,
 }: ProductGridProps) {
   if (error) {
     return (
@@ -54,7 +56,7 @@ export function ProductGrid({
   return (
     <div className={styles.grid}>
       {products.map((product, index) => (
-        <ProductCard key={product.id} product={product} priority={index === 0} />
+        <ProductCard key={product.id} product={product} priority={index === 0} searchQuery={searchQuery} />
       ))}
     </div>
   );

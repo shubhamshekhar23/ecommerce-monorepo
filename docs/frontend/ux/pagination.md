@@ -23,7 +23,7 @@ Source: `pagination.md`
 
 ## Items to Implement
 
-- [ ] **Dynamic loading count based on viewport height** — instead of a fixed `pageSize`, calculate how many product cards fit in the current viewport:
+- [x] **Dynamic loading count based on viewport height** — instead of a fixed `pageSize`, calculate how many product cards fit in the current viewport:
   ```ts
   const CARD_HEIGHT_APPROX = 320; // px
   const count = Math.ceil(window.innerHeight / CARD_HEIGHT_APPROX) * 2;
@@ -32,16 +32,16 @@ Source: `pagination.md`
   - Complexity: Medium
   - File: `src/features/products/hooks/useProductsCursor.ts`
 
-- [ ] **Cursor-based pagination for Admin products list** — `AdminProductsView` currently fetches all products. As the catalog grows, this breaks. Add cursor-based pagination to:
+- [x] **Cursor-based pagination for Admin products list** — `AdminProductsView` currently fetches all products. As the catalog grows, this breaks. Add cursor-based pagination to:
   - `useAdminProducts.ts` — convert to infinite query
   - `AdminProductsView.tsx` — add "Load More" button or infinite scroll trigger
   - Complexity: Medium
   - Files: `src/features/admin/hooks/useAdminProducts.ts`, `AdminProductsView.tsx`
 
-- [ ] **Cursor-based pagination for Admin orders list** — same as above for `useAdminOrders.ts` and `AdminOrdersView.tsx`.
+- [x] **Cursor-based pagination for Admin orders list** — same as above for `useAdminOrders.ts` and `AdminOrdersView.tsx`.
   - Complexity: Medium
   - Files: `src/features/admin/hooks/useAdminOrders.ts`, `AdminOrdersView.tsx`
 
-- [ ] **"Showing X–Y of Z" count in offset pagination** — the `Pagination` component and any offset-paginated view should surface the total count from the API response. Display "Showing 1–20 of 147 products" above the list. The API already returns `total` in its response — it just needs to be wired into the UI.
+- [x] **"Showing X–Y of Z" count in offset pagination** — the `Pagination` component and any offset-paginated view should surface the total count from the API response. Display "Showing 1–20 of 147 products" above the list. The API already returns `total` in its response — it just needs to be wired into the UI.
   - Complexity: Easy
   - File: `src/features/products/components/Pagination/Pagination.tsx` and any view using offset pagination

@@ -16,7 +16,7 @@ Breadcrumbs improve navigation (users know where they are in the hierarchy), SEO
 
 ## Items to Implement
 
-- [ ] **`Breadcrumb` component** — renders an `<nav aria-label="Breadcrumb">` with an `<ol>` of links. Accessible by default (ordered list with nav landmark):
+- [x] **`Breadcrumb` component** — renders an `<nav aria-label="Breadcrumb">` with an `<ol>` of links. Accessible by default (ordered list with nav landmark):
   ```tsx
   // src/components/Breadcrumb/Breadcrumb.tsx
   interface BreadcrumbItem {
@@ -45,7 +45,7 @@ Breadcrumbs improve navigation (users know where they are in the hierarchy), SEO
   - Complexity: Easy
   - File: `src/components/Breadcrumb/Breadcrumb.tsx`
 
-- [ ] **Breadcrumb on product detail page** — derive breadcrumb from the product's category:
+- [x] **Breadcrumb on product detail page** — derive breadcrumb from the product's category:
   ```tsx
   const breadcrumbs = [
     { label: 'Home', href: '/' },
@@ -57,7 +57,7 @@ Breadcrumbs improve navigation (users know where they are in the hierarchy), SEO
   - Complexity: Easy
   - File: `src/features/products/components/ProductDetailView/ProductDetailView.tsx`
 
-- [ ] **Breadcrumb on order detail page**:
+- [x] **Breadcrumb on order detail page**:
   ```tsx
   [
     { label: 'Home', href: '/' },
@@ -68,7 +68,7 @@ Breadcrumbs improve navigation (users know where they are in the hierarchy), SEO
   - Complexity: Easy
   - File: `src/features/orders/components/OrderDetailView/OrderDetailView.tsx`
 
-- [ ] **Breadcrumb on admin pages** — admin edit pages show where the editor is in the admin hierarchy:
+- [x] **Breadcrumb on admin pages** — admin edit pages show where the editor is in the admin hierarchy:
   ```tsx
   // /admin/products/[id]/edit
   [
@@ -80,7 +80,7 @@ Breadcrumbs improve navigation (users know where they are in the hierarchy), SEO
   - Complexity: Easy
   - Files: admin edit pages
 
-- [ ] **JSON-LD `BreadcrumbList` structured data** — add alongside the breadcrumb component so Google shows the breadcrumb trail directly in search results:
+- [x] **JSON-LD `BreadcrumbList` structured data** — add alongside the breadcrumb component so Google shows the breadcrumb trail directly in search results:
   ```json
   {
     "@context": "https://schema.org",

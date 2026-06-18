@@ -5,6 +5,7 @@
 import { useParams } from 'next/navigation';
 import { useAdminProduct } from '@/features/admin/hooks';
 import { ProductForm } from '@/features/admin/components/ProductForm/ProductForm';
+import { Breadcrumb } from '@/components/Breadcrumb/Breadcrumb';
 
 export default function EditProductPage() {
   const params = useParams();
@@ -27,5 +28,14 @@ export default function EditProductPage() {
     return <div style={{ padding: '24px', textAlign: 'center' }}>Product not found</div>;
   }
 
-  return <ProductForm product={product} />;
+  return (
+    <>
+      <Breadcrumb items={[
+        { label: 'Admin', href: '/admin' },
+        { label: 'Products', href: '/admin/products' },
+        { label: `Edit: ${product.name}` },
+      ]} />
+      <ProductForm product={product} />
+    </>
+  );
 }

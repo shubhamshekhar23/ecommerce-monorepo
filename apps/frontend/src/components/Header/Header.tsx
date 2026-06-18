@@ -1,28 +1,17 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth.store';
 import { useLogout } from '@/features/auth/hooks';
 import { useCart } from '@/features/cart/hooks';
+import { SearchBar } from '@/components/SearchBar/SearchBar';
 import styles from './Header.module.scss';
 
 export function Header() {
-  const router = useRouter();
-  const [searchInput, setSearchInput] = useState('');
   const user = useAuthStore((state) => state.user);
   const { mutate: logout } = useLogout();
   const { data: cart } = useCart();
   const cartItemCount = cart?.itemCount ?? 0;
-
-  const handleSearch = (e: React.SyntheticEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (searchInput.trim()) {
-      router.push(`/products?search=${encodeURIComponent(searchInput)}`);
-      setSearchInput('');
-    }
-  };
 
   return (
     <header className={styles.header}>
@@ -35,22 +24,7 @@ export function Header() {
           </div>
         </Link>
 
-        <form onSubmit={handleSearch} className={styles.searchBar}>
-          <input
-            type="text"
-            placeholder="Search products, brands, categories"
-            className={styles.searchInput}
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            aria-label="Search products"
-          />
-          <button type="submit" className={styles.searchBtn} aria-label="Search">
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14Z" stroke="currentColor" strokeWidth="2" />
-              <path d="m20 20-4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          </button>
-        </form>
+        <SearchBar />
 
         <div className={styles.actions}>
           {user?.role === 'ADMIN' && (
@@ -103,7 +77,6 @@ export function Header() {
                 {cartItemCount > 99 ? '99+' : cartItemCount}
               </span>
             )}
-            {/* Persistent live region — announces count changes to screen readers. */}
             <span className="sr-only" aria-live="polite" aria-atomic="true">
               {cartItemCount > 0
                 ? `${cartItemCount} item${cartItemCount !== 1 ? 's' : ''} in cart`
