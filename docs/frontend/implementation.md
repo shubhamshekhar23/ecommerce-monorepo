@@ -139,7 +139,7 @@ Structural refactors are best deferred until features stabilize. Bundle analysis
 - [x] **Bundle Optimization** → [performance/bundle-optimization.md](./performance/bundle-optimization.md)
   - `@next/bundle-analyzer` with `ANALYZE=true` script, dynamic import `@stripe/react-stripe-js`, barrel file anti-pattern audit, vendor chunk splitting in `next.config.ts`, tree shaking verification
 
-- [ ] **Architecture Patterns** → [architecture/architecture-patterns.md](./architecture/architecture-patterns.md)
+- [x] **Architecture Patterns** → [architecture/architecture-patterns.md](./architecture/architecture-patterns.md)
   - `mitt` event bus in `src/shared/eventBus.ts`, `useReducer` for complex cart state transitions, DDD entity/value-object/aggregate type annotations
 
 ---

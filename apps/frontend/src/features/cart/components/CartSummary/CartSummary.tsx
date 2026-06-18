@@ -1,12 +1,13 @@
 // src/features/cart/components/CartSummary/CartSummary.tsx
 
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import type { Cart } from '../../interfaces';
-import { useClearCart } from '../../hooks';
-import styles from './CartSummary.module.scss';
+import { useReducer } from "react";
+import { useRouter } from "next/navigation";
+import type { Cart } from "../../interfaces";
+import { useClearCart } from "../../hooks";
+import { cartUiReducer, cartUiInitialState } from "../../cartReducer";
+import styles from "./CartSummary.module.scss";
 
 interface CartSummaryProps {
   cart: Cart;
@@ -15,23 +16,14 @@ interface CartSummaryProps {
 export function CartSummary({ cart }: CartSummaryProps) {
   const router = useRouter();
   const { mutate: clearCart, isPending: isClearing } = useClearCart();
-  const [showConfirm, setShowConfirm] = useState(false);
+  const [state, dispatch] = useReducer(cartUiReducer, cartUiInitialState);
 
   const total = Number(cart.totalPrice).toFixed(2);
-  const itemLabel = cart.itemCount === 1 ? '1 item' : `${cart.itemCount} items`;
-
-  const handleClearClick = (): void => {
-    setShowConfirm(true);
-  };
+  const itemLabel = cart.itemCount === 1 ? "1 item" : `${cart.itemCount} items`;
 
   const handleConfirmClear = (): void => {
-    clearCart(undefined, {
-      onSettled: () => setShowConfirm(false),
-    });
-  };
-
-  const handleCancelClear = (): void => {
-    setShowConfirm(false);
+    dispatch({ type: "CONFIRM_CLEAR" });
+    clearCart(undefined);
   };
 
   return (
@@ -50,14 +42,17 @@ export function CartSummary({ cart }: CartSummaryProps) {
         <span className={styles.totalValue}>${total}</span>
       </div>
 
-      <button className={styles.checkoutBtn} onClick={() => router.push('/checkout')}>
+      <button
+        className={styles.checkoutBtn}
+        onClick={() => router.push("/checkout")}
+      >
         Proceed to Checkout
       </button>
 
-      {!showConfirm ? (
+      {state.phase === "browsing" ? (
         <button
           className={styles.clearBtn}
-          onClick={handleClearClick}
+          onClick={() => dispatch({ type: "REQUEST_CLEAR" })}
           disabled={isClearing}
         >
           Clear Cart
@@ -71,9 +66,12 @@ export function CartSummary({ cart }: CartSummaryProps) {
               onClick={handleConfirmClear}
               disabled={isClearing}
             >
-              {isClearing ? 'Clearing...' : 'Yes, clear'}
+              {isClearing ? "Clearing..." : "Yes, clear"}
             </button>
-            <button className={styles.confirmNo} onClick={handleCancelClear}>
+            <button
+              className={styles.confirmNo}
+              onClick={() => dispatch({ type: "CANCEL" })}
+            >
               Cancel
             </button>
           </div>

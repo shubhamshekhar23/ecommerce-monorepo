@@ -1,15 +1,15 @@
 // src/app/orders/[id]/page.tsx
 
-import type { Metadata } from 'next';
-import { OrderDetailView } from '@/features/orders/components/OrderDetailView/OrderDetailView';
+import type { Metadata } from "next";
+import { OrderDetailView } from "@/features/orders";
 
 type Props = {
   params: Promise<{ id: string }>;
 };
 
 export const metadata: Metadata = {
-  title: 'Order Details | ShopHub',
-  description: 'View your order details.',
+  title: "Order Details | ShopHub",
+  description: "View your order details.",
 };
 
 export default async function OrderDetailPage({ params }: Props) {

@@ -1,17 +1,19 @@
 // src/app/products/page.tsx
 
-import { Suspense } from 'react';
-import { ProductsView } from '@/features/products/components/ProductsView/ProductsView';
-import styles from './page.module.scss';
+import { Suspense } from "react";
+import { ProductsView } from "@/features/products";
+import styles from "./page.module.scss";
 
 // Serve the cached static page; regenerate in the background when older than 60s.
 // Product listings don't need to be real-time — a 1-minute window is imperceptible.
 export const revalidate = 60;
 
 export const metadata = {
-  title: 'Products | ShopHub',
-  description: 'Browse our collection of products.',
-  alternates: { canonical: `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/products` },
+  title: "Products | ShopHub",
+  description: "Browse our collection of products.",
+  alternates: {
+    canonical: `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/products`,
+  },
 };
 
 function ProductsLoading() {

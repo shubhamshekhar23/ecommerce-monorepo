@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth.store";
+import { eventBus } from "@/shared/eventBus";
 import { addToCartApi } from "../api/cart.api";
 import type { Cart, AddToCartPayload } from "../interfaces";
 import {
@@ -54,10 +55,15 @@ export function useAddToCart() {
 
       return { previousCart };
     },
-    onSuccess: (updatedCart) => {
+    onSuccess: (updatedCart, payload) => {
       // Server returns the full cart — use it directly for accuracy
       queryClient.setQueryData(["cart"], updatedCart);
-      toast.success("Added to cart");
+      const addedItem = updatedCart.items.find(
+        (item) => item.productId === payload.productId,
+      );
+      eventBus.emit("cart:item-added", {
+        productName: addedItem?.product.name ?? "Item",
+      });
     },
     onError: (_err, _vars, context) => {
       if (context?.previousCart !== undefined) {

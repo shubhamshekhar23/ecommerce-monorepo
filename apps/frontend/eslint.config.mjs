@@ -15,6 +15,20 @@ const eslintConfig = defineConfig([
         varsIgnorePattern: '^_',
         caughtErrorsIgnorePattern: '^_',
       }],
+
+      // Bounded context enforcement (DDD): features expose a public API via index.ts.
+      // Warn when code imports directly from a feature's internal path (e.g.
+      // '@/features/cart/hooks/useCart') instead of the public barrel
+      // ('@/features/cart'). Three-segment paths (@/features/cart/hooks) are
+      // allowed because own-feature internal imports need that level.
+      'no-restricted-imports': ['warn', {
+        patterns: [
+          {
+            group: ['@/features/*/*/**'],
+            message: "Import from the feature's public index (e.g. '@/features/cart') instead of its internal path.",
+          },
+        ],
+      }],
     },
   },
   // Override default ignores of eslint-config-next.

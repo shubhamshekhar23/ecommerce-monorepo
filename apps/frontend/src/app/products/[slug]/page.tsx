@@ -1,6 +1,6 @@
 // src/app/products/[slug]/page.tsx
 
-import { ProductDetailView } from '@/features/products/components/ProductDetailView/ProductDetailView';
+import { ProductDetailView } from "@/features/products";
 
 export const revalidate = 3600;
 
@@ -8,7 +8,7 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 async function fetchProduct(slug: string) {
@@ -30,7 +30,9 @@ export async function generateStaticParams() {
     });
     if (!res.ok) return [];
     const data = await res.json();
-    return (data.data as Array<{ slug: string }>).map((p) => ({ slug: p.slug }));
+    return (data.data as Array<{ slug: string }>).map((p) => ({
+      slug: p.slug,
+    }));
   } catch {
     return [];
   }
@@ -42,12 +44,14 @@ export async function generateMetadata({ params }: Props) {
 
   if (!product) {
     return {
-      title: 'Product | ShopHub',
-      description: 'View product details at ShopHub.',
+      title: "Product | ShopHub",
+      description: "View product details at ShopHub.",
     };
   }
 
-  const description = (product.description ?? `Buy ${product.name} at ShopHub.`).slice(0, 155);
+  const description = (
+    product.description ?? `Buy ${product.name} at ShopHub.`
+  ).slice(0, 155);
   const image = product.images?.[0]?.url;
   const canonical = `${APP_URL}/products/${slug}`;
 
@@ -59,7 +63,7 @@ export async function generateMetadata({ params }: Props) {
       title: product.name,
       description,
       url: canonical,
-      type: 'website',
+      type: "website",
       ...(image && { images: [{ url: image, alt: product.name }] }),
     },
   };
@@ -72,36 +76,51 @@ export default async function ProductDetailPage({ params }: Props) {
   // Product schema enables rich results (price, availability) in Google Search.
   const jsonLd = product
     ? {
-        '@context': 'https://schema.org',
-        '@type': 'Product',
+        "@context": "https://schema.org",
+        "@type": "Product",
         name: product.name,
         description: product.description ?? undefined,
         image: product.images?.[0]?.url,
         offers: {
-          '@type': 'Offer',
+          "@type": "Offer",
           price: String(product.price),
-          priceCurrency: 'USD',
+          priceCurrency: "USD",
           availability:
             product.stock > 0
-              ? 'https://schema.org/InStock'
-              : 'https://schema.org/OutOfStock',
+              ? "https://schema.org/InStock"
+              : "https://schema.org/OutOfStock",
         },
       }
     : null;
 
   const breadcrumbLd = product
     ? {
-        '@context': 'https://schema.org',
-        '@type': 'BreadcrumbList',
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Home', item: `${APP_URL}/` },
-          { '@type': 'ListItem', position: 2, name: 'Products', item: `${APP_URL}/products` },
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Home",
+            item: `${APP_URL}/`,
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: "Products",
+            item: `${APP_URL}/products`,
+          },
           ...(product.category
             ? [
-                { '@type': 'ListItem', position: 3, name: product.category.name, item: `${APP_URL}/products?category=${product.category.slug}` },
-                { '@type': 'ListItem', position: 4, name: product.name },
+                {
+                  "@type": "ListItem",
+                  position: 3,
+                  name: product.category.name,
+                  item: `${APP_URL}/products?category=${product.category.slug}`,
+                },
+                { "@type": "ListItem", position: 4, name: product.name },
               ]
-            : [{ '@type': 'ListItem', position: 3, name: product.name }]),
+            : [{ "@type": "ListItem", position: 3, name: product.name }]),
         ],
       }
     : null;

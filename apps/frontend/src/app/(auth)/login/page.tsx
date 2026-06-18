@@ -1,11 +1,11 @@
 // src/app/(auth)/login/page.tsx
 
-import type { Metadata } from 'next';
-import { LoginForm } from '@/features/auth/components/LoginForm/LoginForm';
+import type { Metadata } from "next";
+import { LoginForm } from "@/features/auth";
 
 export const metadata: Metadata = {
-  title: 'Sign In',
-  description: 'Sign in to your account',
+  title: "Sign In",
+  description: "Sign in to your account",
 };
 
 interface LoginPageProps {
@@ -14,5 +14,5 @@ interface LoginPageProps {
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
-  return <LoginForm sessionExpired={params.session_expired === '1'} />;
+  return <LoginForm sessionExpired={params.session_expired === "1"} />;
 }

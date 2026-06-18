@@ -1,11 +1,11 @@
 // src/app/admin/categories/new/page.tsx
 
-import type { Metadata } from 'next';
-import { CategoryForm } from '@/features/admin/components/CategoryForm/CategoryForm';
+import type { Metadata } from "next";
+import { CategoryForm } from "@/features/admin";
 
 export const metadata: Metadata = {
-  title: 'Create Category | Admin',
-  description: 'Create a new category',
+  title: "Create Category | Admin",
+  description: "Create a new category",
   robots: { index: false },
 };
 

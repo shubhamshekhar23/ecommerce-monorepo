@@ -9,7 +9,7 @@ Source: `component-based.md`, `domain-driven-design.md`, `event-bus-pattern.md`,
 
 ### Feature Public API (Component-Based Pattern)
 
-- [ ] **Top-level `index.ts` per feature** — each feature should expose a public API via a barrel file. Other features and pages should import from `@/features/cart` not from `@/features/cart/hooks/useCart` or `@/features/cart/components/CartView/CartView`.
+- [x] **Top-level `index.ts` per feature** — each feature should expose a public API via a barrel file. Other features and pages should import from `@/features/cart` not from `@/features/cart/hooks/useCart` or `@/features/cart/components/CartView/CartView`.
   
   Example `src/features/cart/index.ts`:
   ```ts
@@ -27,7 +27,7 @@ Source: `component-based.md`, `domain-driven-design.md`, `event-bus-pattern.md`,
 
 ### Event Bus Pattern
 
-- [ ] **Event Bus for cross-feature communication** — currently, when `useAddToCart` succeeds, the cart component shows a button state change. But the notification toast (from `08-user-experience.md`) is a separate concern that shouldn't be coupled into the mutation hook.
+- [x] **Event Bus for cross-feature communication** — currently, when `useAddToCart` succeeds, the cart component shows a button state change. But the notification toast (from `08-user-experience.md`) is a separate concern that shouldn't be coupled into the mutation hook.
   
   An event bus decouples this:
   - Cart hook publishes: `eventBus.emit('cart:item-added', { productName })`
@@ -53,7 +53,7 @@ Source: `component-based.md`, `domain-driven-design.md`, `event-bus-pattern.md`,
 
 ### Domain-Driven Design (DDD)
 
-- [ ] **Explicit domain model typing** — the notes describe Entities (have identity, mutable), Value Objects (no identity, immutable), and Aggregates (cluster of objects treated as one unit). Reflect this in the interfaces:
+- [x] **Explicit domain model typing** — the notes describe Entities (have identity, mutable), Value Objects (no identity, immutable), and Aggregates (cluster of objects treated as one unit). Reflect this in the interfaces:
   
   In our app:
   - `Product` is an Entity (has `id`, mutable stock)
@@ -65,7 +65,7 @@ Source: `component-based.md`, `domain-driven-design.md`, `event-bus-pattern.md`,
   - Complexity: Easy (mostly a naming/commenting exercise, no runtime change)
   - Files: `src/features/*/interfaces/index.ts`
 
-- [ ] **Bounded context enforcement — no cross-feature deep imports** — the DDD bounded context principle says each domain (feature) manages its own model. Enforce by:
+- [x] **Bounded context enforcement — no cross-feature deep imports** — the DDD bounded context principle says each domain (feature) manages its own model. Enforce by:
   1. ESLint rule or `no-restricted-imports` to block `import from '@/features/cart/...'` from inside `@/features/orders/...`
   2. Any shared types move to `src/interfaces/` (shared kernel in DDD terms)
   - Complexity: Medium
@@ -75,7 +75,7 @@ Source: `component-based.md`, `domain-driven-design.md`, `event-bus-pattern.md`,
 
 ### Layered Pattern
 
-- [ ] **`useReducer` for cart state transitions** — the cart has complex state transitions: add, remove, update quantity, clear, apply discount, loading states per-item. These are currently spread across multiple `useState` calls and mutation callbacks.
+- [x] **`useReducer` for cart state transitions** — the cart has complex state transitions: add, remove, update quantity, clear, apply discount, loading states per-item. These are currently spread across multiple `useState` calls and mutation callbacks.
   
   Introduce a `cartReducer` with explicit action types:
   ```ts

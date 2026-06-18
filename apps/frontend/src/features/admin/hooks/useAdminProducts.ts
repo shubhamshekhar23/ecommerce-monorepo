@@ -1,6 +1,7 @@
 "use client";
 
 import { useInfiniteQuery } from "@tanstack/react-query";
+// eslint-disable-next-line no-restricted-imports -- admin is the management surface for the products domain; intentional cross-feature API coupling
 import { getProductsApi } from "@/features/products/api/products.api";
 
 const LIMIT = 20;

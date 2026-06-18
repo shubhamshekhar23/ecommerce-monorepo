@@ -1,17 +1,17 @@
 // src/features/products/components/ProductCard/ProductCard.tsx
 
-'use client';
+"use client";
 
-import Link from 'next/link';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { useState, useCallback } from 'react';
-import { useAuthStore } from '@/store/auth.store';
-import { useAddToCart } from '@/features/cart/hooks';
-import { BLUR_PLACEHOLDER } from '@/shared/imagePlaceholder';
-import type { Product } from '../../interfaces';
-import { highlightMatch } from '../../utils/highlightMatch';
-import styles from './ProductCard.module.scss';
+import Link from "next/link";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useState, useCallback } from "react";
+import { useAuthStore } from "@/store/auth.store";
+import { useAddToCart } from "@/features/cart/hooks";
+import { BLUR_PLACEHOLDER } from "@/shared/imagePlaceholder";
+import type { Product } from "../../interfaces";
+import { highlightMatch } from "@/shared/utils/highlightMatch";
+import styles from "./ProductCard.module.scss";
 
 interface ProductCardProps {
   product: Product;
@@ -19,12 +19,19 @@ interface ProductCardProps {
   searchQuery?: string;
 }
 
-export function ProductCard({ product, priority = false, searchQuery }: ProductCardProps) {
+export function ProductCard({
+  product,
+  priority = false,
+  searchQuery,
+}: ProductCardProps) {
   const router = useRouter();
   const status = useAuthStore((state) => state.status);
   const { mutate: addToCart, isPending } = useAddToCart();
-  const [buttonState, setButtonState] = useState<'idle' | 'success' | 'error'>('idle');
-  const mainImage = product.images.find((img) => img.isMain) || product.images[0];
+  const [buttonState, setButtonState] = useState<"idle" | "success" | "error">(
+    "idle",
+  );
+  const mainImage =
+    product.images.find((img) => img.isMain) || product.images[0];
   const [imageSrc, setImageSrc] = useState(mainImage?.url || null);
 
   const handleImageError = useCallback(() => {
@@ -36,8 +43,8 @@ export function ProductCard({ product, priority = false, searchQuery }: ProductC
       e.preventDefault();
       e.stopPropagation();
 
-      if (status !== 'authenticated') {
-        router.push('/login');
+      if (status !== "authenticated") {
+        router.push("/login");
         return;
       }
 
@@ -45,12 +52,12 @@ export function ProductCard({ product, priority = false, searchQuery }: ProductC
         { productId: product.id, quantity: 1 },
         {
           onSuccess: () => {
-            setButtonState('success');
-            setTimeout(() => setButtonState('idle'), 2000);
+            setButtonState("success");
+            setTimeout(() => setButtonState("idle"), 2000);
           },
           onError: () => {
-            setButtonState('error');
-            setTimeout(() => setButtonState('idle'), 2000);
+            setButtonState("error");
+            setTimeout(() => setButtonState("idle"), 2000);
           },
         },
       );
@@ -62,13 +69,13 @@ export function ProductCard({ product, priority = false, searchQuery }: ProductC
   const inStock = product.stock > 0;
 
   const getButtonLabel = (): string => {
-    if (isPending) return 'Adding...';
-    if (buttonState === 'success') return 'Added ✓';
-    if (buttonState === 'error') return 'Failed';
-    return 'Add to Cart';
+    if (isPending) return "Adding...";
+    if (buttonState === "success") return "Added ✓";
+    if (buttonState === "error") return "Failed";
+    return "Add to Cart";
   };
 
-  const isButtonDisabled = !inStock || isPending || buttonState === 'success';
+  const isButtonDisabled = !inStock || isPending || buttonState === "success";
 
   return (
     <Link href={`/products/${product.slug}`} className={styles.card}>
@@ -92,17 +99,19 @@ export function ProductCard({ product, priority = false, searchQuery }: ProductC
 
       <div className={styles.content}>
         <h3 className={styles.name}>
-          {searchQuery ? highlightMatch(product.name, searchQuery) : product.name}
+          {searchQuery
+            ? highlightMatch(product.name, searchQuery)
+            : product.name}
         </h3>
 
         <div className={styles.price}>${price}</div>
 
         <div className={inStock ? styles.inStock : styles.outOfStock}>
-          {inStock ? `In Stock (${product.stock})` : 'Out of Stock'}
+          {inStock ? `In Stock (${product.stock})` : "Out of Stock"}
         </div>
 
         <button
-          className={`${styles.addToCart} ${buttonState === 'success' ? styles.addToCartSuccess : ''} ${buttonState === 'error' ? styles.addToCartError : ''}`}
+          className={`${styles.addToCart} ${buttonState === "success" ? styles.addToCartSuccess : ""} ${buttonState === "error" ? styles.addToCartError : ""}`}
           disabled={isButtonDisabled}
           onClick={handleAddToCart}
         >

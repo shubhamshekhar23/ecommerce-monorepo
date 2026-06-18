@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useProductSearch } from "@/features/products/hooks";
 import { useRecentSearches } from "@/hooks/useRecentSearches";
-import { highlightMatch } from "@/features/products/utils/highlightMatch";
+import { highlightMatch } from "@/shared/utils/highlightMatch";
 import styles from "./SearchBar.module.scss";
 
 export function SearchBar() {
