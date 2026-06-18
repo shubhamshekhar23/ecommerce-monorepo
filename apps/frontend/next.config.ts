@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import bundleAnalyzer from "@next/bundle-analyzer";
+import withPWAInit from "@ducanh2912/next-pwa";
 
 // Fail fast at build/start time if required env vars are missing.
 // The full Zod validation runs in src/shared/config/env.ts at module load.
@@ -107,4 +108,18 @@ const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === "true",
 });
 
-export default withBundleAnalyzer(nextConfig);
+// Service Worker is only generated in production builds. In development
+// next-pwa is effectively a no-op so HMR is unaffected.
+const withPWA = withPWAInit({
+  dest: "public",
+  // Disable the SW in development so it doesn't cache stale responses
+  // during active development.
+  disable: process.env.NODE_ENV === "development",
+  // Cache all Next.js static assets (JS, CSS, fonts) using a StaleWhileRevalidate
+  // strategy — serve from cache instantly, revalidate in the background.
+  cacheOnFrontEndNav: true,
+  aggressiveFrontEndNavCaching: false,
+  reloadOnOnline: true,
+});
+
+export default withBundleAnalyzer(withPWA(nextConfig));

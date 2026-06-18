@@ -167,7 +167,7 @@ Additive features. The app works without them. Implement once all core patterns 
 - [x] **Print CSS** → [ux/print-css.md](./ux/print-css.md)
   - `@media print` global reset (hide header/nav/footer/buttons), `@page` A4 margins, order detail print styles, "Print Receipt" button with `window.print()`
 
-- [ ] **PWA & Real-time** → [advanced/pwa-and-realtime.md](./advanced/pwa-and-realtime.md)
+- [x] **PWA & Real-time** → [advanced/pwa-and-realtime.md](./advanced/pwa-and-realtime.md)
   - SSE connection for order status updates, `manifest.ts`, Service Worker via `next-pwa`, background sync for offline cart queue (connects to Phase 6.3)
 
 - [ ] **i18n** → [advanced/i18n.md](./advanced/i18n.md)

@@ -9,7 +9,7 @@ Source: `others.md`
 
 ### Real-time Updates
 
-- [ ] **Server-Sent Events (SSE) for order status** — when a user is on the order detail page (`/orders/[id]`), subscribe to an SSE stream from the backend to receive live status changes (PENDING → PROCESSING → SHIPPED → DELIVERED).
+- [x] **Server-Sent Events (SSE) for order status** — when a user is on the order detail page (`/orders/[id]`), subscribe to an SSE stream from the backend to receive live status changes (PENDING → PROCESSING → SHIPPED → DELIVERED).
   
   Why SSE over WebSockets here: order status updates are one-directional (server pushes, client reads). SSE is simpler — it's a plain HTTP connection with chunked streaming. WebSockets are bidirectional and add complexity not needed here.
   
@@ -32,7 +32,7 @@ Source: `others.md`
 
 ### PWA
 
-- [ ] **`manifest.ts` for installability** — Next.js supports `app/manifest.ts` to generate a Web App Manifest. Required for "Add to Home Screen" on mobile:
+- [x] **`manifest.ts` for installability** — Next.js supports `app/manifest.ts` to generate a Web App Manifest. Required for "Add to Home Screen" on mobile:
   ```ts
   export default function manifest(): MetadataRoute.Manifest {
     return {
@@ -50,7 +50,7 @@ Source: `others.md`
   - File: `src/app/manifest.ts`
   - Depends on: PWA icons in `public/icons/`
 
-- [ ] **Service Worker for asset caching** — caches static JS, CSS, and image assets so the app loads instantly on repeat visits and the shell renders even offline. Use the `next-pwa` package which integrates with the Next.js build and generates the Service Worker automatically with Workbox.
+- [x] **Service Worker for asset caching** — caches static JS, CSS, and image assets so the app loads instantly on repeat visits and the shell renders even offline. Use the `next-pwa` package which integrates with the Next.js build and generates the Service Worker automatically with Workbox.
   - Complexity: Medium
   - Install: `next-pwa`
   - Config: `next.config.js`

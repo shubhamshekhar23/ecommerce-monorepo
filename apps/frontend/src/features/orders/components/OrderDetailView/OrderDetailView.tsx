@@ -4,7 +4,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useOrder, useCancelOrder } from "../../hooks";
+import { useOrder, useCancelOrder, useOrderStatusStream } from "../../hooks";
 import { Breadcrumb } from "@/components/Breadcrumb/Breadcrumb";
 import type { OrderStatus, PaymentStatus } from "../../interfaces";
 
@@ -31,6 +31,7 @@ export function OrderDetailView({ id }: OrderDetailViewProps) {
   const { data: order, isLoading, error } = useOrder(id);
   const { mutate: cancelOrder, isPending: isCanceling } = useCancelOrder();
   const [showConfirm, setShowConfirm] = useState(false);
+  useOrderStatusStream(id);
 
   if (isLoading) {
     return (
