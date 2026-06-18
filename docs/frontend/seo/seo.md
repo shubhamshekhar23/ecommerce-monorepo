@@ -49,7 +49,7 @@ Source: `seo.md`, `index/seo.md`
   - Complexity: Easy
   - Files: `src/app/orders/page.tsx`, `src/app/cart/page.tsx`, `src/app/checkout/page.tsx`, all `src/app/admin/` pages
 
-- [ ] **OpenGraph image (`opengraph-image.tsx`)** — Next.js supports a `opengraph-image.tsx` file per route segment that dynamically generates an OG image using the Vercel OG library (`@vercel/og`). Add one for product pages (product image + name + price overlay). Controls the preview image when the URL is shared on social media.
+- [x] **OpenGraph image (`opengraph-image.tsx`)** — Next.js supports a `opengraph-image.tsx` file per route segment that dynamically generates an OG image using the Vercel OG library (`@vercel/og`). Add one for product pages (product image + name + price overlay). Controls the preview image when the URL is shared on social media.
   - Complexity: Medium
   - File: `src/app/products/[slug]/opengraph-image.tsx`
 

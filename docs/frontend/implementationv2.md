@@ -61,7 +61,7 @@ Improves how errors are communicated to users after the `AppError` type is in pl
 
 Additive SEO improvements that don't touch routing.
 
-- [ ] **OpenGraph image per product page** → [seo/seo.md](./seo/seo.md)
+- [x] **OpenGraph image per product page** → [seo/seo.md](./seo/seo.md)
   - Add `app/[locale]/products/[slug]/opengraph-image.tsx` using `@vercel/og`; render product image + name + price overlay; controls the preview card when a product URL is shared on social media
 
 - [ ] **Crawlable category filter URLs** → [seo/seo.md](./seo/seo.md)
