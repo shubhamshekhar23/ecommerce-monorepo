@@ -17,8 +17,29 @@
 }
 
 .heading {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0;
   margin-bottom: var(--space-3);
   font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.chevron {
+  transition: transform var(--transition-base);
+  font-size: 0.75em;
+  color: var(--color-text-muted);
+}
+
+.chevronCollapsed {
+  transform: rotate(-90deg);
 }
 
 .list {

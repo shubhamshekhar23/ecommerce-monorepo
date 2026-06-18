@@ -97,7 +97,7 @@ Infrastructure and shared components are in place. Now improve how data flows: n
 - [x] **URL as State** → [data-and-state/url-as-state.md](./data-and-state/url-as-state.md)
   - `useUrlState` hook wrapping `router.push` + `URLSearchParams`, category/sort/price range in URL for product listing, search/status filter/page in URL for admin tables, "Clear all filters" button
 
-- [ ] **Web Storage** → [data-and-state/web-storage.md](./data-and-state/web-storage.md)
+- [x] **Web Storage** → [data-and-state/web-storage.md](./data-and-state/web-storage.md)
   - `sessionStorage` for scroll position (Phase 5) and product list cache, `localStorage` for user preferences and recently viewed, IndexedDB offline cart queue (mutations queued when offline, replayed on reconnect)
 
 - [ ] **Feature Flags** → [architecture/feature-flags.md](./architecture/feature-flags.md)

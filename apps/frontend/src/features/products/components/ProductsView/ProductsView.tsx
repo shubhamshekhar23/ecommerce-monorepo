@@ -2,7 +2,9 @@
 
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useProductsCursor, useProductSearch, useCategories } from '../../hooks';
+import { useProductListCache } from '../../hooks/useProductListCache';
 import { useScrollRestoration } from '@/hooks/useScrollRestoration';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { CategorySidebar } from '../CategorySidebar/CategorySidebar';
 import { ProductGrid } from '../ProductGrid/ProductGrid';
 import type { Product, CursorQueryParams } from '../../interfaces';
@@ -22,11 +24,15 @@ export function ProductsView() {
   const router = useRouter();
   const pathname = usePathname();
 
+  // Persist sort preference across sessions; URL param takes precedence
+  const [savedSort, setSavedSort] = useLocalStorage<CursorQueryParams['sort']>('products-sort-order', undefined);
+
   const search = searchParams.get('search') || undefined;
   const categorySlug = searchParams.get('category') || undefined;
-  const sort = (searchParams.get('sort') as CursorQueryParams['sort']) || undefined;
+  const urlSort = (searchParams.get('sort') as CursorQueryParams['sort']) || undefined;
+  const sort = urlSort ?? savedSort;
   const isSearching = typeof search === 'string' && search.trim().length > 0;
-  const hasActiveFilters = Boolean(categorySlug || sort);
+  const hasActiveFilters = Boolean(categorySlug || urlSort);
 
   // Resolve category slug → ID for the API (which takes categoryId, not slug)
   const { data: categoriesData } = useCategories();
@@ -56,7 +62,12 @@ export function ProductsView() {
     ? (searchData?.data ?? [])
     : (cursorData?.pages.flatMap((p) => p.data) ?? []);
 
+  // Persist product list to sessionStorage for instant back-navigation
+  useProductListCache(products, isLoading, filters);
+
   const handleSortChange = (value: string) => {
+    const sortValue = (value as CursorQueryParams['sort']) || undefined;
+    setSavedSort(sortValue ?? null as unknown as CursorQueryParams['sort']);
     const params = new URLSearchParams(searchParams.toString());
     if (value) {
       params.set('sort', value);
@@ -85,7 +96,7 @@ export function ProductsView() {
             {!isSearching && (
               <select
                 className={styles.sortSelect}
-                value={sort ?? ''}
+                value={urlSort ?? savedSort ?? ''}
                 onChange={(e) => handleSortChange(e.target.value)}
                 aria-label="Sort products"
               >

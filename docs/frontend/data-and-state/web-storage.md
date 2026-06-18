@@ -18,11 +18,11 @@ Source: `web-storage.md`
 
 ### sessionStorage
 
-- [ ] **`sessionStorage` for scroll position** — this is documented in `08-user-experience.md` (`useScrollRestoration`). The web storage connection: `sessionStorage` is the right store (not `localStorage`) because scroll position is tab-specific and should reset when the user closes the tab or opens a new one.
+- [x] **`sessionStorage` for scroll position** — this is documented in `08-user-experience.md` (`useScrollRestoration`). The web storage connection: `sessionStorage` is the right store (not `localStorage`) because scroll position is tab-specific and should reset when the user closes the tab or opens a new one.
   - Complexity: Easy
   - Depends on: `useScrollRestoration` hook from 08-user-experience.md
 
-- [ ] **`sessionStorage` for product list page cache** — cache the last-loaded products list so back-navigation from a product detail page is instant. Store: `sessionStorage.setItem('products-cache', JSON.stringify(products))`. Retrieve on mount before TanStack Query re-fetches.
+- [x] **`sessionStorage` for product list page cache** — cache the last-loaded products list so back-navigation from a product detail page is instant. Store: `sessionStorage.setItem('products-cache', JSON.stringify(products))`. Retrieve on mount before TanStack Query re-fetches.
   - Complexity: Medium
   - Note: set a TTL (timestamp) alongside the cache to invalidate it after a few minutes.
   - File: `src/features/products/hooks/useProducts.ts` or `ProductsView.tsx`
@@ -31,7 +31,7 @@ Source: `web-storage.md`
 
 ### localStorage
 
-- [ ] **`localStorage` for user preferences** — persist preferences that should survive across sessions:
+- [x] **`localStorage` for user preferences** — persist preferences that should survive across sessions:
   - Sort order preference (e.g. "Price: Low to High") — key: `products-sort-order`
   - Sidebar collapsed state (category sidebar open/closed) — key: `category-sidebar-collapsed`
   - Items-per-page preference (for any paginated view) — key: `admin-page-size`
@@ -44,7 +44,7 @@ Source: `web-storage.md`
 
 ### IndexedDB
 
-- [ ] **IndexedDB offline cart queue** — the most advanced item in this file. Goal: if the user adds an item to cart while offline, queue the mutation in IndexedDB and sync it when connectivity returns (pairs with Service Worker background sync from `12-pwa-realtime.md`).
+- [x] **IndexedDB offline cart queue** — the most advanced item in this file. Goal: if the user adds an item to cart while offline, queue the mutation in IndexedDB and sync it when connectivity returns (pairs with Service Worker background sync from `12-pwa-realtime.md`).
   - Use the `idb` npm package as a thin wrapper over the raw IndexedDB API (the raw API is verbose).
   - Store: `{ id, action: 'ADD' | 'REMOVE' | 'UPDATE', payload, timestamp }`
   - On reconnect (or when Service Worker background sync fires): drain the queue and replay mutations.
