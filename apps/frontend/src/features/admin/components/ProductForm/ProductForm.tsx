@@ -1,5 +1,3 @@
-// src/features/admin/components/ProductForm/ProductForm.tsx
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -8,6 +6,7 @@ import { useCategories } from '@/features/products/hooks';
 import { useCreateProduct, useUpdateProduct } from '../../hooks';
 import type { Product } from '@/features/products/interfaces';
 import type { ProductImageDto } from '../../api/admin-products.api';
+import { Input, Select, Textarea } from '@/components/Form';
 import styles from './ProductForm.module.scss';
 
 interface ProductFormProps {
@@ -35,7 +34,6 @@ export function ProductForm({ product }: ProductFormProps) {
 
   const [images, setImages] = useState<ProductImageDto[]>([]);
 
-  // Initialize form data on product load (for edit mode)
   useEffect(() => {
     if (product) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -60,10 +58,7 @@ export function ProductForm({ product }: ProductFormProps) {
   const handleImageChange = (index: number, field: keyof ProductImageDto, value: unknown): void => {
     const newImages = [...images];
     if (field === 'isMain' && value === true) {
-      // Uncheck all other isMain
-      newImages.forEach((img) => {
-        img.isMain = false;
-      });
+      newImages.forEach((img) => { img.isMain = false; });
     }
     newImages[index] = { ...newImages[index], [field]: value };
     setImages(newImages);
@@ -75,10 +70,7 @@ export function ProductForm({ product }: ProductFormProps) {
 
   const handleRemoveImage = (index: number): void => {
     const newImages = images.filter((_, i) => i !== index);
-    // Reorder and ensure first image is main if no main is set
-    newImages.forEach((img, i) => {
-      img.order = i;
-    });
+    newImages.forEach((img, i) => { img.order = i; });
     if (!newImages.some((img) => img.isMain) && newImages.length > 0) {
       newImages[0].isMain = true;
     }
@@ -100,20 +92,9 @@ export function ProductForm({ product }: ProductFormProps) {
     };
 
     if (isEditMode && product) {
-      updateProduct(
-        { id: product.id, dto: payload },
-        {
-          onSuccess: () => {
-            router.push('/admin/products');
-          },
-        },
-      );
+      updateProduct({ id: product.id, dto: payload }, { onSuccess: () => router.push('/admin/products') });
     } else {
-      createProduct(payload, {
-        onSuccess: () => {
-          router.push('/admin/products');
-        },
-      });
+      createProduct(payload, { onSuccess: () => router.push('/admin/products') });
     }
   };
 
@@ -122,104 +103,81 @@ export function ProductForm({ product }: ProductFormProps) {
       <h1 className={styles.title}>{isEditMode ? 'Edit Product' : 'Create Product'}</h1>
 
       <form onSubmit={handleSubmit} className={styles.form}>
-        <div className={styles.fieldGroup}>
-          <label htmlFor="name">Name *</label>
-          <input
-            id="name"
-            type="text"
-            required
-            value={formData.name}
-            onChange={(e) => handleNameChange(e.target.value)}
-            className={styles.input}
-          />
-        </div>
+        <Input
+          id="name"
+          label="Name"
+          type="text"
+          required
+          value={formData.name}
+          onChange={(e) => handleNameChange(e.target.value)}
+        />
 
-        <div className={styles.fieldGroup}>
-          <label htmlFor="slug">Slug *</label>
-          <input
-            id="slug"
-            type="text"
-            required
-            value={formData.slug}
-            onChange={(e) => setFormData((prev) => ({ ...prev, slug: e.target.value }))}
-            className={styles.input}
-          />
-        </div>
+        <Input
+          id="slug"
+          label="Slug"
+          type="text"
+          required
+          value={formData.slug}
+          onChange={(e) => setFormData((prev) => ({ ...prev, slug: e.target.value }))}
+        />
 
-        <div className={styles.fieldGroup}>
-          <label htmlFor="description">Description</label>
-          <textarea
-            id="description"
-            value={formData.description}
-            onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-            className={styles.textarea}
-            rows={4}
-          />
-        </div>
+        <Textarea
+          id="description"
+          label="Description"
+          value={formData.description}
+          onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+          rows={4}
+        />
 
         <div className={styles.row}>
-          <div className={styles.fieldGroup}>
-            <label htmlFor="price">Price *</label>
-            <input
-              id="price"
-              type="number"
-              step="0.01"
-              min="0.01"
-              required
-              value={formData.price}
-              onChange={(e) => setFormData((prev) => ({ ...prev, price: e.target.value }))}
-              className={styles.input}
-            />
-          </div>
-
-          <div className={styles.fieldGroup}>
-            <label htmlFor="cost">Cost *</label>
-            <input
-              id="cost"
-              type="number"
-              step="0.01"
-              min="0"
-              required
-              value={formData.cost}
-              onChange={(e) => setFormData((prev) => ({ ...prev, cost: e.target.value }))}
-              className={styles.input}
-            />
-          </div>
-
-          <div className={styles.fieldGroup}>
-            <label htmlFor="stock">Stock</label>
-            <input
-              id="stock"
-              type="number"
-              min="0"
-              value={formData.stock}
-              onChange={(e) => setFormData((prev) => ({ ...prev, stock: e.target.value }))}
-              className={styles.input}
-            />
-          </div>
-        </div>
-
-        <div className={styles.fieldGroup}>
-          <label htmlFor="category">Category *</label>
-          <select
-            id="category"
+          <Input
+            id="price"
+            label="Price"
+            type="number"
+            step="0.01"
+            min="0.01"
             required
-            value={formData.categoryId}
-            onChange={(e) => setFormData((prev) => ({ ...prev, categoryId: e.target.value }))}
-            className={styles.select}
-          >
-            <option value="">Select a category</option>
-            {categoriesData?.data.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name}
-              </option>
-            ))}
-          </select>
+            value={formData.price}
+            onChange={(e) => setFormData((prev) => ({ ...prev, price: e.target.value }))}
+          />
+          <Input
+            id="cost"
+            label="Cost"
+            type="number"
+            step="0.01"
+            min="0"
+            required
+            value={formData.cost}
+            onChange={(e) => setFormData((prev) => ({ ...prev, cost: e.target.value }))}
+          />
+          <Input
+            id="stock"
+            label="Stock"
+            type="number"
+            min="0"
+            value={formData.stock}
+            onChange={(e) => setFormData((prev) => ({ ...prev, stock: e.target.value }))}
+          />
         </div>
 
-        {/* Images Section */}
+        <Select
+          id="category"
+          label="Category"
+          required
+          value={formData.categoryId}
+          onChange={(e) => setFormData((prev) => ({ ...prev, categoryId: e.target.value }))}
+        >
+          <option value="">Select a category</option>
+          {categoriesData?.data.map((cat) => (
+            <option key={cat.id} value={cat.id}>
+              {cat.name}
+            </option>
+          ))}
+        </Select>
+
+        {/* Images Section — custom layout retained */}
         <div className={styles.imagesSection}>
-          <label>Images</label>
+          <p className={styles.imagesLabel}>Images</p>
           {images.map((image, index) => (
             <div key={index} className={styles.imageRow}>
               <div className={styles.imageRowFields}>
@@ -229,6 +187,7 @@ export function ProductForm({ product }: ProductFormProps) {
                   value={image.url}
                   onChange={(e) => handleImageChange(index, 'url', e.target.value)}
                   className={styles.input}
+                  aria-label={`Image ${index + 1} URL`}
                 />
                 <input
                   type="text"
@@ -236,15 +195,17 @@ export function ProductForm({ product }: ProductFormProps) {
                   value={image.altText || ''}
                   onChange={(e) => handleImageChange(index, 'altText', e.target.value)}
                   className={styles.input}
+                  aria-label={`Image ${index + 1} alt text`}
                 />
                 <input
                   type="number"
-                  placeholder="Order (optional)"
+                  placeholder="Order"
                   min="0"
                   value={image.order ?? ''}
                   onChange={(e) => handleImageChange(index, 'order', e.target.value ? Number(e.target.value) : undefined)}
                   className={styles.input}
                   style={{ maxWidth: '80px' }}
+                  aria-label={`Image ${index + 1} order`}
                 />
                 <label className={styles.checkboxLabel}>
                   <input
@@ -255,22 +216,12 @@ export function ProductForm({ product }: ProductFormProps) {
                   Main
                 </label>
               </div>
-              <button
-                type="button"
-                className={styles.removeBtn}
-                onClick={() => handleRemoveImage(index)}
-                disabled={isPending}
-              >
+              <button type="button" className={styles.removeBtn} onClick={() => handleRemoveImage(index)} disabled={isPending}>
                 Remove
               </button>
             </div>
           ))}
-          <button
-            type="button"
-            className={styles.addImageBtn}
-            onClick={handleAddImage}
-            disabled={isPending}
-          >
+          <button type="button" className={styles.addImageBtn} onClick={handleAddImage} disabled={isPending}>
             + Add Image
           </button>
         </div>
@@ -279,12 +230,7 @@ export function ProductForm({ product }: ProductFormProps) {
           <button type="submit" className={styles.submitBtn} disabled={isPending}>
             {isPending ? (isEditMode ? 'Saving...' : 'Creating...') : isEditMode ? 'Save Changes' : 'Create Product'}
           </button>
-          <button
-            type="button"
-            className={styles.cancelBtn}
-            onClick={() => router.back()}
-            disabled={isPending}
-          >
+          <button type="button" className={styles.cancelBtn} onClick={() => router.back()} disabled={isPending}>
             Cancel
           </button>
         </div>

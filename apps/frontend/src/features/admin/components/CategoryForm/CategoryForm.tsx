@@ -1,11 +1,10 @@
-// src/features/admin/components/CategoryForm/CategoryForm.tsx
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAdminCategories, useCreateCategory, useUpdateCategory } from '../../hooks';
 import type { Category } from '@/features/products/interfaces';
+import { Input, Select, Textarea } from '@/components/Form';
 import styles from './CategoryForm.module.scss';
 
 interface CategoryFormProps {
@@ -29,7 +28,6 @@ export function CategoryForm({ category }: CategoryFormProps) {
     parentId: '',
   });
 
-  // Initialize form data on category load (for edit mode)
   useEffect(() => {
     if (category) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -56,33 +54,14 @@ export function CategoryForm({ category }: CategoryFormProps) {
       slug: formData.slug,
     };
 
-    // Only include optional fields if they have values
-    if (formData.description) {
-      payload.description = formData.description;
-    }
-    // Always include image if it has a value (even empty string)
-    if (formData.image !== '' && formData.image !== null && formData.image !== undefined) {
-      payload.image = formData.image;
-    }
-    if (formData.parentId) {
-      payload.parentId = formData.parentId;
-    }
+    if (formData.description) payload.description = formData.description;
+    if (formData.image) payload.image = formData.image;
+    if (formData.parentId) payload.parentId = formData.parentId;
 
     if (isEditMode && category) {
-      updateCategory(
-        { id: category.id, data: payload },
-        {
-          onSuccess: () => {
-            router.push('/admin/categories');
-          },
-        },
-      );
+      updateCategory({ id: category.id, data: payload }, { onSuccess: () => router.push('/admin/categories') });
     } else {
-      createCategory(payload, {
-        onSuccess: () => {
-          router.push('/admin/categories');
-        },
-      });
+      createCategory(payload, { onSuccess: () => router.push('/admin/categories') });
     }
   };
 
@@ -91,79 +70,59 @@ export function CategoryForm({ category }: CategoryFormProps) {
       <h1 className={styles.title}>{isEditMode ? 'Edit Category' : 'Create Category'}</h1>
 
       <form onSubmit={handleSubmit} className={styles.form}>
-        <div className={styles.fieldGroup}>
-          <label htmlFor="name">Name *</label>
-          <input
-            id="name"
-            type="text"
-            required
-            value={formData.name}
-            onChange={(e) => handleNameChange(e.target.value)}
-            className={styles.input}
-          />
-        </div>
+        <Input
+          id="name"
+          label="Name"
+          type="text"
+          required
+          value={formData.name}
+          onChange={(e) => handleNameChange(e.target.value)}
+        />
 
-        <div className={styles.fieldGroup}>
-          <label htmlFor="slug">Slug *</label>
-          <input
-            id="slug"
-            type="text"
-            required
-            value={formData.slug}
-            onChange={(e) => setFormData((prev) => ({ ...prev, slug: e.target.value }))}
-            className={styles.input}
-          />
-        </div>
+        <Input
+          id="slug"
+          label="Slug"
+          type="text"
+          required
+          value={formData.slug}
+          onChange={(e) => setFormData((prev) => ({ ...prev, slug: e.target.value }))}
+        />
 
-        <div className={styles.fieldGroup}>
-          <label htmlFor="description">Description</label>
-          <textarea
-            id="description"
-            value={formData.description}
-            onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-            className={styles.textarea}
-            rows={4}
-          />
-        </div>
+        <Textarea
+          id="description"
+          label="Description"
+          value={formData.description}
+          onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+          rows={4}
+        />
 
-        <div className={styles.fieldGroup}>
-          <label htmlFor="image">Image URL</label>
-          <input
-            id="image"
-            type="url"
-            value={formData.image}
-            onChange={(e) => setFormData((prev) => ({ ...prev, image: e.target.value }))}
-            className={styles.input}
-          />
-        </div>
+        <Input
+          id="image"
+          label="Image URL"
+          type="url"
+          value={formData.image}
+          onChange={(e) => setFormData((prev) => ({ ...prev, image: e.target.value }))}
+        />
 
-        <div className={styles.fieldGroup}>
-          <label htmlFor="parent">Parent Category</label>
-          <select
-            id="parent"
-            value={formData.parentId}
-            onChange={(e) => setFormData((prev) => ({ ...prev, parentId: e.target.value }))}
-            className={styles.select}
-          >
-            <option value="">None (top-level)</option>
-            {categoriesData?.data.map((cat) => (
-              <option key={cat.id} value={cat.id} disabled={isEditMode && cat.id === category?.id}>
-                {cat.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        <Select
+          id="parent"
+          label="Parent Category"
+          value={formData.parentId}
+          onChange={(e) => setFormData((prev) => ({ ...prev, parentId: e.target.value }))}
+        >
+          <option value="">None (top-level)</option>
+          {categoriesData?.data.map((cat) => (
+            <option key={cat.id} value={cat.id} disabled={isEditMode && cat.id === category?.id}>
+              {cat.name}
+            </option>
+          ))}
+        </Select>
 
         <div className={styles.actions}>
           <button type="submit" className={styles.submitBtn} disabled={isPending}>
             {isPending ? (isEditMode ? 'Saving...' : 'Creating...') : isEditMode ? 'Save Changes' : 'Create Category'}
           </button>
-          <button
-            type="button"
-            className={styles.cancelBtn}
-            onClick={() => router.back()}
-            disabled={isPending}
-          >
+          <button type="button" className={styles.cancelBtn} onClick={() => router.back()} disabled={isPending}>
             Cancel
           </button>
         </div>

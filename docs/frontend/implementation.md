@@ -76,7 +76,7 @@ A11Y is a WCAG requirement. Testing setup must come early — all future phases 
 
 Shared component primitives (form inputs, toast, skeletons, empty states) are used by every feature. Get the patterns right before Phases 6-7 add more screens.
 
-- [ ] **Form Architecture** → [ux/form-architecture.md](./ux/form-architecture.md)
+- [x] **Form Architecture** → [ux/form-architecture.md](./ux/form-architecture.md)
   - `src/components/Form/` with `Input`, `Select`, `Textarea`, `Checkbox`, `RadioGroup`, `ErrorMessage`, `FieldGroup` as RHF Controller wrappers. Refactor `LoginForm`, `RegisterForm`, `CheckoutForm`, `ProductForm` to use them. Shared Zod schemas in `src/shared/validators.ts`
 
 - [ ] **User Experience** → [ux/user-experience.md](./ux/user-experience.md)

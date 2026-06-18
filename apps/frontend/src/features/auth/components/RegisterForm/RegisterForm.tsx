@@ -1,5 +1,3 @@
-// src/features/auth/components/RegisterForm/RegisterForm.tsx
-
 'use client';
 
 import Link from 'next/link';
@@ -8,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { registerSchema, type RegisterFormValues } from '../../utils/auth.schemas';
 import { useRegister } from '../../hooks';
 import { resolveAuthError } from '../../utils/auth.utils';
-import { FormField } from '@/components/FormField/FormField';
+import { Input } from '@/components/Form';
 import styles from './RegisterForm.module.scss';
 
 export function RegisterForm() {
@@ -23,7 +21,6 @@ export function RegisterForm() {
   });
 
   const onSubmit = (values: RegisterFormValues): void => {
-    // Strip confirmPassword before sending to API
     const { confirmPassword: _confirmPassword, ...payload } = values;
     register(payload);
   };
@@ -39,61 +36,50 @@ export function RegisterForm() {
       )}
 
       <div className={styles.nameRow}>
-        <FormField id="firstName" label="First name" error={errors.firstName?.message}>
-          <input
-            id="firstName"
-            type="text"
-            autoComplete="given-name"
-            className={styles.input}
-            aria-describedby={errors.firstName ? 'firstName-error' : undefined}
-            {...formRegister('firstName')}
-          />
-        </FormField>
-
-        <FormField id="lastName" label="Last name" error={errors.lastName?.message}>
-          <input
-            id="lastName"
-            type="text"
-            autoComplete="family-name"
-            className={styles.input}
-            aria-describedby={errors.lastName ? 'lastName-error' : undefined}
-            {...formRegister('lastName')}
-          />
-        </FormField>
+        <Input
+          {...formRegister('firstName')}
+          id="firstName"
+          label="First name"
+          type="text"
+          autoComplete="given-name"
+          error={errors.firstName?.message}
+        />
+        <Input
+          {...formRegister('lastName')}
+          id="lastName"
+          label="Last name"
+          type="text"
+          autoComplete="family-name"
+          error={errors.lastName?.message}
+        />
       </div>
 
-      <FormField id="email" label="Email address" error={errors.email?.message}>
-        <input
-          id="email"
-          type="email"
-          autoComplete="email"
-          className={styles.input}
-          aria-describedby={errors.email ? 'email-error' : undefined}
-          {...formRegister('email')}
-        />
-      </FormField>
+      <Input
+        {...formRegister('email')}
+        id="email"
+        label="Email address"
+        type="email"
+        autoComplete="email"
+        error={errors.email?.message}
+      />
 
-      <FormField id="password" label="Password" error={errors.password?.message}>
-        <input
-          id="password"
-          type="password"
-          autoComplete="new-password"
-          className={styles.input}
-          aria-describedby={errors.password ? 'password-error' : undefined}
-          {...formRegister('password')}
-        />
-      </FormField>
+      <Input
+        {...formRegister('password')}
+        id="password"
+        label="Password"
+        type="password"
+        autoComplete="new-password"
+        error={errors.password?.message}
+      />
 
-      <FormField id="confirmPassword" label="Confirm password" error={errors.confirmPassword?.message}>
-        <input
-          id="confirmPassword"
-          type="password"
-          autoComplete="new-password"
-          className={styles.input}
-          aria-describedby={errors.confirmPassword ? 'confirmPassword-error' : undefined}
-          {...formRegister('confirmPassword')}
-        />
-      </FormField>
+      <Input
+        {...formRegister('confirmPassword')}
+        id="confirmPassword"
+        label="Confirm password"
+        type="password"
+        autoComplete="new-password"
+        error={errors.confirmPassword?.message}
+      />
 
       <button type="submit" disabled={isPending} className={styles.submit}>
         {isPending ? 'Creating account...' : 'Create account'}

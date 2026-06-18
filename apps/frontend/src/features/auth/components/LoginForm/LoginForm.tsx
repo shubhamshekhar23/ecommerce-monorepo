@@ -1,5 +1,3 @@
-// src/features/auth/components/LoginForm/LoginForm.tsx
-
 'use client';
 
 import Link from 'next/link';
@@ -8,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, type LoginFormValues } from '../../utils/auth.schemas';
 import { useLogin } from '../../hooks';
 import { resolveAuthError } from '../../utils/auth.utils';
-import { FormField } from '@/components/FormField/FormField';
+import { Input } from '@/components/Form';
 import styles from './LoginForm.module.scss';
 
 interface LoginFormProps {
@@ -46,27 +44,23 @@ export function LoginForm({ sessionExpired = false }: LoginFormProps) {
         </div>
       )}
 
-      <FormField id="email" label="Email address" error={errors.email?.message}>
-        <input
-          id="email"
-          type="email"
-          autoComplete="email"
-          className={styles.input}
-          aria-describedby={errors.email ? 'email-error' : undefined}
-          {...register('email')}
-        />
-      </FormField>
+      <Input
+        {...register('email')}
+        id="email"
+        label="Email address"
+        type="email"
+        autoComplete="email"
+        error={errors.email?.message}
+      />
 
-      <FormField id="password" label="Password" error={errors.password?.message}>
-        <input
-          id="password"
-          type="password"
-          autoComplete="current-password"
-          className={styles.input}
-          aria-describedby={errors.password ? 'password-error' : undefined}
-          {...register('password')}
-        />
-      </FormField>
+      <Input
+        {...register('password')}
+        id="password"
+        label="Password"
+        type="password"
+        autoComplete="current-password"
+        error={errors.password?.message}
+      />
 
       <button type="submit" disabled={isPending} className={styles.submit}>
         {isPending ? 'Signing in...' : 'Sign in'}
