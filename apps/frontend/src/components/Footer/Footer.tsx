@@ -1,12 +1,14 @@
-'use client';
+// Server Component — no 'use client' needed.
+// Only BackToTopButton is interactive; everything else is static markup.
 
 import Link from 'next/link';
+import { BackToTopButton } from './BackToTopButton';
 import styles from './Footer.module.scss';
 
 const FOOTER_LINKS = {
   shop: [
     { label: 'Browse Products', href: '/products' },
-    { label: 'Today\'s Deals', href: '/deals' },
+    { label: "Today's Deals", href: '/deals' },
     { label: 'New Arrivals', href: '/new' },
   ],
   account: [
@@ -18,24 +20,21 @@ const FOOTER_LINKS = {
     { label: 'Help Center', href: '/help' },
     { label: 'Shipping Info', href: '/shipping' },
     { label: 'Contact Us', href: '/contact' },
+    { label: 'Privacy Policy', href: '/privacy' },
   ],
 };
 
 export function Footer() {
-  const handleScrollToTop = (): void => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   return (
     <footer className={styles.footer}>
-      <button className={styles.backToTop} onClick={handleScrollToTop}>
-        Back to top
-      </button>
+      <BackToTopButton />
 
       <div className={styles.content}>
         <div className={styles.brandColumn}>
           <p className={styles.brand}>ShopHub</p>
-          <p className={styles.tagline}>Elevated shopping for every day essentials and standout finds.</p>
+          <p className={styles.tagline}>
+            Elevated shopping for every day essentials and standout finds.
+          </p>
         </div>
 
         <div className={styles.linksGrid}>

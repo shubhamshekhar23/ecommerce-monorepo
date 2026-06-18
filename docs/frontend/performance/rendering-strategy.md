@@ -31,7 +31,7 @@ Source: `csr-ssr-ssg-pre-rendering.md`, `ssr-aws-react.md`
 
 ## Items to Implement
 
-- [ ] **`generateStaticParams` for product detail pages** — `app/products/[slug]/page.tsx` currently renders on-demand (SSR or CSR). Pre-generate all product slug pages at build time:
+- [x] **`generateStaticParams` for product detail pages** — `app/products/[slug]/page.tsx` currently renders on-demand (SSR or CSR). Pre-generate all product slug pages at build time:
   ```ts
   export async function generateStaticParams() {
     const products = await fetchAllProductSlugs(); // call your API
@@ -42,21 +42,21 @@ Source: `csr-ssr-ssg-pre-rendering.md`, `ssr-aws-react.md`
   - Complexity: Medium
   - File: `src/app/products/[slug]/page.tsx`
 
-- [ ] **ISR (`revalidate`) for product listing** — add `export const revalidate = 60` to `app/products/page.tsx`. Next.js will serve the cached static page and regenerate it in the background when it's older than 60 seconds. Product listings don't need to be real-time.
+- [x] **ISR (`revalidate`) for product listing** — add `export const revalidate = 60` to `app/products/page.tsx`. Next.js will serve the cached static page and regenerate it in the background when it's older than 60 seconds. Product listings don't need to be real-time.
   - Complexity: Easy
   - File: `src/app/products/page.tsx`
 
-- [ ] **`generateMetadata` as async Server Component function** — this is separate from SEO (10-seo.md) but requires the page to be a Server Component. Ensuring product detail pages are Server Components first unlocks both ISR and server-side metadata generation.
+- [x] **`generateMetadata` as async Server Component function** — this is separate from SEO (10-seo.md) but requires the page to be a Server Component. Ensuring product detail pages are Server Components first unlocks both ISR and server-side metadata generation.
   - Complexity: Easy
   - File: `src/app/products/[slug]/page.tsx`
 
-- [ ] **Convert static layout components to Server Components** — `Header`, `Footer`, `Navbar` are marked `'use client'` or their children are. Anything that doesn't use `useState`, `useEffect`, browser APIs, or event handlers can be a Server Component. Server Components ship zero JS to the client.
+- [x] **Convert static layout components to Server Components** — `Header`, `Footer`, `Navbar` are marked `'use client'` or their children are. Anything that doesn't use `useState`, `useEffect`, browser APIs, or event handlers can be a Server Component. Server Components ship zero JS to the client.
   - Audit: check `Header.tsx`, `Footer.tsx`, `Navbar.tsx` for `'use client'` directives
   - Remove `'use client'` where not needed, extract interactive sub-parts into separate client components
   - Complexity: Medium (requires splitting components)
   - Files: `src/components/Header/`, `src/components/Footer/`, `src/components/Navbar/`
 
-- [ ] **Suspense boundaries for streaming SSR** — wrap data-dependent sections in `<Suspense>` so the page shell streams immediately while data loads:
+- [x] **Suspense boundaries for streaming SSR** — wrap data-dependent sections in `<Suspense>` so the page shell streams immediately while data loads:
   ```tsx
   <Suspense fallback={<ProductSkeleton />}>
     <ProductsView />
@@ -66,7 +66,7 @@ Source: `csr-ssr-ssg-pre-rendering.md`, `ssr-aws-react.md`
   - Complexity: Medium
   - Files: `app/products/page.tsx`, `app/orders/page.tsx`, `app/page.tsx`
 
-- [ ] **`loading.tsx` per route segment** — Next.js automatically wraps `page.tsx` in a Suspense boundary when a `loading.tsx` file exists in the same segment. Add one per route:
+- [x] **`loading.tsx` per route segment** — Next.js automatically wraps `page.tsx` in a Suspense boundary when a `loading.tsx` file exists in the same segment. Add one per route:
   - `app/products/loading.tsx` → renders `<ProductSkeleton />`
   - `app/orders/loading.tsx` → renders a skeleton matching the orders list
   - `app/cart/loading.tsx` → renders a cart skeleton

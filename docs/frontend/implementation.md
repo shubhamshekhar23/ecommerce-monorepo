@@ -43,7 +43,7 @@ Security headers and auth hardening are legal/compliance requirements. Payment d
 
 Rendering strategy affects every page — change it late and you're rewriting components. SEO structured data must live on the SSG/SSR pages established here.
 
-- [ ] **Rendering Strategy** → [performance/rendering-strategy.md](./performance/rendering-strategy.md)
+- [x] **Rendering Strategy** → [performance/rendering-strategy.md](./performance/rendering-strategy.md)
   - `generateStaticParams` for `/products/[slug]`, `revalidate = 3600` on `/products`, convert Header/Footer/Navbar to Server Components, `loading.tsx` per route, `<Suspense>` around data-dependent sections
 
 - [ ] **SEO** → [seo/seo.md](./seo/seo.md)

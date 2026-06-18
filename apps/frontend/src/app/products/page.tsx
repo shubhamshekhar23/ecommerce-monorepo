@@ -4,6 +4,10 @@ import { Suspense } from 'react';
 import { ProductsView } from '@/features/products/components/ProductsView/ProductsView';
 import styles from './page.module.scss';
 
+// Serve the cached static page; regenerate in the background when older than 60s.
+// Product listings don't need to be real-time — a 1-minute window is imperceptible.
+export const revalidate = 60;
+
 export const metadata = {
   title: 'Products | ShopHub',
   description: 'Browse our collection of products.',
