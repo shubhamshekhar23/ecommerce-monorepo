@@ -1,9 +1,10 @@
 // src/features/admin/hooks/useDeleteProduct.ts
 
-'use client';
+"use client";
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { deleteProductApi } from '../api/admin-products.api';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { deleteProductApi } from "../api/admin-products.api";
 
 export function useDeleteProduct() {
   const queryClient = useQueryClient();
@@ -11,8 +12,12 @@ export function useDeleteProduct() {
   return useMutation<void, Error, string>({
     mutationFn: (id: string) => deleteProductApi(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'products'] });
-      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      toast.success("Product deleted");
+    },
+    onError: () => {
+      toast.error("Failed to delete product");
     },
   });
 }

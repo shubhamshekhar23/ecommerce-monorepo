@@ -1,9 +1,10 @@
 // src/features/cart/hooks/useRemoveCartItem.ts
 
-'use client';
+"use client";
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { removeCartItemApi } from '../api/cart.api';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { removeCartItemApi } from "../api/cart.api";
 
 export function useRemoveCartItem() {
   const queryClient = useQueryClient();
@@ -11,7 +12,11 @@ export function useRemoveCartItem() {
   return useMutation({
     mutationFn: (itemId: string) => removeCartItemApi(itemId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+      toast.success("Item removed");
+    },
+    onError: () => {
+      toast.error("Failed to remove item");
     },
   });
 }

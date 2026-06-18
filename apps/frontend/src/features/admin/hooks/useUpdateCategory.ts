@@ -1,11 +1,12 @@
 // src/features/admin/hooks/useUpdateCategory.ts
 
-'use client';
+"use client";
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import type { Category } from '@/features/products/interfaces';
-import type { UpdateCategoryDto } from '../api/admin-categories.api';
-import { updateCategoryApi } from '../api/admin-categories.api';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import type { Category } from "@/features/products/interfaces";
+import type { UpdateCategoryDto } from "../api/admin-categories.api";
+import { updateCategoryApi } from "../api/admin-categories.api";
 
 interface UpdateCategoryPayload {
   id: string;
@@ -16,11 +17,14 @@ export function useUpdateCategory() {
   const queryClient = useQueryClient();
 
   return useMutation<Category, Error, UpdateCategoryPayload>({
-    mutationFn: (payload) =>
-      updateCategoryApi(payload.id, payload.data),
+    mutationFn: (payload) => updateCategoryApi(payload.id, payload.data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'categories'] });
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "categories"] });
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      toast.success("Category saved");
+    },
+    onError: () => {
+      toast.error("Failed to save category");
     },
   });
 }

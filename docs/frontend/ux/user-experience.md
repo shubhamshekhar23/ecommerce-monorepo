@@ -9,7 +9,7 @@ Source: `preserve-scroll-position.md`, `others.md`
 
 ### Scroll & Navigation
 
-- [ ] **`useScrollRestoration` hook** — when a user clicks a product card, browses the detail page, then hits the browser Back button, the product listing reloads at the top. The pattern from the notes:
+- [x] **`useScrollRestoration` hook** — when a user clicks a product card, browses the detail page, then hits the browser Back button, the product listing reloads at the top. The pattern from the notes:
   ```ts
   // Before navigation: save position
   sessionStorage.setItem('productsScrollY', String(window.scrollY));
@@ -25,7 +25,7 @@ Source: `preserve-scroll-position.md`, `others.md`
   - Complexity: Easy–Medium
   - Files: `src/hooks/useScrollRestoration.ts`, `ProductsView.tsx`
 
-- [ ] **Cache product list in `sessionStorage` on back-navigation** — alongside scroll position, save the last-fetched product page data to sessionStorage. On return navigation, hydrate from cache before TanStack Query re-fetches in the background. This makes the back navigation feel instant.
+- [x] **Cache product list in `sessionStorage` on back-navigation** — alongside scroll position, save the last-fetched product page data to sessionStorage. On return navigation, hydrate from cache before TanStack Query re-fetches in the background. This makes the back navigation feel instant.
   - Complexity: Medium
   - Note: TanStack Query's `staleTime` can also achieve this partially — set `staleTime: 5 * 60 * 1000` on the products query so cached data is used for 5 minutes before re-fetching.
 
@@ -35,19 +35,19 @@ Source: `preserve-scroll-position.md`, `others.md`
 
 `ProductSkeleton` already exists. Extend the pattern to all other major views.
 
-- [ ] **Skeleton for `OrdersView`** — a list of order card skeletons matching the `OrderCard` layout (title bar, status badge, date, price).
+- [x] **Skeleton for `OrdersView`** — a list of order card skeletons matching the `OrderCard` layout (title bar, status badge, date, price).
   - Complexity: Easy
   - File: `src/features/orders/components/OrderSkeleton/`
 
-- [ ] **Skeleton for `CartView`** — skeleton rows matching `CartItemRow` (image box, title, quantity stepper, price).
+- [x] **Skeleton for `CartView`** — skeleton rows matching `CartItemRow` (image box, title, quantity stepper, price).
   - Complexity: Easy
   - File: `src/features/cart/components/CartSkeleton/`
 
-- [ ] **Skeleton for `CheckoutView`** — form field skeletons while Stripe and cart data load.
+- [x] **Skeleton for `CheckoutView`** — form field skeletons while Stripe and cart data load.
   - Complexity: Easy
   - File: `src/features/checkout/components/CheckoutSkeleton/`
 
-- [ ] **Skeleton for Admin views** — generic table-row skeleton for `AdminProductsView`, `AdminOrdersView`, `AdminUsersView`.
+- [x] **Skeleton for Admin views** — generic table-row skeleton for `AdminProductsView`, `AdminOrdersView`, `AdminUsersView`.
   - Complexity: Easy
   - File: `src/features/admin/components/AdminTableSkeleton/`
 
@@ -55,7 +55,7 @@ Source: `preserve-scroll-position.md`, `others.md`
 
 ### Error Handling
 
-- [ ] **Error boundaries per feature** — wrap each major feature section in a React Error Boundary so a crash in (e.g.) the cart doesn't take down the entire page. Create a reusable `FeatureErrorBoundary` component with a friendly "Something went wrong. Try refreshing." fallback UI.
+- [x] **Error boundaries per feature** — wrap each major feature section in a React Error Boundary so a crash in (e.g.) the cart doesn't take down the entire page. Create a reusable `FeatureErrorBoundary` component with a friendly "Something went wrong. Try refreshing." fallback UI.
   - Complexity: Medium
   - File: `src/components/ErrorBoundary/ErrorBoundary.tsx`
   - Use at: route-level in each page, or wrapping each feature view component
@@ -64,7 +64,7 @@ Source: `preserve-scroll-position.md`, `others.md`
 
 ### Feedback & Microinteractions
 
-- [ ] **Global toast/notification system** — currently "Added ✓" only appears on the button in `ProductCard`. Add a global toast that appears at the top-right for:
+- [x] **Global toast/notification system** — currently "Added ✓" only appears on the button in `ProductCard`. Add a global toast that appears at the top-right for:
   - Cart: add/remove success and error
   - Orders: order placed, cancellation confirmed
   - Auth: login success, session expired warning
@@ -74,7 +74,7 @@ Source: `preserve-scroll-position.md`, `others.md`
   - Complexity: Easy (pick a library + wire up in mutation `onSuccess`/`onError`)
   - File: `src/app/providers.tsx` (add Toaster provider), then call `toast.success(...)` in mutation hooks
 
-- [ ] **`useDebounce` hook for search input** — the product search in `ProductsView` fires a query on every keystroke. Debounce by 300ms before firing:
+- [x] **`useDebounce` hook for search input** — the product search in `ProductsView` fires a query on every keystroke. Debounce by 300ms before firing:
   ```ts
   const debouncedSearch = useDebounce(search, 300);
   ```
@@ -82,9 +82,9 @@ Source: `preserve-scroll-position.md`, `others.md`
   - Complexity: Easy
   - Files: `src/hooks/useDebounce.ts`, `ProductsView.tsx`
 
-- [ ] **Button press microinteraction** — add a subtle `scale(0.97)` on `:active` state to all primary buttons. Currently only hover states exist. One SCSS mixin update in the global button styles.
+- [x] **Button press microinteraction** — add a subtle `scale(0.97)` on `:active` state to all primary buttons. Currently only hover states exist. One SCSS mixin update in the global button styles.
   - Complexity: Easy
 
-- [ ] **Card hover lift effect on `ProductCard`** — add a subtle `translateY(-2px)` + shadow increase on `:hover`. Signals interactivity. One SCSS change.
+- [x] **Card hover lift effect on `ProductCard`** — add a subtle `translateY(-2px)` + shadow increase on `:hover`. Signals interactivity. One SCSS change.
   - Complexity: Easy
   - File: `src/features/products/components/ProductCard/ProductCard.module.scss`

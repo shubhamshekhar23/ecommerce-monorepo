@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { createOrderApi } from "../api/orders.api";
 
 const IDEMPOTENCY_KEY_STORAGE = "checkout-idempotency-key";
@@ -29,6 +30,10 @@ export function useCreateOrder() {
     mutationFn: () => createOrderApi(getOrCreateIdempotencyKey()),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["cart"] });
+      toast.success("Order placed successfully");
+    },
+    onError: () => {
+      toast.error("Failed to place order");
     },
   });
 }

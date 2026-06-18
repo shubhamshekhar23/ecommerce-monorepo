@@ -79,7 +79,7 @@ Shared component primitives (form inputs, toast, skeletons, empty states) are us
 - [x] **Form Architecture** → [ux/form-architecture.md](./ux/form-architecture.md)
   - `src/components/Form/` with `Input`, `Select`, `Textarea`, `Checkbox`, `RadioGroup`, `ErrorMessage`, `FieldGroup` as RHF Controller wrappers. Refactor `LoginForm`, `RegisterForm`, `CheckoutForm`, `ProductForm` to use them. Shared Zod schemas in `src/shared/validators.ts`
 
-- [ ] **User Experience** → [ux/user-experience.md](./ux/user-experience.md)
+- [x] **User Experience** → [ux/user-experience.md](./ux/user-experience.md)
   - `useScrollRestoration` hook (sessionStorage keyed by route), global toast system, React Error Boundary component per feature route, skeletons for Orders/Cart/Checkout/Admin, `useDebounce` hook in `src/hooks/`
 
 - [ ] **Empty States & Loading** → [ux/empty-states-and-loading.md](./ux/empty-states-and-loading.md)

@@ -1,0 +1,50 @@
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+$shimmer: linear-gradient(90deg, #ebf1ff 20%, #f8fafe 45%, #ebf1ff 70%);
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-surface);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.meta {
+  display: flex;
+  justify-content: space-between;
+}
+
+.items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.orderId,
+.status,
+.date,
+.price,
+.item {
+  background: $shimmer;
+  background-size: 200% 100%;
+  animation: shimmer 1.8s infinite;
+  border-radius: var(--radius-sm);
+}
+
+.orderId { height: 1rem; width: 40%; }
+.status { height: 1.4rem; width: 6rem; border-radius: var(--radius-full, 9999px); }
+.date { height: 0.8rem; width: 30%; }
+.price { height: 1rem; width: 20%; }
+.item { height: 0.8rem; width: 100%; }

@@ -88,6 +88,10 @@ button {
     border-radius: var(--radius-sm);
   }
 
+  &:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
   &:disabled {
     opacity: 0.65;
     cursor: not-allowed;

@@ -1,9 +1,10 @@
 // src/features/admin/hooks/useDeleteCategory.ts
 
-'use client';
+"use client";
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { deleteCategoryApi } from '../api/admin-categories.api';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { deleteCategoryApi } from "../api/admin-categories.api";
 
 export function useDeleteCategory() {
   const queryClient = useQueryClient();
@@ -11,8 +12,12 @@ export function useDeleteCategory() {
   return useMutation<void, Error, string>({
     mutationFn: (id: string) => deleteCategoryApi(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'categories'] });
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "categories"] });
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      toast.success("Category deleted");
+    },
+    onError: () => {
+      toast.error("Failed to delete category");
     },
   });
 }

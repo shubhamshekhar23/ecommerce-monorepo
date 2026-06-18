@@ -1,0 +1,64 @@
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+$shimmer: linear-gradient(90deg, #ebf1ff 20%, #f8fafe 45%, #ebf1ff 70%);
+
+.container {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: var(--space-8);
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.itemsSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.title {
+  height: 1.5rem;
+  width: 8rem;
+  background: $shimmer;
+  background-size: 200% 100%;
+  animation: shimmer 1.8s infinite;
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-2);
+}
+
+.row {
+  display: flex;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  flex: 1;
+}
+
+.image,
+.name,
+.price,
+.stepper,
+.summary {
+  background: $shimmer;
+  background-size: 200% 100%;
+  animation: shimmer 1.8s infinite;
+  border-radius: var(--radius-sm);
+}
+
+.image { width: 80px; height: 80px; flex-shrink: 0; border-radius: var(--radius-md); }
+.name { height: 1rem; width: 60%; }
+.price { height: 1.2rem; width: 25%; }
+.stepper { height: 2rem; width: 8rem; border-radius: var(--radius-md); }
+.summary { height: 260px; border-radius: var(--radius-lg); }

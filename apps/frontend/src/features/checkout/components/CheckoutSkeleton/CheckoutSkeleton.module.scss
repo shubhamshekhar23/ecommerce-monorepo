@@ -1,0 +1,53 @@
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+$shimmer: linear-gradient(90deg, #ebf1ff 20%, #f8fafe 45%, #ebf1ff 70%);
+
+.container {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: var(--space-8);
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  align-self: start;
+}
+
+.sectionTitle,
+.field,
+.paymentBox,
+.button,
+.summaryTitle,
+.summaryRow,
+.summaryTotal {
+  background: $shimmer;
+  background-size: 200% 100%;
+  animation: shimmer 1.8s infinite;
+  border-radius: var(--radius-sm);
+}
+
+.sectionTitle { height: 1.2rem; width: 10rem; }
+.field { height: 3rem; border-radius: var(--radius-md); }
+.paymentBox { height: 5rem; border-radius: var(--radius-md); }
+.button { height: 3rem; border-radius: var(--radius-md); margin-top: var(--space-2); }
+.summaryTitle { height: 1.2rem; width: 8rem; }
+.summaryRow { height: 1rem; }
+.summaryTotal { height: 1.5rem; width: 60%; margin-top: var(--space-2); }

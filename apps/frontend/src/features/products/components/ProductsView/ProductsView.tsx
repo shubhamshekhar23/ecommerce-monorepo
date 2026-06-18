@@ -4,12 +4,14 @@
 
 import { useSearchParams } from 'next/navigation';
 import { useProductsCursor, useProductSearch } from '../../hooks';
+import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 import { CategorySidebar } from '../CategorySidebar/CategorySidebar';
 import { ProductGrid } from '../ProductGrid/ProductGrid';
 import type { Product } from '../../interfaces';
 import styles from './ProductsView.module.scss';
 
 export function ProductsView() {
+  useScrollRestoration('products-scroll');
   const searchParams = useSearchParams();
   const search = searchParams.get('search') || undefined;
   const isSearching = typeof search === 'string' && search.trim().length > 0;

@@ -1,11 +1,12 @@
 // src/features/admin/hooks/useCreateCategory.ts
 
-'use client';
+"use client";
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import type { Category } from '@/features/products/interfaces';
-import type { CreateCategoryDto } from '../api/admin-categories.api';
-import { createCategoryApi } from '../api/admin-categories.api';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import type { Category } from "@/features/products/interfaces";
+import type { CreateCategoryDto } from "../api/admin-categories.api";
+import { createCategoryApi } from "../api/admin-categories.api";
 
 export function useCreateCategory() {
   const queryClient = useQueryClient();
@@ -13,8 +14,12 @@ export function useCreateCategory() {
   return useMutation<Category, Error, CreateCategoryDto>({
     mutationFn: (payload) => createCategoryApi(payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'categories'] });
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "categories"] });
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      toast.success("Category created");
+    },
+    onError: () => {
+      toast.error("Failed to create category");
     },
   });
 }
