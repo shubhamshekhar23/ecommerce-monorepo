@@ -1,42 +1,42 @@
-import type { Metadata } from 'next';
-import NextTopLoader from 'nextjs-toploader';
-import { Providers } from './providers';
-import { Header } from '@/components/Header/Header';
-import { Navbar } from '@/components/Navbar/Navbar';
-import { Footer } from '@/components/Footer/Footer';
-import '@/styles/globals.scss';
-import styles from './layout.module.scss';
+import type { Metadata } from "next";
+import NextTopLoader from "nextjs-toploader";
+import { Providers } from "./providers";
+import { Header } from "@/components/Header/Header";
+import { Navbar } from "@/components/Navbar/Navbar";
+import { Footer } from "@/components/Footer/Footer";
+import "@/styles/globals.scss";
+import styles from "./layout.module.scss";
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
 export const metadata: Metadata = {
-  title: { template: '%s | ShopHub', default: 'ShopHub - Online Shopping' },
-  description: 'Shop online for products at unbeatable prices',
+  title: { template: "%s | ShopHub", default: "ShopHub - Online Shopping" },
+  description: "Shop online for products at unbeatable prices",
   alternates: { canonical: APP_URL },
 };
 
 // WebSite schema with SearchAction tells Google to show a search box in results
 // pointing to our product search.
 const websiteJsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'WebSite',
-  name: 'ShopHub',
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "ShopHub",
   url: APP_URL,
   potentialAction: {
-    '@type': 'SearchAction',
+    "@type": "SearchAction",
     target: {
-      '@type': 'EntryPoint',
+      "@type": "EntryPoint",
       urlTemplate: `${APP_URL}/products?search={search_term_string}`,
     },
-    'query-input': 'required name=search_term_string',
+    "query-input": "required name=search_term_string",
   },
 };
 
 const API_ORIGIN = (() => {
   try {
-    return new URL(process.env.NEXT_PUBLIC_API_URL ?? '').origin;
+    return new URL(process.env.NEXT_PUBLIC_API_URL ?? "").origin;
   } catch {
-    return '';
+    return "";
   }
 })();
 
@@ -54,6 +54,15 @@ export default function RootLayout({
         {/* Stripe JS is loaded on checkout — preconnect so the iframe is ready sooner. */}
         <link rel="preconnect" href="https://js.stripe.com" />
         <link rel="dns-prefetch" href="https://js.stripe.com" />
+        {/* FOUC prevention: read theme from localStorage before first paint so the
+            page renders in the correct theme without a flash. Runs synchronously
+            before hydration. This is one of the few legitimate uses of
+            dangerouslySetInnerHTML — it contains no user input. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t)}catch(e){}})()`,
+          }}
+        />
       </head>
       <body>
         <NextTopLoader color="var(--color-accent)" showSpinner={false} />
@@ -61,11 +70,15 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
-        <a href="#main-content" className="skip-link">Skip to main content</a>
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
         <Providers>
           <Header />
           <Navbar />
-          <main id="main-content" className={styles.main}>{children}</main>
+          <main id="main-content" className={styles.main}>
+            {children}
+          </main>
           <Footer />
         </Providers>
       </body>

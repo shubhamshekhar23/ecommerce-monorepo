@@ -1,23 +1,19 @@
 :root {
   /* Core color system */
   --color-bg-canvas: #f4f6fb;
-  --color-bg-surface: #ffffff;
+  --color-bg-surface: #fff;
   --color-bg-elevated: #f9fbff;
   --color-bg-soft: #edf2ff;
-
   --color-text-primary: #111827;
   --color-text-secondary: #475569;
   --color-text-muted: #64748b;
   --color-text-on-accent: #f8fbff;
-
   --color-border: #dbe2ef;
   --color-border-strong: #b8c4db;
-
   --color-accent: #2563eb;
   --color-accent-hover: #1d4ed8;
   --color-accent-soft: #dbeafe;
   --color-accent-text: #12367f;
-
   --color-success: #117a45;
   --color-error: #be123c;
   --color-warning: #b45309;
@@ -27,7 +23,7 @@
   --color-card: var(--color-bg-surface);
   --color-link: var(--color-accent);
   --color-link-visited: #5b21b6;
-  --color-header-bg: rgba(255, 255, 255, 0.84);
+  --color-header-bg: rgb(255 255 255 / 84%);
   --color-header-text: var(--color-text-primary);
   --color-nav-bg: #f8fbff;
   --color-nav-text: var(--color-text-secondary);
@@ -37,8 +33,7 @@
   /* Typography */
   --font-family-base: 'Plus Jakarta Sans', 'Avenir Next', 'Segoe UI', sans-serif;
   --font-family-display: 'Fraunces', 'Iowan Old Style', 'Times New Roman', serif;
-  --font-family-mono: 'SF Mono', Menlo, Monaco, Consolas, monospace;
-
+  --font-family-mono: 'SF Mono', menlo, monaco, consolas, monospace;
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
   --font-size-base: 1rem;
@@ -48,13 +43,11 @@
   --font-size-2xl: 1.5rem;
   --font-size-3xl: 2rem;
   --font-size-4xl: 2.75rem;
-
   --font-weight-light: 300;
   --font-weight-normal: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
-
   --line-height-tight: 1.2;
   --line-height-normal: 1.5;
   --line-height-relaxed: 1.7;
@@ -78,29 +71,129 @@
   --spacing-lg: var(--space-6);
   --spacing-xl: var(--space-8);
 
-  /* Radius and elevation */
+  /* Radius */
   --radius-sm: 0.5rem;
   --radius-md: 0.875rem;
   --radius-lg: 1.125rem;
   --radius-xl: 1.5rem;
   --radius-full: 9999px;
 
-  --shadow-sm: 0 2px 8px rgb(15 23 42 / 0.08);
-  --shadow-md: 0 12px 24px rgb(15 23 42 / 0.1);
-  --shadow-lg: 0 20px 45px rgb(15 23 42 / 0.14);
-  --shadow-xl: 0 36px 64px rgb(15 23 42 / 0.18);
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgb(15 23 42 / 8%);
+  --shadow-md: 0 12px 24px rgb(15 23 42 / 10%);
+  --shadow-lg: 0 20px 45px rgb(15 23 42 / 14%);
+  --shadow-xl: 0 36px 64px rgb(15 23 42 / 18%);
 
+  /* Semantic elevation levels */
+  --elevation-1: 0 1px 3px rgb(15 23 42 / 6%);
+  --elevation-2: 0 2px 8px rgb(15 23 42 / 8%);
+  --elevation-3: 0 8px 16px rgb(15 23 42 / 10%);
+  --elevation-4: 0 16px 32px rgb(15 23 42 / 12%);
+  --elevation-5: 0 32px 64px rgb(15 23 42 / 16%);
+
+  /* Z-index scale — prevents z-index wars between components */
+  --z-index-base: 0;
+  --z-index-dropdown: 100;
+  --z-index-sticky: 200;
+  --z-index-header: 300;
+  --z-index-overlay: 400;
+  --z-index-modal: 500;
+  --z-index-tooltip: 600;
+  --z-index-toast: 700;
+
+  /* Transitions */
   --transition-fast: 120ms ease;
   --transition-base: 220ms ease;
   --transition-slow: 360ms ease;
 
+  /* Named animation curves */
+  --animation-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --animation-fade-in: cubic-bezier(0, 0, 0.2, 1);
+
+  /* Breakpoints as CSS custom properties (informational — cannot be used in @media rules).
+     Use SCSS variables from _breakpoints.scss for responsive mixins. */
   --breakpoint-sm: 640px;
   --breakpoint-md: 768px;
   --breakpoint-lg: 1024px;
   --breakpoint-xl: 1280px;
   --breakpoint-2xl: 1536px;
-
   --container-max-width: 1220px;
   --header-height: 76px;
   --navbar-height: 56px;
+}
+
+/* Dark mode token overrides — activated by data-theme="dark" attribute on <html>.
+   Because the entire app uses var(--color-*) throughout, only these token values
+   need to change; no component CSS changes are required for dark mode. */
+[data-theme='dark'] {
+  --color-bg-canvas: #0f1117;
+  --color-bg-surface: #1a1d27;
+  --color-bg-elevated: #22263a;
+  --color-bg-soft: #1e2235;
+  --color-text-primary: #f1f5f9;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
+  --color-border: #2d3348;
+  --color-border-strong: #3d4663;
+  --color-accent: #3b82f6;
+  --color-accent-hover: #60a5fa;
+  --color-accent-soft: #1e3a5f;
+  --color-accent-text: #93c5fd;
+  --color-success: #34d399;
+  --color-error: #f87171;
+  --color-warning: #fbbf24;
+  --color-background: var(--color-bg-canvas);
+  --color-card: var(--color-bg-surface);
+  --color-link: var(--color-accent);
+  --color-header-bg: rgb(26 29 39 / 90%);
+  --color-nav-bg: var(--color-bg-surface);
+  --color-nav-text: var(--color-text-secondary);
+  --shadow-sm: 0 2px 8px rgb(0 0 0 / 30%);
+  --shadow-md: 0 12px 24px rgb(0 0 0 / 40%);
+  --shadow-lg: 0 20px 45px rgb(0 0 0 / 50%);
+  --shadow-xl: 0 36px 64px rgb(0 0 0 / 60%);
+  --elevation-1: 0 1px 3px rgb(0 0 0 / 30%);
+  --elevation-2: 0 2px 8px rgb(0 0 0 / 35%);
+  --elevation-3: 0 8px 16px rgb(0 0 0 / 40%);
+  --elevation-4: 0 16px 32px rgb(0 0 0 / 45%);
+  --elevation-5: 0 32px 64px rgb(0 0 0 / 50%);
+}
+
+/* OS-level dark mode preference — respected before any JS/user override.
+   Works during SSR and before hydration (no flash if user's OS is dark and
+   they've never overridden). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --color-bg-canvas: #0f1117;
+    --color-bg-surface: #1a1d27;
+    --color-bg-elevated: #22263a;
+    --color-bg-soft: #1e2235;
+    --color-text-primary: #f1f5f9;
+    --color-text-secondary: #94a3b8;
+    --color-text-muted: #64748b;
+    --color-border: #2d3348;
+    --color-border-strong: #3d4663;
+    --color-accent: #3b82f6;
+    --color-accent-hover: #60a5fa;
+    --color-accent-soft: #1e3a5f;
+    --color-accent-text: #93c5fd;
+    --color-success: #34d399;
+    --color-error: #f87171;
+    --color-warning: #fbbf24;
+    --color-background: var(--color-bg-canvas);
+    --color-card: var(--color-bg-surface);
+    --color-link: var(--color-accent);
+    --color-header-bg: rgb(26 29 39 / 90%);
+    --color-nav-bg: var(--color-bg-surface);
+    --color-nav-text: var(--color-text-secondary);
+    --shadow-sm: 0 2px 8px rgb(0 0 0 / 30%);
+    --shadow-md: 0 12px 24px rgb(0 0 0 / 40%);
+    --shadow-lg: 0 20px 45px rgb(0 0 0 / 50%);
+    --shadow-xl: 0 36px 64px rgb(0 0 0 / 60%);
+    --elevation-1: 0 1px 3px rgb(0 0 0 / 30%);
+    --elevation-2: 0 2px 8px rgb(0 0 0 / 35%);
+    --elevation-3: 0 8px 16px rgb(0 0 0 / 40%);
+    --elevation-4: 0 16px 32px rgb(0 0 0 / 45%);
+    --elevation-5: 0 32px 64px rgb(0 0 0 / 50%);
+  }
 }

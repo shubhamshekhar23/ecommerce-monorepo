@@ -1,0 +1,27 @@
+@use '@/styles/mixins' as *;
+
+.toggle {
+  @include button-reset;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-soft);
+  transition: background var(--transition-base), transform var(--transition-fast);
+
+  &:hover {
+    background: var(--color-accent-soft);
+  }
+
+  &:active {
+    transform: scale(0.92);
+  }
+}
+
+.icon {
+  font-size: 1rem;
+  line-height: 1;
+}

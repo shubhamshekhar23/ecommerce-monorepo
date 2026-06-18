@@ -36,7 +36,7 @@
       "bash -c 'cd apps/frontend && npx eslint --fix --max-warnings=0'"
     ],
     "apps/frontend/**/*.scss": [
-      "bash -c 'cd apps/frontend && npx stylelint --fix'"
+      "bash -c 'cd apps/frontend && npx stylelint --fix \"$@\"' --"
     ]
   },
   "devDependencies": {

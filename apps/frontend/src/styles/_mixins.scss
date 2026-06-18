@@ -1,30 +1,24 @@
 // src/styles/_mixins.scss
 // Reusable SCSS mixins for responsive design, focus states, and utilities
+@use './breakpoints' as bp;
 
 // === RESPONSIVE DESIGN ===
 
-@mixin respond-to($breakpoint) {
-  @if $breakpoint == 'sm' {
-    @media (min-width: var(--breakpoint-sm)) {
-      @content;
-    }
-  } @else if $breakpoint == 'md' {
-    @media (min-width: var(--breakpoint-md)) {
-      @content;
-    }
-  } @else if $breakpoint == 'lg' {
-    @media (min-width: var(--breakpoint-lg)) {
-      @content;
-    }
-  } @else if $breakpoint == 'xl' {
-    @media (min-width: var(--breakpoint-xl)) {
-      @content;
-    }
-  } @else if $breakpoint == '2xl' {
-    @media (min-width: var(--breakpoint-2xl)) {
-      @content;
-    }
+// Mobile-first breakpoint alias.
+// Usage: @include respond-to('md') { ... }
+// Delegates to _breakpoints.scss which uses SCSS variables (not CSS custom properties)
+// because CSS custom properties cannot be used inside @media rules.
+@mixin respond-to($size) {
+  @include bp.breakpoint($size) {
+    @content;
   }
+}
+
+// Responsive CSS Grid: fills columns with a minimum width.
+// Usage: @include responsive-grid(280px)
+@mixin responsive-grid($min-col-width: 280px) {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(#{$min-col-width}, 100%), 1fr));
 }
 
 // === FOCUS STATES ===
@@ -48,7 +42,7 @@
   padding: 0;
   margin: -1px;
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
   white-space: nowrap;
   border-width: 0;
 }

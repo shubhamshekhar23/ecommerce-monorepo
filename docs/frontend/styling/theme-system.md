@@ -16,7 +16,7 @@ The app already has a comprehensive CSS custom property system in `_variables.sc
 
 ### Dark Mode
 
-- [ ] **Define dark mode token values** — add a `[data-theme="dark"]` (or `@media (prefers-color-scheme: dark)`) block in `_variables.scss` that overrides the color tokens:
+- [x] **Define dark mode token values** — add a `[data-theme="dark"]` (or `@media (prefers-color-scheme: dark)`) block in `_variables.scss` that overrides the color tokens:
   ```scss
   [data-theme="dark"] {
     --color-bg-canvas: #0f1117;
@@ -33,7 +33,7 @@ The app already has a comprehensive CSS custom property system in `_variables.sc
   - Complexity: Medium (defining the dark palette)
   - File: `src/styles/_variables.scss`
 
-- [ ] **`prefers-color-scheme` as default** — respect the OS-level preference before any user override:
+- [x] **`prefers-color-scheme` as default** — respect the OS-level preference before any user override:
   ```scss
   @media (prefers-color-scheme: dark) {
     :root {
@@ -46,7 +46,7 @@ The app already has a comprehensive CSS custom property system in `_variables.sc
   - File: `src/styles/_variables.scss`
   - Connection: `15-accessibility.md` (prefers-color-scheme item)
 
-- [ ] **Theme toggle component** — a button that sets `data-theme="dark"` on `<html>` and persists the choice to `localStorage`:
+- [x] **Theme toggle component** — a button that sets `data-theme="dark"` on `<html>` and persists the choice to `localStorage`:
   ```ts
   const toggleTheme = () => {
     const next = current === 'light' ? 'dark' : 'light';
@@ -59,7 +59,7 @@ The app already has a comprehensive CSS custom property system in `_variables.sc
   - Complexity: Easy
   - File: `src/shared/theme/useTheme.ts`, `src/components/ThemeToggle/ThemeToggle.tsx`
 
-- [ ] **Avoid flash of wrong theme (FOUT)** — when the page loads, there's a moment before the React app hydrates where the theme can't be read from `localStorage`. Prevent the flash with an inline script in `<head>` that runs synchronously before paint:
+- [x] **Avoid flash of wrong theme (FOUT)** — when the page loads, there's a moment before the React app hydrates where the theme can't be read from `localStorage`. Prevent the flash with an inline script in `<head>` that runs synchronously before paint:
   ```tsx
   // In layout.tsx <head>
   <script dangerouslySetInnerHTML={{ __html: `
@@ -73,7 +73,7 @@ The app already has a comprehensive CSS custom property system in `_variables.sc
 
 ### Theme Tokens Expansion
 
-- [ ] **Add missing token categories** — the current `_variables.scss` has color, typography, spacing, radius, shadow, and transition. Add:
+- [x] **Add missing token categories** — the current `_variables.scss` has color, typography, spacing, radius, shadow, and transition. Add:
   - `--z-index-modal`, `--z-index-tooltip`, `--z-index-header` — prevents z-index wars across components
   - `--elevation-1` through `--elevation-5` — semantic shadow levels
   - `--animation-bounce`, `--animation-fade-in` — named animation curves
@@ -81,5 +81,5 @@ The app already has a comprehensive CSS custom property system in `_variables.sc
 
 ### Custom Branding (Future)
 
-- [ ] **Per-tenant theme support (document only)** — for future multi-tenant ecommerce (white-label), themes can be loaded per-tenant by setting CSS custom property values from a JSON theme config. Document the approach here for reference — implement when the product requires it.
+- [x] **Per-tenant theme support (document only)** — for future multi-tenant ecommerce (white-label), themes can be loaded per-tenant by setting CSS custom property values from a JSON theme config. Document the approach here for reference — implement when the product requires it.
   - Complexity: Complex (future, do not implement now)

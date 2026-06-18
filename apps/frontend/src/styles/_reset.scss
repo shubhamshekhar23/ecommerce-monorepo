@@ -1,0 +1,55 @@
+// CSS reset — foundational element styles and browser default overrides.
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-primary);
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 10% -10%, rgb(37 99 235 / 14%), transparent 45%),
+    radial-gradient(circle at 90% 0%, rgb(30 64 175 / 10%), transparent 36%),
+    linear-gradient(180deg, #f8fbff 0%, var(--color-bg-canvas) 45%, #eef2fb 100%);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+code,
+pre {
+  font-family: var(--font-family-mono);
+}
+
+// Respect OS-level "Reduce Motion" setting.
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

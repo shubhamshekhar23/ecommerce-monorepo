@@ -148,10 +148,10 @@ Structural refactors are best deferred until features stabilize. Bundle analysis
 
 All components exist by now. Expanding the design system has full context. Dark mode requires every component to use CSS custom properties consistently — do as one pass.
 
-- [ ] **SCSS Structure** → [styling/scss-structure.md](./styling/scss-structure.md)
+- [x] **SCSS Structure** → [styling/scss-structure.md](./styling/scss-structure.md)
   - Expand `_mixins.scss` (respond-to, flex-center, truncate, visually-hidden), extract `_breakpoints.scss` + `_typography.scss`, split `globals.scss` into `_reset.scss` + `_utilities.scss`
 
-- [ ] **Theme System** → [styling/theme-system.md](./styling/theme-system.md)
+- [x] **Theme System** → [styling/theme-system.md](./styling/theme-system.md)
   - `[data-theme="dark"]` CSS custom property overrides, `ThemeToggle` component, `localStorage` persistence, inline script in `<head>` to prevent FOUC, z-index / elevation / animation token additions to `_variables.scss`
 
 ---
