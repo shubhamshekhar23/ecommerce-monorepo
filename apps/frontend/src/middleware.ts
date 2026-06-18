@@ -1,42 +1,58 @@
-// src/middleware.ts
-// Route protection middleware
+import createMiddleware from "next-intl/middleware";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { routing } from "./i18n/routing";
 
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+const intlMiddleware = createMiddleware(routing);
 
-const PROTECTED_PATHS = ['/account', '/orders', '/admin', '/cart', '/checkout'];
-const AUTH_PATHS = ['/login', '/register'];
-const AUTH_COOKIE = 'auth_session';
+const PROTECTED_PATHS = ["/account", "/orders", "/admin", "/cart", "/checkout"];
+const AUTH_PATHS = ["/login", "/register"];
+const AUTH_COOKIE = "auth_session";
+
+// Strip the locale prefix (/en, /fr, …) before matching route patterns.
+function stripLocale(pathname: string): string {
+  return pathname.replace(/^\/[a-z]{2}(\/|$)/, "/").replace(/\/$/, "") || "/";
+}
 
 function isProtectedPath(pathname: string): boolean {
-  return PROTECTED_PATHS.some((path) => pathname.startsWith(path));
+  const p = stripLocale(pathname);
+  return PROTECTED_PATHS.some((path) => p === path || p.startsWith(path + "/"));
 }
 
 function isAuthPath(pathname: string): boolean {
-  return AUTH_PATHS.some((path) => pathname.startsWith(path));
+  const p = stripLocale(pathname);
+  return AUTH_PATHS.some((path) => p === path || p.startsWith(path + "/"));
 }
 
-export function middleware(request: NextRequest): NextResponse {
+function getLocaleFromPath(pathname: string): string {
+  const match = pathname.match(/^\/([a-z]{2})(\/|$)/);
+  return match ? match[1] : routing.defaultLocale;
+}
+
+export default function middleware(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
   const hasSession = request.cookies.has(AUTH_COOKIE);
 
-  // Redirect unauthenticated users away from protected paths
+  // Auth checks must run before the intl redirect so we can include the correct
+  // locale prefix in the redirect target.
   if (isProtectedPath(pathname) && !hasSession) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('callbackUrl', pathname);
+    const locale = getLocaleFromPath(pathname);
+    const loginUrl = new URL(`/${locale}/login`, request.url);
+    loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // Redirect authenticated users away from auth pages
   if (isAuthPath(pathname) && hasSession) {
-    return NextResponse.redirect(new URL('/', request.url));
+    const locale = getLocaleFromPath(pathname);
+    return NextResponse.redirect(new URL(`/${locale}`, request.url));
   }
 
-  return NextResponse.next();
+  // Delegate everything else (locale detection, prefix redirects, cookie) to
+  // next-intl's middleware.
+  return intlMiddleware(request);
 }
 
 export const config = {
-  matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|webp)).*)',
-  ],
+  // Match every pathname except Next.js internals and static files.
+  matcher: ["/((?!_next|_vercel|.*\\..*).*)"],
 };

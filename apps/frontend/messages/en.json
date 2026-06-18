@@ -1,0 +1,34 @@
+{
+  "nav": {
+    "products": "Products",
+    "cart": "Cart",
+    "orders": "Orders",
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "admin": "Admin"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "backToProducts": "Back to products",
+    "tryAgain": "Try again",
+    "items": "{count, plural, =0 {No items} =1 {# item} other {# items}}"
+  },
+  "home": {
+    "eyebrow": "New season collection",
+    "headline": "Shop premium essentials, minus the noise.",
+    "subtitle": "Discover curated products with transparent pricing and fast checkout.",
+    "exploreCta": "Explore products",
+    "dealsCta": "View deals",
+    "trustedBy": "Trusted by modern shoppers",
+    "fastDelivery": "Fast delivery",
+    "secureCheckout": "Secure checkout",
+    "flexibleReturns": "Flexible returns",
+    "freeShipping": "Free shipping over $50",
+    "returnWindow": "30-day return window",
+    "support": "24/7 customer support",
+    "featuredTitle": "Featured categories",
+    "shopNow": "Shop now"
+  }
+}

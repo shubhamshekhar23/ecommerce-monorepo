@@ -1,0 +1,34 @@
+{
+  "nav": {
+    "products": "Produits",
+    "cart": "Panier",
+    "orders": "Commandes",
+    "login": "Connexion",
+    "register": "S'inscrire",
+    "logout": "Déconnexion",
+    "admin": "Administration"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "error": "Une erreur s'est produite",
+    "backToProducts": "Retour aux produits",
+    "tryAgain": "Réessayer",
+    "items": "{count, plural, =0 {Aucun article} =1 {# article} other {# articles}}"
+  },
+  "home": {
+    "eyebrow": "Collection de la nouvelle saison",
+    "headline": "Des essentiels premium, sans le bruit.",
+    "subtitle": "Découvrez des produits soigneusement sélectionnés avec des prix transparents et un paiement rapide.",
+    "exploreCta": "Explorer les produits",
+    "dealsCta": "Voir les offres",
+    "trustedBy": "Fait confiance par les acheteurs modernes",
+    "fastDelivery": "Livraison rapide",
+    "secureCheckout": "Paiement sécurisé",
+    "flexibleReturns": "Retours flexibles",
+    "freeShipping": "Livraison gratuite dès 50€",
+    "returnWindow": "30 jours pour retourner",
+    "support": "Support client 24h/7j",
+    "featuredTitle": "Catégories en vedette",
+    "shopNow": "Acheter maintenant"
+  }
+}

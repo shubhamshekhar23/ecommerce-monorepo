@@ -170,5 +170,5 @@ Additive features. The app works without them. Implement once all core patterns 
 - [x] **PWA & Real-time** → [advanced/pwa-and-realtime.md](./advanced/pwa-and-realtime.md)
   - SSE connection for order status updates, `manifest.ts`, Service Worker via `next-pwa`, background sync for offline cart queue (connects to Phase 6.3)
 
-- [ ] **i18n** → [advanced/i18n.md](./advanced/i18n.md)
+- [x] **i18n** → [advanced/i18n.md](./advanced/i18n.md)
   - `next-intl`, `app/[locale]/` route restructure, `hreflang` in `generateMetadata`, `Intl.NumberFormat` for currency, `Intl.DateTimeFormat` for dates, CSS logical properties for RTL, `dir="rtl"` on `<html>`
