@@ -2,10 +2,10 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth.store";
 import { eventBus } from "@/shared/eventBus";
 import { trackAddToCart } from "@/shared/analytics/trackEvent";
+import { handleMutationError } from "@/shared/mutationError";
 import { addToCartApi } from "../api/cart.api";
 import type { Cart, AddToCartPayload } from "../interfaces";
 import {
@@ -74,11 +74,11 @@ export function useAddToCart() {
         });
       }
     },
-    onError: (_err, _vars, context) => {
+    onError: (err, _vars, context) => {
       if (context?.previousCart !== undefined) {
         queryClient.setQueryData(["cart"], context.previousCart);
       }
-      toast.error("Failed to add to cart");
+      handleMutationError(err, "Failed to add to cart");
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["cart"] });

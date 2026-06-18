@@ -5,6 +5,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { deleteProductApi } from "../api/admin-products.api";
+import { handleMutationError } from "@/shared/mutationError";
 
 export function useDeleteProduct() {
   const queryClient = useQueryClient();
@@ -16,8 +17,8 @@ export function useDeleteProduct() {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       toast.success("Product deleted");
     },
-    onError: () => {
-      toast.error("Failed to delete product");
+    onError: (err) => {
+      handleMutationError(err, "Failed to delete product");
     },
   });
 }

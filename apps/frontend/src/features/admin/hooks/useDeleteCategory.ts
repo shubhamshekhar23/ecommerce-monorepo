@@ -5,6 +5,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { deleteCategoryApi } from "../api/admin-categories.api";
+import { handleMutationError } from "@/shared/mutationError";
 
 export function useDeleteCategory() {
   const queryClient = useQueryClient();
@@ -16,8 +17,8 @@ export function useDeleteCategory() {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       toast.success("Category deleted");
     },
-    onError: () => {
-      toast.error("Failed to delete category");
+    onError: (err) => {
+      handleMutationError(err, "Failed to delete category");
     },
   });
 }

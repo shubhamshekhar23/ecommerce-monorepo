@@ -19,16 +19,16 @@ These items make the API layer production-grade. Everything downstream (testing,
 - [ ] **Centralized API error normalization** → [data-and-state/api-and-network.md](./data-and-state/api-and-network.md)
   - `apiClient.ts` response interceptor converts all HTTP errors to typed `AppError` instances before they reach hooks; hooks never inspect raw status codes
 
-- [ ] **Automatic retry with exponential backoff** → [data-and-state/api-and-network.md](./data-and-state/api-and-network.md)
+- [x] **Automatic retry with exponential backoff** → [data-and-state/api-and-network.md](./data-and-state/api-and-network.md)
   - Retry `network` and `server` (5xx) errors automatically; never retry `auth` (401/403) or `validation` (400/422) errors; use TanStack Query `retry` + custom `retryDelay`
 
-- [ ] **Request timeout via `AbortController`** → [data-and-state/api-and-network.md](./data-and-state/api-and-network.md)
+- [x] **Request timeout via `AbortController`** → [data-and-state/api-and-network.md](./data-and-state/api-and-network.md)
   - Every `fetch` call in `api/*.ts` wraps in a 10-second `AbortController` timeout; fail fast rather than hanging indefinitely
 
-- [ ] **Duplicate submit prevention audit** → [data-and-state/api-and-network.md](./data-and-state/api-and-network.md)
+- [x] **Duplicate submit prevention audit** → [data-and-state/api-and-network.md](./data-and-state/api-and-network.md)
   - Audit every form's submit button — must be `disabled` while `isPending === true`; applies to cancel order, category edit, product edit, user actions
 
-- [ ] **Debounce expensive UI interactions** → [data-and-state/api-and-network.md](./data-and-state/api-and-network.md)
+- [x] **Debounce expensive UI interactions** → [data-and-state/api-and-network.md](./data-and-state/api-and-network.md)
   - Search, filter, and sort inputs must go through `useDebounce` before firing a query; default debounce 300ms
 
 ---
@@ -49,7 +49,7 @@ Loose ends from the security phase that require backend coordination or manual v
 
 Improves how errors are communicated to users after the `AppError` type is in place (Phase 1).
 
-- [ ] **Per-category error display rules** → [observability/error-handling.md](./observability/error-handling.md)
+- [x] **Per-category error display rules** → [observability/error-handling.md](./observability/error-handling.md)
   - In mutation `onError` callbacks, branch on `AppError.category`: `validation` → field-level message, `auth` → redirect to login, `network` → offline toast, `server` → generic "try again", `business` → specific message from `AppError.message`
 
 - [ ] **Retry UI for network errors** → [observability/error-handling.md](./observability/error-handling.md)
@@ -64,7 +64,7 @@ Additive SEO improvements that don't touch routing.
 - [x] **OpenGraph image per product page** → [seo/seo.md](./seo/seo.md)
   - Add `app/[locale]/products/[slug]/opengraph-image.tsx` using `@vercel/og`; render product image + name + price overlay; controls the preview card when a product URL is shared on social media
 
-- [ ] **Crawlable category filter URLs** → [seo/seo.md](./seo/seo.md)
+- [x] **Crawlable category filter URLs** → [seo/seo.md](./seo/seo.md)
   - Audit `/products?category=1` — category should use slug, not numeric ID (`/products?category=electronics`); check what the backend `/products` endpoint accepts and align the frontend `useUrlState` params
 
 ---

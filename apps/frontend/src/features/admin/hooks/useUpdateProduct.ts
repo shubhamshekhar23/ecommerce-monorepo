@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import type { Product } from "@/features/products/interfaces";
 import type { UpdateProductDto } from "../api/admin-products.api";
 import { updateProductApi } from "../api/admin-products.api";
+import { handleMutationError } from "@/shared/mutationError";
 
 interface UpdateProductPayload {
   id: string;
@@ -23,8 +24,8 @@ export function useUpdateProduct() {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       toast.success("Product saved");
     },
-    onError: () => {
-      toast.error("Failed to save product");
+    onError: (err) => {
+      handleMutationError(err, "Failed to save product");
     },
   });
 }

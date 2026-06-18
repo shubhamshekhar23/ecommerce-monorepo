@@ -2,6 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { handleMutationError } from "@/shared/mutationError";
 import { cancelOrderApi } from "../api/orders.api";
 import type { Order, PaginatedOrders } from "../interfaces";
 
@@ -39,11 +40,11 @@ export function useCancelOrder() {
 
       return { previousData };
     },
-    onError: (_err, _vars, context) => {
+    onError: (err, _vars, context) => {
       context?.previousData.forEach(([queryKey, data]) => {
         queryClient.setQueryData(queryKey, data);
       });
-      toast.error("Failed to cancel order");
+      handleMutationError(err, "Failed to cancel order");
     },
     onSuccess: () => {
       toast.success("Order cancelled");

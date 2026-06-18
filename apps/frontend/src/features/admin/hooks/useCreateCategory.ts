@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import type { Category } from "@/features/products/interfaces";
 import type { CreateCategoryDto } from "../api/admin-categories.api";
 import { createCategoryApi } from "../api/admin-categories.api";
+import { handleMutationError } from "@/shared/mutationError";
 
 export function useCreateCategory() {
   const queryClient = useQueryClient();
@@ -18,8 +19,8 @@ export function useCreateCategory() {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       toast.success("Category created");
     },
-    onError: () => {
-      toast.error("Failed to create category");
+    onError: (err) => {
+      handleMutationError(err, "Failed to create category");
     },
   });
 }

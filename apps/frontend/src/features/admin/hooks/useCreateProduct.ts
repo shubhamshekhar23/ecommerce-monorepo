@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import type { Product } from "@/features/products/interfaces";
 import type { CreateProductDto } from "../api/admin-products.api";
 import { createProductApi } from "../api/admin-products.api";
+import { handleMutationError } from "@/shared/mutationError";
 
 export function useCreateProduct() {
   const queryClient = useQueryClient();
@@ -18,8 +19,8 @@ export function useCreateProduct() {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       toast.success("Product created");
     },
-    onError: () => {
-      toast.error("Failed to create product");
+    onError: (err) => {
+      handleMutationError(err, "Failed to create product");
     },
   });
 }

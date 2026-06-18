@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import type { Category } from "@/features/products/interfaces";
 import type { UpdateCategoryDto } from "../api/admin-categories.api";
 import { updateCategoryApi } from "../api/admin-categories.api";
+import { handleMutationError } from "@/shared/mutationError";
 
 interface UpdateCategoryPayload {
   id: string;
@@ -23,8 +24,8 @@ export function useUpdateCategory() {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       toast.success("Category saved");
     },
-    onError: () => {
-      toast.error("Failed to save category");
+    onError: (err) => {
+      handleMutationError(err, "Failed to save category");
     },
   });
 }
