@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { useAdminProducts, useDeleteProduct } from '../../hooks';
 import { AdminTableSkeleton } from '../AdminTableSkeleton/AdminTableSkeleton';
 import { EmptyState } from '@/components/EmptyState/EmptyState';
@@ -9,6 +9,7 @@ import { useUrlState } from '@/hooks/useUrlState';
 import styles from './AdminProductsView.module.scss';
 
 export function AdminProductsView() {
+  const [isPending, startTransition] = useTransition();
   const [urlSearch, setUrlSearch] = useUrlState('search');
   const [localSearch, setLocalSearch] = useState(urlSearch ?? '');
   const {
@@ -18,7 +19,7 @@ export function AdminProductsView() {
     hasNextPage,
     isFetchingNextPage,
   } = useAdminProducts(urlSearch || undefined);
-  const { mutate: deleteProduct, isPending } = useDeleteProduct();
+  const { mutate: deleteProduct, isPending: isDeleting } = useDeleteProduct();
   const [showConfirmId, setShowConfirmId] = useState<string | null>(null);
 
   if (isLoading) {
@@ -56,8 +57,10 @@ export function AdminProductsView() {
           placeholder="Search products..."
           value={localSearch}
           onChange={(e) => {
-            setLocalSearch(e.target.value);
-            setUrlSearch(e.target.value || null);
+            setLocalSearch(e.target.value); // urgent: keep input responsive
+            startTransition(() => {
+              setUrlSearch(e.target.value || null); // non-urgent: drives query
+            });
           }}
           className={styles.searchInput}
         />
@@ -71,6 +74,7 @@ export function AdminProductsView() {
         />
       ) : (
         <>
+          <div style={{ opacity: isPending ? 0.6 : 1, transition: 'opacity 200ms' }}>
           <div className={styles.tableWrapper}>
             <table className={styles.table}>
               <thead>
@@ -96,14 +100,14 @@ export function AdminProductsView() {
                           <button
                             className={styles.confirmYes}
                             onClick={() => handleDelete(product.id)}
-                            disabled={isPending}
+                            disabled={isDeleting}
                           >
-                            {isPending ? '...' : 'Yes'}
+                            {isDeleting ? '...' : 'Yes'}
                           </button>
                           <button
                             className={styles.confirmNo}
                             onClick={() => setShowConfirmId(null)}
-                            disabled={isPending}
+                            disabled={isDeleting}
                           >
                             No
                           </button>
@@ -126,6 +130,7 @@ export function AdminProductsView() {
                 ))}
               </tbody>
             </table>
+          </div>
           </div>
 
           <div className={styles.footer}>

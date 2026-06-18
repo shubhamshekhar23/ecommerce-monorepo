@@ -1,5 +1,6 @@
 'use client';
 
+import { useTransition } from 'react';
 import Link from 'next/link';
 import { useAdminOrders, useUpdateOrderStatus } from '../../hooks';
 import { AdminTableSkeleton } from '../AdminTableSkeleton/AdminTableSkeleton';
@@ -23,6 +24,7 @@ const TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
 };
 
 export function AdminOrdersView() {
+  const [isPending, startTransition] = useTransition();
   const [statusFilter, setStatusFilter] = useUrlState('status');
   const {
     data,
@@ -31,7 +33,7 @@ export function AdminOrdersView() {
     hasNextPage,
     isFetchingNextPage,
   } = useAdminOrders();
-  const { mutate: updateStatus, isPending } = useUpdateOrderStatus();
+  const { mutate: updateStatus, isPending: isUpdating } = useUpdateOrderStatus();
 
   if (isLoading) {
     return (
@@ -57,7 +59,7 @@ export function AdminOrdersView() {
           <select
             className={styles.statusFilter}
             value={statusFilter ?? ''}
-            onChange={(e) => setStatusFilter(e.target.value || null)}
+            onChange={(e) => startTransition(() => setStatusFilter(e.target.value || null))}
             aria-label="Filter by status"
           >
             <option value="">All statuses</option>
@@ -67,7 +69,7 @@ export function AdminOrdersView() {
           </select>
 
           {statusFilter && (
-            <button className={styles.clearBtn} onClick={() => setStatusFilter(null)}>
+            <button className={styles.clearBtn} onClick={() => startTransition(() => setStatusFilter(null))}>
               Clear
             </button>
           )}
@@ -78,10 +80,11 @@ export function AdminOrdersView() {
         <EmptyState
           title="No orders yet"
           description={statusFilter ? `No orders with status "${statusFilter}"` : 'Orders placed by customers will appear here.'}
-          action={statusFilter ? { label: 'Clear filter', onClick: () => setStatusFilter(null) } : undefined}
+          action={statusFilter ? { label: 'Clear filter', onClick: () => startTransition(() => setStatusFilter(null)) } : undefined}
         />
       ) : (
         <>
+          <div style={{ opacity: isPending ? 0.6 : 1, transition: 'opacity 200ms' }}>
           <div className={styles.tableWrapper}>
             <table className={styles.table}>
               <thead>
@@ -113,7 +116,7 @@ export function AdminOrdersView() {
                             status: e.target.value as OrderStatus,
                           })
                         }
-                        disabled={isPending || TRANSITIONS[order.status].length === 0}
+                        disabled={isUpdating || TRANSITIONS[order.status].length === 0}
                         className={styles.statusSelect}
                       >
                         <option value={order.status}>{order.status}</option>
@@ -126,6 +129,7 @@ export function AdminOrdersView() {
                 ))}
               </tbody>
             </table>
+          </div>
           </div>
 
           <div className={styles.footer}>

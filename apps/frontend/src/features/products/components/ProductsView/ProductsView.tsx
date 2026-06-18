@@ -1,5 +1,6 @@
 'use client';
 
+import { useTransition, useDeferredValue, useMemo } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useProductsCursor, useProductSearch, useCategories } from '../../hooks';
 import { useProductListCache } from '../../hooks/useProductListCache';
@@ -20,6 +21,7 @@ const SORT_OPTIONS: { label: string; value: CursorQueryParams['sort'] }[] = [
 export function ProductsView() {
   useScrollRestoration('products-scroll');
 
+  const [isPending, startTransition] = useTransition();
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -39,10 +41,18 @@ export function ProductsView() {
   const matchedCategory = categoriesData?.data.find((c) => c.slug === categorySlug);
   const categoryId = matchedCategory?.id;
 
-  const filters = {
-    ...(categoryId ? { categoryId } : {}),
-    ...(sort ? { sort } : {}),
-  };
+  // Memoize filters so useDeferredValue can detect reference equality
+  const filters = useMemo(
+    () => ({
+      ...(categoryId ? { categoryId } : {}),
+      ...(sort ? { sort } : {}),
+    }),
+    [categoryId, sort],
+  );
+
+  // Defer the filter value that drives the expensive product grid re-render.
+  // The grid shows stale results at reduced opacity while the transition is pending.
+  const deferredFilters = useDeferredValue(filters);
 
   // FTS path
   const { data: searchData, isLoading: searchLoading } = useProductSearch(search);
@@ -54,7 +64,7 @@ export function ProductsView() {
     hasNextPage,
     isFetchingNextPage,
     isLoading: browseLoading,
-  } = useProductsCursor(!isSearching, filters);
+  } = useProductsCursor(!isSearching, deferredFilters);
 
   const isLoading = isSearching ? searchLoading : browseLoading;
 
@@ -63,7 +73,7 @@ export function ProductsView() {
     : (cursorData?.pages.flatMap((p) => p.data) ?? []);
 
   // Persist product list to sessionStorage for instant back-navigation
-  useProductListCache(products, isLoading, filters);
+  useProductListCache(products, isLoading, deferredFilters);
 
   const handleSortChange = (value: string) => {
     const sortValue = (value as CursorQueryParams['sort']) || undefined;
@@ -75,10 +85,13 @@ export function ProductsView() {
       params.delete('sort');
     }
     params.delete('page');
-    router.push(`${pathname}?${params.toString()}`);
+    startTransition(() => {
+      router.push(`${pathname}?${params.toString()}`);
+    });
   };
 
-  const handleClearFilters = () => router.push(pathname);
+  const handleClearFilters = () =>
+    startTransition(() => router.push(pathname));
 
   let title = 'Products';
   if (isSearching) title = `Results for "${search}"`;
@@ -125,21 +138,23 @@ export function ProductsView() {
               : ''}
         </p>
 
-        <ProductGrid
-          products={products}
-          isLoading={isLoading}
-          error={null}
-          searchQuery={isSearching ? search : undefined}
-          emptyTitle={isSearching ? `No results for "${search}"` : (categorySlug ? 'No products in this category' : 'No products found')}
-          emptyDescription={isSearching ? 'Try a different spelling or browse all products' : undefined}
-          emptyAction={
-            isSearching
-              ? { label: 'Browse all products', href: '/products' }
-              : hasActiveFilters
-                ? { label: 'Clear filters', onClick: handleClearFilters }
-                : undefined
-          }
-        />
+        <div style={{ opacity: isPending ? 0.6 : 1, transition: 'opacity 200ms' }}>
+          <ProductGrid
+            products={products}
+            isLoading={isLoading}
+            error={null}
+            searchQuery={isSearching ? search : undefined}
+            emptyTitle={isSearching ? `No results for "${search}"` : (categorySlug ? 'No products in this category' : 'No products found')}
+            emptyDescription={isSearching ? 'Try a different spelling or browse all products' : undefined}
+            emptyAction={
+              isSearching
+                ? { label: 'Browse all products', href: '/products' }
+                : hasActiveFilters
+                  ? { label: 'Clear filters', onClick: handleClearFilters }
+                  : undefined
+            }
+          />
+        </div>
 
         {!isSearching && hasNextPage && (
           <div className={styles.loadMore}>

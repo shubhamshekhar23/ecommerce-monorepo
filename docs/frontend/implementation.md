@@ -118,7 +118,7 @@ Polish items that build on Phase 5 component primitives and Phase 6 data pattern
 - [x] **Breadcrumbs** → [ux/breadcrumbs.md](./ux/breadcrumbs.md)
   - `Breadcrumb` component (`<nav aria-label="Breadcrumb"><ol>`), add to product detail / order detail / admin edit pages, JSON-LD `BreadcrumbList` in `generateMetadata`
 
-- [ ] **Concurrent Features** → [performance/concurrent-features.md](./performance/concurrent-features.md)
+- [x] **Concurrent Features** → [performance/concurrent-features.md](./performance/concurrent-features.md)
   - `useTransition` on search input in Header (urgent: input update, non-urgent: query), `useDeferredValue` on category sidebar filter, `isPending` opacity indicator
 
 - [ ] **Virtualization** → [performance/virtualization.md](./performance/virtualization.md)
