@@ -127,7 +127,7 @@ Unit, integration, and E2E coverage. Build in dependency order: utilities first,
 - [x] **Component test: `CartView`** → [testing/testing-strategy.md](./testing/testing-strategy.md)
   - Render with items: assert item names, quantities, subtotals, total; render empty: assert empty state; assert "Clear cart" confirmation dialog; assert remove item
 
-- [ ] **Component test: add-to-cart flow** → [testing/testing-strategy.md](./testing/testing-strategy.md)
+- [x] **Component test: add-to-cart flow** → [testing/testing-strategy.md](./testing/testing-strategy.md)
   - Render `ProductCard` + Navbar cart count together with MSW; click "Add to Cart"; assert cart count increments
 
 - [ ] **Component test: product filter** → [testing/testing-strategy.md](./testing/testing-strategy.md)
