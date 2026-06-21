@@ -16,7 +16,7 @@ All items target WCAG 2.1 Level AA.
 
 ## HTML & Semantics
 
-- [ ] **Semantic HTML audit** — replace `<div>` and `<span>` with the correct semantic element where applicable:
+- [x] **Semantic HTML audit** — replace `<div>` and `<span>` with the correct semantic element where applicable:
   - `<nav>` for navigation menus
   - `<main>` for the page's primary content (already in layout, verify it wraps correctly)
   - `<article>` for `ProductCard` (a self-contained piece of content)
@@ -25,7 +25,7 @@ All items target WCAG 2.1 Level AA.
   - Complexity: Easy (audit + replace)
   - Files: all components
 
-- [ ] **Heading hierarchy** — every page must have exactly one `<h1>`. Headings must not skip levels (`h1` → `h3` without `h2`). Audit all pages.
+- [x] **Heading hierarchy** — every page must have exactly one `<h1>`. Headings must not skip levels (`h1` → `h3` without `h2`). Audit all pages.
   - Complexity: Easy (audit)
 
 - [x] **Skip to content link** — add a visually hidden link as the very first element in `<body>` that becomes visible on focus and jumps to `<main>`. Allows keyboard users to skip the Header and Navbar on every page:
@@ -40,7 +40,7 @@ All items target WCAG 2.1 Level AA.
 
 ## ARIA
 
-- [ ] **ARIA labels on icon-only buttons** — buttons that contain only an icon (no visible text) must have `aria-label`. Examples: cart icon button in Navbar, close button in modals, image gallery prev/next arrows.
+- [x] **ARIA labels on icon-only buttons** — buttons that contain only an icon (no visible text) must have `aria-label`. Examples: cart icon button in Navbar, close button in modals, image gallery prev/next arrows.
   ```tsx
   <button aria-label="Add to cart">🛒</button>
   ```
@@ -51,11 +51,11 @@ All items target WCAG 2.1 Level AA.
   - Complexity: Easy
   - Files: `Navbar.tsx` (cart badge), toast provider
 
-- [ ] **`aria-busy` during loading** — when a section is loading (skeleton visible), mark the container with `aria-busy="true"`. Screen readers will announce "loading" to the user.
+- [x] **`aria-busy` during loading** — when a section is loading (skeleton visible), mark the container with `aria-busy="true"`. Screen readers will announce "loading" to the user.
   - Complexity: Easy
   - Files: all views with skeleton states
 
-- [ ] **`role` attributes where semantic HTML isn't enough** — examples:
+- [x] **`role` attributes where semantic HTML isn't enough** — examples:
   - `role="status"` on the "Added ✓" / "Failed" button feedback (politely announces to screen readers)
   - `role="alert"` on error messages (announces immediately)
   - `role="dialog"` on any modal overlay
@@ -65,27 +65,27 @@ All items target WCAG 2.1 Level AA.
 
 ## Keyboard Navigation
 
-- [ ] **Full keyboard navigability** — every interactive element (buttons, links, form fields, dropdowns) must be reachable and operable via keyboard alone. Test by pressing Tab through every page.
+- [x] **Full keyboard navigability** — every interactive element (buttons, links, form fields, dropdowns) must be reachable and operable via keyboard alone. Test by pressing Tab through every page.
   - Complexity: Medium (audit + fix)
 
-- [ ] **Focus trap in modals** — if any modal, drawer, or overlay is opened, focus must be trapped inside it. Tab should cycle through the modal's interactive elements, not elements behind it. Use Radix UI's Dialog/AlertDialog which handles this automatically, or implement manually.
+- [x] **Focus trap in modals** — if any modal, drawer, or overlay is opened, focus must be trapped inside it. Tab should cycle through the modal's interactive elements, not elements behind it. Use Radix UI's Dialog/AlertDialog which handles this automatically, or implement manually.
   - Complexity: Medium
   - Library option: `@radix-ui/react-dialog` (already planned in CLAUDE.md)
 
 - [x] **Visible focus ring on all interactive elements** — the `globals.scss` already has a `focus-visible` outline for links. Audit that buttons, inputs, and custom interactive components also show a visible focus indicator. Never use `outline: none` without providing an equivalent visual indicator.
   - Complexity: Easy (audit + CSS fix)
 
-- [ ] **Logical tab order** — the DOM order must match the visual order. If CSS repositions elements visually, check that Tab order still makes sense.
+- [x] **Logical tab order** — the DOM order must match the visual order. If CSS repositions elements visually, check that Tab order still makes sense.
   - Complexity: Medium (audit)
 
 ---
 
 ## Forms & Errors
 
-- [ ] **All form inputs have explicit `<label>`** — use `htmlFor` + `id` pairing, not just placeholder text. Placeholder text disappears on input and has poor contrast. `FormField.tsx` already exists — verify it always renders a `<label>`.
+- [x] **All form inputs have explicit `<label>`** — use `htmlFor` + `id` pairing, not just placeholder text. Placeholder text disappears on input and has poor contrast. `FormField.tsx` already exists — verify it always renders a `<label>`.
   - Complexity: Easy (audit `FormField.tsx`)
 
-- [ ] **Accessible error messages** — error messages must be programmatically associated with their field using `aria-describedby`:
+- [x] **Accessible error messages** — error messages must be programmatically associated with their field using `aria-describedby`:
   ```tsx
   <input id="email" aria-describedby="email-error" aria-invalid={!!error} />
   <span id="email-error" role="alert">{error}</span>
@@ -93,14 +93,14 @@ All items target WCAG 2.1 Level AA.
   - Complexity: Easy–Medium
   - File: `src/components/FormField/FormField.tsx`
 
-- [ ] **Required field indication** — mark required fields with `aria-required="true"` and a visible indicator (asterisk with a legend explaining it, not just color).
+- [x] **Required field indication** — mark required fields with `aria-required="true"` and a visible indicator (asterisk with a legend explaining it, not just color).
   - Complexity: Easy
 
 ---
 
 ## Visual & Motion
 
-- [ ] **Color contrast** — all text must meet AA contrast ratios: 4.5:1 for normal text, 3:1 for large text (18px+ or 14px+ bold). Audit using browser DevTools accessibility panel or the axe extension. The muted text colors (`--color-text-muted: #64748b`) on white are borderline — verify.
+- [x] **Color contrast** — all text must meet AA contrast ratios: 4.5:1 for normal text, 3:1 for large text (18px+ or 14px+ bold). Audit using browser DevTools accessibility panel or the axe extension. The muted text colors (`--color-text-muted: #64748b`) on white are borderline — verify.
   - Complexity: Easy (audit, may need color value adjustments)
 
 - [x] **`prefers-reduced-motion` support** — users who have set "Reduce Motion" in their OS should not see animations. Wrap all transitions and animations:
@@ -120,7 +120,7 @@ All items target WCAG 2.1 Level AA.
   - Complexity: Easy (one media query in the theme system)
   - Depends on: `24-theme-system.md`
 
-- [ ] **Images have meaningful `alt` text** — `ProductCard` already passes `altText`. Audit all `<Image>` usages: decorative images get `alt=""`, informational images get a descriptive string. Never omit `alt` entirely.
+- [x] **Images have meaningful `alt` text** — `ProductCard` already passes `altText`. Audit all `<Image>` usages: decorative images get `alt=""`, informational images get a descriptive string. Never omit `alt` entirely.
   - Complexity: Easy (audit)
 
 ---
@@ -133,7 +133,7 @@ All items target WCAG 2.1 Level AA.
   ```
   - Complexity: Easy
 
-- [ ] **`axe-core` in test suite** — integrate `@axe-core/react` (dev-only) or `jest-axe` (for automated tests) to catch A11Y regressions in the test pipeline. See `16-testing.md` for the testing integration.
+- [x] **`axe-core` in test suite** — integrate `@axe-core/react` (dev-only) or `jest-axe` (for automated tests) to catch A11Y regressions in the test pipeline. See `16-testing.md` for the testing integration.
   - Complexity: Medium
   - Depends on: `16-testing.md`
 

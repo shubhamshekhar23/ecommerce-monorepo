@@ -21,7 +21,7 @@ From fastest/cheapest to slowest/most realistic:
 
 ### Unit Tests
 
-- [ ] **Test pure utility functions** — every function in `features/*/utils/` and `src/shared/` should have unit tests. These have no side effects and are the easiest to test:
+- [x] **Test pure utility functions** — every function in `features/*/utils/` and `src/shared/` should have unit tests. These have no side effects and are the easiest to test:
   - `auth.utils.ts` — token parsing, expiry checks
   - Cart total calculation, discount application (once in utils)
   - Form schema validators (`auth.schemas.ts`, checkout validation)

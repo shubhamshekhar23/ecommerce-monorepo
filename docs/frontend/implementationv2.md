@@ -118,7 +118,7 @@ WCAG AA compliance. These are code changes (ARIA attributes, semantic HTML) not 
 
 Unit, integration, and E2E coverage. Build in dependency order: utilities first, then hooks, then components, then E2E.
 
-- [ ] **Unit tests for pure utility functions** → [testing/testing-strategy.md](./testing/testing-strategy.md)
+- [x] **Unit tests for pure utility functions** → [testing/testing-strategy.md](./testing/testing-strategy.md)
   - Every function in `features/*/utils/` and `src/shared/` (including new `formatters.ts`) gets unit tests; these have no side effects and are the easiest to cover
 
 - [ ] **Unit tests for custom hooks** → [testing/testing-strategy.md](./testing/testing-strategy.md)
