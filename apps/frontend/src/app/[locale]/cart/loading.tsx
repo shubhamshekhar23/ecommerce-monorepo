@@ -3,6 +3,7 @@ export default function CartLoading() {
   return (
     <div
       role="status"
+      aria-busy="true"
       aria-label="Loading cart"
       style={{ padding: "2rem", textAlign: "center" }}
     >

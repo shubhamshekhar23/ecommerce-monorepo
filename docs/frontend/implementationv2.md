@@ -40,7 +40,7 @@ Loose ends from the security phase that require backend coordination or manual v
 - [x] **Optimistic auth state on page load** → [security/authentication.md](./security/authentication.md)
   - Prevent unauthenticated flash on protected pages by reading auth state from the cookie synchronously in middleware before the client-side Zustand store hydrates; middleware already has the `auth_session` cookie check — extend it to set a header that Server Components can read
 
-- [ ] **`SameSite=Strict; Secure` on auth cookies** → [security/security-headers.md](./security/security-headers.md)
+- [x] **`SameSite=Strict; Secure` on auth cookies** → [security/security-headers.md](./security/security-headers.md)
   - Verify the backend sets `SameSite=Strict; Secure; HttpOnly` on all auth cookies (refresh token, session); check `Set-Cookie` headers in browser DevTools on login; this is a backend fix surfaced here for completeness
 
 ---
@@ -73,19 +73,19 @@ Additive SEO improvements that don't touch routing.
 
 WCAG AA compliance. These are code changes (ARIA attributes, semantic HTML) not just audits.
 
-- [ ] **Semantic HTML audit** → [ux/accessibility.md](./ux/accessibility.md)
+- [x] **Semantic HTML audit** → [ux/accessibility.md](./ux/accessibility.md)
   - Replace non-semantic `<div>`/`<span>` with `<article>`, `<section>`, `<nav>`, `<aside>`, `<time>`, `<address>` where appropriate; priority: `ProductCard`, `OrderDetailView`, `Navbar`
 
-- [ ] **Heading hierarchy audit** → [ux/accessibility.md](./ux/accessibility.md)
+- [x] **Heading hierarchy audit** → [ux/accessibility.md](./ux/accessibility.md)
   - Every page must have exactly one `<h1>`; no skipped levels; audit all 10+ pages including admin views
 
-- [ ] **ARIA labels on icon-only buttons** → [ux/accessibility.md](./ux/accessibility.md)
+- [x] **ARIA labels on icon-only buttons** → [ux/accessibility.md](./ux/accessibility.md)
   - Add `aria-label` to: cart icon button in Navbar, close button in modals/drawers, image gallery prev/next arrows, ThemeToggle (already has it — verify others)
 
-- [ ] **`aria-busy` on loading skeletons** → [ux/accessibility.md](./ux/accessibility.md)
+- [x] **`aria-busy` on loading skeletons** → [ux/accessibility.md](./ux/accessibility.md)
   - When a section shows a skeleton, mark the container with `aria-busy="true"` so screen readers announce the loading state
 
-- [ ] **`role` attributes where semantic HTML is insufficient** → [ux/accessibility.md](./ux/accessibility.md)
+- [x] **`role` attributes where semantic HTML is insufficient** → [ux/accessibility.md](./ux/accessibility.md)
   - `role="status"` on toast notifications, `role="alert"` on error messages, `role="progressbar"` on the top loader
 
 - [ ] **Focus trap in modals and drawers** → [ux/accessibility.md](./ux/accessibility.md)
@@ -97,10 +97,10 @@ WCAG AA compliance. These are code changes (ARIA attributes, semantic HTML) not 
 - [ ] **Logical tab order** → [ux/accessibility.md](./ux/accessibility.md)
   - DOM order must match visual order; audit any components where CSS `order`, `position: absolute`, or flex reordering diverges from the source order
 
-- [ ] **Accessible form error messages** → [ux/accessibility.md](./ux/accessibility.md)
+- [x] **Accessible form error messages** → [ux/accessibility.md](./ux/accessibility.md)
   - Error messages must be linked to their field via `aria-describedby`; verify `FormField.tsx` already does this and audit any form that doesn't use `FormField`
 
-- [ ] **Required field indication** → [ux/accessibility.md](./ux/accessibility.md)
+- [x] **Required field indication** → [ux/accessibility.md](./ux/accessibility.md)
   - Mark required fields with `aria-required="true"` and a visible asterisk (`*`) with a legend; never rely on color alone
 
 - [ ] **Color contrast audit** → [ux/accessibility.md](./ux/accessibility.md)

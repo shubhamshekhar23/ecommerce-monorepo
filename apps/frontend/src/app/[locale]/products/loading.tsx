@@ -4,6 +4,7 @@ export default function ProductsLoading() {
   return (
     <div
       role="status"
+      aria-busy="true"
       aria-label="Loading products"
       style={{ padding: "2rem", textAlign: "center" }}
     >

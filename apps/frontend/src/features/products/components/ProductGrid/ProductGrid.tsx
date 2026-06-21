@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import type { Product } from '../../interfaces';
-import { ProductCard } from '../ProductCard/ProductCard';
-import { ProductSkeleton } from '../ProductSkeleton/ProductSkeleton';
-import { EmptyState } from '@/components/EmptyState/EmptyState';
-import styles from './ProductGrid.module.scss';
+import type { Product } from "../../interfaces";
+import { ProductCard } from "../ProductCard/ProductCard";
+import { ProductSkeleton } from "../ProductSkeleton/ProductSkeleton";
+import { EmptyState } from "@/components/EmptyState/EmptyState";
+import styles from "./ProductGrid.module.scss";
 
 interface ProductGridProps {
   products?: Product[];
@@ -20,14 +20,14 @@ export function ProductGrid({
   products,
   isLoading,
   error,
-  emptyTitle = 'No products found',
+  emptyTitle = "No products found",
   emptyDescription,
   emptyAction,
   searchQuery,
 }: ProductGridProps) {
   if (error) {
     return (
-      <div className={styles.error}>
+      <div className={styles.error} role="alert">
         <p>Failed to load products. Please try again.</p>
       </div>
     );
@@ -35,10 +35,17 @@ export function ProductGrid({
 
   if (isLoading) {
     return (
-      <div className={styles.grid}>
-        {Array(8).fill(0).map((_, i) => (
-          <ProductSkeleton key={i} />
-        ))}
+      <div
+        className={styles.grid}
+        role="status"
+        aria-busy="true"
+        aria-label="Loading products"
+      >
+        {Array(8)
+          .fill(0)
+          .map((_, i) => (
+            <ProductSkeleton key={i} />
+          ))}
       </div>
     );
   }
@@ -56,7 +63,12 @@ export function ProductGrid({
   return (
     <div className={styles.grid}>
       {products.map((product, index) => (
-        <ProductCard key={product.id} product={product} priority={index === 0} searchQuery={searchQuery} />
+        <ProductCard
+          key={product.id}
+          product={product}
+          priority={index === 0}
+          searchQuery={searchQuery}
+        />
       ))}
     </div>
   );

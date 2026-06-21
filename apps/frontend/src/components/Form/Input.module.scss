@@ -25,7 +25,7 @@
   &:focus {
     outline: none;
     border-color: var(--color-accent);
-    box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb, 59 130 246) / 0.15);
+    box-shadow: 0 0 0 3px rgb(var(--color-accent-rgb, 59 130 246) / 15%);
   }
 
   &[aria-invalid='true'] {
@@ -41,4 +41,8 @@
 .hint {
   font-size: var(--font-size-xs);
   color: var(--color-text-muted, var(--color-text-secondary));
+}
+
+.required {
+  color: var(--color-error, #dc2626);
 }

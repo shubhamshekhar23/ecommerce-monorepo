@@ -3,6 +3,7 @@ export default function CheckoutLoading() {
   return (
     <div
       role="status"
+      aria-busy="true"
       aria-label="Loading checkout"
       style={{ padding: "2rem", textAlign: "center" }}
     >

@@ -1,7 +1,7 @@
-import { forwardRef } from 'react';
-import * as Label from '@radix-ui/react-label';
-import { ErrorMessage } from './ErrorMessage';
-import styles from './Input.module.scss';
+import { forwardRef } from "react";
+import * as Label from "@radix-ui/react-label";
+import { ErrorMessage } from "./ErrorMessage";
+import styles from "./Input.module.scss";
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   id: string;
@@ -11,22 +11,33 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ id, label, error, hint, className, ...rest }, ref) => {
+  ({ id, label, error, hint, className, required, ...rest }, ref) => {
     const errorId = `${id}-error`;
     const hintId = `${id}-hint`;
-    const describedBy = [error ? errorId : null, hint ? hintId : null].filter(Boolean).join(' ') || undefined;
+    const describedBy =
+      [error ? errorId : null, hint ? hintId : null]
+        .filter(Boolean)
+        .join(" ") || undefined;
 
     return (
       <div className={styles.field}>
         <Label.Root htmlFor={id} className={styles.label}>
           {label}
+          {required && (
+            <span className={styles.required} aria-hidden="true">
+              {" "}
+              *
+            </span>
+          )}
         </Label.Root>
         <input
           ref={ref}
           id={id}
-          aria-invalid={error ? 'true' : undefined}
+          required={required}
+          aria-required={required ? "true" : undefined}
+          aria-invalid={error ? "true" : undefined}
           aria-describedby={describedBy}
-          className={`${styles.input}${className ? ` ${className}` : ''}`}
+          className={`${styles.input}${className ? ` ${className}` : ""}`}
           {...rest}
         />
         {hint && !error && (
@@ -40,4 +51,4 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
   },
 );
 
-Input.displayName = 'Input';
+Input.displayName = "Input";
