@@ -22,9 +22,11 @@ export default defineConfig({
   ],
 
   // Start the Next.js dev server automatically unless a server is already running.
+  // PLAYWRIGHT_BASE_URL also drives the webServer URL so a pre-started server on
+  // a different port (e.g. 3001 in local dev) is reused without spawning a second one.
   webServer: {
     command: "npm run dev",
-    url: "http://localhost:3000",
+    url: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },

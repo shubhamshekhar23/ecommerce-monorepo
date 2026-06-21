@@ -91,7 +91,7 @@ From fastest/cheapest to slowest/most realistic:
   - Config: `playwright.config.ts` pointing to `localhost:3000`
   - Complexity: Medium (setup)
 
-- [ ] **E2E: Browse and add to cart** — user journey:
+- [x] **E2E: Browse and add to cart** — user journey:
   1. Visit `/products`
   2. Click a product card
   3. Click "Add to Cart"
