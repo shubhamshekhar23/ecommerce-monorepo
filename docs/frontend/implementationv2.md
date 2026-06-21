@@ -139,7 +139,7 @@ Unit, integration, and E2E coverage. Build in dependency order: utilities first,
 - [x] **E2E: Full checkout flow** → [testing/testing-strategy.md](./testing/testing-strategy.md)
   - Playwright: login → add item to cart → proceed to checkout → fill Stripe test card → submit → assert order confirmation and order appears in `/en/orders`
 
-- [ ] **E2E: Admin product CRUD** → [testing/testing-strategy.md](./testing/testing-strategy.md)
+- [x] **E2E: Admin product CRUD** → [testing/testing-strategy.md](./testing/testing-strategy.md)
   - Login as admin → create product → verify in listing → edit → delete; assert product disappears from listing
 
 - [ ] **Playwright screenshot tests** → [testing/testing-strategy.md](./testing/testing-strategy.md)

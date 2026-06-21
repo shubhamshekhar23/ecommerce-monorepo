@@ -1,7 +1,7 @@
 // src/app/admin/categories/page.tsx
 
 import type { Metadata } from "next";
-import dynamic from "next/dynamic";
+import { AdminCategoriesClientWrapper } from "./AdminCategoriesClientWrapper";
 
 export const metadata: Metadata = {
   title: "Categories | Admin",
@@ -9,14 +9,6 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
-const AdminCategoriesView = dynamic(
-  () =>
-    import("@/features/admin/components/AdminCategoriesView/AdminCategoriesView").then(
-      (m) => m.AdminCategoriesView,
-    ),
-  { ssr: false },
-);
-
 export default function CategoriesAdminPage() {
-  return <AdminCategoriesView />;
+  return <AdminCategoriesClientWrapper />;
 }

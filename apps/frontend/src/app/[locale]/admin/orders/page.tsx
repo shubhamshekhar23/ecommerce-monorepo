@@ -1,7 +1,7 @@
 // src/app/admin/orders/page.tsx
 
 import type { Metadata } from "next";
-import dynamic from "next/dynamic";
+import { AdminOrdersClientWrapper } from "./AdminOrdersClientWrapper";
 
 export const metadata: Metadata = {
   title: "Orders | Admin",
@@ -9,14 +9,6 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
-const AdminOrdersView = dynamic(
-  () =>
-    import("@/features/admin/components/AdminOrdersView/AdminOrdersView").then(
-      (m) => m.AdminOrdersView,
-    ),
-  { ssr: false },
-);
-
 export default function OrdersAdminPage() {
-  return <AdminOrdersView />;
+  return <AdminOrdersClientWrapper />;
 }

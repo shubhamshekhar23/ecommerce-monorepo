@@ -111,7 +111,7 @@ From fastest/cheapest to slowest/most realistic:
 - [x] **E2E: Auth flow** — register new user, login, logout, verify redirects.
   - Complexity: Medium
 
-- [ ] **E2E: Admin product CRUD** — login as admin, create product, verify it appears in listing, edit it, delete it.
+- [x] **E2E: Admin product CRUD** — login as admin, create product, verify it appears in listing, edit it, delete it.
   - Complexity: Medium
 
 ### Visual Regression Tests

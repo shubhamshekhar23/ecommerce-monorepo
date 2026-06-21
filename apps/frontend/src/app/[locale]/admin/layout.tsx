@@ -18,6 +18,11 @@ export default function AdminLayout({
   const status = useAuthStore((state) => state.status);
 
   useEffect(() => {
+    // Wait for the user profile to load (status="authenticated" but user still null
+    // means useAuthHydration hasn't resolved yet — don't redirect prematurely).
+    if (status === "loading" || (status === "authenticated" && user === null))
+      return;
+
     if (
       status === "unauthenticated" ||
       (status === "authenticated" && user?.role !== "ADMIN")

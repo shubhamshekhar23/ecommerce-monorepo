@@ -1,7 +1,7 @@
 // src/app/admin/users/page.tsx
 
 import type { Metadata } from "next";
-import dynamic from "next/dynamic";
+import { AdminUsersClientWrapper } from "./AdminUsersClientWrapper";
 
 export const metadata: Metadata = {
   title: "Users | Admin",
@@ -9,14 +9,6 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
-const AdminUsersView = dynamic(
-  () =>
-    import("@/features/admin/components/AdminUsersView/AdminUsersView").then(
-      (m) => m.AdminUsersView,
-    ),
-  { ssr: false },
-);
-
 export default function UsersAdminPage() {
-  return <AdminUsersView />;
+  return <AdminUsersClientWrapper />;
 }
