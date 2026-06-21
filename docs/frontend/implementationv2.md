@@ -37,7 +37,7 @@ These items make the API layer production-grade. Everything downstream (testing,
 
 Loose ends from the security phase that require backend coordination or manual verification.
 
-- [ ] **Optimistic auth state on page load** → [security/authentication.md](./security/authentication.md)
+- [x] **Optimistic auth state on page load** → [security/authentication.md](./security/authentication.md)
   - Prevent unauthenticated flash on protected pages by reading auth state from the cookie synchronously in middleware before the client-side Zustand store hydrates; middleware already has the `auth_session` cookie check — extend it to set a header that Server Components can read
 
 - [ ] **`SameSite=Strict; Secure` on auth cookies** → [security/security-headers.md](./security/security-headers.md)

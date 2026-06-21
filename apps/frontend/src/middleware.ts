@@ -1,6 +1,5 @@
 import createMiddleware from "next-intl/middleware";
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { routing } from "./i18n/routing";
 
 const intlMiddleware = createMiddleware(routing);
@@ -47,8 +46,40 @@ export default function middleware(request: NextRequest): NextResponse {
     return NextResponse.redirect(new URL(`/${locale}`, request.url));
   }
 
-  // Delegate everything else (locale detection, prefix redirects, cookie) to
-  // next-intl's middleware.
+  // When the user has a session, forward an auth hint to Server Components
+  // via a request header so the layout can initialize the auth UI correctly
+  // on the server render — eliminating the SSR→hydration flash.
+  if (hasSession) {
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-auth-hint", "1");
+
+    // Pass the modified request to intlMiddleware; its internal next() call
+    // forwards these headers to the Server Component tree.
+    const intlResponse = intlMiddleware(
+      new NextRequest(request.url, {
+        headers: requestHeaders,
+        method: request.method,
+        body: request.body,
+        signal: request.signal,
+      }),
+    );
+
+    // If intlMiddleware issued a locale redirect, return it directly.
+    if (intlResponse.status >= 300) return intlResponse;
+
+    // For pass-through responses, re-issue next() ourselves so the request
+    // headers (including x-auth-hint) are properly forwarded to Server Components,
+    // and copy any cookies intlMiddleware set (e.g. NEXT_LOCALE).
+    const response = NextResponse.next({
+      request: { headers: requestHeaders },
+    });
+    intlResponse.cookies.getAll().forEach((cookie) => {
+      response.cookies.set(cookie);
+    });
+    return response;
+  }
+
+  // No session — delegate to intlMiddleware as normal.
   return intlMiddleware(request);
 }
 

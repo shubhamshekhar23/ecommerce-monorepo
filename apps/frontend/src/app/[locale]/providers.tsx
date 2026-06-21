@@ -3,7 +3,7 @@
 
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import * as Sentry from "@sentry/nextjs";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
@@ -67,9 +67,27 @@ function SentryUserSync() {
 
 interface ProvidersProps {
   children: React.ReactNode;
+  isAuthenticated?: boolean;
 }
 
-export function Providers({ children }: ProvidersProps) {
+export function Providers({
+  children,
+  isAuthenticated = false,
+}: ProvidersProps) {
+  const setStatus = useAuthStore((s) => s.setStatus);
+
+  // Pre-seed auth status from the server hint before the first browser paint.
+  // This eliminates the 'loading' flash on pages where the server already knows
+  // the user has a session (middleware sets x-auth-hint when auth_session cookie exists).
+  // useLayoutEffect fires synchronously after React's DOM update but before paint,
+  // so the user never sees the intermediate 'loading' state.
+  // useAuthHydration will still run to validate the token and populate user data.
+  useLayoutEffect(() => {
+    if (isAuthenticated) {
+      setStatus("authenticated");
+    }
+  }, [isAuthenticated, setStatus]);
+
   return (
     <QueryClientProvider client={queryClient}>
       <FeatureFlagProvider>

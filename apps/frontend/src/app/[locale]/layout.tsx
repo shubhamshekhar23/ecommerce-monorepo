@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Script from "next/script";
 import NextTopLoader from "nextjs-toploader";
 import { Analytics } from "@vercel/analytics/react";
@@ -84,6 +85,8 @@ export default async function LocaleLayout({
 
   const messages = await getMessages();
   const dir = getTextDirection(locale);
+  const headersList = await headers();
+  const isAuthenticated = headersList.get("x-auth-hint") === "1";
 
   return (
     <html lang={locale} dir={dir}>
@@ -121,7 +124,7 @@ export default async function LocaleLayout({
         </a>
 
         <NextIntlClientProvider messages={messages}>
-          <Providers>
+          <Providers isAuthenticated={isAuthenticated}>
             <Header />
             <Navbar />
             <main id="main-content" className={styles.main}>
