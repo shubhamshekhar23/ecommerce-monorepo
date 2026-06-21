@@ -17,6 +17,7 @@ export function AdminProductsView() {
     useAdminProducts(urlSearch || undefined);
   const { mutate: deleteProduct, isPending: isDeleting } = useDeleteProduct();
   const [showConfirmId, setShowConfirmId] = useState<string | null>(null);
+  const deleteBtnRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   const products = data?.pages.flatMap((p) => p.data) ?? [];
   const total = data?.pages[0]?.meta.total ?? 0;
@@ -45,6 +46,11 @@ export function AdminProductsView() {
     deleteProduct(id, {
       onSettled: () => setShowConfirmId(null),
     });
+  };
+
+  const handleCancelDelete = (id: string): void => {
+    setShowConfirmId(null);
+    requestAnimationFrame(() => deleteBtnRefs.current[id]?.focus());
   };
 
   const virtualItems = rowVirtualizer.getVirtualItems();
@@ -137,12 +143,13 @@ export function AdminProductsView() {
                                 className={styles.confirmYes}
                                 onClick={() => handleDelete(product.id)}
                                 disabled={isDeleting}
+                                autoFocus
                               >
                                 {isDeleting ? "..." : "Yes"}
                               </button>
                               <button
                                 className={styles.confirmNo}
-                                onClick={() => setShowConfirmId(null)}
+                                onClick={() => handleCancelDelete(product.id)}
                                 disabled={isDeleting}
                               >
                                 No
@@ -157,6 +164,9 @@ export function AdminProductsView() {
                                 Edit
                               </Link>
                               <button
+                                ref={(el) => {
+                                  deleteBtnRefs.current[product.id] = el;
+                                }}
                                 className={styles.deleteBtn}
                                 onClick={() => setShowConfirmId(product.id)}
                               >

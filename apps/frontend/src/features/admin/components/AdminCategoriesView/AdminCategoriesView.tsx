@@ -1,16 +1,17 @@
 // src/features/admin/components/AdminCategoriesView/AdminCategoriesView.tsx
 
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useState } from 'react';
-import { useAdminCategories, useDeleteCategory } from '../../hooks';
-import styles from './AdminCategoriesView.module.scss';
+import Link from "next/link";
+import { useRef, useState } from "react";
+import { useAdminCategories, useDeleteCategory } from "../../hooks";
+import styles from "./AdminCategoriesView.module.scss";
 
 export function AdminCategoriesView() {
   const { data, isLoading } = useAdminCategories();
   const { mutate: deleteCategory, isPending } = useDeleteCategory();
   const [showConfirmId, setShowConfirmId] = useState<string | null>(null);
+  const deleteBtnRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   if (isLoading) {
     return <div className={styles.loading}>Loading categories...</div>;
@@ -24,6 +25,11 @@ export function AdminCategoriesView() {
     });
   };
 
+  const handleCancelDelete = (id: string): void => {
+    setShowConfirmId(null);
+    requestAnimationFrame(() => deleteBtnRefs.current[id]?.focus());
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -35,7 +41,10 @@ export function AdminCategoriesView() {
 
       {categories.length === 0 ? (
         <div className={styles.empty}>
-          <p>No categories found. <Link href="/admin/categories/new">Create one</Link>.</p>
+          <p>
+            No categories found.{" "}
+            <Link href="/admin/categories/new">Create one</Link>.
+          </p>
         </div>
       ) : (
         <div className={styles.tableWrapper}>
@@ -53,7 +62,7 @@ export function AdminCategoriesView() {
                 <tr key={category.id}>
                   <td className={styles.name}>{category.name}</td>
                   <td>{category.slug}</td>
-                  <td>{category.parentId ? '(sub)' : '—'}</td>
+                  <td>{category.parentId ? "(sub)" : "—"}</td>
                   <td className={styles.actions}>
                     {showConfirmId === category.id ? (
                       <div className={styles.confirm}>
@@ -62,12 +71,13 @@ export function AdminCategoriesView() {
                           className={styles.confirmYes}
                           onClick={() => handleDelete(category.id)}
                           disabled={isPending}
+                          autoFocus
                         >
-                          {isPending ? '...' : 'Yes'}
+                          {isPending ? "..." : "Yes"}
                         </button>
                         <button
                           className={styles.confirmNo}
-                          onClick={() => setShowConfirmId(null)}
+                          onClick={() => handleCancelDelete(category.id)}
                           disabled={isPending}
                         >
                           No
@@ -75,10 +85,16 @@ export function AdminCategoriesView() {
                       </div>
                     ) : (
                       <div className={styles.actionButtons}>
-                        <Link href={`/admin/categories/${category.id}/edit`} className={styles.editBtn}>
+                        <Link
+                          href={`/admin/categories/${category.id}/edit`}
+                          className={styles.editBtn}
+                        >
                           Edit
                         </Link>
                         <button
+                          ref={(el) => {
+                            deleteBtnRefs.current[category.id] = el;
+                          }}
                           className={styles.deleteBtn}
                           onClick={() => setShowConfirmId(category.id)}
                         >

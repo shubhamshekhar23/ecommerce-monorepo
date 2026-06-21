@@ -88,13 +88,13 @@ WCAG AA compliance. These are code changes (ARIA attributes, semantic HTML) not 
 - [x] **`role` attributes where semantic HTML is insufficient** → [ux/accessibility.md](./ux/accessibility.md)
   - `role="status"` on toast notifications, `role="alert"` on error messages, `role="progressbar"` on the top loader
 
-- [ ] **Focus trap in modals and drawers** → [ux/accessibility.md](./ux/accessibility.md)
+- [x] **Focus trap in modals and drawers** → [ux/accessibility.md](./ux/accessibility.md)
   - Tab key must cycle within an open modal and not reach elements behind it; use Radix UI `Dialog`/`AlertDialog` (handles this natively) or implement `focus-trap` manually
 
-- [ ] **Full keyboard navigability audit** → [ux/accessibility.md](./ux/accessibility.md)
+- [x] **Full keyboard navigability audit** → [ux/accessibility.md](./ux/accessibility.md)
   - Tab through every page manually; every button, link, and form field must be reachable and operable without a mouse; fix any focus-order issues
 
-- [ ] **Logical tab order** → [ux/accessibility.md](./ux/accessibility.md)
+- [x] **Logical tab order** → [ux/accessibility.md](./ux/accessibility.md)
   - DOM order must match visual order; audit any components where CSS `order`, `position: absolute`, or flex reordering diverges from the source order
 
 - [x] **Accessible form error messages** → [ux/accessibility.md](./ux/accessibility.md)
@@ -103,10 +103,10 @@ WCAG AA compliance. These are code changes (ARIA attributes, semantic HTML) not 
 - [x] **Required field indication** → [ux/accessibility.md](./ux/accessibility.md)
   - Mark required fields with `aria-required="true"` and a visible asterisk (`*`) with a legend; never rely on color alone
 
-- [ ] **Color contrast audit** → [ux/accessibility.md](./ux/accessibility.md)
+- [x] **Color contrast audit** → [ux/accessibility.md](./ux/accessibility.md)
   - All text must meet WCAG AA: 4.5:1 for body text, 3:1 for large text; audit `--color-text-muted: #64748b` on white backgrounds — this is borderline; use browser DevTools accessibility panel
 
-- [ ] **Alt text audit** → [ux/accessibility.md](./ux/accessibility.md)
+- [x] **Alt text audit** → [ux/accessibility.md](./ux/accessibility.md)
   - All `<Image>` usages: decorative images get `alt=""`, informational images get a descriptive string; audit `ProductCard`, `ProductImageGallery`, admin views
 
 - [ ] **`axe-core` in component test suite** → [ux/accessibility.md](./ux/accessibility.md)
