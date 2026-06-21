@@ -57,7 +57,7 @@ From fastest/cheapest to slowest/most realistic:
   - Error response from API renders the error message
   - Complexity: Medium
 
-- [ ] **Test `CartView`** — assert:
+- [x] **Test `CartView`** — assert:
   - Empty cart renders empty state
   - Items render with correct quantity and subtotal
   - Remove button calls the correct mutation
