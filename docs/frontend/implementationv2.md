@@ -109,7 +109,7 @@ WCAG AA compliance. These are code changes (ARIA attributes, semantic HTML) not 
 - [x] **Alt text audit** → [ux/accessibility.md](./ux/accessibility.md)
   - All `<Image>` usages: decorative images get `alt=""`, informational images get a descriptive string; audit `ProductCard`, `ProductImageGallery`, admin views
 
-- [ ] **`axe-core` in component test suite** → [ux/accessibility.md](./ux/accessibility.md)
+- [x] **`axe-core` in component test suite** → [ux/accessibility.md](./ux/accessibility.md)
   - Add `jest-axe` to every RTL component test; `await expect(container).toHaveNoViolations()` after each render; catches ~30% of A11Y issues automatically
 
 ---
