@@ -28,7 +28,7 @@ From fastest/cheapest to slowest/most realistic:
   - Complexity: Easy
   - Tool: Jest (already in Next.js)
 
-- [ ] **Test custom hooks** — use `@testing-library/react` with `renderHook` to test hooks in isolation:
+- [x] **Test custom hooks** — use `@testing-library/react` with `renderHook` to test hooks in isolation:
   - `useDebounce` — verify value updates after delay
   - `useScrollRestoration` — verify save/restore behavior
   - `useLocalStorage` — verify get/set/clear

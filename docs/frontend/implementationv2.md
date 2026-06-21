@@ -121,7 +121,7 @@ Unit, integration, and E2E coverage. Build in dependency order: utilities first,
 - [x] **Unit tests for pure utility functions** → [testing/testing-strategy.md](./testing/testing-strategy.md)
   - Every function in `features/*/utils/` and `src/shared/` (including new `formatters.ts`) gets unit tests; these have no side effects and are the easiest to cover
 
-- [ ] **Unit tests for custom hooks** → [testing/testing-strategy.md](./testing/testing-strategy.md)
+- [x] **Unit tests for custom hooks** → [testing/testing-strategy.md](./testing/testing-strategy.md)
   - Use `renderHook` from `@testing-library/react` with MSW handlers; cover `useCart`, `useAddToCart`, `useOrder`, `useOrderStatusStream` (mock EventSource), `useTheme`, `useCookieConsent`
 
 - [ ] **Component test: `CartView`** → [testing/testing-strategy.md](./testing/testing-strategy.md)
