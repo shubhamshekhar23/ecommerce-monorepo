@@ -99,7 +99,7 @@ From fastest/cheapest to slowest/most realistic:
   5. Assert item is in cart
   - Complexity: Medium
 
-- [ ] **E2E: Full checkout flow** — user journey:
+- [x] **E2E: Full checkout flow** — user journey:
   1. Login
   2. Add product to cart
   3. Navigate to checkout
