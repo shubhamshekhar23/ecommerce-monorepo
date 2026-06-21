@@ -9,7 +9,7 @@ import type { Order, PaginatedOrders } from "../interfaces";
 export function useCancelOrder() {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: (id: string) => cancelOrderApi(id),
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ["orders"] });
@@ -40,11 +40,13 @@ export function useCancelOrder() {
 
       return { previousData };
     },
-    onError: (err, _vars, context) => {
+    onError: (err, vars, context) => {
       context?.previousData.forEach(([queryKey, data]) => {
         queryClient.setQueryData(queryKey, data);
       });
-      handleMutationError(err, "Failed to cancel order");
+      handleMutationError(err, "Failed to cancel order", () =>
+        mutation.mutate(vars),
+      );
     },
     onSuccess: () => {
       toast.success("Order cancelled");
@@ -53,4 +55,5 @@ export function useCancelOrder() {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
     },
   });
+  return mutation;
 }

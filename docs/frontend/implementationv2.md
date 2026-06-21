@@ -10,13 +10,13 @@ Each item links back to the topic doc where the full implementation detail lives
 
 These items make the API layer production-grade. Everything downstream (testing, error UI, performance) is easier once the API boundary is solid.
 
-- [ ] **Zod validation of API responses at runtime** → [data-and-state/api-and-network.md](./data-and-state/api-and-network.md)
+- [x] **Zod validation of API responses at runtime** → [data-and-state/api-and-network.md](./data-and-state/api-and-network.md)
   - Add Zod schemas for every API endpoint response; parse inside each `api/*.ts` function so type mismatches surface at the boundary, not silently in the UI
 
-- [ ] **Typed request/response contracts per endpoint** → [data-and-state/api-and-network.md](./data-and-state/api-and-network.md)
+- [x] **Typed request/response contracts per endpoint** → [data-and-state/api-and-network.md](./data-and-state/api-and-network.md)
   - Audit all `api/*.ts` functions — no `any` in return types; return type must be the Zod-validated shape
 
-- [ ] **Centralized API error normalization** → [data-and-state/api-and-network.md](./data-and-state/api-and-network.md)
+- [x] **Centralized API error normalization** → [data-and-state/api-and-network.md](./data-and-state/api-and-network.md)
   - `apiClient.ts` response interceptor converts all HTTP errors to typed `AppError` instances before they reach hooks; hooks never inspect raw status codes
 
 - [x] **Automatic retry with exponential backoff** → [data-and-state/api-and-network.md](./data-and-state/api-and-network.md)
@@ -52,7 +52,7 @@ Improves how errors are communicated to users after the `AppError` type is in pl
 - [x] **Per-category error display rules** → [observability/error-handling.md](./observability/error-handling.md)
   - In mutation `onError` callbacks, branch on `AppError.category`: `validation` → field-level message, `auth` → redirect to login, `network` → offline toast, `server` → generic "try again", `business` → specific message from `AppError.message`
 
-- [ ] **Retry UI for network errors** → [observability/error-handling.md](./observability/error-handling.md)
+- [x] **Retry UI for network errors** → [observability/error-handling.md](./observability/error-handling.md)
   - For `network`-category errors, the toast should include a "Try Again" button that re-fires the mutation; TanStack Query handles automatic retries; this button is for user-initiated retry after auto-retries exhaust
 
 ---

@@ -17,15 +17,18 @@ interface UpdateCategoryPayload {
 export function useUpdateCategory() {
   const queryClient = useQueryClient();
 
-  return useMutation<Category, Error, UpdateCategoryPayload>({
+  const mutation = useMutation<Category, Error, UpdateCategoryPayload>({
     mutationFn: (payload) => updateCategoryApi(payload.id, payload.data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "categories"] });
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       toast.success("Category saved");
     },
-    onError: (err) => {
-      handleMutationError(err, "Failed to save category");
+    onError: (err, vars) => {
+      handleMutationError(err, "Failed to save category", () =>
+        mutation.mutate(vars),
+      );
     },
   });
+  return mutation;
 }

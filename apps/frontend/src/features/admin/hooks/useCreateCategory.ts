@@ -12,15 +12,18 @@ import { handleMutationError } from "@/shared/mutationError";
 export function useCreateCategory() {
   const queryClient = useQueryClient();
 
-  return useMutation<Category, Error, CreateCategoryDto>({
+  const mutation = useMutation<Category, Error, CreateCategoryDto>({
     mutationFn: (payload) => createCategoryApi(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "categories"] });
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       toast.success("Category created");
     },
-    onError: (err) => {
-      handleMutationError(err, "Failed to create category");
+    onError: (err, vars) => {
+      handleMutationError(err, "Failed to create category", () =>
+        mutation.mutate(vars),
+      );
     },
   });
+  return mutation;
 }

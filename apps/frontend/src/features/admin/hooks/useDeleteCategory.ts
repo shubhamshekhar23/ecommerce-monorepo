@@ -10,15 +10,18 @@ import { handleMutationError } from "@/shared/mutationError";
 export function useDeleteCategory() {
   const queryClient = useQueryClient();
 
-  return useMutation<void, Error, string>({
+  const mutation = useMutation<void, Error, string>({
     mutationFn: (id: string) => deleteCategoryApi(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "categories"] });
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       toast.success("Category deleted");
     },
-    onError: (err) => {
-      handleMutationError(err, "Failed to delete category");
+    onError: (err, vars) => {
+      handleMutationError(err, "Failed to delete category", () =>
+        mutation.mutate(vars),
+      );
     },
   });
+  return mutation;
 }

@@ -12,15 +12,18 @@ import { handleMutationError } from "@/shared/mutationError";
 export function useCreateProduct() {
   const queryClient = useQueryClient();
 
-  return useMutation<Product, Error, CreateProductDto>({
+  const mutation = useMutation<Product, Error, CreateProductDto>({
     mutationFn: (payload) => createProductApi(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       toast.success("Product created");
     },
-    onError: (err) => {
-      handleMutationError(err, "Failed to create product");
+    onError: (err, vars) => {
+      handleMutationError(err, "Failed to create product", () =>
+        mutation.mutate(vars),
+      );
     },
   });
+  return mutation;
 }

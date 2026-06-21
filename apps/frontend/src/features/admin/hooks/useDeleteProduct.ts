@@ -10,15 +10,18 @@ import { handleMutationError } from "@/shared/mutationError";
 export function useDeleteProduct() {
   const queryClient = useQueryClient();
 
-  return useMutation<void, Error, string>({
+  const mutation = useMutation<void, Error, string>({
     mutationFn: (id: string) => deleteProductApi(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       toast.success("Product deleted");
     },
-    onError: (err) => {
-      handleMutationError(err, "Failed to delete product");
+    onError: (err, vars) => {
+      handleMutationError(err, "Failed to delete product", () =>
+        mutation.mutate(vars),
+      );
     },
   });
+  return mutation;
 }

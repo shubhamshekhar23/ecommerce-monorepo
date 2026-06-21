@@ -17,15 +17,18 @@ interface UpdateProductPayload {
 export function useUpdateProduct() {
   const queryClient = useQueryClient();
 
-  return useMutation<Product, Error, UpdateProductPayload>({
+  const mutation = useMutation<Product, Error, UpdateProductPayload>({
     mutationFn: (payload) => updateProductApi(payload.id, payload.dto),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       toast.success("Product saved");
     },
-    onError: (err) => {
-      handleMutationError(err, "Failed to save product");
+    onError: (err, vars) => {
+      handleMutationError(err, "Failed to save product", () =>
+        mutation.mutate(vars),
+      );
     },
   });
+  return mutation;
 }

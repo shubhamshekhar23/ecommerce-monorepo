@@ -18,7 +18,7 @@ export function useAddToCart() {
   const router = useRouter();
   const status = useAuthStore((state) => state.status);
 
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: (payload: AddToCartPayload) => addToCartApi(payload),
     onMutate: async (payload) => {
       if (status !== "authenticated") {
@@ -74,14 +74,17 @@ export function useAddToCart() {
         });
       }
     },
-    onError: (err, _vars, context) => {
+    onError: (err, vars, context) => {
       if (context?.previousCart !== undefined) {
         queryClient.setQueryData(["cart"], context.previousCart);
       }
-      handleMutationError(err, "Failed to add to cart");
+      handleMutationError(err, "Failed to add to cart", () =>
+        mutation.mutate(vars),
+      );
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["cart"] });
     },
   });
+  return mutation;
 }
