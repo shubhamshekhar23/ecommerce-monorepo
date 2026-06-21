@@ -81,7 +81,7 @@ From fastest/cheapest to slowest/most realistic:
 - [x] **Test add-to-cart flow** — render `ProductCard` + cart count in Navbar together. Assert that clicking "Add to Cart" updates the cart count.
   - Complexity: Medium
 
-- [ ] **Test product filter + results** — render `CategorySidebar` + `ProductGrid` together with MSW handlers. Assert filtering by category changes the displayed products.
+- [x] **Test product filter + results** — render `CategorySidebar` + `ProductGrid` together with MSW handlers. Assert filtering by category changes the displayed products.
   - Complexity: Medium
 
 ### E2E Tests

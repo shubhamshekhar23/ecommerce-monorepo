@@ -130,7 +130,7 @@ Unit, integration, and E2E coverage. Build in dependency order: utilities first,
 - [x] **Component test: add-to-cart flow** → [testing/testing-strategy.md](./testing/testing-strategy.md)
   - Render `ProductCard` + Navbar cart count together with MSW; click "Add to Cart"; assert cart count increments
 
-- [ ] **Component test: product filter** → [testing/testing-strategy.md](./testing/testing-strategy.md)
+- [x] **Component test: product filter** → [testing/testing-strategy.md](./testing/testing-strategy.md)
   - Render `CategorySidebar` + `ProductGrid` with MSW handlers; select a category; assert only products in that category are displayed
 
 - [ ] **E2E: Browse and add to cart** → [testing/testing-strategy.md](./testing/testing-strategy.md)
