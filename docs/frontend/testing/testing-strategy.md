@@ -116,7 +116,7 @@ From fastest/cheapest to slowest/most realistic:
 
 ### Visual Regression Tests
 
-- [ ] **Playwright screenshot tests** — for key UI components (ProductCard, Navbar, checkout form), capture screenshots and compare against baseline. Fails CI when visual changes occur unexpectedly.
+- [x] **Playwright screenshot tests** — for key UI components (ProductCard, Navbar, checkout form), capture screenshots and compare against baseline. Fails CI when visual changes occur unexpectedly.
   - Use: Playwright's built-in `expect(page).toHaveScreenshot()` or `@playwright/experimental-ct-react` for component-level snapshots
   - Complexity: Medium
 
@@ -164,7 +164,7 @@ From fastest/cheapest to slowest/most realistic:
 
 ### Contract Tests
 
-- [ ] **Pact consumer contract tests** — a Pact test already exists at `src/__tests__/pacts/products.pact.spec.ts`. Extend to cover all feature APIs:
+- [x] **Pact consumer contract tests** — a Pact test already exists at `src/__tests__/pacts/products.pact.spec.ts`. Extend to cover all feature APIs:
   - Auth endpoints (`/auth/login`, `/auth/register`, `/auth/me`)
   - Cart endpoints
   - Orders endpoints

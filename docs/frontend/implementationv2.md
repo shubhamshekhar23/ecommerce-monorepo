@@ -142,10 +142,10 @@ Unit, integration, and E2E coverage. Build in dependency order: utilities first,
 - [x] **E2E: Admin product CRUD** → [testing/testing-strategy.md](./testing/testing-strategy.md)
   - Login as admin → create product → verify in listing → edit → delete; assert product disappears from listing
 
-- [ ] **Playwright screenshot tests** → [testing/testing-strategy.md](./testing/testing-strategy.md)
+- [x] **Playwright screenshot tests** → [testing/testing-strategy.md](./testing/testing-strategy.md)
   - Capture baseline screenshots for `ProductCard`, `Navbar`, checkout form; fail CI on unexpected visual change
 
-- [ ] **Pact contract tests — extend to all feature APIs** → [testing/testing-strategy.md](./testing/testing-strategy.md)
+- [x] **Pact contract tests — extend to all feature APIs** → [testing/testing-strategy.md](./testing/testing-strategy.md)
   - A Pact consumer test exists at `src/__tests__/pacts/products.pact.spec.ts`; extend to cover `orders`, `cart`, `auth`, `categories` APIs; publish pacts to a Pact Broker so backend can verify
 
 ---
