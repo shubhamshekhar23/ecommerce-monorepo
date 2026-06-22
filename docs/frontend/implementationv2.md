@@ -226,7 +226,7 @@ Long-term architecture improvements and the two complex real-time features defer
 - [x] **`public/` folder organization** → [architecture/project-structure.md](./architecture/project-structure.md)
   - Organize `public/` into `public/icons/` (PWA icons, favicon variants), `public/images/` (static editorial images), `public/fonts/` (self-hosted WOFF2 files if not using `next/font`)
 
-- [ ] **Zod schemas co-located with shared types** → [architecture/shared-types.md](./architecture/shared-types.md)
+- [x] **Zod schemas co-located with shared types** → [architecture/shared-types.md](./architecture/shared-types.md)
   - Add Zod schemas to `packages/shared-types/` alongside the TypeScript types; both frontend and backend can import the same runtime validator; no duplicated schema definitions
 
 - [ ] **Backend NestJS DTOs derive from shared types** → [architecture/shared-types.md](./architecture/shared-types.md)

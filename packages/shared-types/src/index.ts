@@ -1,5 +1,9 @@
 // Entity types — canonical API contract shared between frontend and backend
 export * from './common.types';
+
+// Zod runtime schemas — same source of truth as the TypeScript types above.
+// Both frontend (API boundary) and backend (response shaping) can import these.
+export * from './schemas';
 export * from './product.types';
 export * from './order.types';
 export * from './cart.types';
