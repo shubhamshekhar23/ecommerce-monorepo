@@ -160,7 +160,7 @@ CI enforcement. Depends on Phase 6 (tests must exist before you gate on them).
 - [x] **Prettier format check in CI** → [testing/ci-cd-quality-gates.md](./testing/ci-cd-quality-gates.md)
   - Add `prettier --check "src/**/*.{ts,tsx,scss}"` to CI; fail the build if any file isn't formatted
 
-- [ ] **E2E tests in CI** → [testing/ci-cd-quality-gates.md](./testing/ci-cd-quality-gates.md)
+- [x] **E2E tests in CI** → [testing/ci-cd-quality-gates.md](./testing/ci-cd-quality-gates.md)
   - Run Playwright tests in CI against a real `next build && next start`; use `@playwright/test` `webServer` config; requires a test environment with a seeded database
 
 - [ ] **Accessibility audit in CI** → [testing/ci-cd-quality-gates.md](./testing/ci-cd-quality-gates.md)

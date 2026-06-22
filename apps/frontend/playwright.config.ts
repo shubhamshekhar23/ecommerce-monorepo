@@ -21,11 +21,10 @@ export default defineConfig({
     { name: "mobile-safari", use: { ...devices["iPhone 13"] } },
   ],
 
-  // Start the Next.js dev server automatically unless a server is already running.
-  // PLAYWRIGHT_BASE_URL also drives the webServer URL so a pre-started server on
-  // a different port (e.g. 3001 in local dev) is reused without spawning a second one.
+  // In CI: the job builds the app first then starts the production server.
+  // Locally: dev server is reused if already running on PLAYWRIGHT_BASE_URL.
   webServer: {
-    command: "npm run dev",
+    command: process.env.CI ? "npm run start" : "npm run dev",
     url: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

@@ -44,7 +44,7 @@ The monorepo already has a CI matrix workflow (`paths-filter` on all 5 services)
   Start at 70%, raise as coverage improves. CI fails if coverage drops below threshold.
   - Complexity: Easy
 
-- [ ] **E2E tests in CI** — run Playwright tests against a test environment build. Use `@playwright/test` with `webServer` config to spin up `next build && next start` before running tests.
+- [x] **E2E tests in CI** — run Playwright tests against a test environment build. Use `@playwright/test` with `webServer` config to spin up `next build && next start` before running tests.
   - Complexity: Medium (needs CI environment setup)
 
 - [ ] **Accessibility audit in CI** — run `axe` scans via Playwright against key pages (`/`, `/products`, `/products/[slug]`, `/cart`). Fail if any critical or serious A11Y violations are found.
