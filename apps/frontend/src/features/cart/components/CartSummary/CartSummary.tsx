@@ -6,6 +6,7 @@ import { useReducer } from "react";
 import { useRouter } from "next/navigation";
 import type { Cart } from "../../interfaces";
 import { useClearCart } from "../../hooks";
+import { useCartTotalsWorker } from "../../hooks/useCartTotalsWorker";
 import { cartUiReducer, cartUiInitialState } from "../../cartReducer";
 import styles from "./CartSummary.module.scss";
 
@@ -18,8 +19,15 @@ export function CartSummary({ cart }: CartSummaryProps) {
   const { mutate: clearCart, isPending: isClearing } = useClearCart();
   const [state, dispatch] = useReducer(cartUiReducer, cartUiInitialState);
 
-  const total = Number(cart.totalPrice).toFixed(2);
-  const itemLabel = cart.itemCount === 1 ? "1 item" : `${cart.itemCount} items`;
+  // Worker computes totals off the main thread. Falls back to the backend-provided
+  // value on the first tick before the worker responds.
+  const workerTotals = useCartTotalsWorker(cart.items);
+  const displayTotal = (
+    workerTotals?.totalPrice ?? Number(cart.totalPrice)
+  ).toFixed(2);
+  const displayItemCount = workerTotals?.itemCount ?? cart.itemCount;
+  const itemLabel =
+    displayItemCount === 1 ? "1 item" : `${displayItemCount} items`;
 
   const handleConfirmClear = (): void => {
     dispatch({ type: "CONFIRM_CLEAR" });
@@ -39,7 +47,7 @@ export function CartSummary({ cart }: CartSummaryProps) {
 
       <div className={`${styles.row} ${styles.totalRow}`}>
         <span className={styles.totalLabel}>Order Total</span>
-        <span className={styles.totalValue}>${total}</span>
+        <span className={styles.totalValue}>${displayTotal}</span>
       </div>
 
       <button

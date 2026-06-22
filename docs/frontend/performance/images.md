@@ -74,7 +74,7 @@ Source: `lazy-load-picture-tag.md`, `asset-optimization.md`
   - Files: homepage hero, any banner/editorial images
   - Note: Next.js `<Image>` is still preferred for all product photos (automated format conversion, caching). Reserve `<picture>` for editorial/marketing images where art direction is specifically needed.
 
-- [ ] **CDN image transformations** — instead of storing multiple pre-cropped versions of every product image, use a CDN image transformation service. The client sends the desired dimensions and the CDN returns the correctly sized image:
+- [x] **CDN image transformations** — instead of storing multiple pre-cropped versions of every product image, use a CDN image transformation service. The client sends the desired dimensions and the CDN returns the correctly sized image:
   - **Cloudinary / Imgix / Bunny.net** — URL-based transformation: `https://res.cloudinary.com/demo/image/upload/w_400,h_400,c_fill/product.jpg`
   - **Next.js built-in image optimization** — already acts as a lightweight transformation layer (resize + format convert + cache). For most cases this is sufficient.
   - **Custom image optimization endpoint** — the notes describe "sending imgUrl and viewport size from client, service returns properly sized image." This is the pattern Cloudinary/Imgix implement. Only build a custom one if an external service is not acceptable.
@@ -85,7 +85,7 @@ Source: `lazy-load-picture-tag.md`, `asset-optimization.md`
   - Complexity: Medium (CDN integration + update image URLs)
   - File: `src/shared/config/config.ts` (add image CDN base URL), update all image URL construction
 
-- [ ] **Adaptive images based on network speed** — serve a lower-quality image to users on slow connections. Use the Network Information API:
+- [x] **Adaptive images based on network speed** — serve a lower-quality image to users on slow connections. Use the Network Information API:
   ```ts
   const connection = (navigator as any).connection;
   const isSlowNetwork = connection?.effectiveType === '2g' || connection?.saveData;

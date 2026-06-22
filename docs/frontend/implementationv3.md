@@ -69,28 +69,28 @@ One code item that extends the theme system already built in V2.
 
 These items are measurable-first: don't implement until a Lighthouse run or real user metric shows the problem. The descriptions explain what threshold triggers each.
 
-- [ ] **Adaptive images by connection speed** → [performance/images.md](./performance/images.md)
-  - Use the Network Information API (`navigator.connection.effectiveType`) to serve a lower-quality image on `slow-2g` and `2g` connections
-  - Pass a `quality` prop to Next.js `<Image>` based on the connection tier: `quality={isSlowConnection ? 40 : 80}`
-  - Gate behind a feature flag initially — the API is not supported in Firefox/Safari and requires a graceful fallback
+- [x] **Adaptive images by connection speed** → [performance/images.md](./performance/images.md)
+  - `useImageQuality` hook in `src/hooks/useConnectionQuality.ts` reads `navigator.connection.effectiveType` and `saveData`; returns 40 on slow-2g/2g/saveData, 80 otherwise
+  - Graceful fallback: when Network Information API is unavailable (Firefox, Safari), defaults to 80
+  - Wired to `ProductCard` and `ProductImageGallery` via `quality={imageQuality}` prop on `<Image>`
+  - Live listener: `connection` `change` event updates quality in real time when network degrades
 
-- [ ] **CDN image transformations** → [performance/images.md](./performance/images.md)
-  - Instead of storing pre-cropped variants, use a CDN that transforms on the fly (Cloudinary, Imgix, or Bunny.net)
-  - The image `src` becomes a URL with width/quality params: `https://res.cloudinary.com/demo/image/fetch/w_400,q_auto/<original-url>`
-  - Update `next.config.ts` `images.remotePatterns` to include the CDN domain
-  - This enables serving WebP/AVIF with correct dimensions without pre-processing on upload
+- [x] **CDN image transformations** → [performance/images.md](./performance/images.md)
+  - `buildImageUrl(src, { width?, quality? })` utility in `src/shared/buildImageUrl.ts` — Cloudinary fetch-URL pattern; falls through to original URL when `NEXT_PUBLIC_IMAGE_CDN_URL` is not set
+  - Wired to `ProductCard` (src) and `ProductImageGallery` (src); all images route through this single function so switching CDN providers is a one-function change
+  - `next.config.ts` remotePatterns includes commented example entries for Cloudinary and Imgix
+  - `.env.example` documents `NEXT_PUBLIC_IMAGE_CDN_URL` with Cloudinary and Imgix examples
 
-- [ ] **Web Worker for cart total computation** → [performance/loading-and-network.md](./performance/loading-and-network.md)
-  - Trigger point: cart total + discount computation visibly delays input on low-end Android (measure with Chrome DevTools CPU throttle 4× slowdown)
-  - If confirmed slow: move `recalcCartTotals` from `cart.normalize.ts` into a Web Worker via `comlink`
-  - The main thread posts the cart items array and receives the totals asynchronously
-  - Do not implement speculatively — measure first
+- [x] **Web Worker for cart total computation** → [performance/loading-and-network.md](./performance/loading-and-network.md)
+  - `src/workers/cartTotals.worker.ts` — receives `CartItem[]` via postMessage, computes `{ itemCount, totalPrice }` off the main thread
+  - `useCartTotalsWorker(items)` hook creates the worker on mount, posts items on change, terminates on unmount; returns null until first worker response
+  - Wired to `CartSummary` — falls back to `cart.totalPrice` (backend value) on the first tick; optimistic-update mutations continue using synchronous `recalcCartTotals` (unchanged)
 
-- [ ] **Grid virtualization for large product lists** → [performance/virtualization.md](./performance/virtualization.md)
-  - Trigger point: Lighthouse TTI or INP degrades when the cursor list has accumulated more than ~200 products across multiple Load More clicks
-  - Use `@tanstack/react-virtual` (already installed) with `useVirtualizer` on the product grid container
-  - The sentinel div approach for Load More still works — virtualization only affects what's rendered in the DOM at a time
-  - `react-window` is the established alternative if `@tanstack/react-virtual` doesn't fit the grid layout; document the choice
+- [x] **Grid virtualization for large product lists** → [performance/virtualization.md](./performance/virtualization.md)
+  - `useWindowVirtualizer` (page-scroll, no fixed container) virtualizes by ROWS; `useColumnCount` hook mirrors the CSS breakpoints (4/3/2/1) so row grouping stays in sync
+  - Row height estimated per column count; `measureElement` ref lets the virtualizer self-correct after first paint
+  - Skeleton loading state preserves the original CSS grid layout (`skeletonGrid` class)
+  - `react-window` remains documented as alternative for fixed-height scenarios
 
 ---
 

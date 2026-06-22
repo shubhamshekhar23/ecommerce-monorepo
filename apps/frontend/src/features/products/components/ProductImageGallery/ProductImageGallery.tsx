@@ -5,6 +5,8 @@
 import { useState } from "react";
 import Image from "next/image";
 import { BLUR_PLACEHOLDER } from "@/shared/imagePlaceholder";
+import { useImageQuality } from "@/hooks/useConnectionQuality";
+import { buildImageUrl } from "@/shared/buildImageUrl";
 import type { ProductImage } from "../../interfaces";
 import styles from "./ProductImageGallery.module.scss";
 
@@ -17,6 +19,7 @@ export function ProductImageGallery({
   images,
   productName,
 }: ProductImageGalleryProps) {
+  const imageQuality = useImageQuality();
   const mainImageIndex = images.findIndex((img) => img.isMain);
   const [selectedIndex, setSelectedIndex] = useState(
     mainImageIndex >= 0 ? mainImageIndex : 0,
@@ -40,12 +43,13 @@ export function ProductImageGallery({
     <div className={styles.gallery}>
       <div className={styles.mainImageWrapper}>
         <Image
-          src={selectedImage.url}
+          src={buildImageUrl(selectedImage.url, { quality: imageQuality })}
           alt={selectedImage.altText || productName}
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 40vw"
           className={styles.mainImage}
           priority
+          quality={imageQuality}
           placeholder="blur"
           blurDataURL={BLUR_PLACEHOLDER}
         />

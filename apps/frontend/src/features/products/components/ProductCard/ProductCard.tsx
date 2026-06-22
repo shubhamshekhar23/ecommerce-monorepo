@@ -9,6 +9,8 @@ import { useState, useCallback } from "react";
 import { useAuthStore } from "@/store/auth.store";
 import { useAddToCart } from "@/features/cart/hooks";
 import { BLUR_PLACEHOLDER } from "@/shared/imagePlaceholder";
+import { useImageQuality } from "@/hooks/useConnectionQuality";
+import { buildImageUrl } from "@/shared/buildImageUrl";
 import type { Product } from "../../interfaces";
 import { highlightMatch } from "@/shared/utils/highlightMatch";
 import styles from "./ProductCard.module.scss";
@@ -27,12 +29,17 @@ export function ProductCard({
   const router = useRouter();
   const status = useAuthStore((state) => state.status);
   const { mutate: addToCart, isPending } = useAddToCart();
+  const imageQuality = useImageQuality();
   const [buttonState, setButtonState] = useState<"idle" | "success" | "error">(
     "idle",
   );
   const mainImage =
     product.images.find((img) => img.isMain) || product.images[0];
-  const [imageSrc, setImageSrc] = useState(mainImage?.url || null);
+  const [imageSrc, setImageSrc] = useState(
+    mainImage?.url
+      ? buildImageUrl(mainImage.url, { quality: imageQuality })
+      : null,
+  );
 
   const handleImageError = useCallback(() => {
     setImageSrc(`https://picsum.photos/400/400`);
@@ -88,6 +95,7 @@ export function ProductCard({
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             className={styles.image}
             priority={priority}
+            quality={imageQuality}
             placeholder="blur"
             blurDataURL={BLUR_PLACEHOLDER}
             onError={handleImageError}

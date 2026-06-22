@@ -7,3 +7,4 @@ export { useRemoveCartItem } from "./useRemoveCartItem";
 export { useClearCart } from "./useClearCart";
 export { useAddToCartOffline } from "./useAddToCartOffline";
 export { useDrainCartQueue } from "./useDrainCartQueue";
+export { useCartTotalsWorker } from "./useCartTotalsWorker";

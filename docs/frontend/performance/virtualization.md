@@ -59,7 +59,7 @@ The `/products` page uses cursor-based infinite scroll with a "Load More" button
   - Complexity: Medium
   - File: `src/features/admin/components/AdminUsersView/AdminUsersView.tsx`
 
-- [ ] **Grid virtualization for product listing (if needed)** — the `/products` page uses Load More (not infinite list rendering), so virtualization is lower priority here. If the cursor pagination loads a very large number of pages without a hard limit, consider `useVirtualizer` for the grid. Measure first with Lighthouse before implementing.
+- [x] **Grid virtualization for product listing (if needed)** — the `/products` page uses Load More (not infinite list rendering), so virtualization is lower priority here. If the cursor pagination loads a very large number of pages without a hard limit, consider `useVirtualizer` for the grid. Measure first with Lighthouse before implementing.
   - Complexity: Complex (grid virtualization is harder than list — items have variable heights and a multi-column layout)
   - Planned in V3 (Phase 4) — implement only after measuring: confirm scroll jank with Lighthouse before writing the virtualizer
 

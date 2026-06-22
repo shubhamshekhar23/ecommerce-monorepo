@@ -79,6 +79,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "picsum.photos",
       },
+      // When NEXT_PUBLIC_IMAGE_CDN_URL is set to a Cloudinary fetch URL, add
+      // the CDN hostname here so Next.js accepts CDN-transformed image URLs:
+      //   { protocol: "https", hostname: "res.cloudinary.com" }
+      //   { protocol: "https", hostname: "<subdomain>.imgix.net" }
     ],
   },
 

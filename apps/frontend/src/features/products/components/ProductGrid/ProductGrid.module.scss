@@ -1,4 +1,5 @@
-.grid {
+// Skeleton loading state keeps the CSS grid layout for consistent skeleton sizing.
+.skeletonGrid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--space-4);
@@ -13,6 +14,23 @@
 
   @media (width <= 640px) {
     grid-template-columns: 1fr;
+  }
+}
+
+// Virtualizer outer container — no fixed height; page scroll drives the virtualizer.
+.virtualContainer {
+  width: 100%;
+}
+
+// Each virtualized row is positioned absolutely by the virtualizer.
+// Items inside use flex with equal widths to replicate the CSS grid layout.
+.row {
+  display: flex;
+  gap: var(--space-4);
+
+  > * {
+    flex: 1;
+    min-width: 0;
   }
 }
 

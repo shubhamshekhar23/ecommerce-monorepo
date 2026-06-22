@@ -68,6 +68,6 @@ Source: `pre-load-fetch-connect.md`, `async-defer.md`, `performance-optimziation
   - Never use a raw `<script>` tag in the app layout.
   - Complexity: Easy (relevant when adding scripts from Priority 4)
 
-- [ ] **Web Worker for heavy cart computation** — if the cart grows large (many items, complex discount rules, shipping matrix lookups), move total calculation off the main thread into a Web Worker. The main thread stays responsive during calculation.
+- [x] **Web Worker for heavy cart computation** — `src/workers/cartTotals.worker.ts` receives `CartItem[]` via postMessage and returns `{ itemCount, totalPrice }` off the main thread. `useCartTotalsWorker` hook manages the worker lifecycle; wired to `CartSummary`. Optimistic-update mutations continue using synchronous `recalcCartTotals` since those need to be immediate.
   - Complexity: Complex
   - Planned in V3 (Phase 4) — implement only after measuring: confirm jank with Lighthouse CPU throttle 4× before writing the Worker
