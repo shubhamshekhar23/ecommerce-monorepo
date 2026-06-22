@@ -4,7 +4,10 @@ import type { Product } from "../../interfaces";
 import { ProductCard } from "../ProductCard/ProductCard";
 import { ProductSkeleton } from "../ProductSkeleton/ProductSkeleton";
 import { EmptyState } from "@/components/EmptyState/EmptyState";
+import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import styles from "./ProductGrid.module.scss";
+
+const ABOVE_FOLD_COUNT = 4;
 
 interface ProductGridProps {
   products?: Product[];
@@ -25,6 +28,14 @@ export function ProductGrid({
   emptyAction,
   searchQuery,
 }: ProductGridProps) {
+  // Sentinel placed after the above-fold cards; once it enters the viewport
+  // we render the remaining cards (avoids rendering off-screen React trees).
+  const { ref: sentinelRef, isIntersecting: belowFoldVisible } =
+    useIntersectionObserver<HTMLDivElement>({
+      once: true,
+      rootMargin: "200px",
+    });
+
   if (error) {
     return (
       <div className={styles.error} role="alert">
@@ -60,9 +71,12 @@ export function ProductGrid({
     );
   }
 
+  const aboveFold = products.slice(0, ABOVE_FOLD_COUNT);
+  const belowFold = products.slice(ABOVE_FOLD_COUNT);
+
   return (
     <div className={styles.grid}>
-      {products.map((product, index) => (
+      {aboveFold.map((product, index) => (
         <ProductCard
           key={product.id}
           product={product}
@@ -70,6 +84,22 @@ export function ProductGrid({
           searchQuery={searchQuery}
         />
       ))}
+
+      {belowFold.length > 0 && (
+        <>
+          {/* Sentinel: triggers render of below-fold cards when near viewport */}
+          <div ref={sentinelRef} aria-hidden="true" />
+          {belowFoldVisible &&
+            belowFold.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                priority={false}
+                searchQuery={searchQuery}
+              />
+            ))}
+        </>
+      )}
     </div>
   );
 }

@@ -196,7 +196,7 @@ Performance is measured first, then fixed. Run the bundle analyzer before making
 - [x] **`font-display: swap` audit** → [performance/loading-and-network.md](./performance/loading-and-network.md)
   - If using `@font-face` directly in SCSS, verify `font-display: swap` is set; if using `next/font`, this is handled automatically — audit which approach is in use
 
-- [ ] **Intersection Observer lazy load for below-fold components** → [performance/images.md](./performance/images.md)
+- [x] **Intersection Observer lazy load for below-fold components** → [performance/images.md](./performance/images.md)
   - Components far below the fold (related products, second half of product grid) should defer rendering until they enter the viewport; use `useIntersectionObserver` hook with `React.lazy`
 
 - [ ] **Art direction with `<picture>` tag** → [performance/images.md](./performance/images.md)
