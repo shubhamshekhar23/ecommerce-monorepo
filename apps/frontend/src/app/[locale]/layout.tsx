@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Script from "next/script";
+import { Plus_Jakarta_Sans, Fraunces } from "next/font/google";
 import NextTopLoader from "nextjs-toploader";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -14,6 +15,20 @@ import { Footer } from "@/components/Footer/Footer";
 import { routing, getTextDirection } from "@/i18n/routing";
 import "@/styles/globals.scss";
 import styles from "./layout.module.scss";
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-sans",
+  weight: ["300", "400", "500", "600", "700"],
+});
+
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-display",
+  weight: ["400", "700"],
+});
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
@@ -89,7 +104,11 @@ export default async function LocaleLayout({
   const isAuthenticated = headersList.get("x-auth-hint") === "1";
 
   return (
-    <html lang={locale} dir={dir}>
+    <html
+      lang={locale}
+      dir={dir}
+      className={`${plusJakartaSans.variable} ${fraunces.variable}`}
+    >
       <head>
         {API_ORIGIN && <link rel="preconnect" href={API_ORIGIN} />}
         {API_ORIGIN && <link rel="dns-prefetch" href={API_ORIGIN} />}

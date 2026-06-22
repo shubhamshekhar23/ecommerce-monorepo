@@ -30,11 +30,11 @@
   --color-star: #f59e0b;
   --color-badge: #e11d48;
 
-  /* Typography */
+  /* Typography — --font-sans and --font-display are injected by next/font */
   --font-family-base:
-    "Plus Jakarta Sans", "Avenir Next", "Segoe UI", sans-serif;
+    var(--font-sans), "Avenir Next", "Segoe UI", sans-serif;
   --font-family-display:
-    "Fraunces", "Iowan Old Style", "Times New Roman", serif;
+    var(--font-display), "Iowan Old Style", "Times New Roman", serif;
   --font-family-mono: "SF Mono", menlo, monaco, consolas, monospace;
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;

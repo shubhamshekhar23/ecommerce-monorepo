@@ -181,19 +181,19 @@ CI enforcement. Depends on Phase 6 (tests must exist before you gate on them).
 
 Performance is measured first, then fixed. Run the bundle analyzer before making changes.
 
-- [ ] **Bundle analysis — identify largest dependencies** → [performance/bundle-optimization.md](./performance/bundle-optimization.md)
+- [x] **Bundle analysis — identify largest dependencies** → [performance/bundle-optimization.md](./performance/bundle-optimization.md)
   - Run `ANALYZE=true npm run build`; look for: lodash (use lodash-es or cherry-pick), moment (replace with date-fns already installed), any duplicated packages loaded twice
 
-- [ ] **Route-level code splitting audit** → [performance/bundle-optimization.md](./performance/bundle-optimization.md)
+- [x] **Route-level code splitting audit** → [performance/bundle-optimization.md](./performance/bundle-optimization.md)
   - Verify no route's `page.tsx` imports the entire app's logic; audit barrel files (`features/*/index.ts`) — re-exporting everything defeats tree shaking
 
-- [ ] **Tree shaking verification** → [performance/bundle-optimization.md](./performance/bundle-optimization.md)
+- [x] **Tree shaking verification** → [performance/bundle-optimization.md](./performance/bundle-optimization.md)
   - Ensure all packages use ES modules; any CommonJS `require()` in `node_modules` blocks tree shaking for that package; check the bundle analyzer for unexpectedly large chunks
 
-- [ ] **Font preloading** → [performance/loading-and-network.md](./performance/loading-and-network.md)
+- [x] **Font preloading** → [performance/loading-and-network.md](./performance/loading-and-network.md)
   - Add `<link rel="preload" as="font">` for WOFF2 font files in `[locale]/layout.tsx`; or migrate to `next/font` (handles preloading automatically and eliminates FOUT)
 
-- [ ] **`font-display: swap` audit** → [performance/loading-and-network.md](./performance/loading-and-network.md)
+- [x] **`font-display: swap` audit** → [performance/loading-and-network.md](./performance/loading-and-network.md)
   - If using `@font-face` directly in SCSS, verify `font-display: swap` is set; if using `next/font`, this is handled automatically — audit which approach is in use
 
 - [ ] **Intersection Observer lazy load for below-fold components** → [performance/images.md](./performance/images.md)
