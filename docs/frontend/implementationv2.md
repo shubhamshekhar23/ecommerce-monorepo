@@ -223,7 +223,7 @@ Storybook provides a visual component catalogue and enables interaction tests th
 
 Long-term architecture improvements and the two complex real-time features deferred from Phase 10 of V1.
 
-- [ ] **`public/` folder organization** → [architecture/project-structure.md](./architecture/project-structure.md)
+- [x] **`public/` folder organization** → [architecture/project-structure.md](./architecture/project-structure.md)
   - Organize `public/` into `public/icons/` (PWA icons, favicon variants), `public/images/` (static editorial images), `public/fonts/` (self-hosted WOFF2 files if not using `next/font`)
 
 - [ ] **Zod schemas co-located with shared types** → [architecture/shared-types.md](./architecture/shared-types.md)
