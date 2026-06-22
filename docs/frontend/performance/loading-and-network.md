@@ -70,4 +70,4 @@ Source: `pre-load-fetch-connect.md`, `async-defer.md`, `performance-optimziation
 
 - [ ] **Web Worker for heavy cart computation** — if the cart grows large (many items, complex discount rules, shipping matrix lookups), move total calculation off the main thread into a Web Worker. The main thread stays responsive during calculation.
   - Complexity: Complex
-  - Defer until cart calculation becomes measurably slow (measure first with Lighthouse)
+  - Planned in V3 (Phase 4) — implement only after measuring: confirm jank with Lighthouse CPU throttle 4× before writing the Worker

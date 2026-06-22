@@ -61,7 +61,7 @@ The `/products` page uses cursor-based infinite scroll with a "Load More" button
 
 - [ ] **Grid virtualization for product listing (if needed)** — the `/products` page uses Load More (not infinite list rendering), so virtualization is lower priority here. If the cursor pagination loads a very large number of pages without a hard limit, consider `useVirtualizer` for the grid. Measure first with Lighthouse before implementing.
   - Complexity: Complex (grid virtualization is harder than list — items have variable heights and a multi-column layout)
-  - Defer: only implement if scroll jank is measured in production
+  - Planned in V3 (Phase 4) — implement only after measuring: confirm scroll jank with Lighthouse before writing the virtualizer
 
 - [ ] **`react-window` as alternative** — if `@tanstack/react-virtual` doesn't fit a use case, `react-window` is the established alternative. It provides `FixedSizeList` and `VariableSizeList` components with a simpler API for fixed-height items.
   - Document: use `@tanstack/react-virtual` by default; reach for `react-window` for fixed-height list scenarios where performance is paramount.
