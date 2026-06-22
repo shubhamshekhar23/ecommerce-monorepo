@@ -2,6 +2,7 @@
 
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -21,7 +22,7 @@ interface ProductCardProps {
   searchQuery?: string;
 }
 
-export function ProductCard({
+function ProductCardComponent({
   product,
   priority = false,
   searchQuery,
@@ -129,3 +130,5 @@ export function ProductCard({
     </Link>
   );
 }
+
+export const ProductCard = React.memo(ProductCardComponent);

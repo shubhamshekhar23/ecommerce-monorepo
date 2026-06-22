@@ -2,6 +2,7 @@
 
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import type { CartItem } from "../../interfaces";
 import { useUpdateCartItem, useRemoveCartItem } from "../../hooks";
@@ -11,7 +12,7 @@ interface CartItemRowProps {
   item: CartItem;
 }
 
-export function CartItemRow({ item }: CartItemRowProps) {
+function CartItemRowComponent({ item }: CartItemRowProps) {
   const { mutate: updateItem, isPending: isUpdating } = useUpdateCartItem();
   const { mutate: removeItem, isPending: isRemoving } = useRemoveCartItem();
 
@@ -82,3 +83,5 @@ export function CartItemRow({ item }: CartItemRowProps) {
     </div>
   );
 }
+
+export const CartItemRow = React.memo(CartItemRowComponent);

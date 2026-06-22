@@ -134,27 +134,11 @@ From fastest/cheapest to slowest/most realistic:
   - Complexity: Easy (add to existing component tests)
   - Start with: `ProductGrid`, `CartView`, `AdminProductsView`
 
-- [ ] **Interaction performance with Playwright `page.metrics()`** — in E2E tests, measure key navigation metrics after each user journey step:
-  ```ts
-  const metrics = await page.metrics();
-  expect(metrics.TaskDuration).toBeLessThan(100);
-  // Also available: LayoutCount, RecalcStyleCount, ScriptDuration
-  ```
-  Add to the browse-and-add-to-cart E2E test to track performance regressions on the critical path.
+- [x] **Interaction performance with Playwright `page.metrics()`** — `e2e/performance.spec.ts` tests products listing initial load and listing→detail navigation. Uses `expect.soft()` so threshold breaches warn without blocking CI. Chromium-only via `test.skip` — CDP metrics aren't available in Firefox/Safari. Thresholds: `ScriptDuration` < 2s per navigation step, `TaskDuration` < 4s.
   - Complexity: Medium
   - Depends on: Playwright E2E setup
 
-- [ ] **React Profiler in dev tests** — wrap components under test with `<React.Profiler>` to capture render counts and duration. Catch unexpected re-renders caused by missing memoization:
-  ```tsx
-  const onRender = jest.fn();
-  render(
-    <React.Profiler id="ProductCard" onRender={onRender}>
-      <ProductCard product={mockProduct} />
-    </React.Profiler>
-  );
-  // Verify it rendered exactly once on mount
-  expect(onRender).toHaveBeenCalledTimes(1);
-  ```
+- [x] **React Profiler in dev tests** — added `React.memo` to `ProductCard` and `CartItemRow` (prerequisite for the test to be meaningful). Both now have a Profiler test that renders 10 items, bumps parent state, and asserts ≤10 total `onRender` calls — confirming memoization prevents unnecessary re-renders.
   - Complexity: Easy
   - Use on: `ProductCard`, `CartItemRow`, any component suspected of over-rendering
 

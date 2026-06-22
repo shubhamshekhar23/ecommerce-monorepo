@@ -117,4 +117,50 @@ describe("ProductCard", () => {
     );
     expect(await axe(container)).toHaveNoViolations();
   });
+
+  it("does not re-render when parent re-renders with unchanged props", () => {
+    const renderCounts: Record<string, number> = {};
+    const products = Array.from({ length: 10 }, (_, i) => ({
+      ...mockProduct,
+      id: `prod-${i}`,
+      slug: `product-${i}`,
+      name: `Product ${i}`,
+    }));
+
+    function TestList() {
+      const [, bump] = React.useReducer((n: number) => n + 1, 0);
+      return (
+        <>
+          <button onClick={bump}>re-render parent</button>
+          {products.map((p) => (
+            <React.Profiler
+              key={p.id}
+              id={p.id}
+              onRender={() => {
+                renderCounts[p.id] = (renderCounts[p.id] ?? 0) + 1;
+              }}
+            >
+              <ProductCard product={p} />
+            </React.Profiler>
+          ))}
+        </>
+      );
+    }
+
+    const { getByText } = renderWithProviders(<TestList />);
+
+    // Trigger a parent re-render — ProductCard is memoized so props haven't
+    // changed and no card should re-render.
+    React.act(() => {
+      getByText("re-render parent").click();
+    });
+
+    const totalAfterParentRerender = Object.values(renderCounts).reduce(
+      (a, b) => a + b,
+      0,
+    );
+    // Each card should have rendered exactly once (initial mount only).
+    // A total of 10 means none re-rendered after the parent bump.
+    expect(totalAfterParentRerender).toBeLessThanOrEqual(10);
+  });
 });
