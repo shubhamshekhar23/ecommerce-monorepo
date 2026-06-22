@@ -208,13 +208,13 @@ Performance is measured first, then fixed. Run the bundle analyzer before making
 
 Storybook provides a visual component catalogue and enables interaction tests that complement RTL unit tests.
 
-- [ ] **Set up Storybook** → [testing/testing-strategy.md](./testing/testing-strategy.md)
+- [x] **Set up Storybook** → [testing/testing-strategy.md](./testing/testing-strategy.md)
   - Install `@storybook/nextjs`; configure with the same SCSS global imports and `@/` path aliases as the app; add `storybook` and `build-storybook` scripts
 
-- [ ] **Stories for shared components** → [testing/testing-strategy.md](./testing/testing-strategy.md)
+- [x] **Stories for shared components** → [testing/testing-strategy.md](./testing/testing-strategy.md)
   - Write `.stories.tsx` for: `ProductCard` (default, out-of-stock, with variants), `FormField` (text, error, disabled), `ProductSkeleton`, `Navbar`, `Footer`, `EmptyState`, `Breadcrumb`, `ThemeToggle`
 
-- [ ] **Storybook interaction tests** → [testing/testing-strategy.md](./testing/testing-strategy.md)
+- [x] **Storybook interaction tests** → [testing/testing-strategy.md](./testing/testing-strategy.md)
   - Use `@storybook/test` `userEvent` + `expect` inside stories to write interaction tests; run in CI via `storybook test --ci`
 
 ---
