@@ -1,14 +1,14 @@
 // SCSS variables for media queries.
 // CSS custom properties (--breakpoint-*) cannot be used inside @media rules,
 // so breakpoints are duplicated here as SCSS variables.
-@use 'sass:map';
+@use "sass:map";
 
 $breakpoints: (
-  'sm': 640px,
-  'md': 768px,
-  'lg': 1024px,
-  'xl': 1280px,
-  '2xl': 1536px,
+  "sm": 640px,
+  "md": 768px,
+  "lg": 1024px,
+  "xl": 1280px,
+  "2xl": 1536px,
 );
 
 // Mobile-first breakpoint mixin.

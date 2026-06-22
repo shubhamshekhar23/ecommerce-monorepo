@@ -1,4 +1,4 @@
-@use '@/styles/mixins' as *;
+@use "@/styles/mixins" as *;
 
 .root {
   display: grid;
@@ -30,7 +30,7 @@
   min-width: 2.6rem;
   padding: 0.4rem 0.75rem;
   border-radius: var(--radius-md);
-  border: 1.5px solid rgb(148 163 184 / 0.4);
+  border: 1.5px solid rgb(148 163 184 / 40%);
   background: transparent;
   color: var(--color-text-primary);
   font-size: 0.88rem;
@@ -43,8 +43,8 @@
     transform var(--transition-fast);
 
   &:hover:not(.optionOos) {
-    border-color: rgb(37 99 235 / 0.55);
-    background: rgb(37 99 235 / 0.06);
+    border-color: rgb(37 99 235 / 55%);
+    background: rgb(37 99 235 / 6%);
   }
 
   &:focus-visible {
@@ -54,7 +54,7 @@
 
 .optionSelected {
   border-color: #2563eb;
-  background: rgb(37 99 235 / 0.1);
+  background: rgb(37 99 235 / 10%);
   color: var(--color-accent-text);
   font-weight: var(--font-weight-semibold);
 
@@ -78,13 +78,13 @@
   pointer-events: none;
 
   &::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 50%;
     left: 0;
     width: 141%;
     height: 1px;
-    background: currentColor;
+    background: currentcolor;
     transform: translateY(-50%) rotate(-25deg);
     transform-origin: left center;
     opacity: 0.5;
@@ -97,6 +97,6 @@
   color: var(--color-error);
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-md);
-  background: rgb(244 63 94 / 0.07);
-  border: 1px solid rgb(244 63 94 / 0.2);
+  background: rgb(244 63 94 / 7%);
+  border: 1px solid rgb(244 63 94 / 20%);
 }

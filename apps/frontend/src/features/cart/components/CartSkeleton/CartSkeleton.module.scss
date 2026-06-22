@@ -1,6 +1,11 @@
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 $shimmer: linear-gradient(90deg, #ebf1ff 20%, #f8fafe 45%, #ebf1ff 70%);
@@ -10,7 +15,7 @@ $shimmer: linear-gradient(90deg, #ebf1ff 20%, #f8fafe 45%, #ebf1ff 70%);
   grid-template-columns: 1fr 320px;
   gap: var(--space-8);
 
-  @media (max-width: 768px) {
+  @media (width <= 768px) {
     grid-template-columns: 1fr;
   }
 }
@@ -57,8 +62,30 @@ $shimmer: linear-gradient(90deg, #ebf1ff 20%, #f8fafe 45%, #ebf1ff 70%);
   border-radius: var(--radius-sm);
 }
 
-.image { width: 80px; height: 80px; flex-shrink: 0; border-radius: var(--radius-md); }
-.name { height: 1rem; width: 60%; }
-.price { height: 1.2rem; width: 25%; }
-.stepper { height: 2rem; width: 8rem; border-radius: var(--radius-md); }
-.summary { height: 260px; border-radius: var(--radius-lg); }
+.image {
+  width: 80px;
+  height: 80px;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+}
+
+.name {
+  height: 1rem;
+  width: 60%;
+}
+
+.price {
+  height: 1.2rem;
+  width: 25%;
+}
+
+.stepper {
+  height: 2rem;
+  width: 8rem;
+  border-radius: var(--radius-md);
+}
+
+.summary {
+  height: 260px;
+  border-radius: var(--radius-lg);
+}

@@ -1,8 +1,8 @@
 // src/features/auth/components/AuthProvider/AuthProvider.tsx
 
-'use client';
+"use client";
 
-import { useAuthHydration } from '../../hooks';
+import { useAuthHydration } from "../../hooks";
 
 interface AuthProviderProps {
   children: React.ReactNode;

@@ -1,4 +1,4 @@
-import styles from './CheckoutSkeleton.module.scss';
+import styles from "./CheckoutSkeleton.module.scss";
 
 export function CheckoutSkeleton() {
   return (

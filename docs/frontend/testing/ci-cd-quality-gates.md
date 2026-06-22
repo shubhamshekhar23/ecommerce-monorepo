@@ -22,11 +22,11 @@ The monorepo already has a CI matrix workflow (`paths-filter` on all 5 services)
   - Command: `npx eslint src/ --max-warnings 0`
   - Complexity: Easy
 
-- [ ] **Stylelint** — run `stylelint "src/**/*.scss"` in CI once `.stylelintrc.json` is set up (from `01-project-structure.md`).
+- [x] **Stylelint** — run `stylelint "src/**/*.scss"` in CI once `.stylelintrc.json` is set up (from `01-project-structure.md`).
   - Command: `npx stylelint "src/**/*.scss"`
   - Complexity: Easy (depends on stylelint setup)
 
-- [ ] **Prettier format check** — `prettier --check "src/**/*.{ts,tsx,scss}"` to ensure code is formatted. Fail if any file doesn't match.
+- [x] **Prettier format check** — `prettier --check "src/**/*.{ts,tsx,scss}"` to ensure code is formatted. Fail if any file doesn't match.
   - Complexity: Easy
 
 ### Test Gates

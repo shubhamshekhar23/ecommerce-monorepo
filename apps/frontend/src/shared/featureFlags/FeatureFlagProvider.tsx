@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { createContext, useContext, useMemo, type ReactNode } from 'react';
-import { type Flags, defaultFlags, loadFlagsFromEnv } from './featureFlags';
+import { createContext, useContext, useMemo, type ReactNode } from "react";
+import { type Flags, defaultFlags, loadFlagsFromEnv } from "./featureFlags";
 
 const FeatureFlagContext = createContext<Flags>(defaultFlags);
 

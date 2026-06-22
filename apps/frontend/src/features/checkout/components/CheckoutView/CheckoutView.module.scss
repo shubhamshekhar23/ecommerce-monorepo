@@ -1,4 +1,4 @@
-@use '@/styles/mixins' as *;
+@use "@/styles/mixins" as *;
 
 .container {
   max-width: 900px;
@@ -65,7 +65,7 @@
   grid-template-columns: 1fr auto auto;
   gap: var(--space-3);
 
-  @media (max-width: 700px) {
+  @media (width <= 700px) {
     grid-template-columns: 1fr;
   }
 }

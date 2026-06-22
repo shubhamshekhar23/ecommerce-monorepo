@@ -7,13 +7,13 @@
 .backToTop {
   width: 100%;
   border: 0;
-  background: rgb(30 41 59 / 0.9);
+  background: rgb(30 41 59 / 90%);
   color: #e2e8f0;
   padding: var(--space-4);
   font-size: var(--font-size-sm);
 
   &:hover {
-    background: rgb(51 65 85 / 0.95);
+    background: rgb(51 65 85 / 95%);
   }
 }
 
@@ -25,7 +25,7 @@
   grid-template-columns: 1.1fr 2fr;
   gap: var(--space-10);
 
-  @media (max-width: 900px) {
+  @media (width <= 900px) {
     grid-template-columns: 1fr;
     gap: var(--space-6);
   }
@@ -52,7 +52,7 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-6);
 
-  @media (max-width: 700px) {
+  @media (width <= 700px) {
     grid-template-columns: 1fr;
   }
 }
@@ -83,7 +83,7 @@
 }
 
 .copyright {
-  border-top: 1px solid rgb(148 163 184 / 0.2);
+  border-top: 1px solid rgb(148 163 184 / 20%);
   text-align: center;
   padding: var(--space-4);
 

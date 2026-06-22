@@ -1,4 +1,4 @@
-import styles from './CartSkeleton.module.scss';
+import styles from "./CartSkeleton.module.scss";
 
 export function CartSkeleton() {
   return (

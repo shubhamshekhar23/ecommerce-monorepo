@@ -1,4 +1,4 @@
-@use '@/styles/mixins' as *;
+@use "@/styles/mixins" as *;
 
 .header {
   position: sticky;
@@ -6,7 +6,7 @@
   z-index: 120;
   backdrop-filter: blur(12px);
   background: var(--color-header-bg);
-  border-bottom: 1px solid rgb(148 163 184 / 0.25);
+  border-bottom: 1px solid rgb(148 163 184 / 25%);
 }
 
 .container {
@@ -19,7 +19,7 @@
   gap: var(--space-6);
   align-items: center;
 
-  @media (max-width: 1024px) {
+  @media (width <= 1024px) {
     grid-template-columns: 1fr;
     gap: var(--space-3);
   }
@@ -60,14 +60,13 @@
   color: var(--color-text-muted);
 }
 
-
 .actions {
   display: flex;
   align-items: center;
   gap: var(--space-4);
   justify-self: end;
 
-  @media (max-width: 1024px) {
+  @media (width <= 1024px) {
     justify-self: stretch;
     justify-content: space-between;
   }

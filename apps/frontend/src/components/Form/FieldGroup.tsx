@@ -1,4 +1,4 @@
-import styles from './FieldGroup.module.scss';
+import styles from "./FieldGroup.module.scss";
 
 interface FieldGroupProps {
   label: string;
@@ -8,7 +8,7 @@ interface FieldGroupProps {
 
 export function FieldGroup({ label, children, className }: FieldGroupProps) {
   return (
-    <fieldset className={`${styles.group}${className ? ` ${className}` : ''}`}>
+    <fieldset className={`${styles.group}${className ? ` ${className}` : ""}`}>
       <legend className={styles.legend}>{label}</legend>
       <div className={styles.fields}>{children}</div>
     </fieldset>

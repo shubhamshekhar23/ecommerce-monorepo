@@ -1,8 +1,8 @@
 // src/components/FormField/FormField.tsx
 // Reusable form field wrapper with label and error display
 
-import * as Label from '@radix-ui/react-label';
-import styles from './FormField.module.scss';
+import * as Label from "@radix-ui/react-label";
+import styles from "./FormField.module.scss";
 
 interface FormFieldProps {
   id: string;

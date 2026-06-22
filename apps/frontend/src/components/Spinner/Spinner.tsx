@@ -1,11 +1,14 @@
-import styles from './Spinner.module.scss';
+import styles from "./Spinner.module.scss";
 
 interface SpinnerProps {
-  size?: 'sm' | 'md' | 'lg';
-  'aria-label'?: string;
+  size?: "sm" | "md" | "lg";
+  "aria-label"?: string;
 }
 
-export function Spinner({ size = 'md', 'aria-label': ariaLabel = 'Loading' }: SpinnerProps) {
+export function Spinner({
+  size = "md",
+  "aria-label": ariaLabel = "Loading",
+}: SpinnerProps) {
   return (
     <span
       className={`${styles.spinner} ${styles[size]}`}

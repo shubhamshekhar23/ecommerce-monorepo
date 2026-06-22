@@ -1,25 +1,29 @@
-'use client';
+"use client";
 
-import { useTransition, useDeferredValue, useMemo } from 'react';
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { useProductsCursor, useProductSearch, useCategories } from '../../hooks';
-import { useProductListCache } from '../../hooks/useProductListCache';
-import { useScrollRestoration } from '@/hooks/useScrollRestoration';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { CategorySidebar } from '../CategorySidebar/CategorySidebar';
-import { ProductGrid } from '../ProductGrid/ProductGrid';
-import type { Product, CursorQueryParams } from '../../interfaces';
-import styles from './ProductsView.module.scss';
+import { useTransition, useDeferredValue, useMemo } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import {
+  useProductsCursor,
+  useProductSearch,
+  useCategories,
+} from "../../hooks";
+import { useProductListCache } from "../../hooks/useProductListCache";
+import { useScrollRestoration } from "@/hooks/useScrollRestoration";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { CategorySidebar } from "../CategorySidebar/CategorySidebar";
+import { ProductGrid } from "../ProductGrid/ProductGrid";
+import type { Product, CursorQueryParams } from "../../interfaces";
+import styles from "./ProductsView.module.scss";
 
-const SORT_OPTIONS: { label: string; value: CursorQueryParams['sort'] }[] = [
-  { label: 'Newest', value: 'newest' },
-  { label: 'Price: Low to High', value: 'price_asc' },
-  { label: 'Price: High to Low', value: 'price_desc' },
-  { label: 'Oldest', value: 'oldest' },
+const SORT_OPTIONS: { label: string; value: CursorQueryParams["sort"] }[] = [
+  { label: "Newest", value: "newest" },
+  { label: "Price: Low to High", value: "price_asc" },
+  { label: "Price: High to Low", value: "price_desc" },
+  { label: "Oldest", value: "oldest" },
 ];
 
 export function ProductsView() {
-  useScrollRestoration('products-scroll');
+  useScrollRestoration("products-scroll");
 
   const [isPending, startTransition] = useTransition();
   const searchParams = useSearchParams();
@@ -27,18 +31,24 @@ export function ProductsView() {
   const pathname = usePathname();
 
   // Persist sort preference across sessions; URL param takes precedence
-  const [savedSort, setSavedSort] = useLocalStorage<CursorQueryParams['sort']>('products-sort-order', undefined);
+  const [savedSort, setSavedSort] = useLocalStorage<CursorQueryParams["sort"]>(
+    "products-sort-order",
+    undefined,
+  );
 
-  const search = searchParams.get('search') || undefined;
-  const categorySlug = searchParams.get('category') || undefined;
-  const urlSort = (searchParams.get('sort') as CursorQueryParams['sort']) || undefined;
+  const search = searchParams.get("search") || undefined;
+  const categorySlug = searchParams.get("category") || undefined;
+  const urlSort =
+    (searchParams.get("sort") as CursorQueryParams["sort"]) || undefined;
   const sort = urlSort ?? savedSort;
-  const isSearching = typeof search === 'string' && search.trim().length > 0;
+  const isSearching = typeof search === "string" && search.trim().length > 0;
   const hasActiveFilters = Boolean(categorySlug || urlSort);
 
   // Resolve category slug → ID for the API (which takes categoryId, not slug)
   const { data: categoriesData } = useCategories();
-  const matchedCategory = categoriesData?.data.find((c) => c.slug === categorySlug);
+  const matchedCategory = categoriesData?.data.find(
+    (c) => c.slug === categorySlug,
+  );
   const categoryId = matchedCategory?.id;
 
   // Memoize filters so useDeferredValue can detect reference equality
@@ -55,7 +65,8 @@ export function ProductsView() {
   const deferredFilters = useDeferredValue(filters);
 
   // FTS path
-  const { data: searchData, isLoading: searchLoading } = useProductSearch(search);
+  const { data: searchData, isLoading: searchLoading } =
+    useProductSearch(search);
 
   // Browse path: cursor infinite scroll with optional filters
   const {
@@ -76,24 +87,23 @@ export function ProductsView() {
   useProductListCache(products, isLoading, deferredFilters);
 
   const handleSortChange = (value: string) => {
-    const sortValue = (value as CursorQueryParams['sort']) || undefined;
-    setSavedSort(sortValue ?? null as unknown as CursorQueryParams['sort']);
+    const sortValue = (value as CursorQueryParams["sort"]) || undefined;
+    setSavedSort(sortValue ?? (null as unknown as CursorQueryParams["sort"]));
     const params = new URLSearchParams(searchParams.toString());
     if (value) {
-      params.set('sort', value);
+      params.set("sort", value);
     } else {
-      params.delete('sort');
+      params.delete("sort");
     }
-    params.delete('page');
+    params.delete("page");
     startTransition(() => {
       router.push(`${pathname}?${params.toString()}`);
     });
   };
 
-  const handleClearFilters = () =>
-    startTransition(() => router.push(pathname));
+  const handleClearFilters = () => startTransition(() => router.push(pathname));
 
-  let title = 'Products';
+  let title = "Products";
   if (isSearching) title = `Results for "${search}"`;
   else if (matchedCategory) title = matchedCategory.name;
 
@@ -109,13 +119,13 @@ export function ProductsView() {
             {!isSearching && (
               <select
                 className={styles.sortSelect}
-                value={urlSort ?? savedSort ?? ''}
+                value={urlSort ?? savedSort ?? ""}
                 onChange={(e) => handleSortChange(e.target.value)}
                 aria-label="Sort products"
               >
                 <option value="">Sort by</option>
                 {SORT_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value ?? ''}>
+                  <option key={opt.value} value={opt.value ?? ""}>
                     {opt.label}
                   </option>
                 ))}
@@ -132,25 +142,37 @@ export function ProductsView() {
 
         <p className={styles.count}>
           {isSearching
-            ? `${products.length} result${products.length !== 1 ? 's' : ''}`
+            ? `${products.length} result${products.length !== 1 ? "s" : ""}`
             : products.length > 0
               ? `${products.length} loaded`
-              : ''}
+              : ""}
         </p>
 
-        <div style={{ opacity: isPending ? 0.6 : 1, transition: 'opacity 200ms' }}>
+        <div
+          style={{ opacity: isPending ? 0.6 : 1, transition: "opacity 200ms" }}
+        >
           <ProductGrid
             products={products}
             isLoading={isLoading}
             error={null}
             searchQuery={isSearching ? search : undefined}
-            emptyTitle={isSearching ? `No results for "${search}"` : (categorySlug ? 'No products in this category' : 'No products found')}
-            emptyDescription={isSearching ? 'Try a different spelling or browse all products' : undefined}
+            emptyTitle={
+              isSearching
+                ? `No results for "${search}"`
+                : categorySlug
+                  ? "No products in this category"
+                  : "No products found"
+            }
+            emptyDescription={
+              isSearching
+                ? "Try a different spelling or browse all products"
+                : undefined
+            }
             emptyAction={
               isSearching
-                ? { label: 'Browse all products', href: '/products' }
+                ? { label: "Browse all products", href: "/products" }
                 : hasActiveFilters
-                  ? { label: 'Clear filters', onClick: handleClearFilters }
+                  ? { label: "Clear filters", onClick: handleClearFilters }
                   : undefined
             }
           />
@@ -163,7 +185,7 @@ export function ProductsView() {
               onClick={() => void fetchNextPage()}
               disabled={isFetchingNextPage}
             >
-              {isFetchingNextPage ? 'Loading…' : 'Load More'}
+              {isFetchingNextPage ? "Loading…" : "Load More"}
             </button>
           </div>
         )}

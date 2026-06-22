@@ -31,9 +31,11 @@
   --color-badge: #e11d48;
 
   /* Typography */
-  --font-family-base: 'Plus Jakarta Sans', 'Avenir Next', 'Segoe UI', sans-serif;
-  --font-family-display: 'Fraunces', 'Iowan Old Style', 'Times New Roman', serif;
-  --font-family-mono: 'SF Mono', menlo, monaco, consolas, monospace;
+  --font-family-base:
+    "Plus Jakarta Sans", "Avenir Next", "Segoe UI", sans-serif;
+  --font-family-display:
+    "Fraunces", "Iowan Old Style", "Times New Roman", serif;
+  --font-family-mono: "SF Mono", menlo, monaco, consolas, monospace;
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
   --font-size-base: 1rem;

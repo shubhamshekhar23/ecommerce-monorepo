@@ -1,11 +1,11 @@
 // src/features/products/components/Pagination/Pagination.tsx
 
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import type { PaginationMeta } from '../../interfaces';
-import styles from './Pagination.module.scss';
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import type { PaginationMeta } from "../../interfaces";
+import styles from "./Pagination.module.scss";
 
 interface PaginationProps {
   meta: PaginationMeta;
@@ -13,11 +13,11 @@ interface PaginationProps {
 
 export function Pagination({ meta }: PaginationProps) {
   const searchParams = useSearchParams();
-  const currentPage = Number(searchParams.get('page')) || 1;
+  const currentPage = Number(searchParams.get("page")) || 1;
 
   const buildHref = (page: number): string => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set('page', String(page));
+    params.set("page", String(page));
     return `?${params.toString()}`;
   };
 
@@ -38,7 +38,7 @@ export function Pagination({ meta }: PaginationProps) {
     if (start > 1) {
       pageNumbers.push(1);
       if (start > 2) {
-        pageNumbers.push('...');
+        pageNumbers.push("...");
       }
     }
 
@@ -48,7 +48,7 @@ export function Pagination({ meta }: PaginationProps) {
 
     if (end < pages) {
       if (end < pages - 1) {
-        pageNumbers.push('...');
+        pageNumbers.push("...");
       }
       pageNumbers.push(pages);
     }
@@ -68,7 +68,7 @@ export function Pagination({ meta }: PaginationProps) {
 
       <div className={styles.pages}>
         {pageNumbers.map((page, idx) =>
-          page === '...' ? (
+          page === "..." ? (
             <span key={`dots-${idx}`} className={styles.dots}>
               …
             </span>
@@ -77,12 +77,12 @@ export function Pagination({ meta }: PaginationProps) {
               key={page}
               href={buildHref(page as number)}
               className={`${styles.page} ${
-                page === currentPage ? styles.active : ''
+                page === currentPage ? styles.active : ""
               }`}
             >
               {page}
             </Link>
-          )
+          ),
         )}
       </div>
 

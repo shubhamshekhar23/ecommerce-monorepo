@@ -1,13 +1,16 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { registerSchema, type RegisterFormValues } from '../../utils/auth.schemas';
-import { useRegister } from '../../hooks';
-import { resolveAuthError } from '../../utils/auth.utils';
-import { Input } from '@/components/Form';
-import styles from './RegisterForm.module.scss';
+import Link from "next/link";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  registerSchema,
+  type RegisterFormValues,
+} from "../../utils/auth.schemas";
+import { useRegister } from "../../hooks";
+import { resolveAuthError } from "../../utils/auth.utils";
+import { Input } from "@/components/Form";
+import styles from "./RegisterForm.module.scss";
 
 export function RegisterForm() {
   const { mutate: register, isPending, error } = useRegister();
@@ -31,13 +34,13 @@ export function RegisterForm() {
 
       {error && (
         <div role="alert" className={styles.serverError}>
-          {resolveAuthError(error, 'Registration failed. Please try again.')}
+          {resolveAuthError(error, "Registration failed. Please try again.")}
         </div>
       )}
 
       <div className={styles.nameRow}>
         <Input
-          {...formRegister('firstName')}
+          {...formRegister("firstName")}
           id="firstName"
           label="First name"
           type="text"
@@ -45,7 +48,7 @@ export function RegisterForm() {
           error={errors.firstName?.message}
         />
         <Input
-          {...formRegister('lastName')}
+          {...formRegister("lastName")}
           id="lastName"
           label="Last name"
           type="text"
@@ -55,7 +58,7 @@ export function RegisterForm() {
       </div>
 
       <Input
-        {...formRegister('email')}
+        {...formRegister("email")}
         id="email"
         label="Email address"
         type="email"
@@ -64,7 +67,7 @@ export function RegisterForm() {
       />
 
       <Input
-        {...formRegister('password')}
+        {...formRegister("password")}
         id="password"
         label="Password"
         type="password"
@@ -73,7 +76,7 @@ export function RegisterForm() {
       />
 
       <Input
-        {...formRegister('confirmPassword')}
+        {...formRegister("confirmPassword")}
         id="confirmPassword"
         label="Confirm password"
         type="password"
@@ -82,12 +85,12 @@ export function RegisterForm() {
       />
 
       <button type="submit" disabled={isPending} className={styles.submit}>
-        {isPending ? 'Creating account...' : 'Create account'}
+        {isPending ? "Creating account..." : "Create account"}
       </button>
 
       <div className={styles.footer}>
         <p className={styles.footerText}>
-          Already have an account?{' '}
+          Already have an account?{" "}
           <Link href="/login" className={styles.link}>
             Sign in
           </Link>

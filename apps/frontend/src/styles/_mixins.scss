@@ -1,6 +1,6 @@
 // src/styles/_mixins.scss
 // Reusable SCSS mixins for responsive design, focus states, and utilities
-@use './breakpoints' as bp;
+@use "./breakpoints" as bp;
 
 // === RESPONSIVE DESIGN ===
 
@@ -18,7 +18,10 @@
 // Usage: @include responsive-grid(280px)
 @mixin responsive-grid($min-col-width: 280px) {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(#{$min-col-width}, 100%), 1fr));
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(min(#{$min-col-width}, 100%), 1fr)
+  );
 }
 
 // === FOCUS STATES ===

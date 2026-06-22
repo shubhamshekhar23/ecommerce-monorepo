@@ -1,15 +1,15 @@
 // Global stylesheet — import-only.
 // Each partial owns a single concern; nothing is defined here directly.
-@use './variables';
-@use './reset';
-@use './typography';
-@use './utilities';
-@use './print';
+@use "./variables";
+@use "./reset";
+@use "./typography";
+@use "./utilities";
+@use "./print";
 
 // Dark mode token overrides — activated by data-theme="dark" attribute on <html>.
 // Kept here (not in _variables.scss) because [data-theme] is a global selector
 // that CSS Modules would reject as "not pure" if included via @use.
-[data-theme='dark'] {
+[data-theme="dark"] {
   --color-bg-canvas: #0f1117;
   --color-bg-surface: #1a1d27;
   --color-bg-elevated: #22263a;
@@ -45,7 +45,7 @@
 
 // OS-level dark mode preference — respected before any JS/user override.
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
+  :root:not([data-theme="light"]) {
     --color-bg-canvas: #0f1117;
     --color-bg-surface: #1a1d27;
     --color-bg-elevated: #22263a;

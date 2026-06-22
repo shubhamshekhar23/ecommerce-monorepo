@@ -1,4 +1,4 @@
-@use '@/styles/mixins' as *;
+@use "@/styles/mixins" as *;
 
 .container {
   position: relative;
@@ -8,7 +8,7 @@
 
   &::before,
   &::after {
-    content: '';
+    content: "";
     position: absolute;
     border-radius: 50%;
     pointer-events: none;
@@ -21,7 +21,7 @@
     height: clamp(180px, 24vw, 320px);
     top: 6%;
     left: -8%;
-    background: rgb(59 130 246 / 0.18);
+    background: rgb(59 130 246 / 18%);
   }
 
   &::after {
@@ -29,7 +29,7 @@
     height: clamp(160px, 18vw, 250px);
     right: -3%;
     bottom: 12%;
-    background: rgb(16 185 129 / 0.14);
+    background: rgb(16 185 129 / 14%);
   }
 }
 
@@ -58,7 +58,7 @@
   align-items: stretch;
   justify-content: center;
 
-  @media (max-width: 960px) {
+  @media (width <= 960px) {
     grid-template-columns: 1fr;
     gap: var(--space-6);
   }
@@ -69,32 +69,40 @@
   height: 100%;
   padding: clamp(0.5rem, 0.85vw, 0.7rem);
   border-radius: var(--radius-xl);
-  border: 1px solid rgb(191 219 254 / 0.72);
+  border: 1px solid rgb(191 219 254 / 72%);
   background:
-    radial-gradient(120% 120% at 100% 0%, rgb(219 234 254 / 0.92) 0%, rgb(255 255 255 / 0.95) 55%),
+    radial-gradient(
+      120% 120% at 100% 0%,
+      rgb(219 234 254 / 92%) 0%,
+      rgb(255 255 255 / 95%) 55%
+    ),
     var(--color-bg-surface);
-  box-shadow: 0 20px 45px rgb(30 41 59 / 0.12);
+  box-shadow: 0 20px 45px rgb(30 41 59 / 12%);
 }
 
 .info {
   display: grid;
   height: 100%;
   gap: var(--space-3);
-  border: 1px solid rgb(191 219 254 / 0.65);
+  border: 1px solid rgb(191 219 254 / 65%);
   border-radius: var(--radius-xl);
   background:
-    linear-gradient(156deg, rgb(255 255 255 / 0.96) 0%, rgb(248 252 255 / 0.95) 100%),
+    linear-gradient(
+      156deg,
+      rgb(255 255 255 / 96%) 0%,
+      rgb(248 252 255 / 95%) 100%
+    ),
     var(--color-bg-surface);
   padding: clamp(0.8rem, 1.2vw, 1rem);
-  box-shadow: 0 20px 50px rgb(15 23 42 / 0.12);
+  box-shadow: 0 20px 50px rgb(15 23 42 / 12%);
 }
 
 .kicker {
   width: fit-content;
   margin: 0;
-  border: 1px solid rgb(37 99 235 / 0.22);
+  border: 1px solid rgb(37 99 235 / 22%);
   border-radius: var(--radius-full);
-  background: rgb(37 99 235 / 0.1);
+  background: rgb(37 99 235 / 10%);
   color: var(--color-accent-text);
   font-size: 0.68rem;
   font-weight: var(--font-weight-semibold);
@@ -142,15 +150,15 @@
 }
 
 .inStock {
-  background: rgb(16 185 129 / 0.12);
+  background: rgb(16 185 129 / 12%);
   color: var(--color-success);
-  border-color: rgb(16 185 129 / 0.3);
+  border-color: rgb(16 185 129 / 30%);
 }
 
 .outOfStock {
-  background: rgb(244 63 94 / 0.12);
+  background: rgb(244 63 94 / 12%);
   color: var(--color-error);
-  border-color: rgb(244 63 94 / 0.3);
+  border-color: rgb(244 63 94 / 30%);
 }
 
 .badge {
@@ -171,7 +179,7 @@
   align-items: center;
 
   &::before {
-    content: '';
+    content: "";
     width: 7px;
     height: 7px;
     border-radius: 50%;
@@ -181,7 +189,7 @@
 }
 
 .section {
-  border-top: 1px solid rgb(148 163 184 / 0.24);
+  border-top: 1px solid rgb(148 163 184 / 24%);
   padding-top: var(--space-3);
 }
 
@@ -204,8 +212,8 @@
   padding: 0.58rem 0.8rem;
   border-radius: var(--radius-full);
   width: fit-content;
-  border: 1px dashed rgb(148 163 184 / 0.5);
-  background: rgb(248 250 252 / 0.8);
+  border: 1px dashed rgb(148 163 184 / 50%);
+  background: rgb(248 250 252 / 80%);
 }
 
 .sku {
@@ -235,8 +243,8 @@
   color: #fff;
   font-weight: var(--font-weight-semibold);
   box-shadow:
-    0 16px 30px rgb(37 99 235 / 0.25),
-    inset 0 1px 1px rgb(255 255 255 / 0.28);
+    0 16px 30px rgb(37 99 235 / 25%),
+    inset 0 1px 1px rgb(255 255 255 / 28%);
   transition:
     transform var(--transition-fast),
     box-shadow var(--transition-base),
@@ -246,8 +254,8 @@
     transform: translateY(-1px);
     filter: brightness(1.03);
     box-shadow:
-      0 20px 35px rgb(37 99 235 / 0.28),
-      inset 0 1px 1px rgb(255 255 255 / 0.3);
+      0 20px 35px rgb(37 99 235 / 28%),
+      inset 0 1px 1px rgb(255 255 255 / 30%);
   }
 
   &:focus-visible {
@@ -261,12 +269,12 @@
 
   &.addToCartSuccess {
     background: linear-gradient(120deg, #0f766e, #059669);
-    box-shadow: 0 16px 30px rgb(5 150 105 / 0.28);
+    box-shadow: 0 16px 30px rgb(5 150 105 / 28%);
   }
 
   &.addToCartError {
     background: linear-gradient(120deg, #be123c, #e11d48);
-    box-shadow: 0 16px 30px rgb(225 29 72 / 0.27);
+    box-shadow: 0 16px 30px rgb(225 29 72 / 27%);
   }
 }
 
@@ -283,6 +291,7 @@
   0% {
     background-position: -200% 0;
   }
+
   100% {
     background-position: 200% 0;
   }
@@ -297,7 +306,7 @@
   text-align: center;
 }
 
-@media (max-width: 960px) {
+@media (width <= 960px) {
   .container {
     padding: var(--space-2) var(--space-4) var(--space-10);
     max-width: var(--container-max-width);

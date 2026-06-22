@@ -1,11 +1,15 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAdminCategories, useCreateCategory, useUpdateCategory } from '../../hooks';
-import type { Category } from '@/features/products/interfaces';
-import { Input, Select, Textarea } from '@/components/Form';
-import styles from './CategoryForm.module.scss';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import {
+  useAdminCategories,
+  useCreateCategory,
+  useUpdateCategory,
+} from "../../hooks";
+import type { Category } from "@/features/products/interfaces";
+import { Input, Select, Textarea } from "@/components/Form";
+import styles from "./CategoryForm.module.scss";
 
 interface CategoryFormProps {
   category?: Category;
@@ -21,11 +25,11 @@ export function CategoryForm({ category }: CategoryFormProps) {
   const isPending = isCreating || isUpdating;
 
   const [formData, setFormData] = useState({
-    name: '',
-    slug: '',
-    description: '',
-    image: '',
-    parentId: '',
+    name: "",
+    slug: "",
+    description: "",
+    image: "",
+    parentId: "",
   });
 
   useEffect(() => {
@@ -34,22 +38,31 @@ export function CategoryForm({ category }: CategoryFormProps) {
       setFormData({
         name: category.name,
         slug: category.slug,
-        description: category.description || '',
-        image: category.image || '',
-        parentId: category.parentId || '',
+        description: category.description || "",
+        image: category.image || "",
+        parentId: category.parentId || "",
       });
     }
   }, [category]);
 
   const handleNameChange = (value: string): void => {
-    const slug = value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    const slug = value
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9-]/g, "");
     setFormData((prev) => ({ ...prev, name: value, slug }));
   };
 
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
 
-    const payload: { name: string; slug: string; description?: string; image?: string; parentId?: string } = {
+    const payload: {
+      name: string;
+      slug: string;
+      description?: string;
+      image?: string;
+      parentId?: string;
+    } = {
       name: formData.name,
       slug: formData.slug,
     };
@@ -59,15 +72,22 @@ export function CategoryForm({ category }: CategoryFormProps) {
     if (formData.parentId) payload.parentId = formData.parentId;
 
     if (isEditMode && category) {
-      updateCategory({ id: category.id, data: payload }, { onSuccess: () => router.push('/admin/categories') });
+      updateCategory(
+        { id: category.id, data: payload },
+        { onSuccess: () => router.push("/admin/categories") },
+      );
     } else {
-      createCategory(payload, { onSuccess: () => router.push('/admin/categories') });
+      createCategory(payload, {
+        onSuccess: () => router.push("/admin/categories"),
+      });
     }
   };
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>{isEditMode ? 'Edit Category' : 'Create Category'}</h1>
+      <h1 className={styles.title}>
+        {isEditMode ? "Edit Category" : "Create Category"}
+      </h1>
 
       <form onSubmit={handleSubmit} className={styles.form}>
         <Input
@@ -85,14 +105,18 @@ export function CategoryForm({ category }: CategoryFormProps) {
           type="text"
           required
           value={formData.slug}
-          onChange={(e) => setFormData((prev) => ({ ...prev, slug: e.target.value }))}
+          onChange={(e) =>
+            setFormData((prev) => ({ ...prev, slug: e.target.value }))
+          }
         />
 
         <Textarea
           id="description"
           label="Description"
           value={formData.description}
-          onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+          onChange={(e) =>
+            setFormData((prev) => ({ ...prev, description: e.target.value }))
+          }
           rows={4}
         />
 
@@ -101,28 +125,51 @@ export function CategoryForm({ category }: CategoryFormProps) {
           label="Image URL"
           type="url"
           value={formData.image}
-          onChange={(e) => setFormData((prev) => ({ ...prev, image: e.target.value }))}
+          onChange={(e) =>
+            setFormData((prev) => ({ ...prev, image: e.target.value }))
+          }
         />
 
         <Select
           id="parent"
           label="Parent Category"
           value={formData.parentId}
-          onChange={(e) => setFormData((prev) => ({ ...prev, parentId: e.target.value }))}
+          onChange={(e) =>
+            setFormData((prev) => ({ ...prev, parentId: e.target.value }))
+          }
         >
           <option value="">None (top-level)</option>
           {categoriesData?.data.map((cat) => (
-            <option key={cat.id} value={cat.id} disabled={isEditMode && cat.id === category?.id}>
+            <option
+              key={cat.id}
+              value={cat.id}
+              disabled={isEditMode && cat.id === category?.id}
+            >
               {cat.name}
             </option>
           ))}
         </Select>
 
         <div className={styles.actions}>
-          <button type="submit" className={styles.submitBtn} disabled={isPending}>
-            {isPending ? (isEditMode ? 'Saving...' : 'Creating...') : isEditMode ? 'Save Changes' : 'Create Category'}
+          <button
+            type="submit"
+            className={styles.submitBtn}
+            disabled={isPending}
+          >
+            {isPending
+              ? isEditMode
+                ? "Saving..."
+                : "Creating..."
+              : isEditMode
+                ? "Save Changes"
+                : "Create Category"}
           </button>
-          <button type="button" className={styles.cancelBtn} onClick={() => router.back()} disabled={isPending}>
+          <button
+            type="button"
+            className={styles.cancelBtn}
+            onClick={() => router.back()}
+            disabled={isPending}
+          >
             Cancel
           </button>
         </div>

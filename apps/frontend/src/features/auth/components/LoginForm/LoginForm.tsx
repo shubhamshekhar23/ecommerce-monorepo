@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { loginSchema, type LoginFormValues } from '../../utils/auth.schemas';
-import { useLogin } from '../../hooks';
-import { resolveAuthError } from '../../utils/auth.utils';
-import { Input } from '@/components/Form';
-import styles from './LoginForm.module.scss';
+import Link from "next/link";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { loginSchema, type LoginFormValues } from "../../utils/auth.schemas";
+import { useLogin } from "../../hooks";
+import { resolveAuthError } from "../../utils/auth.utils";
+import { Input } from "@/components/Form";
+import styles from "./LoginForm.module.scss";
 
 interface LoginFormProps {
   sessionExpired?: boolean;
@@ -40,12 +40,12 @@ export function LoginForm({ sessionExpired = false }: LoginFormProps) {
 
       {error && (
         <div role="alert" className={styles.serverError}>
-          {resolveAuthError(error, 'Sign in failed. Please try again.')}
+          {resolveAuthError(error, "Sign in failed. Please try again.")}
         </div>
       )}
 
       <Input
-        {...register('email')}
+        {...register("email")}
         id="email"
         label="Email address"
         type="email"
@@ -54,7 +54,7 @@ export function LoginForm({ sessionExpired = false }: LoginFormProps) {
       />
 
       <Input
-        {...register('password')}
+        {...register("password")}
         id="password"
         label="Password"
         type="password"
@@ -63,12 +63,12 @@ export function LoginForm({ sessionExpired = false }: LoginFormProps) {
       />
 
       <button type="submit" disabled={isPending} className={styles.submit}>
-        {isPending ? 'Signing in...' : 'Sign in'}
+        {isPending ? "Signing in..." : "Sign in"}
       </button>
 
       <div className={styles.footer}>
         <p className={styles.footerText}>
-          New to us?{' '}
+          New to us?{" "}
           <Link href="/register" className={styles.link}>
             Create your account
           </Link>

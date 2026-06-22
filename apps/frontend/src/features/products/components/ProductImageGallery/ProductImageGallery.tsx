@@ -1,12 +1,12 @@
 // src/features/products/components/ProductImageGallery/ProductImageGallery.tsx
 
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Image from 'next/image';
-import { BLUR_PLACEHOLDER } from '@/shared/imagePlaceholder';
-import type { ProductImage } from '../../interfaces';
-import styles from './ProductImageGallery.module.scss';
+import { useState } from "react";
+import Image from "next/image";
+import { BLUR_PLACEHOLDER } from "@/shared/imagePlaceholder";
+import type { ProductImage } from "../../interfaces";
+import styles from "./ProductImageGallery.module.scss";
 
 interface ProductImageGalleryProps {
   images: ProductImage[];
@@ -18,7 +18,9 @@ export function ProductImageGallery({
   productName,
 }: ProductImageGalleryProps) {
   const mainImageIndex = images.findIndex((img) => img.isMain);
-  const [selectedIndex, setSelectedIndex] = useState(mainImageIndex >= 0 ? mainImageIndex : 0);
+  const [selectedIndex, setSelectedIndex] = useState(
+    mainImageIndex >= 0 ? mainImageIndex : 0,
+  );
 
   const selectedImage = images[selectedIndex];
 
@@ -55,7 +57,7 @@ export function ProductImageGallery({
             <button
               key={image.id || idx}
               className={`${styles.thumbnail} ${
-                idx === selectedIndex ? styles.active : ''
+                idx === selectedIndex ? styles.active : ""
               }`}
               onClick={() => setSelectedIndex(idx)}
               aria-label={`View image ${idx + 1}`}

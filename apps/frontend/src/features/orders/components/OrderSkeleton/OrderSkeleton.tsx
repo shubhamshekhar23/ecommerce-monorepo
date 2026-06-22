@@ -1,4 +1,4 @@
-import styles from './OrderSkeleton.module.scss';
+import styles from "./OrderSkeleton.module.scss";
 
 export function OrderSkeleton() {
   return (

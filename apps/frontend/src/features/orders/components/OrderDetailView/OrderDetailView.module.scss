@@ -1,12 +1,12 @@
-@use '@/styles/variables' as *;
-@use '@/styles/mixins' as *;
+@use "@/styles/variables" as *;
+@use "@/styles/mixins" as *;
 
 .container {
   max-width: 800px;
   margin: 0 auto;
   padding: var(--space-6);
 
-  @include respond-to('md') {
+  @include respond-to("md") {
     padding: var(--space-4);
   }
 }

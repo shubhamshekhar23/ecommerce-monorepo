@@ -1,6 +1,11 @@
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 $shimmer: linear-gradient(90deg, #ebf1ff 20%, #f8fafe 45%, #ebf1ff 70%);
@@ -43,8 +48,28 @@ $shimmer: linear-gradient(90deg, #ebf1ff 20%, #f8fafe 45%, #ebf1ff 70%);
   border-radius: var(--radius-sm);
 }
 
-.orderId { height: 1rem; width: 40%; }
-.status { height: 1.4rem; width: 6rem; border-radius: var(--radius-full, 9999px); }
-.date { height: 0.8rem; width: 30%; }
-.price { height: 1rem; width: 20%; }
-.item { height: 0.8rem; width: 100%; }
+.orderId {
+  height: 1rem;
+  width: 40%;
+}
+
+.status {
+  height: 1.4rem;
+  width: 6rem;
+  border-radius: var(--radius-full, 9999px);
+}
+
+.date {
+  height: 0.8rem;
+  width: 30%;
+}
+
+.price {
+  height: 1rem;
+  width: 20%;
+}
+
+.item {
+  height: 0.8rem;
+  width: 100%;
+}

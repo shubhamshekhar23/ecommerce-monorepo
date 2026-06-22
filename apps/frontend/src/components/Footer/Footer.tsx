@@ -1,26 +1,26 @@
 // Server Component — no 'use client' needed.
 // Only BackToTopButton is interactive; everything else is static markup.
 
-import Link from 'next/link';
-import { BackToTopButton } from './BackToTopButton';
-import styles from './Footer.module.scss';
+import Link from "next/link";
+import { BackToTopButton } from "./BackToTopButton";
+import styles from "./Footer.module.scss";
 
 const FOOTER_LINKS = {
   shop: [
-    { label: 'Browse Products', href: '/products' },
-    { label: "Today's Deals", href: '/deals' },
-    { label: 'New Arrivals', href: '/new' },
+    { label: "Browse Products", href: "/products" },
+    { label: "Today's Deals", href: "/deals" },
+    { label: "New Arrivals", href: "/new" },
   ],
   account: [
-    { label: 'Your Orders', href: '/orders' },
-    { label: 'Your Cart', href: '/cart' },
-    { label: 'Sign In', href: '/login' },
+    { label: "Your Orders", href: "/orders" },
+    { label: "Your Cart", href: "/cart" },
+    { label: "Sign In", href: "/login" },
   ],
   support: [
-    { label: 'Help Center', href: '/help' },
-    { label: 'Shipping Info', href: '/shipping' },
-    { label: 'Contact Us', href: '/contact' },
-    { label: 'Privacy Policy', href: '/privacy' },
+    { label: "Help Center", href: "/help" },
+    { label: "Shipping Info", href: "/shipping" },
+    { label: "Contact Us", href: "/contact" },
+    { label: "Privacy Policy", href: "/privacy" },
   ],
 };
 

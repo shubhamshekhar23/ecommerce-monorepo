@@ -1,27 +1,27 @@
 // src/features/admin/components/AdminNav/AdminNav.tsx
 
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import styles from './AdminNav.module.scss';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import styles from "./AdminNav.module.scss";
 
 export function AdminNav() {
   const pathname = usePathname();
 
   const isActive = (path: string): boolean => {
-    if (path === '/admin') {
-      return pathname === '/admin';
+    if (path === "/admin") {
+      return pathname === "/admin";
     }
     return pathname.startsWith(path);
   };
 
   const navItems = [
-    { label: 'Dashboard', href: '/admin' },
-    { label: 'Products', href: '/admin/products' },
-    { label: 'Categories', href: '/admin/categories' },
-    { label: 'Orders', href: '/admin/orders' },
-    { label: 'Users', href: '/admin/users' },
+    { label: "Dashboard", href: "/admin" },
+    { label: "Products", href: "/admin/products" },
+    { label: "Categories", href: "/admin/categories" },
+    { label: "Orders", href: "/admin/orders" },
+    { label: "Users", href: "/admin/users" },
   ];
 
   return (
@@ -37,7 +37,7 @@ export function AdminNav() {
           <Link
             key={item.href}
             href={item.href}
-            className={`${styles.link} ${isActive(item.href) ? styles.active : ''}`}
+            className={`${styles.link} ${isActive(item.href) ? styles.active : ""}`}
           >
             {item.label}
           </Link>

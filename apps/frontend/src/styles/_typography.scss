@@ -33,7 +33,9 @@ p {
 a {
   color: var(--color-link);
   text-decoration: none;
-  transition: color var(--transition-base), opacity var(--transition-base);
+  transition:
+    color var(--transition-base),
+    opacity var(--transition-base);
 
   &:hover {
     color: var(--color-accent-hover);
@@ -86,7 +88,9 @@ select {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-bg-surface);
-  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+  transition:
+    border-color var(--transition-base),
+    box-shadow var(--transition-base);
 
   &:focus {
     outline: none;

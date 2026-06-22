@@ -1,4 +1,4 @@
-@use '@/styles/mixins' as *;
+@use "@/styles/mixins" as *;
 
 .sidebar {
   width: 100%;
@@ -11,7 +11,7 @@
   position: sticky;
   top: calc(var(--header-height) + var(--navbar-height) + var(--space-4));
 
-  @media (max-width: 1024px) {
+  @media (width <= 1024px) {
     position: static;
   }
 }

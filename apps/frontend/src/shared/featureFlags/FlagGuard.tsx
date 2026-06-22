@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { type ReactNode } from 'react';
-import { notFound } from 'next/navigation';
-import { useFeatureFlag } from './FeatureFlagProvider';
-import type { Flags } from './featureFlags';
+import { type ReactNode } from "react";
+import { notFound } from "next/navigation";
+import { useFeatureFlag } from "./FeatureFlagProvider";
+import type { Flags } from "./featureFlags";
 
 interface FlagGuardProps {
   flag: keyof Flags;

@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useCart } from '../../hooks';
-import { CartItemRow } from '../CartItemRow/CartItemRow';
-import { CartSummary } from '../CartSummary/CartSummary';
-import { CartSkeleton } from '../CartSkeleton/CartSkeleton';
-import { EmptyState } from '@/components/EmptyState/EmptyState';
-import styles from './CartView.module.scss';
+import { useCart } from "../../hooks";
+import { CartItemRow } from "../CartItemRow/CartItemRow";
+import { CartSummary } from "../CartSummary/CartSummary";
+import { CartSkeleton } from "../CartSkeleton/CartSkeleton";
+import { EmptyState } from "@/components/EmptyState/EmptyState";
+import styles from "./CartView.module.scss";
 
 export function CartView() {
   const { data: cart, isLoading, error } = useCart();
@@ -28,7 +28,7 @@ export function CartView() {
         icon="🛒"
         title="Your cart is empty"
         description="Add some items to get started."
-        action={{ label: 'Browse products', href: '/products' }}
+        action={{ label: "Browse products", href: "/products" }}
       />
     );
   }

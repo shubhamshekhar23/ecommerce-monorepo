@@ -1,6 +1,6 @@
-import { Controller } from 'react-hook-form';
-import type { Control, FieldPath, FieldValues } from 'react-hook-form';
-import { Textarea } from './Textarea';
+import { Controller } from "react-hook-form";
+import type { Control, FieldPath, FieldValues } from "react-hook-form";
+import { Textarea } from "./Textarea";
 
 interface ControlledTextareaProps<T extends FieldValues> {
   control: Control<T>;
@@ -35,7 +35,7 @@ export function ControlledTextarea<T extends FieldValues>({
           placeholder={placeholder}
           disabled={disabled}
           error={fieldState.error?.message}
-          value={field.value ?? ''}
+          value={field.value ?? ""}
         />
       )}
     />

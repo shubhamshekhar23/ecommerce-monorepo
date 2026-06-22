@@ -1,12 +1,12 @@
 // src/features/checkout/components/CheckoutForm/CheckoutForm.tsx
 
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
-import { resolveStripeError } from '../../utils/stripe-errors';
-import styles from './CheckoutForm.module.scss';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useStripe, useElements, CardElement } from "@stripe/react-stripe-js";
+import { resolveStripeError } from "../../utils/stripe-errors";
+import styles from "./CheckoutForm.module.scss";
 
 interface CheckoutFormProps {
   orderId: string;
@@ -18,13 +18,19 @@ interface CheckoutFormProps {
 // checkout starts clean (new idempotency key, no stale clientSecret).
 function clearCheckoutSession(): void {
   try {
-    sessionStorage.removeItem('checkout-idempotency-key');
-    sessionStorage.removeItem('checkout-order-id');
-    sessionStorage.removeItem('checkout-client-secret');
-  } catch { /* ignore */ }
+    sessionStorage.removeItem("checkout-idempotency-key");
+    sessionStorage.removeItem("checkout-order-id");
+    sessionStorage.removeItem("checkout-client-secret");
+  } catch {
+    /* ignore */
+  }
 }
 
-export function CheckoutForm({ orderId, amount, clientSecret }: CheckoutFormProps) {
+export function CheckoutForm({
+  orderId,
+  amount,
+  clientSecret,
+}: CheckoutFormProps) {
   const router = useRouter();
   const stripe = useStripe();
   const elements = useElements();
@@ -37,7 +43,7 @@ export function CheckoutForm({ orderId, amount, clientSecret }: CheckoutFormProp
     e.preventDefault();
 
     if (!stripe || !elements) {
-      setError('Payment system not loaded. Please refresh and try again.');
+      setError("Payment system not loaded. Please refresh and try again.");
       return;
     }
 
@@ -46,14 +52,15 @@ export function CheckoutForm({ orderId, amount, clientSecret }: CheckoutFormProp
 
     const cardElement = elements.getElement(CardElement);
     if (!cardElement) {
-      setError('Card element not found. Please refresh and try again.');
+      setError("Card element not found. Please refresh and try again.");
       setProcessing(false);
       return;
     }
 
-    const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-      payment_method: { card: cardElement },
-    });
+    const { error: confirmError, paymentIntent } =
+      await stripe.confirmCardPayment(clientSecret, {
+        payment_method: { card: cardElement },
+      });
 
     if (confirmError) {
       setError(resolveStripeError(confirmError));
@@ -65,7 +72,7 @@ export function CheckoutForm({ orderId, amount, clientSecret }: CheckoutFormProp
     // Redirect to the order page either way — it will show the current status.
     clearCheckoutSession();
 
-    if (paymentIntent?.status === 'processing') {
+    if (paymentIntent?.status === "processing") {
       router.push(`/orders/${orderId}?payment_processing=1`);
     } else {
       router.push(`/orders/${orderId}`);
@@ -92,15 +99,15 @@ export function CheckoutForm({ orderId, amount, clientSecret }: CheckoutFormProp
               options={{
                 style: {
                   base: {
-                    fontSize: '16px',
-                    fontFamily: 'var(--font-family-base)',
-                    color: 'var(--color-text-primary)',
-                    '::placeholder': {
-                      color: 'var(--color-text-muted)',
+                    fontSize: "16px",
+                    fontFamily: "var(--font-family-base)",
+                    color: "var(--color-text-primary)",
+                    "::placeholder": {
+                      color: "var(--color-text-muted)",
                     },
                   },
                   invalid: {
-                    color: '#cc0c39',
+                    color: "#cc0c39",
                   },
                 },
               }}
@@ -115,7 +122,7 @@ export function CheckoutForm({ orderId, amount, clientSecret }: CheckoutFormProp
           className={styles.submitBtn}
           disabled={!stripe || processing}
         >
-          {processing ? 'Processing payment…' : `Pay $${total}`}
+          {processing ? "Processing payment…" : `Pay $${total}`}
         </button>
       </form>
 

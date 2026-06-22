@@ -1,6 +1,11 @@
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 $shimmer: linear-gradient(90deg, #ebf1ff 20%, #f8fafe 45%, #ebf1ff 70%);
@@ -42,5 +47,10 @@ $shimmer: linear-gradient(90deg, #ebf1ff 20%, #f8fafe 45%, #ebf1ff 70%);
   border-radius: var(--radius-sm);
 }
 
-.headerCell { height: 0.85rem; }
-.cell { height: 1rem; }
+.headerCell {
+  height: 0.85rem;
+}
+
+.cell {
+  height: 1rem;
+}

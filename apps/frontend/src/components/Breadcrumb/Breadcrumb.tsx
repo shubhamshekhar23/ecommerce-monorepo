@@ -1,5 +1,5 @@
-import Link from 'next/link';
-import styles from './Breadcrumb.module.scss';
+import Link from "next/link";
+import styles from "./Breadcrumb.module.scss";
 
 export interface BreadcrumbItem {
   label: string;
@@ -17,7 +17,9 @@ export function Breadcrumb({ items }: BreadcrumbProps) {
         {items.map((item, i) => (
           <li key={i} className={styles.item}>
             {i > 0 && (
-              <span className={styles.separator} aria-hidden="true">›</span>
+              <span className={styles.separator} aria-hidden="true">
+                ›
+              </span>
             )}
             {item.href ? (
               <Link href={item.href} className={styles.link}>

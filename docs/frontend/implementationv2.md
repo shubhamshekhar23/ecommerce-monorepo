@@ -154,10 +154,10 @@ Unit, integration, and E2E coverage. Build in dependency order: utilities first,
 
 CI enforcement. Depends on Phase 6 (tests must exist before you gate on them).
 
-- [ ] **Stylelint in CI** → [testing/ci-cd-quality-gates.md](./testing/ci-cd-quality-gates.md)
+- [x] **Stylelint in CI** → [testing/ci-cd-quality-gates.md](./testing/ci-cd-quality-gates.md)
   - Add `npx stylelint "src/**/*.scss"` step to the GitHub Actions workflow; already runs via lint-staged on commit — make it a required CI check too
 
-- [ ] **Prettier format check in CI** → [testing/ci-cd-quality-gates.md](./testing/ci-cd-quality-gates.md)
+- [x] **Prettier format check in CI** → [testing/ci-cd-quality-gates.md](./testing/ci-cd-quality-gates.md)
   - Add `prettier --check "src/**/*.{ts,tsx,scss}"` to CI; fail the build if any file isn't formatted
 
 - [ ] **E2E tests in CI** → [testing/ci-cd-quality-gates.md](./testing/ci-cd-quality-gates.md)

@@ -21,7 +21,12 @@ body {
   background:
     radial-gradient(circle at 10% -10%, rgb(37 99 235 / 14%), transparent 45%),
     radial-gradient(circle at 90% 0%, rgb(30 64 175 / 10%), transparent 36%),
-    linear-gradient(180deg, #f8fbff 0%, var(--color-bg-canvas) 45%, #eef2fb 100%);
+    linear-gradient(
+      180deg,
+      #f8fbff 0%,
+      var(--color-bg-canvas) 45%,
+      #eef2fb 100%
+    );
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

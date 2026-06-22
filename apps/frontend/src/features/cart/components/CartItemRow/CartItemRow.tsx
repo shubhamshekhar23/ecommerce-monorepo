@@ -1,11 +1,11 @@
 // src/features/cart/components/CartItemRow/CartItemRow.tsx
 
-'use client';
+"use client";
 
-import Link from 'next/link';
-import type { CartItem } from '../../interfaces';
-import { useUpdateCartItem, useRemoveCartItem } from '../../hooks';
-import styles from './CartItemRow.module.scss';
+import Link from "next/link";
+import type { CartItem } from "../../interfaces";
+import { useUpdateCartItem, useRemoveCartItem } from "../../hooks";
+import styles from "./CartItemRow.module.scss";
 
 interface CartItemRowProps {
   item: CartItem;
@@ -77,7 +77,7 @@ export function CartItemRow({ item }: CartItemRowProps) {
         disabled={isDisabled}
         aria-label={`Remove ${item.product.name} from cart`}
       >
-        {isRemoving ? '...' : 'Remove'}
+        {isRemoving ? "..." : "Remove"}
       </button>
     </div>
   );

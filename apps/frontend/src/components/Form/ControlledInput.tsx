@@ -1,13 +1,13 @@
-import { Controller } from 'react-hook-form';
-import type { Control, FieldPath, FieldValues } from 'react-hook-form';
-import { Input } from './Input';
+import { Controller } from "react-hook-form";
+import type { Control, FieldPath, FieldValues } from "react-hook-form";
+import { Input } from "./Input";
 
 interface ControlledInputProps<T extends FieldValues> {
   control: Control<T>;
   name: FieldPath<T>;
   label: string;
   hint?: string;
-  type?: React.InputHTMLAttributes<HTMLInputElement>['type'];
+  type?: React.InputHTMLAttributes<HTMLInputElement>["type"];
   autoComplete?: string;
   placeholder?: string;
   disabled?: boolean;
@@ -38,7 +38,7 @@ export function ControlledInput<T extends FieldValues>({
           placeholder={placeholder}
           disabled={disabled}
           error={fieldState.error?.message}
-          value={field.value ?? ''}
+          value={field.value ?? ""}
         />
       )}
     />

@@ -2,9 +2,9 @@
   position: sticky;
   top: var(--header-height);
   z-index: 110;
-  background: rgb(248 251 255 / 0.85);
+  background: rgb(248 251 255 / 85%);
   backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgb(148 163 184 / 0.28);
+  border-bottom: 1px solid rgb(148 163 184 / 28%);
 }
 
 .container {
@@ -22,7 +22,9 @@
   color: var(--color-text-secondary);
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-full);
-  transition: color var(--transition-base), background-color var(--transition-base);
+  transition:
+    color var(--transition-base),
+    background-color var(--transition-base);
 
   &:hover {
     color: var(--color-accent);

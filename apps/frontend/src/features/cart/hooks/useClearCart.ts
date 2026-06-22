@@ -1,9 +1,9 @@
 // src/features/cart/hooks/useClearCart.ts
 
-'use client';
+"use client";
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { clearCartApi } from '../api/cart.api';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { clearCartApi } from "../api/cart.api";
 
 export function useClearCart() {
   const queryClient = useQueryClient();
@@ -11,7 +11,7 @@ export function useClearCart() {
   return useMutation({
     mutationFn: clearCartApi,
     onSuccess: () => {
-      queryClient.setQueryData(['cart'], null);
+      queryClient.setQueryData(["cart"], null);
     },
   });
 }

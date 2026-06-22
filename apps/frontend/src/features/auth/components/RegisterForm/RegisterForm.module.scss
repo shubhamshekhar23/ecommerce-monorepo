@@ -1,4 +1,4 @@
-@use '@/styles/mixins' as *;
+@use "@/styles/mixins" as *;
 
 .form {
   display: grid;
@@ -23,7 +23,7 @@
   grid-template-columns: 1fr 1fr;
   gap: var(--space-4);
 
-  @media (max-width: 640px) {
+  @media (width <= 640px) {
     grid-template-columns: 1fr;
   }
 }

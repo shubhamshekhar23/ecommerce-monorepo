@@ -67,7 +67,6 @@ export default async function ProductOGImage({
         }}
       >
         {imageUrl ? (
-           
           <img
             src={imageUrl}
             alt={name}

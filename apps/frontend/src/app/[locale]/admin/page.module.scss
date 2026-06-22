@@ -41,7 +41,9 @@
   border-radius: var(--radius-lg);
   background: var(--color-bg-surface);
   padding: var(--space-5);
-  transition: transform var(--transition-base), box-shadow var(--transition-base);
+  transition:
+    transform var(--transition-base),
+    box-shadow var(--transition-base);
 
   &:hover {
     transform: translateY(-2px);
@@ -49,10 +51,21 @@
   }
 }
 
-.products { border-top: 3px solid #2563eb; }
-.categories { border-top: 3px solid #7c3aed; }
-.orders { border-top: 3px solid #0891b2; }
-.users { border-top: 3px solid #ea580c; }
+.products {
+  border-top: 3px solid #2563eb;
+}
+
+.categories {
+  border-top: 3px solid #7c3aed;
+}
+
+.orders {
+  border-top: 3px solid #0891b2;
+}
+
+.users {
+  border-top: 3px solid #ea580c;
+}
 
 .label {
   font-size: var(--font-size-sm);

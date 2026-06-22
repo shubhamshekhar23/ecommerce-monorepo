@@ -1,10 +1,10 @@
 // src/features/admin/hooks/useUpdateOrderStatus.ts
 
-'use client';
+"use client";
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { updateOrderStatusApi } from '../api/admin-orders.api';
-import type { Order, OrderStatus } from '@/features/orders/interfaces';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { updateOrderStatusApi } from "../api/admin-orders.api";
+import type { Order, OrderStatus } from "@/features/orders/interfaces";
 
 interface UpdateOrderStatusPayload {
   id: string;
@@ -15,10 +15,9 @@ export function useUpdateOrderStatus() {
   const queryClient = useQueryClient();
 
   return useMutation<Order, Error, UpdateOrderStatusPayload>({
-    mutationFn: (payload) =>
-      updateOrderStatusApi(payload.id, payload.status),
+    mutationFn: (payload) => updateOrderStatusApi(payload.id, payload.status),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'orders'] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "orders"] });
     },
   });
 }

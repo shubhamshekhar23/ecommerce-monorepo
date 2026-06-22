@@ -1,6 +1,6 @@
-import { Controller } from 'react-hook-form';
-import type { Control, FieldPath, FieldValues } from 'react-hook-form';
-import { Select } from './Select';
+import { Controller } from "react-hook-form";
+import type { Control, FieldPath, FieldValues } from "react-hook-form";
+import { Select } from "./Select";
 
 interface ControlledSelectProps<T extends FieldValues> {
   control: Control<T>;
@@ -31,7 +31,7 @@ export function ControlledSelect<T extends FieldValues>({
           hint={hint}
           disabled={disabled}
           error={fieldState.error?.message}
-          value={field.value ?? ''}
+          value={field.value ?? ""}
         >
           {children}
         </Select>

@@ -1,8 +1,11 @@
-import { forwardRef } from 'react';
-import { ErrorMessage } from './ErrorMessage';
-import styles from './Checkbox.module.scss';
+import { forwardRef } from "react";
+import { ErrorMessage } from "./ErrorMessage";
+import styles from "./Checkbox.module.scss";
 
-interface CheckboxProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> {
+interface CheckboxProps extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "type"
+> {
   id: string;
   label: string;
   error?: string;
@@ -19,9 +22,9 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
             ref={ref}
             id={id}
             type="checkbox"
-            aria-invalid={error ? 'true' : undefined}
+            aria-invalid={error ? "true" : undefined}
             aria-describedby={error ? errorId : undefined}
-            className={`${styles.checkbox}${className ? ` ${className}` : ''}`}
+            className={`${styles.checkbox}${className ? ` ${className}` : ""}`}
             {...rest}
           />
           <span className={styles.labelText}>{label}</span>
@@ -32,4 +35,4 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
   },
 );
 
-Checkbox.displayName = 'Checkbox';
+Checkbox.displayName = "Checkbox";

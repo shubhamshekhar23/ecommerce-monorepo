@@ -1,9 +1,19 @@
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
 }
 
-$shimmer-gradient: linear-gradient(90deg, #e9f0ff 25%, #f7f9ff 50%, #e9f0ff 75%);
+$shimmer-gradient: linear-gradient(
+  90deg,
+  #e9f0ff 25%,
+  #f7f9ff 50%,
+  #e9f0ff 75%
+);
 
 .container {
   display: grid;
@@ -14,7 +24,7 @@ $shimmer-gradient: linear-gradient(90deg, #e9f0ff 25%, #f7f9ff 50%, #e9f0ff 75%)
   padding: 0 var(--space-4);
   align-items: start;
 
-  @media (max-width: 960px) {
+  @media (width <= 960px) {
     grid-template-columns: 1fr;
   }
 }

@@ -1,4 +1,4 @@
-@use '@/styles/mixins' as *;
+@use "@/styles/mixins" as *;
 
 .nav {
   display: flex;
@@ -10,7 +10,7 @@
 
 .header {
   padding: var(--space-5);
-  border-bottom: 1px solid rgb(148 163 184 / 0.2);
+  border-bottom: 1px solid rgb(148 163 184 / 20%);
 }
 
 .logo {
@@ -34,19 +34,19 @@
 
   &:hover {
     color: #f8fafc;
-    background: rgb(148 163 184 / 0.15);
+    background: rgb(148 163 184 / 15%);
   }
 
   &.active {
     color: #dbeafe;
-    background: rgb(37 99 235 / 0.28);
+    background: rgb(37 99 235 / 28%);
     font-weight: var(--font-weight-semibold);
   }
 }
 
 .footer {
   padding: var(--space-4);
-  border-top: 1px solid rgb(148 163 184 / 0.2);
+  border-top: 1px solid rgb(148 163 184 / 20%);
 }
 
 .storeLink {

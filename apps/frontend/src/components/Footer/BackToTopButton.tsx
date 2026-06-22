@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import styles from './Footer.module.scss';
+import styles from "./Footer.module.scss";
 
 export function BackToTopButton() {
   const handleClick = (): void => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (

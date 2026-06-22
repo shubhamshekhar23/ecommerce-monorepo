@@ -1,12 +1,15 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useMemo } from 'react';
-import type { ProductVariant, DerivedVariantType } from '../../interfaces';
-import styles from './VariantSelector.module.scss';
+import { useState, useEffect, useMemo } from "react";
+import type { ProductVariant, DerivedVariantType } from "../../interfaces";
+import styles from "./VariantSelector.module.scss";
 
 interface VariantSelectorProps {
   variants: ProductVariant[];
-  onVariantChange: (variant: ProductVariant | null, isFullySelected: boolean) => void;
+  onVariantChange: (
+    variant: ProductVariant | null,
+    isFullySelected: boolean,
+  ) => void;
 }
 
 // Derives the selectable type/option matrix from the flat variants array.
@@ -42,13 +45,19 @@ function findMatchingVariant(
   );
 }
 
-export function VariantSelector({ variants, onVariantChange }: VariantSelectorProps) {
+export function VariantSelector({
+  variants,
+  onVariantChange,
+}: VariantSelectorProps) {
   const [selection, setSelection] = useState<Record<string, string>>({});
 
   const variantTypes = useMemo(() => deriveVariantTypes(variants), [variants]);
 
-  const isFullySelected = variantTypes.length > 0 && variantTypes.every((t) => !!selection[t.name]);
-  const matchedVariant = isFullySelected ? findMatchingVariant(variants, selection) : null;
+  const isFullySelected =
+    variantTypes.length > 0 && variantTypes.every((t) => !!selection[t.name]);
+  const matchedVariant = isFullySelected
+    ? findMatchingVariant(variants, selection)
+    : null;
 
   useEffect(() => {
     onVariantChange(matchedVariant, isFullySelected);
@@ -82,13 +91,15 @@ export function VariantSelector({ variants, onVariantChange }: VariantSelectorPr
                 <button
                   key={value}
                   type="button"
-                  className={`${styles.option} ${isSelected ? styles.optionSelected : ''} ${outOfStock ? styles.optionOos : ''}`}
+                  className={`${styles.option} ${isSelected ? styles.optionSelected : ""} ${outOfStock ? styles.optionOos : ""}`}
                   onClick={() => handleSelect(type.name, value)}
                   aria-pressed={isSelected}
                   title={outOfStock ? `${value} — Out of stock` : value}
                 >
                   {value}
-                  {outOfStock && <span className={styles.oosLine} aria-hidden="true" />}
+                  {outOfStock && (
+                    <span className={styles.oosLine} aria-hidden="true" />
+                  )}
                 </button>
               );
             })}

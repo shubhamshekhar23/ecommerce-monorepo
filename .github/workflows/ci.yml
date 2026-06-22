@@ -389,6 +389,12 @@ jobs:
       - name: ESLint (zero warnings)
         run: npm run lint:check
 
+      - name: Stylelint
+        run: npx stylelint "src/**/*.scss" --max-warnings=0
+
+      - name: Prettier format check
+        run: npx prettier --check "src/**/*.{ts,tsx,scss}"
+
       - name: Dependency audit
         run: npm audit --audit-level=high
         working-directory: .

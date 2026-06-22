@@ -1,4 +1,4 @@
-@use '@/styles/mixins' as *;
+@use "@/styles/mixins" as *;
 
 .card {
   display: flex;
@@ -9,7 +9,10 @@
   border-radius: var(--radius-lg);
   overflow: hidden;
   background: var(--color-bg-surface);
-  transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base);
+  transition:
+    transform var(--transition-base),
+    box-shadow var(--transition-base),
+    border-color var(--transition-base);
 
   &:hover {
     transform: translateY(-2px);
@@ -45,6 +48,7 @@
   font-size: var(--font-size-sm);
   line-height: 1.35;
   color: var(--color-text-primary);
+
   @include line-clamp(2);
 }
 

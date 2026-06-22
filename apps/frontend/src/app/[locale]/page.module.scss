@@ -83,7 +83,7 @@
     padding-left: var(--space-4);
 
     &::before {
-      content: '';
+      content: "";
       width: 0.4rem;
       height: 0.4rem;
       border-radius: 999px;
@@ -135,7 +135,9 @@
   background: linear-gradient(170deg, #fff 0%, #f8fbff 100%);
   border-radius: var(--radius-lg);
   padding: var(--space-5);
-  transition: transform var(--transition-base), box-shadow var(--transition-base);
+  transition:
+    transform var(--transition-base),
+    box-shadow var(--transition-base);
 
   h3 {
     color: var(--color-text-primary);

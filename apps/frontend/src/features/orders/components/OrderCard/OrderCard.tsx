@@ -1,12 +1,12 @@
 // src/features/orders/components/OrderCard/OrderCard.tsx
 
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useState } from 'react';
-import { useCancelOrder } from '../../hooks';
-import type { Order } from '../../interfaces';
-import styles from './OrderCard.module.scss';
+import Link from "next/link";
+import { useState } from "react";
+import { useCancelOrder } from "../../hooks";
+import type { Order } from "../../interfaces";
+import styles from "./OrderCard.module.scss";
 
 interface OrderCardProps {
   order: Order;
@@ -16,30 +16,32 @@ export function OrderCard({ order }: OrderCardProps) {
   const { mutate: cancelOrder, isPending: isCanceling } = useCancelOrder();
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const isCancellable = ['PENDING', 'CONFIRMED', 'PROCESSING'].includes(order.status);
-  const date = new Date(order.createdAt).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
+  const isCancellable = ["PENDING", "CONFIRMED", "PROCESSING"].includes(
+    order.status,
+  );
+  const date = new Date(order.createdAt).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
   });
   const total = Number(order.totalPrice).toFixed(2);
 
   const getStatusColor = (status: string): string => {
     switch (status) {
-      case 'PENDING':
+      case "PENDING":
         return styles.statusPending;
-      case 'CONFIRMED':
-      case 'PROCESSING':
+      case "CONFIRMED":
+      case "PROCESSING":
         return styles.statusProcessing;
-      case 'SHIPPED':
+      case "SHIPPED":
         return styles.statusShipped;
-      case 'DELIVERED':
+      case "DELIVERED":
         return styles.statusDelivered;
-      case 'CANCELLED':
-      case 'REFUNDED':
+      case "CANCELLED":
+      case "REFUNDED":
         return styles.statusCancelled;
       default:
-        return '';
+        return "";
     }
   };
 
@@ -70,10 +72,12 @@ export function OrderCard({ order }: OrderCardProps) {
           <span className={styles.label}>Total</span>
           <span className={`${styles.value} ${styles.total}`}>${total}</span>
         </div>
-        {order.paymentStatus === 'FAILED' && (
+        {order.paymentStatus === "FAILED" && (
           <div className={styles.row}>
             <span className={styles.label}>Payment</span>
-            <span className={`${styles.value} ${styles.paymentFailed}`}>Failed</span>
+            <span className={`${styles.value} ${styles.paymentFailed}`}>
+              Failed
+            </span>
           </div>
         )}
       </div>
@@ -90,7 +94,7 @@ export function OrderCard({ order }: OrderCardProps) {
               onClick={() => setShowConfirm(true)}
               disabled={isCanceling}
             >
-              {isCanceling ? 'Canceling...' : 'Cancel Order'}
+              {isCanceling ? "Canceling..." : "Cancel Order"}
             </button>
           )
         ) : (
@@ -102,7 +106,7 @@ export function OrderCard({ order }: OrderCardProps) {
                 onClick={handleCancel}
                 disabled={isCanceling}
               >
-                {isCanceling ? '...' : 'Yes'}
+                {isCanceling ? "..." : "Yes"}
               </button>
               <button
                 className={styles.confirmNo}
