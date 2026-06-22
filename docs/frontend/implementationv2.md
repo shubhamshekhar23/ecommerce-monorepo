@@ -169,7 +169,7 @@ CI enforcement. Depends on Phase 6 (tests must exist before you gate on them).
 - [x] **Bundle size gate in CI** → [testing/ci-cd-quality-gates.md](./testing/ci-cd-quality-gates.md)
   - Set per-page JS budget (e.g. 200kB for homepage, 300kB for product page); fail CI if any page exceeds it; use `bundlewatch` or Next.js build output analysis
 
-- [ ] **Dependabot** → [testing/ci-cd-quality-gates.md](./testing/ci-cd-quality-gates.md)
+- [x] **Dependabot** → [testing/ci-cd-quality-gates.md](./testing/ci-cd-quality-gates.md)
   - Add `.github/dependabot.yml` for `npm` in `apps/frontend`, `apps/backend`, `packages/shared-types`; weekly dependency PRs with security patches auto-merged
 
 - [ ] **Lighthouse CI** → [testing/ci-cd-quality-gates.md](./testing/ci-cd-quality-gates.md)

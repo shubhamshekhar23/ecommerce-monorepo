@@ -71,7 +71,7 @@ The monorepo already has a CI matrix workflow (`paths-filter` on all 5 services)
 - [x] **`npm audit`** — run `npm audit --audit-level=high` in CI. Fails if any high or critical severity vulnerability is found in dependencies.
   - Complexity: Easy
 
-- [ ] **Dependabot or Renovate** — auto-open PRs when dependencies have new versions or security patches. Configure in `.github/dependabot.yml`.
+- [x] **Dependabot or Renovate** — auto-open PRs when dependencies have new versions or security patches. Configure in `.github/dependabot.yml`.
   - Complexity: Easy (config file)
 
 ### Performance Gate
