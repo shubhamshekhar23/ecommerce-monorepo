@@ -24,7 +24,7 @@ Source: `others.md`
   - Complexity: Medium (requires backend SSE endpoint too)
   - File: `src/features/orders/hooks/useOrderStatusStream.ts`
 
-- [ ] **WebSocket for live cart/inventory** — if two users are viewing the same product, the stock count could go to zero. Use a WebSocket connection to receive real-time inventory updates and reflect them in the UI (disable "Add to Cart" when stock hits 0 without requiring a page refresh).
+- [x] **WebSocket for live cart/inventory** — if two users are viewing the same product, the stock count could go to zero. Use a WebSocket connection to receive real-time inventory updates and reflect them in the UI (disable "Add to Cart" when stock hits 0 without requiring a page refresh).
   - Complexity: Complex
   - Defer: implement after SSE works
 

@@ -5,3 +5,4 @@ export { useProduct } from "./useProduct";
 export { useCategories } from "./useCategories";
 export { useProductsCursor } from "./useProductsCursor";
 export { useProductSearch } from "./useProductSearch";
+export { useInventoryStream } from "./useInventoryStream";

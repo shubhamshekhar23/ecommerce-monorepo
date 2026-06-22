@@ -9,6 +9,7 @@ import {
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 import { PRODUCT_RESTOCKED_EVENT } from '@/modules/stock-alerts/stock-alerts.service';
+import { INVENTORY_STOCK_UPDATED } from '@/modules/products/inventory.gateway';
 import { CreateVariantTypeDto, CreateVariantDto, UpdateVariantStockDto } from './dto';
 
 @Injectable()
@@ -108,6 +109,12 @@ export class VariantsService {
         productName: variant.product.name,
       });
     }
+
+    this.eventEmitter.emit(INVENTORY_STOCK_UPDATED, {
+      productId: variant.product.id,
+      variantId,
+      stock: dto.stock,
+    });
 
     return updated;
   }

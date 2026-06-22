@@ -9,11 +9,18 @@ import { VariantsService } from './variants/variants.service';
 import { VariantsController } from './variants/variants.controller';
 import { CsvImportService } from './csv-import.service';
 import { ProductsResolver } from './products.resolver';
+import { InventoryGateway } from './inventory.gateway';
 
 @Module({
   imports: [PrismaModule, OutboxModule, ReviewsModule, SearchGrpcClientModule],
   controllers: [ProductsController, VariantsController],
-  providers: [ProductsService, VariantsService, CsvImportService, ProductsResolver],
+  providers: [
+    ProductsService,
+    VariantsService,
+    CsvImportService,
+    ProductsResolver,
+    InventoryGateway,
+  ],
   exports: [ProductsService, VariantsService],
 })
 export class ProductsModule {}

@@ -6,7 +6,7 @@ import { useState, useCallback, useEffect } from "react";
 import { trackViewItem } from "@/shared/analytics/trackEvent";
 import { useAuthStore } from "@/store/auth.store";
 import { useAddToCart } from "@/features/cart/hooks";
-import { useProduct } from "../../hooks";
+import { useProduct, useInventoryStream } from "../../hooks";
 import { ProductImageGallery } from "../ProductImageGallery/ProductImageGallery";
 import { VariantSelector } from "../VariantSelector/VariantSelector";
 import { Breadcrumb } from "@/components/Breadcrumb/Breadcrumb";
@@ -19,6 +19,7 @@ interface ProductDetailViewProps {
 
 export function ProductDetailView({ slug }: ProductDetailViewProps) {
   const { data: product, isLoading, error } = useProduct(slug);
+  useInventoryStream(product?.id);
   const router = useRouter();
   const status = useAuthStore((state) => state.status);
   const { mutate: addToCart, isPending } = useAddToCart();

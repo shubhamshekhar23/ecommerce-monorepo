@@ -232,7 +232,7 @@ Long-term architecture improvements and the two complex real-time features defer
 - [x] **Backend NestJS DTOs derive from shared types** → [architecture/shared-types.md](./architecture/shared-types.md)
   - Backend response classes implement or extend the shared TypeScript interfaces; a type mismatch in a backend DTO causes a compile error in the shared package, surfacing in CI before it reaches production
 
-- [ ] **WebSocket for live inventory** → [advanced/pwa-and-realtime.md](./advanced/pwa-and-realtime.md)
+- [x] **WebSocket for live inventory** → [advanced/pwa-and-realtime.md](./advanced/pwa-and-realtime.md)
   - When two users view the same product, the stock count can hit zero without a refresh; use a WebSocket connection to receive real-time inventory updates and disable "Add to Cart" when stock reaches 0
   - Depends on: backend WebSocket gateway for inventory events
 
