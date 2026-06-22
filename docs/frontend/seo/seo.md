@@ -104,5 +104,5 @@ Source: `seo.md`, `index/seo.md`
 
 ### URL Structure Audit
 
-- [ ] **Verify search URLs are crawlable** — currently `/products?search=shoes` and `/products?category=1`. Category filter should ideally use the category slug, not an ID: `/products?category=electronics`. Check what the backend accepts and align the frontend URL params.
+- [x] **Verify search URLs are crawlable** — currently `/products?search=shoes` and `/products?category=1`. Category filter should ideally use the category slug, not an ID: `/products?category=electronics`. Check what the backend accepts and align the frontend URL params.
   - Complexity: Easy (URL change + backend check)

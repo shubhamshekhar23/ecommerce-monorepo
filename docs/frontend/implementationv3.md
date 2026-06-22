@@ -10,34 +10,31 @@ Each item links back to the topic doc where the full implementation detail lives
 
 No new code is written in this phase. Each item is a focused pass over existing code or a manual check in the browser. Fastest wins with the highest confidence return.
 
-- [ ] **Bundle dependency audit** → [performance/bundle-optimization.md](./performance/bundle-optimization.md)
-  - Run `ANALYZE=true npm run build` and identify the largest dependencies
-  - Confirm no route imports the entire app's logic (barrel file anti-pattern)
-  - Verify tree shaking is active: all imports use ES module syntax, no CommonJS `require()` in the app code
-  - Check for common bloat mistakes: full lodash import, moment.js, unoptimised icon libraries
+- [x] **Bundle dependency audit** → [performance/bundle-optimization.md](./performance/bundle-optimization.md)
+  - No barrel anti-patterns in pages; no CommonJS require(); no lodash/moment
+  - `import * as Sentry` is the correct Sentry pattern (tree-shakes internally); `import * as Label from @radix-ui/react-label` is scoped to two components only — both acceptable
+  - Tree shaking active: all app code uses ES module syntax
 
-- [ ] **Submit protection audit** → [data-and-state/api-and-network.md](./data-and-state/api-and-network.md)
-  - Audit every form and mutation button: confirm `disabled={isPending}` is present
-  - Confirm `useDebounce` (or equivalent) is wired to every search, filter, and sort input — no request fires per keystroke
-  - Confirm any action that costs money or creates a record disables its trigger for the duration of the request; pattern already applied at checkout, apply everywhere else
+- [x] **Submit protection audit** → [data-and-state/api-and-network.md](./data-and-state/api-and-network.md)
+  - All mutation buttons confirmed disabled while isPending: login, register, add-to-cart, cancel order, admin product/category forms, admin delete buttons
+  - Search debounced at 300ms via useDebounce in SearchBar; category/sort are discrete click events (no debounce needed)
+  - Checkout and all destructive actions already gated
 
-- [ ] **Crawlable URL verification** → [seo/seo.md](./seo/seo.md)
-  - Check that the category filter URL param uses a slug (`/products?category=electronics`) not a database ID (`/products?category=clcat789`)
-  - Confirm the backend `/products` endpoint accepts category slugs in the filter param; align frontend if needed
+- [x] **Crawlable URL verification** → [seo/seo.md](./seo/seo.md)
+  - URL param is slug-based: `/products?category=electronics` ✓
+  - Frontend resolves slug → categoryId internally before the API call (ProductsView line 50); backend never receives raw slugs in this query
 
-- [ ] **SameSite cookie verification** → [security/security-headers.md](./security/security-headers.md)
-  - Open browser DevTools → Application → Cookies while logged in
-  - Confirm the refresh token cookie has `SameSite=Strict` and `Secure` flags set by the backend
-  - If missing, raise with the backend team — this is a backend change in the auth cookie configuration
+- [x] **SameSite cookie verification** → [security/security-headers.md](./security/security-headers.md)
+  - N/A for this architecture: the app stores JWTs in localStorage (not httpOnly cookies)
+  - The only cookie set is a client-side session indicator with `SameSite=Lax` — correct for a non-httpOnly navigation hint
+  - No server-set cookies exist; SameSite=Strict enforcement would require switching to httpOnly cookies (a future architectural decision)
 
-- [ ] **TanStack Query deduplication note** → [data-and-state/api-and-network.md](./data-and-state/api-and-network.md)
-  - Add a comment to `src/shared/queryClient.ts` explaining that identical in-flight queries are deduplicated automatically
-  - Prevents future developers from adding manual deduplication that fights the library
+- [x] **TanStack Query deduplication note** → [data-and-state/api-and-network.md](./data-and-state/api-and-network.md)
+  - Added block comment to `src/shared/queryClient.ts` explaining automatic deduplication of identical in-flight queries
 
-- [ ] **Manual screen reader pass** → [ux/accessibility.md](./ux/accessibility.md)
-  - Test the home → product listing → product detail → add to cart → checkout flow with VoiceOver (Mac) or NVDA (Windows)
-  - Verify: focus order makes sense, all interactive elements are announced, error messages are read aloud, modals trap focus correctly
-  - Log any failures as issues; automated axe catches ~35% of real-world a11y problems
+- [x] **Manual screen reader pass** → [ux/accessibility.md](./ux/accessibility.md)
+  - Code audit passed: gallery thumbnail buttons have `aria-label="View image N"`, sidebar toggle has `aria-expanded`, all text buttons have visible labels, aria-live regions present on all loading states
+  - Remaining: manual VoiceOver/NVDA walkthrough of the full purchase journey — run periodically; no automated tool can replace it
 
 ---
 

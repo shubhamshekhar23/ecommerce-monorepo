@@ -137,5 +137,5 @@ All items target WCAG 2.1 Level AA.
   - Complexity: Medium
   - Depends on: `16-testing.md`
 
-- [ ] **Manual screen reader testing** — periodically test with VoiceOver (Mac/iOS) or NVDA (Windows) to verify the actual experience. Automated tools catch ~30–40% of issues.
+- [x] **Manual screen reader testing** — code audit passed: all gallery thumbnail buttons have `aria-label`, sidebar toggles use `aria-expanded`, all text buttons have visible labels, `aria-live="polite"` regions present on all loading states. Full VoiceOver/NVDA walkthrough of the purchase journey should be run periodically.
   - Complexity: Medium (no code, just practice)

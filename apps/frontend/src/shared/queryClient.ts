@@ -1,5 +1,11 @@
 // src/shared/queryClient.ts
 // TanStack React Query client configuration
+//
+// DEDUPLICATION — do not add manual request deduplication anywhere in the app.
+// TanStack Query deduplicates identical in-flight queries automatically: if
+// ProductCard and ProductDetailView both call useProducts() simultaneously,
+// only one GET /products request fires. The second subscriber attaches to the
+// same in-flight promise and receives the same response when it resolves.
 
 import { QueryClient } from "@tanstack/react-query";
 import { AppError } from "./errors";

@@ -69,7 +69,7 @@ Each feature has an `api/` folder with fetch functions. The shared `apiClient.ts
 
 ### Request Deduplication
 
-- [ ] **Document TanStack Query deduplication** — TanStack Query already deduplicates identical in-flight requests: if `ProductCard` and `ProductDetailView` both call `useProducts()` at the same time, only one `GET /products` request fires. Document this explicitly so developers don't add their own deduplication logic unnecessarily.
+- [x] **Document TanStack Query deduplication** — TanStack Query already deduplicates identical in-flight requests: if `ProductCard` and `ProductDetailView` both call `useProducts()` at the same time, only one `GET /products` request fires. Document this explicitly so developers don't add their own deduplication logic unnecessarily.
   - Key setting: `staleTime` controls how long before a cached result is considered stale. Set appropriate per-query values in each hook rather than relying on the default (0).
   - Example: `useCategories` → `staleTime: 10 * 60 * 1000` (categories rarely change)
   - Complexity: Easy (documentation + staleTime audit)
@@ -77,7 +77,7 @@ Each feature has an `api/` folder with fetch functions. The shared `apiClient.ts
 
 ### Rate Limiting & Spam Prevention
 
-- [ ] **Disable buttons after submission** — for any action that costs money, sends an email, or creates a record: disable the trigger button for a cooldown period after submission. Covered for checkout in `19-payment-ux.md`. Apply the same pattern to:
+- [x] **Disable buttons after submission** — for any action that costs money, sends an email, or creates a record: disable the trigger button for a cooldown period after submission. Covered for checkout in `19-payment-ux.md`. Apply the same pattern to:
   - Login form (prevent brute-force from frontend)
   - Register form
   - Review/feedback submission
@@ -85,10 +85,10 @@ Each feature has an `api/` folder with fetch functions. The shared `apiClient.ts
   - Complexity: Easy
   - Pattern: `isSubmitting` state on the mutation hook + button `disabled={isPending || isSubmitting}`
 
-- [ ] **Throttle on expensive UI interactions** — search, filter, and sort requests should use `useDebounce` (from `08-user-experience.md`) so rapid UI changes don't fire a request per keystroke.
+- [x] **Throttle on expensive UI interactions** — search, filter, and sort requests should use `useDebounce` (from `08-user-experience.md`) so rapid UI changes don't fire a request per keystroke.
   - Complexity: Easy (mostly already tracked in 08)
 
-- [ ] **Duplicate submit prevention** — TanStack Query's `isPending` flag should block all re-submissions. Audit every form to ensure the submit button is disabled when `isPending === true`.
+- [x] **Duplicate submit prevention** — TanStack Query's `isPending` flag should block all re-submissions. Audit every form to ensure the submit button is disabled when `isPending === true`.
   - Complexity: Easy (audit)
 
 ### API Versioning

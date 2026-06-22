@@ -54,7 +54,7 @@ All headers below are set in the `headers()` function in `next.config.js`. One f
 
 ### Auth & Input
 
-- [ ] **`SameSite=Strict; Secure` on auth cookies** — if any cookies are set (refresh tokens, session identifiers), ensure the backend sets `SameSite=Strict` and `Secure` flags. The frontend needs to verify this is the case by checking the Set-Cookie header in browser dev tools.
+- [x] **`SameSite=Strict; Secure` on auth cookies** — N/A for current architecture: JWTs are stored in localStorage (not httpOnly cookies). The only cookie set is a client-side session indicator with `SameSite=Lax`, which is correct for a non-httpOnly navigation hint. Switching to httpOnly cookies would require an architectural decision and is a future consideration.
   - Complexity: Easy (backend config, verify from frontend)
 
 - [x] **Sanitization audit for user-generated content** — search for any place where user-supplied text is rendered as HTML (product descriptions from admin, order notes, review text). Ensure none use `dangerouslySetInnerHTML` without first passing through a sanitization library like `DOMPurify`.
