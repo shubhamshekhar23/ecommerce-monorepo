@@ -55,6 +55,6 @@ Source: `others.md`
   - Install: `next-pwa`
   - Config: `next.config.js`
 
-- [ ] **Background sync for offline cart mutations** — when the user is offline and the IndexedDB cart queue has pending mutations (from `11-web-storage.md`), the Service Worker registers a background sync event. When connectivity returns (even if the browser tab is closed), the Service Worker fires and drains the queue.
+- [x] **Background sync for offline cart mutations** — when the user is offline and the IndexedDB cart queue has pending mutations (from `11-web-storage.md`), the Service Worker registers a background sync event. When connectivity returns (even if the browser tab is closed), the Service Worker fires and drains the queue.
   - Complexity: Complex
   - Depends on: IndexedDB cart queue (11-web-storage.md) + Service Worker above

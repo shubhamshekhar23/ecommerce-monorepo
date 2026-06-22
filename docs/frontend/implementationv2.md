@@ -236,6 +236,6 @@ Long-term architecture improvements and the two complex real-time features defer
   - When two users view the same product, the stock count can hit zero without a refresh; use a WebSocket connection to receive real-time inventory updates and disable "Add to Cart" when stock reaches 0
   - Depends on: backend WebSocket gateway for inventory events
 
-- [ ] **Background sync for offline cart mutations** → [advanced/pwa-and-realtime.md](./advanced/pwa-and-realtime.md)
+- [x] **Background sync for offline cart mutations** → [advanced/pwa-and-realtime.md](./advanced/pwa-and-realtime.md)
   - When offline, cart mutations queue in IndexedDB (from Phase 6.3 of V1); the Service Worker registers a `background-sync` event; when connectivity returns the SW drains the queue even if the tab is closed
   - Depends on: IndexedDB cart queue (`data-and-state/web-storage.md`) + Service Worker (already set up via next-pwa)

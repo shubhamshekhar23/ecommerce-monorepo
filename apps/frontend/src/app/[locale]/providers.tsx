@@ -15,6 +15,7 @@ import { CookieConsentBanner } from "@/components/CookieConsent/CookieConsentBan
 import { eventBus } from "@/shared/eventBus";
 import { useCookieConsent } from "@/shared/cookieConsent/useCookieConsent";
 import { useAuthStore } from "@/store/auth.store";
+import { useDrainCartQueue } from "@/features/cart/hooks";
 
 // Subscribes to cross-feature events and renders feedback (toasts, etc.).
 // Lives here so event-emitting hooks stay decoupled from the toast library.
@@ -65,6 +66,11 @@ function SentryUserSync() {
   return null;
 }
 
+function CartQueueDrainer() {
+  useDrainCartQueue();
+  return null;
+}
+
 interface ProvidersProps {
   children: React.ReactNode;
   isAuthenticated?: boolean;
@@ -96,6 +102,7 @@ export function Providers({
 
       <EventBusSubscriber />
       <SentryUserSync />
+      <CartQueueDrainer />
       <CookieConsentBanner />
       <Toaster position="top-right" richColors closeButton />
       <ReactQueryDevtools initialIsOpen={false} />
