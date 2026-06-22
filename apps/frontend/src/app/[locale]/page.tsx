@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { ArtDirectedImage } from "@/components/ArtDirectedImage/ArtDirectedImage";
 import styles from "./page.module.scss";
 
 const FEATURED = [
@@ -27,14 +28,25 @@ export default async function HomePage() {
             </Link>
           </div>
         </div>
-        <div className={styles.heroPanel}>
-          <p>{t("trustedBy")}</p>
-          <ul>
-            <li>{t("fastDelivery")}</li>
-            <li>{t("secureCheckout")}</li>
-            <li>{t("flexibleReturns")}</li>
-          </ul>
-        </div>
+        {/* Art-directed hero image: portrait crop on mobile, wide on desktop */}
+        <ArtDirectedImage
+          sources={[
+            {
+              srcSet: "/images/hero-mobile.svg",
+              media: "(max-width: 767px)",
+              width: 640,
+              height: 800,
+            },
+          ]}
+          fallback={{
+            src: "/images/hero-desktop.svg",
+            width: 1440,
+            height: 600,
+          }}
+          alt="ShopHub — discover curated products"
+          priority
+          className={styles.heroImage}
+        />
       </section>
 
       <section className={styles.valueStrip}>

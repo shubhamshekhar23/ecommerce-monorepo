@@ -199,7 +199,7 @@ Performance is measured first, then fixed. Run the bundle analyzer before making
 - [x] **Intersection Observer lazy load for below-fold components** → [performance/images.md](./performance/images.md)
   - Components far below the fold (related products, second half of product grid) should defer rendering until they enter the viewport; use `useIntersectionObserver` hook with `React.lazy`
 
-- [ ] **Art direction with `<picture>` tag** → [performance/images.md](./performance/images.md)
+- [x] **Art direction with `<picture>` tag** → [performance/images.md](./performance/images.md)
   - Editorial images (hero, category banners) need different crops on mobile vs desktop; Next.js `<Image>` only resizes — use native `<picture>` with `<source media="...">` for true art direction
 
 ---
