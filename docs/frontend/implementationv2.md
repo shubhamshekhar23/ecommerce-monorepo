@@ -172,7 +172,7 @@ CI enforcement. Depends on Phase 6 (tests must exist before you gate on them).
 - [x] **Dependabot** → [testing/ci-cd-quality-gates.md](./testing/ci-cd-quality-gates.md)
   - Add `.github/dependabot.yml` for `npm` in `apps/frontend`, `apps/backend`, `packages/shared-types`; weekly dependency PRs with security patches auto-merged
 
-- [ ] **Lighthouse CI** → [testing/ci-cd-quality-gates.md](./testing/ci-cd-quality-gates.md)
+- [x] **Lighthouse CI** → [testing/ci-cd-quality-gates.md](./testing/ci-cd-quality-gates.md)
   - Run `@lhci/cli` in CI; enforce: Performance ≥ 80, Accessibility ≥ 90, Best Practices ≥ 90, SEO ≥ 90; treat Web Vitals failures (LCP > 2.5s, CLS > 0.1) as hard failures
 
 ---

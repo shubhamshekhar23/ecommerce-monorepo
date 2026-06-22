@@ -76,7 +76,7 @@ The monorepo already has a CI matrix workflow (`paths-filter` on all 5 services)
 
 ### Performance Gate
 
-- [ ] **Lighthouse CI** — run Lighthouse against the built app in CI and enforce score thresholds:
+- [x] **Lighthouse CI** — run Lighthouse against the built app in CI and enforce score thresholds:
   - Performance: ≥ 80
   - Accessibility: ≥ 90
   - Best Practices: ≥ 90
