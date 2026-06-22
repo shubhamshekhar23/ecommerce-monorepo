@@ -207,7 +207,7 @@ jobs:
           NODE_ENV: test
         run: npm run test -- --passWithNoTests --forceExit --coverage
 
-      - uses: codecov/codecov-action@v4
+      - uses: codecov/codecov-action@v7
         if: always()
         with:
           files: apps/backend/coverage/coverage-final.json
