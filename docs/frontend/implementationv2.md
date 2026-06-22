@@ -229,7 +229,7 @@ Long-term architecture improvements and the two complex real-time features defer
 - [x] **Zod schemas co-located with shared types** → [architecture/shared-types.md](./architecture/shared-types.md)
   - Add Zod schemas to `packages/shared-types/` alongside the TypeScript types; both frontend and backend can import the same runtime validator; no duplicated schema definitions
 
-- [ ] **Backend NestJS DTOs derive from shared types** → [architecture/shared-types.md](./architecture/shared-types.md)
+- [x] **Backend NestJS DTOs derive from shared types** → [architecture/shared-types.md](./architecture/shared-types.md)
   - Backend response classes implement or extend the shared TypeScript interfaces; a type mismatch in a backend DTO causes a compile error in the shared package, surfacing in CI before it reaches production
 
 - [ ] **WebSocket for live inventory** → [advanced/pwa-and-realtime.md](./advanced/pwa-and-realtime.md)
