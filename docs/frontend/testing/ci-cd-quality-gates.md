@@ -47,7 +47,7 @@ The monorepo already has a CI matrix workflow (`paths-filter` on all 5 services)
 - [x] **E2E tests in CI** — run Playwright tests against a test environment build. Use `@playwright/test` with `webServer` config to spin up `next build && next start` before running tests.
   - Complexity: Medium (needs CI environment setup)
 
-- [ ] **Accessibility audit in CI** — run `axe` scans via Playwright against key pages (`/`, `/products`, `/products/[slug]`, `/cart`). Fail if any critical or serious A11Y violations are found.
+- [x] **Accessibility audit in CI** — run `axe` scans via Playwright against key pages (`/`, `/products`, `/products/[slug]`, `/cart`). Fail if any critical or serious A11Y violations are found.
   - Tool: `@axe-core/playwright`
   - Complexity: Medium
 
