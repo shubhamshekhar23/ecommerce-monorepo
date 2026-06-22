@@ -111,7 +111,7 @@
     "ioredis": "^5.11.0",
     "kafkajs": "^2.2.4",
     "multer": "^2.0.2",
-    "nestjs-pino": "^3.5.0",
+    "nestjs-pino": "^4.6.1",
     "nodemailer": "^8.0.0",
     "opossum": "^9.0.0",
     "otplib": "^13.4.0",
