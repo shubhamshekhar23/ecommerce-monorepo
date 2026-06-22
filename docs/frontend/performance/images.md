@@ -40,12 +40,12 @@ Source: `lazy-load-picture-tag.md`, `asset-optimization.md`
   - Complexity: Medium (need to generate or fetch blurDataURL per product)
   - Files: `ProductCard.tsx`, `ProductDetailView.tsx`, `ProductImageGallery.tsx`
 
-- [ ] **Intersection Observer for lazy load on visibility** — for components that contain images and are far below the fold (e.g., the second half of the product grid, the related products section), delay rendering the component itself until it enters the viewport. Use the `useIntersectionObserver` hook (from `src/hooks/`) combined with `React.lazy`.
+- [x] **Intersection Observer for lazy load on visibility** — for components that contain images and are far below the fold (e.g., the second half of the product grid, the related products section), delay rendering the component itself until it enters the viewport. Use the `useIntersectionObserver` hook (from `src/hooks/`) combined with `React.lazy`.
   - This is "lazy load on visibility" from the notes — the component's JS bundle is only fetched when it scrolls into view.
   - Complexity: Medium
   - Depends on: `useIntersectionObserver` hook from 01-project-structure
 
-- [ ] **Art direction with `<picture>` tag** — `srcset` and `sizes` only resize the same image for different viewports. Art direction serves a *different image composition* depending on the viewport — a wide landscape product lifestyle shot on desktop, a tight square crop focused on the product on mobile. Next.js `<Image>` does not support art direction; it requires the native `<picture>` element:
+- [x] **Art direction with `<picture>` tag** — `srcset` and `sizes` only resize the same image for different viewports. Art direction serves a *different image composition* depending on the viewport — a wide landscape product lifestyle shot on desktop, a tight square crop focused on the product on mobile. Next.js `<Image>` does not support art direction; it requires the native `<picture>` element:
   ```tsx
   <picture>
     <source

@@ -71,7 +71,7 @@ Two sources of truth. If the backend renames `product.imageUrl` to `product.imag
   - Complexity: Easy (once the package exists)
   - Files: `src/features/*/interfaces/index.ts`
 
-- [ ] **Backend NestJS DTOs derive from shared-types** — this is the backend-side change. Backend response classes should implement or extend the shared type. A type mismatch in a backend DTO now causes a TypeScript error in the shared package, which surfaces in CI.
+- [x] **Backend NestJS DTOs derive from shared-types** — this is the backend-side change. Backend response classes should implement or extend the shared type. A type mismatch in a backend DTO now causes a TypeScript error in the shared package, which surfaces in CI.
   - Complexity: Medium (backend change)
   - File: backend DTO files
 
@@ -79,7 +79,7 @@ Two sources of truth. If the backend renames `product.imageUrl` to `product.imag
   - Complexity: Easy
   - File: `.github/workflows/*.yml`
 
-- [ ] **Zod schemas co-located with shared types** — Zod schemas validate the shape at runtime. If the Zod schema and the TypeScript type live in `shared-types`, both apps can use the same runtime validator:
+- [x] **Zod schemas co-located with shared types** — Zod schemas validate the shape at runtime. If the Zod schema and the TypeScript type live in `shared-types`, both apps can use the same runtime validator:
   ```ts
   // packages/shared-types/src/product.types.ts
   export const ProductSchema = z.object({ ... });

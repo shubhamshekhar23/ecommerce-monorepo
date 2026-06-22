@@ -43,7 +43,7 @@ features/<name>/
   - `useScrollRestoration.ts` — saves and restores window scroll position across navigations
   - Complexity: Easy–Medium
 
-- [ ] **`public/` folder organization** — currently unstructured. Organize as:
+- [x] **`public/` folder organization** — currently unstructured. Organize as:
   - `public/images/` — static images (logo, OG image, fallback product image)
   - `public/icons/` — favicon variants, PWA icons
   - `public/fonts/` — self-hosted font files (if moved off Google Fonts CDN)

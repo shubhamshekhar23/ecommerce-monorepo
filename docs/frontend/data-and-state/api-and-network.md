@@ -14,18 +14,18 @@ Each feature has an `api/` folder with fetch functions. The shared `apiClient.ts
 
 ### API Abstraction
 
-- [ ] **Typed request/response contract per endpoint** — every API function should have explicit TypeScript types for its input and output. No `any` in API functions. The return type should be the validated shape (see Zod validation below), not just the raw API response.
+- [x] **Typed request/response contract per endpoint** — every API function should have explicit TypeScript types for its input and output. No `any` in API functions. The return type should be the validated shape (see Zod validation below), not just the raw API response.
   ```ts
   // features/products/api/products.api.ts
   export async function getProducts(params: GetProductsParams): Promise<ProductsResponse> { ... }
   ```
   - Complexity: Easy (mostly enforcing existing pattern)
 
-- [ ] **Centralized API error normalization** — documented in `20-error-handling-strategy.md`. The `apiClient.ts` interceptor converts HTTP error responses into typed `AppError` instances before they reach any hook. This is the single place that understands HTTP status codes.
+- [x] **Centralized API error normalization** — documented in `20-error-handling-strategy.md`. The `apiClient.ts` interceptor converts HTTP error responses into typed `AppError` instances before they reach any hook. This is the single place that understands HTTP status codes.
   - Complexity: Medium
   - File: `src/shared/apiClient.ts`
 
-- [ ] **Zod validation of API responses at runtime** — TypeScript types are erased at runtime. An unexpected backend response shape (missing field, wrong type) will silently cause bugs. Add Zod parsing at the API layer:
+- [x] **Zod validation of API responses at runtime** — TypeScript types are erased at runtime. An unexpected backend response shape (missing field, wrong type) will silently cause bugs. Add Zod parsing at the API layer:
   ```ts
   const ProductSchema = z.object({ id: z.string(), name: z.string(), price: z.number(), ... });
   
@@ -40,7 +40,7 @@ Each feature has an `api/` folder with fetch functions. The shared `apiClient.ts
 
 ### Retry & Resilience
 
-- [ ] **Automatic retry with exponential backoff** — transient network errors (timeouts, 503s) should be retried automatically. Do not retry user errors (400, 401, 422):
+- [x] **Automatic retry with exponential backoff** — transient network errors (timeouts, 503s) should be retried automatically. Do not retry user errors (400, 401, 422):
   ```ts
   // TanStack Query config in queryClient.ts
   retry: (failureCount, error) => {
@@ -54,7 +54,7 @@ Each feature has an `api/` folder with fetch functions. The shared `apiClient.ts
   - Complexity: Easy
   - File: `src/shared/queryClient.ts`
 
-- [ ] **Request timeout** — every API request should have a timeout. If the backend doesn't respond within N seconds, fail with a network error:
+- [x] **Request timeout** — every API request should have a timeout. If the backend doesn't respond within N seconds, fail with a network error:
   ```ts
   // axios
   timeout: 10000 // 10 seconds
@@ -63,7 +63,7 @@ Each feature has an `api/` folder with fetch functions. The shared `apiClient.ts
   - Complexity: Easy
   - File: `src/shared/apiClient.ts`
 
-- [ ] **Request cancellation with `AbortController`** — when a component unmounts mid-request (user navigates away), cancel the in-flight request to avoid state updates on unmounted components and wasted bandwidth. TanStack Query handles this automatically for queries; ensure custom fetch calls also use an `AbortController`.
+- [x] **Request cancellation with `AbortController`** — when a component unmounts mid-request (user navigates away), cancel the in-flight request to avoid state updates on unmounted components and wasted bandwidth. TanStack Query handles this automatically for queries; ensure custom fetch calls also use an `AbortController`.
   - Complexity: Easy–Medium
   - Files: any custom `fetch` calls outside TanStack Query
 
@@ -93,7 +93,7 @@ Each feature has an `api/` folder with fetch functions. The shared `apiClient.ts
 
 ### API Versioning
 
-- [ ] **URL-based versioning** — all API calls go through `apiClient.ts` which has the base URL. When the backend introduces a breaking `/v2` endpoint, update the base URL or prefix per-endpoint:
+- [x] **URL-based versioning** — all API calls go through `apiClient.ts` which has the base URL. When the backend introduces a breaking `/v2` endpoint, update the base URL or prefix per-endpoint:
   ```ts
   // src/shared/config.ts
   export const API_V1 = `${API_BASE}/v1`;

@@ -89,7 +89,7 @@ Every byte of JavaScript the browser downloads must be parsed, compiled, and exe
 
 ### Performance Budget in CI
 
-- [ ] **Bundle size gate in CI** — from `17-ci-cd-quality-gates.md`, fail CI when any page's bundle exceeds a size budget. Set budgets after initial analysis:
+- [x] **Bundle size gate in CI** — from `17-ci-cd-quality-gates.md`, fail CI when any page's bundle exceeds a size budget. Set budgets after initial analysis:
   - First load JS for homepage: < 120kb gzipped
   - First load JS for product listing: < 140kb gzipped
   - Checkout page: < 200kb gzipped (includes Stripe)

@@ -72,6 +72,6 @@ The current auth implementation handles login/logout and stores a token. This fi
   - Admin routes additionally check the user's role, not just auth status
   - Complexity: Easy (audit + fix)
 
-- [ ] **Optimistic auth state on page load** — currently, there may be a flash where the page renders in an unauthenticated state before the auth store hydrates. Prevent this by reading the auth state from the cookie/token synchronously on the server side via Next.js middleware or Server Components.
+- [x] **Optimistic auth state on page load** — currently, there may be a flash where the page renders in an unauthenticated state before the auth store hydrates. Prevent this by reading the auth state from the cookie/token synchronously on the server side via Next.js middleware or Server Components.
   - Complexity: Medium
   - File: `src/features/auth/hooks/useAuthHydration.ts`, `middleware.ts`

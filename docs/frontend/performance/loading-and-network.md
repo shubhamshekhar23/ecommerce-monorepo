@@ -33,7 +33,7 @@ Source: `pre-load-fetch-connect.md`, `async-defer.md`, `performance-optimziation
   - Complexity: Easy
   - File: `src/app/layout.tsx`
 
-- [ ] **`<link rel="preload">` for critical fonts** — `Plus Jakarta Sans` and `Fraunces` are loaded via CSS `@font-face` or Google Fonts. The browser doesn't discover them until it parses the CSS. Preloading fetches the WOFF2 files immediately:
+- [x] **`<link rel="preload">` for critical fonts** — `Plus Jakarta Sans` and `Fraunces` are loaded via CSS `@font-face` or Google Fonts. The browser doesn't discover them until it parses the CSS. Preloading fetches the WOFF2 files immediately:
   ```html
   <link rel="preload" href="/fonts/PlusJakartaSans.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
   ```
@@ -41,7 +41,7 @@ Source: `pre-load-fetch-connect.md`, `async-defer.md`, `performance-optimziation
   - Complexity: Easy–Medium (depends on whether fonts are self-hosted or CDN)
   - File: `src/app/layout.tsx`
 
-- [ ] **`font-display: swap` on custom fonts** — if using self-hosted fonts via `@font-face`, add `font-display: swap`. If using Next.js `next/font`, it handles this automatically. Audit current font loading method.
+- [x] **`font-display: swap` on custom fonts** — if using self-hosted fonts via `@font-face`, add `font-display: swap`. If using Next.js `next/font`, it handles this automatically. Audit current font loading method.
   - Complexity: Easy
   - File: `src/styles/globals.scss` or `src/app/layout.tsx` (depending on font loading method)
 
@@ -62,7 +62,7 @@ Source: `pre-load-fetch-connect.md`, `async-defer.md`, `performance-optimziation
   - `app/admin/loading.tsx`
   - Complexity: Easy
 
-- [ ] **Next.js `<Script>` component with strategy for third-party scripts** — when Sentry, analytics, or any other third-party script is added (see `13-analytics-monitoring.md`), use:
+- [x] **Next.js `<Script>` component with strategy for third-party scripts** — when Sentry, analytics, or any other third-party script is added (see `13-analytics-monitoring.md`), use:
   - `strategy="afterInteractive"` — for scripts that need the page to be interactive (analytics, error tracking)
   - `strategy="lazyOnload"` — for scripts that can wait until the browser is idle (chat widgets, non-critical tracking)
   - Never use a raw `<script>` tag in the app layout.

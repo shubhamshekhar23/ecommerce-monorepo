@@ -158,7 +158,7 @@ From fastest/cheapest to slowest/most realistic:
   - Complexity: Easy
   - Use on: `ProductCard`, `CartItemRow`, any component suspected of over-rendering
 
-- [ ] **Web Vitals assertion in Lighthouse CI** — the CI gate (in `17-ci-cd-quality-gates.md`) runs Lighthouse and enforces score thresholds. Treat failing Web Vital scores (LCP > 2.5s, CLS > 0.1, FID > 100ms) as test failures, not just warnings.
+- [x] **Web Vitals assertion in Lighthouse CI** — the CI gate (in `17-ci-cd-quality-gates.md`) runs Lighthouse and enforces score thresholds. Treat failing Web Vital scores (LCP > 2.5s, CLS > 0.1, FID > 100ms) as test failures, not just warnings.
   - Complexity: Easy (config in Lighthouse CI setup, not a code test)
   - Documented in: `17-ci-cd-quality-gates.md` but enforced as a performance test gate
 
@@ -172,14 +172,14 @@ From fastest/cheapest to slowest/most realistic:
 
 ### Storybook
 
-- [ ] **Set up Storybook** — for component documentation and interaction testing:
+- [x] **Set up Storybook** — for component documentation and interaction testing:
   ```
   npx storybook@latest init
   ```
   - Complexity: Medium (setup)
 
-- [ ] **Stories for shared components** — `ProductCard`, `FormField`, `ProductSkeleton`, `Navbar`, `Footer`, button variants, error states
+- [x] **Stories for shared components** — `ProductCard`, `FormField`, `ProductSkeleton`, `Navbar`, `Footer`, button variants, error states
   - Complexity: Easy (one story file per component)
 
-- [ ] **Storybook interaction tests** — use `@storybook/test` to write interaction tests inside stories. These run in CI via `storybook test`.
+- [x] **Storybook interaction tests** — use `@storybook/test` to write interaction tests inside stories. These run in CI via `storybook test`.
   - Complexity: Medium

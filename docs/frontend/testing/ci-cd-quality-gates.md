@@ -62,7 +62,7 @@ The monorepo already has a CI matrix workflow (`paths-filter` on all 5 services)
   - Budget example: main page bundle < 150kb gzipped
   - Complexity: Medium
 
-- [ ] **`@next/bundle-analyzer` for manual inspection** — not a CI gate but a dev tool. Run `ANALYZE=true npm run build` to see a visual bundle composition breakdown. Use to identify what's making bundles large.
+- [x] **`@next/bundle-analyzer` for manual inspection** — not a CI gate but a dev tool. Run `ANALYZE=true npm run build` to see a visual bundle composition breakdown. Use to identify what's making bundles large.
   - Complexity: Easy (config + npm script)
   - File: `next.config.js`
 
