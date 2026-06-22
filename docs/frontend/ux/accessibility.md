@@ -116,7 +116,7 @@ All items target WCAG 2.1 Level AA.
   - Complexity: Easy
   - File: `src/styles/globals.scss`
 
-- [ ] **`prefers-color-scheme` support** — when the theme system (see `24-theme-system.md`) is implemented, respect the OS-level dark/light preference as the default before any user override.
+- [x] **`prefers-color-scheme` support** — `useTheme` reads OS preference via `matchMedia` as fallback when no localStorage override exists. Added a live `change` listener so theme updates in real time when the user changes their OS setting mid-session. Fixed: localStorage now only writes on explicit toggle, not on mount — ensures OS listener applies on return visits when user has never manually overridden.
   - Complexity: Easy (one media query in the theme system)
   - Depends on: `24-theme-system.md`
 

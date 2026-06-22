@@ -57,11 +57,11 @@ The `AppError` class and category system are in place from V1. These items use t
 
 One code item that extends the theme system already built in V2.
 
-- [ ] **`prefers-color-scheme` as initial theme default** → [ux/accessibility.md](./ux/accessibility.md)
-  - Before the user has ever set a preference, the ThemeToggle should default to the OS dark/light setting
-  - Read `window.matchMedia('(prefers-color-scheme: dark)').matches` in the theme store's initial state
-  - After the user manually toggles, persist their choice in `localStorage` — the persisted value takes priority over the OS setting on subsequent visits
-  - Wire a `matchMedia` listener so the theme updates live if the OS preference changes while the tab is open
+- [x] **`prefers-color-scheme` as initial theme default** → [ux/accessibility.md](./ux/accessibility.md)
+  - `getInitialTheme()` reads localStorage first; falls back to `window.matchMedia(prefers-color-scheme:dark)` — was already present
+  - Added: `matchMedia` `change` listener in useTheme updates the theme live when the OS preference changes, but only if the user has no explicit localStorage override
+  - Fixed: localStorage was previously written on every mount (not just on toggle), which meant the OS listener could never apply on return visits. Now localStorage is only written inside `toggleTheme()`
+  - FOUC-prevention script in layout.tsx already reads matchMedia as fallback when localStorage is empty — no change needed there
 
 ---
 
