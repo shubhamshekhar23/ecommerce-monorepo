@@ -7,17 +7,24 @@ import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { registerApi } from "../api/auth.api";
 import { useAuthStore } from "@/store/auth.store";
+import { handleMutationError } from "@/shared/mutationError";
 import type { RegisterPayload } from "../interfaces";
 
 export function useRegister() {
   const router = useRouter();
   const setAuth = useAuthStore((state) => state.setAuth);
 
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: (payload: RegisterPayload) => registerApi(payload),
     onSuccess: (data) => {
       setAuth(data.user, data.accessToken, data.refreshToken);
       router.push("/");
     },
+    onError: (err, vars) => {
+      handleMutationError(err, "Registration failed", () =>
+        mutation.mutate(vars),
+      );
+    },
   });
+  return mutation;
 }

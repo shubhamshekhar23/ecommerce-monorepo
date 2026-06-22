@@ -4,6 +4,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateCartItemApi } from "../api/cart.api";
+import { handleMutationError } from "@/shared/mutationError";
 import type { Cart } from "../interfaces";
 
 interface UpdateCartItemVariables {
@@ -44,10 +45,11 @@ export function useUpdateCartItem() {
 
       return { previousCart };
     },
-    onError: (_err, _vars, context) => {
+    onError: (err, _vars, context) => {
       if (context?.previousCart !== undefined) {
         queryClient.setQueryData(["cart"], context.previousCart);
       }
+      handleMutationError(err, "Failed to update cart");
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["cart"] });

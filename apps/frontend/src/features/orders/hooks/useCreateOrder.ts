@@ -1,8 +1,8 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { createOrderApi } from "../api/orders.api";
+import { handleMutationError } from "@/shared/mutationError";
 import { eventBus } from "@/shared/eventBus";
 import { trackPurchase } from "@/shared/analytics/trackEvent";
 
@@ -28,7 +28,7 @@ function getOrCreateIdempotencyKey(): string {
 
 export function useCreateOrder() {
   const queryClient = useQueryClient();
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: () => createOrderApi(getOrCreateIdempotencyKey()),
     onSuccess: (order) => {
       void queryClient.invalidateQueries({ queryKey: ["cart"] });
@@ -43,8 +43,13 @@ export function useCreateOrder() {
         itemCount: order.items.length,
       });
     },
-    onError: () => {
-      toast.error("Failed to place order");
+    onError: (err) => {
+      // Idempotency key ensures retrying place-order on network failure
+      // creates the same order rather than a duplicate.
+      handleMutationError(err, "Failed to place order", () =>
+        mutation.mutate(),
+      );
     },
   });
+  return mutation;
 }

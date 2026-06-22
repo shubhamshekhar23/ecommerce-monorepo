@@ -8,13 +8,14 @@ import { useRouter } from "next/navigation";
 import { loginApi } from "../api/auth.api";
 import { useAuthStore } from "@/store/auth.store";
 import { logger } from "@/shared/logger";
+import { handleMutationError } from "@/shared/mutationError";
 import type { LoginPayload } from "../interfaces";
 
 export function useLogin() {
   const router = useRouter();
   const setAuth = useAuthStore((state) => state.setAuth);
 
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: (payload: LoginPayload) => loginApi(payload),
     onSuccess: (data) => {
       setAuth(data.user, data.accessToken, data.refreshToken);
@@ -29,5 +30,9 @@ export function useLogin() {
         new URLSearchParams(window.location.search).get("callbackUrl") ?? "/";
       router.push(callbackUrl);
     },
+    onError: (err, vars) => {
+      handleMutationError(err, "Login failed", () => mutation.mutate(vars));
+    },
   });
+  return mutation;
 }

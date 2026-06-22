@@ -5,15 +5,16 @@ import { AppError } from "./errors";
  * Standard per-category error handler for mutation onError callbacks.
  *
  * Pass `retry` (a function that re-fires the mutation) to show a
- * "Try Again" button in the toast for network and server errors.
- * This fires after TanStack Query's automatic retries have exhausted.
+ * "Try Again" button for network errors — only those have a chance of
+ * succeeding on retry. This fires after TanStack Query's automatic
+ * retries have exhausted.
  *
  * Category routing:
- *   network    → "Check your connection" toast + optional "Try Again" button
+ *   network    → red toast (6s) + "Try Again" button if retry provided
  *   auth       → redirect to login (session expired mid-action)
- *   validation → show the server's specific validation message
- *   business   → show the server's specific business rule message
- *   server     → generic "something went wrong" toast + optional "Try Again" button
+ *   validation → yellow warning toast — user's input is wrong, not the system
+ *   business   → red toast — server rejected with a known business reason
+ *   server     → red toast (4s), generic message — system error, no retry button
  *   unknown    → fallback message
  */
 export function handleMutationError(
@@ -26,13 +27,12 @@ export function handleMutationError(
     return;
   }
 
-  const retryAction = retry
-    ? { action: { label: "Try Again", onClick: retry } }
-    : {};
-
   switch (error.category) {
     case "network":
-      toast.error("Check your connection and try again.", retryAction);
+      toast.error("Check your connection and try again.", {
+        duration: 6000,
+        ...(retry ? { action: { label: "Try Again", onClick: retry } } : {}),
+      });
       break;
     case "auth":
       if (typeof window !== "undefined") {
@@ -40,14 +40,15 @@ export function handleMutationError(
       }
       break;
     case "validation":
+      toast.warning(error.userMessage);
+      break;
     case "business":
       toast.error(error.userMessage);
       break;
     case "server":
-      toast.error(
-        "Something went wrong on our end. Please try again.",
-        retryAction,
-      );
+      toast.error("Something went wrong on our end. Please try again.", {
+        duration: 4000,
+      });
       break;
     default:
       toast.error(fallback);

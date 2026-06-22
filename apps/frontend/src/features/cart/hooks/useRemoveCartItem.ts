@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { removeCartItemApi } from "../api/cart.api";
+import { handleMutationError } from "@/shared/mutationError";
 import type { Cart } from "../interfaces";
 import { recalcCartTotals } from "../utils/cart.normalize";
 
@@ -23,11 +24,11 @@ export function useRemoveCartItem() {
 
       return { previousCart };
     },
-    onError: (_err, _vars, context) => {
+    onError: (err, _vars, context) => {
       if (context?.previousCart !== undefined) {
         queryClient.setQueryData(["cart"], context.previousCart);
       }
-      toast.error("Failed to remove item");
+      handleMutationError(err, "Failed to remove item");
     },
     onSuccess: () => {
       toast.success("Item removed");

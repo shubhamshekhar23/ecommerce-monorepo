@@ -54,14 +54,16 @@ Every error the frontend encounters falls into one of these categories. The cate
 
 ### Display Layer
 
-- [ ] **Per-category display rules** — in mutation hooks' `onError` callbacks, check the error category and display accordingly:
-  - `validation` / `business` → toast or inline message with the `userMessage`
-  - `auth` → trigger silent refresh or redirect (handled by interceptor)
-  - `network` → toast with "Retry" action button
-  - `server` / `unknown` → generic toast + log to Sentry
+- [x] **Per-category display rules** — `handleMutationError` in `src/shared/mutationError.ts` routes all categories:
+  - `network` → red toast (6s) + "Try Again" button for network errors
+  - `validation` → yellow `toast.warning()` (user's input is wrong, not a system failure)
+  - `business` → red `toast.error()` with specific server message
+  - `server` → red toast (4s), generic message, no retry button
+  - `auth` → redirect to `/login?session_expired=1`, no toast
+  - All mutation hooks wired: useLogin, useRegister, useAddToCart, useRemoveCartItem, useUpdateCartItem, useCreateOrder, useCancelOrder, all admin hooks
   - Complexity: Medium (apply in all mutation hooks)
 
-- [ ] **Retry UI for network errors** — for network-category errors, the toast should include a "Try Again" button that re-fires the mutation. TanStack Query's `retry` option handles automatic retries; the manual retry button is for user-initiated retries after the automatic ones fail.
+- [x] **Retry UI for network errors** — "Try Again" action button in network-category toasts re-fires the mutation via the stable `mutate` reference passed as `retry` callback. useCreateOrder retry is safe because the idempotency key in sessionStorage ensures the same order is returned on retry rather than a duplicate.
   - Complexity: Medium
 
 ### Logging Strategy

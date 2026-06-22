@@ -42,18 +42,14 @@ No new code is written in this phase. Each item is a focused pass over existing 
 
 The `AppError` class and category system are in place from V1. These items use the category to drive richer UI feedback — currently all errors show the same generic toast.
 
-- [ ] **Per-category toast display rules** → [observability/error-handling.md](./observability/error-handling.md)
-  - In mutation `onError` callbacks, check `error.category` and vary the toast:
-    - `network` → red toast, longer duration (6s), suggest checking connection
-    - `server` → red toast, shorter duration (4s), generic "something went wrong"
-    - `validation` → yellow/warning toast, list the specific field errors if available
-    - `auth` → no toast (redirect to login instead)
-    - `business` → orange toast, show the specific business rule message from the API
+- [x] **Per-category toast display rules** → [observability/error-handling.md](./observability/error-handling.md)
+  - `network` → `toast.error()` duration 6s; `server` → `toast.error()` duration 4s; `validation` → `toast.warning()` (yellow); `business` → `toast.error()` (red, specific message); `auth` → redirect, no toast
+  - All mutation hooks wired: useLogin, useRegister, useUpdateCartItem, useRemoveCartItem, useCreateOrder now route through handleMutationError
 
-- [ ] **Retry button in network-error toasts** → [observability/error-handling.md](./observability/error-handling.md)
-  - For `network`-category errors only, add a "Try again" action to the toast (sonner supports action buttons)
-  - The action callback re-fires the mutation — TanStack Query's `mutate` reference is stable, so pass it directly to the toast action
-  - Automatic retries (from queryClient config) have already exhausted by the time the error handler fires; this is user-initiated
+- [x] **Retry button in network-error toasts** → [observability/error-handling.md](./observability/error-handling.md)
+  - Network errors show "Try Again" action button that re-fires the mutation via stable mutate reference
+  - Server errors no longer get a retry button (narrowed from previous implementation to match spec — server-side errors rarely benefit from an immediate retry)
+  - useCreateOrder retry is safe: idempotency key in sessionStorage prevents duplicate orders
 
 ---
 
