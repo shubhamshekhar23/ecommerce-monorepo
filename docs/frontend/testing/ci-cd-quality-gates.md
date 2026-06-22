@@ -57,7 +57,7 @@ The monorepo already has a CI matrix workflow (`paths-filter` on all 5 services)
   - Command: `npx next build`
   - Complexity: Easy
 
-- [ ] **Bundle size check** — set a budget for JS bundle size. Fail CI if any page's bundle exceeds it. Prevents accidental import of large libraries.
+- [x] **Bundle size check** — set a budget for JS bundle size. Fail CI if any page's bundle exceeds it. Prevents accidental import of large libraries.
   - Tool: `bundlesize` or Next.js built-in bundle analyzer (`@next/bundle-analyzer`) + a custom size check script
   - Budget example: main page bundle < 150kb gzipped
   - Complexity: Medium

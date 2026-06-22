@@ -467,6 +467,9 @@ jobs:
           NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_placeholder
           NEXT_PUBLIC_APP_URL: http://localhost:3000
 
+      - name: Bundle size check
+        run: npm run check:bundle
+
   # ── Job 6d: Frontend E2E Tests ───────────────────────────────────────────────
   # Runs after the production build so the server started by webServer config
   # is `next start` (not `next dev`) — closer to production behaviour.

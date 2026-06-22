@@ -166,7 +166,7 @@ CI enforcement. Depends on Phase 6 (tests must exist before you gate on them).
 - [x] **Accessibility audit in CI** → [testing/ci-cd-quality-gates.md](./testing/ci-cd-quality-gates.md)
   - Run `axe` via Playwright against `/en`, `/en/products`, `/en/products/[slug]`, `/en/cart`; fail if any critical or serious violations are found
 
-- [ ] **Bundle size gate in CI** → [testing/ci-cd-quality-gates.md](./testing/ci-cd-quality-gates.md)
+- [x] **Bundle size gate in CI** → [testing/ci-cd-quality-gates.md](./testing/ci-cd-quality-gates.md)
   - Set per-page JS budget (e.g. 200kB for homepage, 300kB for product page); fail CI if any page exceeds it; use `bundlewatch` or Next.js build output analysis
 
 - [ ] **Dependabot** → [testing/ci-cd-quality-gates.md](./testing/ci-cd-quality-gates.md)
