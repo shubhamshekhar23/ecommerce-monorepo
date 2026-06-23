@@ -10,6 +10,9 @@ import { useProduct, useInventoryStream } from "../../hooks";
 import { ProductImageGallery } from "../ProductImageGallery/ProductImageGallery";
 import { VariantSelector } from "../VariantSelector/VariantSelector";
 import { Breadcrumb } from "@/components/Breadcrumb/Breadcrumb";
+import { ReviewList } from "@/features/reviews";
+import { RecommendationStrip } from "@/features/recommendations";
+import { useSubscribeStockAlert } from "@/features/stock-alerts";
 import type { ProductVariant } from "../../interfaces";
 import styles from "./ProductDetailView.module.scss";
 
@@ -22,6 +25,9 @@ export function ProductDetailView({ slug }: ProductDetailViewProps) {
   useInventoryStream(product?.id);
   const router = useRouter();
   const status = useAuthStore((state) => state.status);
+  const { mutate: notifyMe, isPending: isSubscribing } = useSubscribeStockAlert(
+    product?.id ?? "",
+  );
   const { mutate: addToCart, isPending } = useAddToCart();
   const [buttonState, setButtonState] = useState<"idle" | "success" | "error">(
     "idle",
@@ -183,6 +189,15 @@ export function ProductDetailView({ slug }: ProductDetailViewProps) {
             <div className={styles.outOfStock}>
               <span className={styles.badge}>✗</span>
               Out of Stock
+              {status === "authenticated" && (
+                <button
+                  onClick={() => notifyMe()}
+                  disabled={isSubscribing}
+                  className={styles.notifyBtn}
+                >
+                  {isSubscribing ? "Saving..." : "Notify me when available"}
+                </button>
+              )}
             </div>
           )}
 
@@ -230,6 +245,9 @@ export function ProductDetailView({ slug }: ProductDetailViewProps) {
           )}
         </div>
       </div>
+
+      <ReviewList productId={product.id} />
+      <RecommendationStrip productId={product.id} />
     </div>
   );
 }

@@ -1,0 +1,55 @@
+.card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  background: var(--color-surface);
+}
+
+.name {
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--space-1);
+}
+
+.line {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.editBtn {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-4);
+  background: transparent;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-surface-hover);
+  }
+}
+
+.deleteBtn {
+  border: 0;
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-4);
+  background: transparent;
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: #fff1f2;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}

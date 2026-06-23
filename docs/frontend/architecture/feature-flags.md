@@ -91,7 +91,7 @@ Feature flags decouple deployment from release. Code ships to production hidden 
 
 The `recommendations` flag is already declared in `featureFlags.ts` and `env.ts` but no component actually calls the recommendations API. It is a dead stub.
 
-- [ ] **Wire the `recommendations` flag to the analytics-service API** → `GET /api/recommendations/products/:id`
+- [x] **Wire the `recommendations` flag to the analytics-service API** → `GET /api/recommendations/products/:id`
   - Create `features/recommendations/api/recommendations.api.ts` — `getRecommendations(productId)` hitting the analytics-service via the gateway
   - Create `features/recommendations/hooks/useRecommendations.ts` — TanStack query keyed on `["recommendations", productId]`; disabled when the flag is off or `productId` is undefined
   - Create `features/recommendations/components/RecommendationStrip/RecommendationStrip.tsx` — horizontal scrollable row of `ProductCard`s labelled "You might also like"; renders nothing when the query returns an empty array

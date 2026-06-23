@@ -1,0 +1,52 @@
+.form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+
+  @media (width <= 480px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-3);
+  padding-top: var(--space-2);
+}
+
+.submit {
+  border: 0;
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-5);
+  background: var(--color-accent);
+  color: #fff;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--color-accent-hover);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.cancel {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-5);
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-surface-hover);
+  }
+}

@@ -10,14 +10,14 @@ Each item states the exact API endpoints it touches, the files to create or modi
 
 The frontend has no `/account` section at all. These items create it. The profile page is the prerequisite for addresses and security because the layout shell is shared.
 
-- [ ] **Account layout and profile edit page** → `PATCH /users/me`, `GET /users/me`
+- [x] **Account layout and profile edit page** → `PATCH /users/me`, `GET /users/me`
   - Create `app/[locale]/account/layout.tsx` — sidebar nav linking to Profile, Addresses, Security, Privacy tabs
   - Create `app/[locale]/account/profile/page.tsx` — form to edit display name and email; submit calls `PATCH /users/me`; on success invalidate the `["me"]` query so Navbar/AuthProvider reflects the update
   - Create `features/account/api/account.api.ts` — `getMe()` and `updateMe(dto)` wrappers
   - Create `features/account/hooks/useUpdateProfile.ts` — TanStack mutation with optimistic update on `["me"]` cache key
   - Validation: name required, email must be a valid email format
 
-- [ ] **Saved addresses management** → `GET /addresses`, `POST /addresses`, `PATCH /addresses/:id`, `DELETE /addresses/:id`
+- [x] **Saved addresses management** → `GET /addresses`, `POST /addresses`, `PATCH /addresses/:id`, `DELETE /addresses/:id`
   - Create `app/[locale]/account/addresses/page.tsx`
   - Create `features/addresses/api/addresses.api.ts` — four wrappers for list, create, update, delete
   - Create `features/addresses/hooks/` — `useAddresses`, `useCreateAddress`, `useUpdateAddress`, `useDeleteAddress`
@@ -25,7 +25,7 @@ The frontend has no `/account` section at all. These items create it. The profil
   - Create `features/addresses/components/AddressForm/AddressForm.tsx` — fields: firstName, lastName, line1, line2, city, state, postalCode, country; used for both create and edit
   - On the checkout page: add a "Use saved address" step before the address fields; `GET /addresses` populates a radio list; selecting one pre-fills the form; user can still type a new one
 
-- [ ] **GDPR data deletion request** → `DELETE /users/me/data`, `DELETE /users/me/data/cancel`
+- [x] **GDPR data deletion request** → `DELETE /users/me/data`, `DELETE /users/me/data/cancel`
   - Create `app/[locale]/account/privacy/page.tsx` — explains what data is stored; has a "Request account data deletion" button
   - On click: show a confirmation dialog ("This will schedule deletion of all your personal data. You have 30 days to cancel."); on confirm call `DELETE /users/me/data`
   - If a request is already pending: show "Deletion scheduled" state with a "Cancel deletion" button that calls `DELETE /users/me/data/cancel`
@@ -37,17 +37,17 @@ The frontend has no `/account` section at all. These items create it. The profil
 
 The login and register pages exist but are missing three entire auth flows that the auth-service already implements.
 
-- [ ] **Forgot password flow** → `POST /auth/forgot-password`
+- [x] **Forgot password flow** → `POST /auth/forgot-password`
   - Create `app/[locale]/(auth)/forgot-password/page.tsx` — single email field; on submit calls `POST /auth/forgot-password`; shows success state regardless of whether email exists (don't leak account existence)
   - Add "Forgot password?" link to `LoginForm.tsx` pointing to this page
   - Create `features/auth/hooks/useForgotPassword.ts` — mutation; no auth header required (`@Public()` on the endpoint)
 
-- [ ] **Reset password flow** → `POST /auth/reset-password`
+- [x] **Reset password flow** → `POST /auth/reset-password`
   - Create `app/[locale]/(auth)/reset-password/page.tsx` — reads `?token=` from the URL query string; shows new-password + confirm-password fields; submits `{ token, newPassword }` to `POST /auth/reset-password`; on success redirects to `/login`
   - Validate: passwords match, minimum length 8; show inline field errors, not just a toast
   - Create `features/auth/hooks/useResetPassword.ts` — mutation; `@Public()` endpoint
 
-- [ ] **Two-Factor Authentication (2FA)** → `POST /auth/2fa/setup`, `POST /auth/2fa/enable`, `POST /auth/2fa/verify`, `POST /auth/2fa/disable`
+- [x] **Two-Factor Authentication (2FA)** → `POST /auth/2fa/setup`, `POST /auth/2fa/enable`, `POST /auth/2fa/verify`, `POST /auth/2fa/disable`
   - Create `app/[locale]/account/security/page.tsx` — shows 2FA status (enabled / disabled)
   - **Setup + enable flow (account/security page):**
     - "Enable 2FA" button calls `POST /auth/2fa/setup` which returns a TOTP `otpauth://` URI and a QR code data URL
@@ -61,7 +61,7 @@ The login and register pages exist but are missing three entire auth flows that 
     - "Disable 2FA" button shows a confirmation dialog with a code field; submits to `POST /auth/2fa/disable`
   - Create `features/auth/hooks/use2faSetup.ts`, `use2faEnable.ts`, `use2faVerify.ts`, `use2faDisable.ts`
 
-- [ ] **Google OAuth login** → `GET /auth/oauth/google`
+- [x] **Google OAuth login** → `GET /auth/oauth/google`
   - Add a "Continue with Google" button to `LoginForm.tsx` and `RegisterForm.tsx`
   - On click: redirect to `${API_URL}/auth/oauth/google`; the auth-service handles the OAuth dance and redirects back to the frontend with tokens in query params or a short-lived code
   - On the callback landing page (`app/[locale]/(auth)/oauth/callback/page.tsx`): read the tokens from the URL, store them in the auth store (same as after a normal login), clear the URL params, redirect to the intended destination
@@ -73,7 +73,7 @@ The login and register pages exist but are missing three entire auth flows that 
 
 These three features all live on or near the product detail page. Implement in dependency order: reviews first (needs a submit form and list), then notify-me (simpler), then recommendations (feature-flagged).
 
-- [ ] **Product reviews — submit and list** → `POST /reviews`, `GET /reviews/products/:productId`
+- [x] **Product reviews — submit and list** → `POST /reviews`, `GET /reviews/products/:productId`
   - Create `features/reviews/api/reviews.api.ts` — `getProductReviews(productId)` and `createReview(dto)`
   - Create `features/reviews/hooks/useProductReviews.ts` — TanStack query keyed on `["reviews", productId]`
   - Create `features/reviews/hooks/useCreateReview.ts` — mutation; on success invalidate `["reviews", productId]` and `["products", slug]` (so `avgRating` updates)
@@ -81,12 +81,12 @@ These three features all live on or near the product detail page. Implement in d
   - Create `features/reviews/components/ReviewForm/ReviewForm.tsx` — star picker (1–5), text area body; only shown to authenticated users who have ordered the product (gate on auth state; the backend enforces the order check)
   - Add both components to `ProductDetailView.tsx` below the product description
 
-- [ ] **Back-in-Stock "Notify Me" button** → `POST /products/:productId/stock-alerts`, `DELETE /products/:productId/stock-alerts`
+- [x] **Back-in-Stock "Notify Me" button** → `POST /products/:productId/stock-alerts`, `DELETE /products/:productId/stock-alerts`
   - Create `features/stock-alerts/api/stock-alerts.api.ts` — `subscribeStockAlert(productId, variantId?)` and `unsubscribeStockAlert(productId, variantId?)`
   - Create `features/stock-alerts/hooks/useStockAlert.ts` — mutation pair (subscribe / unsubscribe) with local toggle state
   - In `VariantSelector.tsx` / `ProductDetailView.tsx`: when the selected variant's stock is 0, replace the "Add to Cart" button with a "Notify me when back in stock" button; authenticated users get the subscribe call; unauthenticated users are redirected to login
 
-- [ ] **Product recommendations** → `GET /api/recommendations/products/:id`
+- [x] **Product recommendations** → `GET /api/recommendations/products/:id`
   - The feature flag `NEXT_PUBLIC_FLAG_RECOMMENDATIONS` is already declared in [featureFlags.ts](../apps/frontend/src/shared/featureFlags/featureFlags.ts) but no component consumes the API
   - Create `features/recommendations/api/recommendations.api.ts` — `getRecommendations(productId)` (hits the analytics-service via the gateway)
   - Create `features/recommendations/hooks/useRecommendations.ts` — TanStack query; disabled when flag is off or productId is missing

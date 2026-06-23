@@ -114,7 +114,7 @@ The app has no `/account` section. These items create it.
 
 ## Product Reviews
 
-- [ ] **Review submit and listing on product page** → `POST /reviews`, `GET /reviews/products/:productId`
+- [x] **Review submit and listing on product page** → `POST /reviews`, `GET /reviews/products/:productId`
   - Create `features/reviews/api/reviews.api.ts` — `getProductReviews(productId)` and `createReview(dto)`
   - Create `features/reviews/hooks/useProductReviews.ts` — TanStack query on `["reviews", productId]`
   - Create `features/reviews/hooks/useCreateReview.ts` — mutation; on success invalidates `["reviews", productId]` and `["products", slug]` (so `avgRating` updates in the product header)
@@ -128,7 +128,7 @@ The app has no `/account` section. These items create it.
 
 ## Back-in-Stock Notifications
 
-- [ ] **"Notify Me" button on out-of-stock variants** → `POST /products/:productId/stock-alerts`, `DELETE /products/:productId/stock-alerts`
+- [x] **"Notify Me" button on out-of-stock variants** → `POST /products/:productId/stock-alerts`, `DELETE /products/:productId/stock-alerts`
   - Create `features/stock-alerts/api/stock-alerts.api.ts` — `subscribe(productId, variantId?)` and `unsubscribe(productId, variantId?)`
   - Create `features/stock-alerts/hooks/useStockAlert.ts` — mutation pair with local toggle state tracking whether the user is currently subscribed
   - In `VariantSelector.tsx` and `ProductDetailView.tsx`: when the selected variant's stock is 0, replace "Add to Cart" with a "Notify me when back in stock" button
