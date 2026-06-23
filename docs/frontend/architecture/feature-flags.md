@@ -105,7 +105,7 @@ The `recommendations` flag is already declared in `featureFlags.ts` and `env.ts`
 
 The backend exposes a full CRUD API for runtime feature flags stored in the database. The frontend currently reads flags only from env vars (build-time). This panel lets admins toggle flags live without a redeployment.
 
-- [ ] **Admin feature flags page** → `GET /admin/feature-flags`, `POST /admin/feature-flags`, `PATCH /admin/feature-flags/:name`, `DELETE /admin/feature-flags/:name`
+- [x] **Admin feature flags page** → `GET /admin/feature-flags`, `POST /admin/feature-flags`, `PATCH /admin/feature-flags/:name`, `DELETE /admin/feature-flags/:name`
   - Create `app/[locale]/admin/feature-flags/page.tsx` — table of all runtime flags; columns: name, enabled (toggle), description, created at, actions
   - Enabled toggle: calls `PATCH /admin/feature-flags/:name` with `{ enabled: !current }` inline — no page reload needed
   - "New flag" form: name and description fields; calls `POST /admin/feature-flags`

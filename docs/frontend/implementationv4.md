@@ -206,7 +206,7 @@ Three admin workflows that require new pages under `/admin/`.
 
 These are ops and devtool panels. Lower business priority but all endpoints exist and are admin-gated.
 
-- [ ] **Queue monitoring dashboard** → `GET /admin/queue/stats`, `GET /admin/queue/dlq`, `POST /admin/queue/dlq/:jobId/retry`, `POST /admin/queue/dlq/clear`
+- [x] **Queue monitoring dashboard** → `GET /admin/queue/stats`, `GET /admin/queue/dlq`, `POST /admin/queue/dlq/:jobId/retry`, `POST /admin/queue/dlq/clear`
   - Create `app/[locale]/admin/queue/page.tsx`
   - Create `features/admin/components/QueueStats/QueueStats.tsx` — shows active, waiting, completed, failed job counts from `GET /admin/queue/stats`; auto-refreshes every 10 seconds
   - Create `features/admin/components/DeadLetterQueue/DeadLetterQueue.tsx` — table of failed jobs from `GET /admin/queue/dlq`; columns: job ID, name, failed reason, failed at
@@ -214,7 +214,7 @@ These are ops and devtool panels. Lower business priority but all endpoints exis
   - Create `features/admin/hooks/useQueueStats.ts` (polled query), `useDlqJobs.ts`, `useRetryDlqJob.ts`, `useClearDlq.ts`
   - Add "Queue" link under a "System" section in `AdminNav.tsx`
 
-- [ ] **Feature flag management** → `GET /admin/feature-flags`, `POST /admin/feature-flags`, `PATCH /admin/feature-flags/:name`, `DELETE /admin/feature-flags/:name`
+- [x] **Feature flag management** → `GET /admin/feature-flags`, `POST /admin/feature-flags`, `PATCH /admin/feature-flags/:name`, `DELETE /admin/feature-flags/:name`
   - Create `app/[locale]/admin/feature-flags/page.tsx` — table of runtime feature flags; columns: name, enabled toggle, description, created at
   - The existing frontend reads flags from env vars (`NEXT_PUBLIC_FLAG_*`) — this panel manages the same flags stored in the database (the backend `feature-flags` module). Document in a comment that env vars are build-time defaults; database flags override at runtime.
   - Enabled toggle calls `PATCH /admin/feature-flags/:name` with `{ enabled: !current }` inline
@@ -223,7 +223,7 @@ These are ops and devtool panels. Lower business priority but all endpoints exis
   - Create `features/admin/hooks/useFeatureFlags.ts`, `useCreateFeatureFlag.ts`, `useUpdateFeatureFlag.ts`, `useDeleteFeatureFlag.ts`
   - Add "Feature Flags" link under the "System" section in `AdminNav.tsx`
 
-- [ ] **DB analytics panel** → `GET /admin/db/slow-queries`, `POST /admin/db/reset-stats`, `GET /admin/db/table-stats`, `GET /admin/db/replication/lag`, `GET /admin/db/replication/status`, `GET /admin/db/partitions`, `POST /admin/db/partitions/create-next`
+- [x] **DB analytics panel** → `GET /admin/db/slow-queries`, `POST /admin/db/reset-stats`, `GET /admin/db/table-stats`, `GET /admin/db/replication/lag`, `GET /admin/db/replication/status`, `GET /admin/db/partitions`, `POST /admin/db/partitions/create-next`
   - Create `app/[locale]/admin/db-analytics/page.tsx` with four sections:
   - **Slow queries** — table from `GET /admin/db/slow-queries`; columns: query, calls, mean time, total time; "Reset stats" button calls `POST /admin/db/reset-stats`
   - **Table stats** — table from `GET /admin/db/table-stats`; columns: table name, live rows, dead rows, last vacuum, last analyze

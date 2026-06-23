@@ -14,5 +14,14 @@ export { AdminArchivedView } from "./components/AdminArchivedView/AdminArchivedV
 export { PromotionRuleForm } from "./components/PromotionRuleForm/PromotionRuleForm";
 export type { ReturnStatus } from "./api/admin-returns.api";
 export type { PromotionRule } from "./api/admin-promotions.api";
+export type { FeatureFlag } from "./api/admin-feature-flags.api";
+export type { DlqJob, QueueStatsMap } from "./api/admin-queue.api";
+export type {
+  SlowQuery,
+  TableStat,
+  ReplicationLag,
+  ReplicationStatus,
+  PartitionInfo,
+} from "./api/admin-db-analytics.api";
 
 export * from "./hooks";

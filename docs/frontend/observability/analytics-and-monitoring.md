@@ -64,7 +64,7 @@ The backend exposes admin-gated endpoints for queue health and database diagnost
 
 ### Queue Monitoring
 
-- [ ] **Queue stats and dead-letter queue UI** → `GET /admin/queue/stats`, `GET /admin/queue/dlq`, `POST /admin/queue/dlq/:jobId/retry`, `POST /admin/queue/dlq/clear`
+- [x] **Queue stats and dead-letter queue UI** → `GET /admin/queue/stats`, `GET /admin/queue/dlq`, `POST /admin/queue/dlq/:jobId/retry`, `POST /admin/queue/dlq/clear`
   - Create `app/[locale]/admin/queue/page.tsx`
   - **Queue stats section** (`GET /admin/queue/stats`): shows active, waiting, completed, and failed job counts per queue (STOCK_ALERTS, INVOICE, CART_RECOVERY); auto-refreshes every 10 seconds via `refetchInterval`
   - **Dead-letter queue section** (`GET /admin/queue/dlq`): table of failed jobs that exhausted all retries; columns: job ID, queue name, failure reason, failed at timestamp
@@ -76,7 +76,7 @@ The backend exposes admin-gated endpoints for queue health and database diagnost
 
 ### DB Analytics
 
-- [ ] **Database analytics panel** → `GET /admin/db/slow-queries`, `POST /admin/db/reset-stats`, `GET /admin/db/table-stats`, `GET /admin/db/replication/lag`, `GET /admin/db/replication/status`, `GET /admin/db/partitions`, `POST /admin/db/partitions/create-next`
+- [x] **Database analytics panel** → `GET /admin/db/slow-queries`, `POST /admin/db/reset-stats`, `GET /admin/db/table-stats`, `GET /admin/db/replication/lag`, `GET /admin/db/replication/status`, `GET /admin/db/partitions`, `POST /admin/db/partitions/create-next`
   - Create `app/[locale]/admin/db-analytics/page.tsx` with four collapsible sections:
   - **Slow queries** (`GET /admin/db/slow-queries`): table with columns query, calls, mean time (ms), total time (ms); "Reset stats" button calls `POST /admin/db/reset-stats`
   - **Table stats** (`GET /admin/db/table-stats`): table with columns table name, live rows, dead rows (bloat indicator), last vacuum, last analyze
