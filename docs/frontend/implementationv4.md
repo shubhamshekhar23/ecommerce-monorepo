@@ -99,20 +99,20 @@ These three features all live on or near the product detail page. Implement in d
 
 These items add three missing actions to the order detail page and one missing input to the cart/checkout flow.
 
-- [ ] **Coupon code input** → `GET /coupons/:code/validate`
+- [x] **Coupon code input** → `GET /coupons/:code/validate`
   - Create `features/coupons/api/coupons.api.ts` — `validateCoupon(code)` returns the coupon discount data
   - Create `features/coupons/hooks/useCoupon.ts` — stores the applied coupon code in local state; calls validate on submit; clears on cart clear or order completion
   - Create `features/coupons/components/CouponInput/CouponInput.tsx` — text input + "Apply" button; shows the discount amount on success; "Remove" link to clear it; error message for invalid/expired codes
   - Add `CouponInput` to `CartSummary.tsx` above the total row; pass the applied discount to `CheckoutView` so it is included in the order creation payload
   - The backend applies the coupon server-side during order creation — the frontend only needs to surface the code field and show the validated discount preview
 
-- [ ] **PDF invoice download** → `POST /orders/:orderId/invoice`, `GET /orders/:orderId/invoice`
+- [x] **PDF invoice download** → `POST /orders/:orderId/invoice`, `GET /orders/:orderId/invoice`
   - Create `features/orders/hooks/useInvoice.ts` — first calls `POST` to enqueue generation; then polls `GET` with `refetchInterval: 2000` until it returns 200 (not 202); stops polling on 200 or error
   - Add a "Download Invoice" button to `OrderDetailView.tsx`; visible only when `order.status` is `CONFIRMED`, `SHIPPED`, or `DELIVERED`
   - On 200: open the streamed PDF in a new tab (`window.open(invoiceUrl, '_blank')`) or trigger a file download via a hidden `<a download>` link
   - Show a loading spinner on the button while polling; disable the button while the job is in-flight
 
-- [ ] **Return request flow** → `POST /returns`, `GET /returns`
+- [x] **Return request flow** → `POST /returns`, `GET /returns`
   - Create `app/[locale]/orders/[id]/return/page.tsx`
   - Create `features/returns/api/returns.api.ts` — `createReturn(dto)` and `getUserReturns()`
   - Create `features/returns/hooks/useCreateReturn.ts` — mutation; on success redirect back to the order detail page
@@ -120,7 +120,7 @@ These items add three missing actions to the order detail page and one missing i
   - Add a "Request Return" button to `OrderDetailView.tsx`; visible only when `order.status === 'DELIVERED'` and no pending return exists for this order; links to `/orders/:id/return`
   - Show return status on the order detail if a return request already exists (PENDING / APPROVED / REJECTED / REFUNDED)
 
-- [ ] **Order event log / timeline** → `GET /orders/:id/events`
+- [x] **Order event log / timeline** → `GET /orders/:id/events`
   - Create `features/orders/hooks/useOrderEvents.ts` — TanStack query on `["orders", id, "events"]`
   - Create `features/orders/components/OrderTimeline/OrderTimeline.tsx` — vertical timeline of status-change events; each entry shows the event name, timestamp, and any metadata (e.g. "Payment confirmed by Stripe")
   - Add `OrderTimeline` to `OrderDetailView.tsx` below the order items list, collapsible with a "View history" toggle

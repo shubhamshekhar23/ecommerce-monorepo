@@ -140,7 +140,7 @@ The app has no `/account` section. These items create it.
 
 ## Order Post-Purchase Actions
 
-- [ ] **PDF invoice download** → `POST /orders/:orderId/invoice`, `GET /orders/:orderId/invoice`
+- [x] **PDF invoice download** → `POST /orders/:orderId/invoice`, `GET /orders/:orderId/invoice`
   - Create `features/orders/hooks/useInvoice.ts`:
     - First calls `POST` to enqueue PDF generation (idempotent — backend skips if already exists)
     - Then polls `GET` with `refetchInterval: 2000` until a 200 (ready) or error is returned; stops polling on either
@@ -148,7 +148,7 @@ The app has no `/account` section. These items create it.
   - Show a spinner on the button while polling; on 200, trigger a file download via a hidden `<a download>` link or open in a new tab
   - Complexity: Medium
 
-- [ ] **Return request flow** → `POST /returns`, `GET /returns`
+- [x] **Return request flow** → `POST /returns`, `GET /returns`
   - Create `app/[locale]/orders/[id]/return/page.tsx`
   - Create `features/returns/api/returns.api.ts` — `createReturn(dto)` and `getUserReturns()`
   - Create `features/returns/hooks/useCreateReturn.ts` — mutation; on success redirect back to the order detail page
@@ -157,7 +157,7 @@ The app has no `/account` section. These items create it.
   - Show return status badge (PENDING / APPROVED / REJECTED / REFUNDED) on the order detail if a return already exists
   - Complexity: Medium
 
-- [ ] **Order event timeline** → `GET /orders/:id/events`
+- [x] **Order event timeline** → `GET /orders/:id/events`
   - Create `features/orders/hooks/useOrderEvents.ts` — TanStack query on `["orders", id, "events"]`
   - Create `features/orders/components/OrderTimeline/OrderTimeline.tsx` — vertical timeline; each entry shows event name, timestamp, and any metadata; good for displaying the full journey from PENDING → CONFIRMED → SHIPPED → DELIVERED
   - Add `OrderTimeline` to `OrderDetailView.tsx` below the items list, behind a collapsible "View history" toggle

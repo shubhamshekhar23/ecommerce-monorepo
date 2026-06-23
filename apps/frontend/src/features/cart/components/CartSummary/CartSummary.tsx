@@ -8,6 +8,7 @@ import type { Cart } from "../../interfaces";
 import { useClearCart } from "../../hooks";
 import { useCartTotalsWorker } from "../../hooks/useCartTotalsWorker";
 import { cartUiReducer, cartUiInitialState } from "../../cartReducer";
+import { CouponInput, useCoupon } from "@/features/coupons";
 import styles from "./CartSummary.module.scss";
 
 interface CartSummaryProps {
@@ -18,13 +19,20 @@ export function CartSummary({ cart }: CartSummaryProps) {
   const router = useRouter();
   const { mutate: clearCart, isPending: isClearing } = useClearCart();
   const [state, dispatch] = useReducer(cartUiReducer, cartUiInitialState);
+  const {
+    appliedCoupon,
+    apply: applyCoupon,
+    remove: removeCoupon,
+    isPending: isCouponPending,
+    computeDiscount,
+  } = useCoupon();
 
   // Worker computes totals off the main thread. Falls back to the backend-provided
   // value on the first tick before the worker responds.
   const workerTotals = useCartTotalsWorker(cart.items);
-  const displayTotal = (
-    workerTotals?.totalPrice ?? Number(cart.totalPrice)
-  ).toFixed(2);
+  const subtotal = workerTotals?.totalPrice ?? Number(cart.totalPrice);
+  const discount = computeDiscount(subtotal);
+  const displayTotal = (subtotal - discount).toFixed(2);
   const displayItemCount = workerTotals?.itemCount ?? cart.itemCount;
   const itemLabel =
     displayItemCount === 1 ? "1 item" : `${displayItemCount} items`;
@@ -42,6 +50,25 @@ export function CartSummary({ cart }: CartSummaryProps) {
         <span className={styles.label}>Items</span>
         <span className={styles.value}>{itemLabel}</span>
       </div>
+
+      <CouponInput
+        onApply={applyCoupon}
+        onRemove={removeCoupon}
+        appliedCoupon={appliedCoupon}
+        isPending={isCouponPending}
+      />
+
+      {discount > 0 && (
+        <div className={styles.row}>
+          <span className={styles.label}>Discount</span>
+          <span
+            className={styles.value}
+            style={{ color: "var(--color-error)" }}
+          >
+            −${discount.toFixed(2)}
+          </span>
+        </div>
+      )}
 
       <div className={styles.divider} />
 

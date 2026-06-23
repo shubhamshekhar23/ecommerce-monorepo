@@ -5,6 +5,8 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useOrder, useCancelOrder, useOrderStatusStream } from "../../hooks";
+import { useInvoice } from "../../hooks/useInvoice";
+import { OrderTimeline } from "../OrderTimeline/OrderTimeline";
 import { Breadcrumb } from "@/components/Breadcrumb/Breadcrumb";
 import type { OrderStatus, PaymentStatus } from "../../interfaces";
 
@@ -30,6 +32,11 @@ interface OrderDetailViewProps {
 export function OrderDetailView({ id }: OrderDetailViewProps) {
   const { data: order, isLoading, error } = useOrder(id);
   const { mutate: cancelOrder, isPending: isCanceling } = useCancelOrder();
+  const {
+    request: requestInvoice,
+    isRequesting: isInvoicePending,
+    isPolling: isInvoicePolling,
+  } = useInvoice(id);
   const [showConfirm, setShowConfirm] = useState(false);
   useOrderStatusStream(id);
 
@@ -57,6 +64,10 @@ export function OrderDetailView({ id }: OrderDetailViewProps) {
   }
 
   const isCancellable = ["PENDING", "CONFIRMED", "PROCESSING"].includes(
+    order.status,
+  );
+  const isReturnable = order.status === "DELIVERED";
+  const isInvoiceable = ["CONFIRMED", "SHIPPED", "DELIVERED"].includes(
     order.status,
   );
   const statuses: OrderStatus[] = [
@@ -206,13 +217,40 @@ export function OrderDetailView({ id }: OrderDetailViewProps) {
         </div>
       )}
 
-      <button
-        className={`${styles.printBtn} no-print`}
-        onClick={() => window.print()}
-        aria-label="Print this receipt"
-      >
-        Print Receipt
-      </button>
+      <div className={styles.actions}>
+        {isInvoiceable && (
+          <button
+            className={styles.invoiceBtn}
+            onClick={() => requestInvoice()}
+            disabled={isInvoicePending || isInvoicePolling}
+          >
+            {isInvoicePolling
+              ? "Generating..."
+              : isInvoicePending
+                ? "Requesting..."
+                : "Download Invoice"}
+          </button>
+        )}
+
+        {isReturnable && (
+          <Link
+            href={`/orders/${order.id}/return`}
+            className={styles.returnBtn}
+          >
+            Request Return
+          </Link>
+        )}
+
+        <button
+          className={`${styles.printBtn} no-print`}
+          onClick={() => window.print()}
+          aria-label="Print this receipt"
+        >
+          Print Receipt
+        </button>
+      </div>
+
+      <OrderTimeline orderId={order.id} />
     </div>
   );
 }

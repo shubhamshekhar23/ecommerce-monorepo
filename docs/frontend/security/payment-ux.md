@@ -80,7 +80,7 @@ Payment flows are the highest-stakes part of an ecommerce frontend. Errors here 
 
 ## Coupon Codes
 
-- [ ] **Coupon code input at cart and checkout** → `GET /coupons/:code/validate`
+- [x] **Coupon code input at cart and checkout** → `GET /coupons/:code/validate`
   - Create `features/coupons/api/coupons.api.ts` — `validateCoupon(code)` returns the coupon type, discount value, and whether it is still valid
   - Create `features/coupons/hooks/useCoupon.ts` — local state for the applied coupon code; calls validate on submit; clears when the cart is cleared or the order completes
   - Create `features/coupons/components/CouponInput/CouponInput.tsx` — text input + "Apply" button; shows the discount amount and type on success (e.g. "10% off applied"); "Remove" link to clear; inline error for invalid, expired, or already-used codes
