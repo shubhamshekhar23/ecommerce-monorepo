@@ -80,14 +80,14 @@ The current auth implementation handles login/logout and stores a token. This fi
 
 ## Password Recovery
 
-- [ ] **Forgot password page** → `POST /auth/forgot-password`
+- [x] **Forgot password page** → `POST /auth/forgot-password`
   - Create `app/[locale]/(auth)/forgot-password/page.tsx` — single email field form; on submit calls `POST /auth/forgot-password`
   - Always show a success message regardless of whether the email exists — never reveal account existence to a potential attacker
   - Add "Forgot password?" link to `LoginForm.tsx` pointing to this page
   - Create `features/auth/hooks/useForgotPassword.ts` — mutation; endpoint is `@Public()`, no auth header needed
   - Complexity: Easy
 
-- [ ] **Reset password page** → `POST /auth/reset-password`
+- [x] **Reset password page** → `POST /auth/reset-password`
   - Create `app/[locale]/(auth)/reset-password/page.tsx` — reads `?token=` from the URL query string; shows new-password + confirm-password fields; submits `{ token, newPassword }` to `POST /auth/reset-password`; on success redirects to `/login`
   - Validate client-side: passwords must match, minimum length 8 characters; show inline field errors via `ErrorMessage`, not just a toast
   - Create `features/auth/hooks/useResetPassword.ts` — mutation; `@Public()` endpoint
@@ -97,14 +97,14 @@ The current auth implementation handles login/logout and stores a token. This fi
 
 ## Two-Factor Authentication (2FA)
 
-- [ ] **2FA setup and enable** → `POST /auth/2fa/setup`, `POST /auth/2fa/enable`
+- [x] **2FA setup and enable** → `POST /auth/2fa/setup`, `POST /auth/2fa/enable`
   - Add a "Security" tab to the account section (`app/[locale]/account/security/page.tsx`) showing current 2FA status
   - "Enable 2FA" button calls `POST /auth/2fa/setup` which returns a TOTP `otpauth://` URI and a QR code data URL
   - Display the QR code for the user to scan with an authenticator app; also show the plain-text secret for manual entry
   - "Verify and activate" form: 6-digit code field; calls `POST /auth/2fa/enable`; on success display backup codes and mark 2FA as active
   - Complexity: Medium
 
-- [ ] **2FA verify step during login** → `POST /auth/2fa/verify`
+- [x] **2FA verify step during login** → `POST /auth/2fa/verify`
   - After `POST /auth/login` succeeds, check whether the response contains `requires2fa: true`
   - If so, show an interstitial screen with a 6-digit TOTP code field instead of completing login
   - Submitting the code to `POST /auth/2fa/verify` returns the real access/refresh tokens to complete the auth flow
@@ -112,7 +112,7 @@ The current auth implementation handles login/logout and stores a token. This fi
   - Create `features/auth/hooks/use2faVerify.ts`
   - Complexity: Medium
 
-- [ ] **2FA disable** → `POST /auth/2fa/disable`
+- [x] **2FA disable** → `POST /auth/2fa/disable`
   - "Disable 2FA" button on the security page shows a confirmation dialog with a current TOTP code field
   - On confirm, calls `POST /auth/2fa/disable` and updates the security page status
   - Create `features/auth/hooks/use2faDisable.ts`
@@ -122,7 +122,7 @@ The current auth implementation handles login/logout and stores a token. This fi
 
 ## OAuth
 
-- [ ] **Google OAuth login** → `GET /auth/oauth/google`
+- [x] **Google OAuth login** → `GET /auth/oauth/google`
   - Add a "Continue with Google" button to both `LoginForm.tsx` and `RegisterForm.tsx`
   - On click: redirect the browser to `${API_URL}/auth/oauth/google`; the auth-service handles the full OAuth dance and redirects back to the frontend with tokens
   - Create `app/[locale]/(auth)/oauth/callback/page.tsx` — reads tokens from URL params on mount, stores them in the auth store (same path as a normal login), clears the URL params, redirects to the originally intended page

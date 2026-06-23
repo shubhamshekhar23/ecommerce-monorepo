@@ -92,7 +92,7 @@ Payment flows are the highest-stakes part of an ecommerce frontend. Errors here 
 
 ### Saved Address at Checkout
 
-- [ ] **Saved address selector in checkout** → `GET /addresses`
+- [x] **Saved address selector in checkout** → `GET /addresses`
   - Before the address form fields in `CheckoutForm.tsx`, add a "Use a saved address" section that fetches the user's saved addresses and renders them as a radio list
   - Selecting an address pre-fills all the form fields; the user can still edit before submitting
   - If the user has no saved addresses, skip the section entirely — the inline form is the only option

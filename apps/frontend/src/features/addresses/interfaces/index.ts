@@ -8,6 +8,7 @@ export interface Address {
   state: string;
   postalCode: string;
   country: string;
+  isDefault?: boolean;
   createdAt: string;
   updatedAt: string;
 }

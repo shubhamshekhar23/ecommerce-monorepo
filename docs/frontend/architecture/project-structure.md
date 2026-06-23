@@ -70,28 +70,28 @@ features/<name>/
 
 The V4 implementation adds eight new feature domains. Each must follow the same internal structure as existing features (`api/`, `hooks/`, `components/`, `interfaces/`, `utils/`, `constants/`, `mocks/`).
 
-- [ ] **`features/account/`** — profile edit and `PATCH /users/me`; shared layout shell for the `/account/*` pages
+- [x] **`features/account/`** — profile edit and `PATCH /users/me`; shared layout shell for the `/account/*` pages
   - Complexity: Easy (structure only; implementation in [ux/user-experience.md](../ux/user-experience.md))
 
-- [ ] **`features/addresses/`** — saved shipping address CRUD
+- [x] **`features/addresses/`** — saved shipping address CRUD
   - Complexity: Easy (structure only; implementation in [ux/user-experience.md](../ux/user-experience.md))
 
-- [ ] **`features/reviews/`** — product review submit and listing
+- [x] **`features/reviews/`** — product review submit and listing
   - Complexity: Easy (structure only; implementation in [ux/user-experience.md](../ux/user-experience.md))
 
-- [ ] **`features/stock-alerts/`** — back-in-stock subscribe/unsubscribe
+- [x] **`features/stock-alerts/`** — back-in-stock subscribe/unsubscribe
   - Complexity: Easy (structure only; implementation in [ux/user-experience.md](../ux/user-experience.md))
 
-- [ ] **`features/returns/`** — customer return request and admin returns management
+- [x] **`features/returns/`** — customer return request and admin returns management
   - Complexity: Easy (structure only; implementation in [ux/user-experience.md](../ux/user-experience.md))
 
-- [ ] **`features/coupons/`** — coupon code validation and input component
+- [x] **`features/coupons/`** — coupon code validation and input component
   - Complexity: Easy (structure only; implementation in [security/payment-ux.md](../security/payment-ux.md))
 
-- [ ] **`features/recommendations/`** — product recommendation strip from the analytics-service
+- [x] **`features/recommendations/`** — product recommendation strip from the analytics-service
   - Complexity: Easy (structure only; implementation in [architecture/feature-flags.md](./feature-flags.md))
 
-- [ ] **`features/promotions/`** — admin promotion rule CRUD (consumer-facing promotions are applied server-side; this feature is admin-only)
+- [x] **`features/promotions/`** — admin promotion rule CRUD (consumer-facing promotions are applied server-side; this feature is admin-only)
   - Complexity: Easy (structure only; implementation in [ux/user-experience.md](../ux/user-experience.md))
 
 ### New Admin Pages

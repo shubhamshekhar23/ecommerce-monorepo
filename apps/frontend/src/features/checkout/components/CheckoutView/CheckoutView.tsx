@@ -9,6 +9,7 @@ import { useCreateOrder } from "@/features/orders/hooks";
 import { useGetClientSecret } from "../../hooks";
 import { CheckoutForm } from "../CheckoutForm/CheckoutForm";
 import { CheckoutSkeleton } from "../CheckoutSkeleton/CheckoutSkeleton";
+import { SavedAddressSelector } from "../SavedAddressSelector/SavedAddressSelector";
 import { AppError } from "@/shared/errors";
 import { trackBeginCheckout } from "@/shared/analytics/trackEvent";
 import styles from "./CheckoutView.module.scss";
@@ -39,6 +40,9 @@ export function CheckoutView() {
   const [orderId, setOrderId] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [orderError, setOrderError] = useState<string | null>(null);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
+    null,
+  );
 
   const { data: cart, isLoading: cartLoading } = useCart();
   const { mutate: createOrder, isPending: isCreatingOrder } = useCreateOrder();
@@ -128,6 +132,14 @@ export function CheckoutView() {
         <div className={styles.reviewSection}>
           <div className={styles.content}>
             <h2 className={styles.sectionTitle}>Order Review</h2>
+
+            <div className={styles.addressSection}>
+              <h3 className={styles.subTitle}>Shipping address</h3>
+              <SavedAddressSelector
+                selectedId={selectedAddressId}
+                onSelect={setSelectedAddressId}
+              />
+            </div>
 
             <div className={styles.itemsList}>
               {cart.items.map((item) => (

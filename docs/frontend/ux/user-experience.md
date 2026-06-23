@@ -95,14 +95,14 @@ Source: `preserve-scroll-position.md`, `others.md`
 
 The app has no `/account` section. These items create it.
 
-- [ ] **Account layout and profile edit** → `PATCH /users/me`, `GET /users/me`
+- [x] **Account layout and profile edit** → `PATCH /users/me`, `GET /users/me`
   - Create `app/[locale]/account/layout.tsx` — sidebar nav with tabs: Profile, Addresses, Security, Privacy
   - Create `app/[locale]/account/profile/page.tsx` — form for editing display name and email; on submit calls `PATCH /users/me`; on success invalidates the `["me"]` query so the Navbar reflects the change
   - Create `features/account/api/account.api.ts` — `getMe()` and `updateMe(dto)` wrappers
   - Create `features/account/hooks/useUpdateProfile.ts` — TanStack mutation with optimistic update on `["me"]` cache key
   - Complexity: Medium
 
-- [ ] **Saved addresses page** → `GET /addresses`, `POST /addresses`, `PATCH /addresses/:id`, `DELETE /addresses/:id`
+- [x] **Saved addresses page** → `GET /addresses`, `POST /addresses`, `PATCH /addresses/:id`, `DELETE /addresses/:id`
   - Create `app/[locale]/account/addresses/page.tsx`
   - Create `features/addresses/api/addresses.api.ts` — list, create, update, delete wrappers
   - Create `features/addresses/hooks/` — `useAddresses`, `useCreateAddress`, `useUpdateAddress`, `useDeleteAddress`
