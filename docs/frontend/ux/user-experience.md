@@ -203,7 +203,7 @@ The app has no `/account` section. These items create it.
 
 ## Admin: Business Operations
 
-- [ ] **Promotion rules management** → `GET /admin/promotion-rules`, `POST /admin/promotion-rules`, `PATCH /admin/promotion-rules/:id`, `DELETE /admin/promotion-rules/:id`
+- [x] **Promotion rules management** → `GET /admin/promotion-rules`, `POST /admin/promotion-rules`, `PATCH /admin/promotion-rules/:id`, `DELETE /admin/promotion-rules/:id`
   - Create `app/[locale]/admin/promotion-rules/page.tsx` — paginated table; columns: name, priority, active toggle, starts/expires at, actions
   - Create `app/[locale]/admin/promotion-rules/new/page.tsx` and `[id]/edit/page.tsx`
   - Create `features/admin/components/PromotionRuleForm/PromotionRuleForm.tsx`:
@@ -216,7 +216,7 @@ The app has no `/account` section. These items create it.
   - Add "Promotion Rules" link to `AdminNav.tsx`
   - Complexity: Medium–High
 
-- [ ] **Returns management (admin)** → `GET /returns` (admin), `PATCH /returns/:id/approve`, `PATCH /returns/:id/reject`, `PATCH /returns/:id/refund`
+- [x] **Returns management (admin)** → `GET /returns` (admin), `PATCH /returns/:id/approve`, `PATCH /returns/:id/reject`, `PATCH /returns/:id/refund`
   - Create `app/[locale]/admin/returns/page.tsx` — table of all return requests; columns: order ID, customer name, reason, status, requested at, actions
   - Filter tabs: All / Pending / Approved / Refunded / Rejected
   - Per-row actions based on current status:

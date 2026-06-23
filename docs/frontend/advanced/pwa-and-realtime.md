@@ -63,7 +63,7 @@ Source: `others.md`
 
 ## Admin Real-Time Order Feed
 
-- [ ] **WebSocket admin order feed** → Socket.IO gateway at `/admin/orders`
+- [x] **WebSocket admin order feed** → Socket.IO gateway at `/admin/orders`
   - The backend `OrdersGateway` emits `order:created` to the `/admin/orders` Socket.IO namespace every time a new order is placed
   - In `AdminOrdersView.tsx`: connect to `io('/admin/orders', { auth: { token: accessToken } })` on mount; listen for `order:created` events; prepend the new order object to the TanStack Query cache via `queryClient.setQueryData` so the table updates instantly without a refetch
   - Show a toast "New order #XYZ received" on each event so admins are notified even when scrolled down
