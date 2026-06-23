@@ -7,5 +7,9 @@ export { AdminCategoriesView } from "./components/AdminCategoriesView/AdminCateg
 export { AdminTableSkeleton } from "./components/AdminTableSkeleton/AdminTableSkeleton";
 export { ProductForm } from "./components/ProductForm/ProductForm";
 export { CategoryForm } from "./components/CategoryForm/CategoryForm";
+export { VariantTypesManager } from "./components/VariantTypesManager/VariantTypesManager";
+export { VariantsTable } from "./components/VariantsTable/VariantsTable";
+export { CsvImportModal } from "./components/CsvImportModal/CsvImportModal";
+export { AdminArchivedView } from "./components/AdminArchivedView/AdminArchivedView";
 
 export * from "./hooks";

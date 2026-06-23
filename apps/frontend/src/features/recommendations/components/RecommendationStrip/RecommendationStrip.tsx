@@ -37,7 +37,9 @@ export function RecommendationStrip({ productId }: RecommendationStripProps) {
               </div>
             )}
             <p className={styles.name}>{product.name}</p>
-            <p className={styles.price}>{formatCurrency(product.price)}</p>
+            <p className={styles.price}>
+              {formatCurrency(product.price, "en-US")}
+            </p>
           </Link>
         ))}
       </div>

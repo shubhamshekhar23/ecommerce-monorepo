@@ -131,7 +131,7 @@ These items add three missing actions to the order detail page and one missing i
 
 The admin product form only has basic fields. The backend supports full variant type + option hierarchies, per-variant stock control, soft-delete recovery, and bulk CSV import — none of which have UI.
 
-- [ ] **Variant type and option management** → `POST /products/:productId/variant-types`, `POST /products/:productId/variant-types/:typeId/options`, `DELETE /products/:productId/variants/:variantId`
+- [x] **Variant type and option management** → `POST /products/:productId/variant-types`, `POST /products/:productId/variant-types/:typeId/options`, `DELETE /products/:productId/variants/:variantId`
   - Add a "Variants" tab to the admin product edit page (alongside the existing product fields)
   - Create `features/admin/components/VariantTypesManager/VariantTypesManager.tsx`:
     - Lists existing variant types (e.g. "Size", "Color") fetched from `GET /products/:id`
@@ -142,18 +142,18 @@ The admin product form only has basic fields. The backend supports full variant 
     - "Delete variant" button calls `DELETE /products/:productId/variants/:variantId` with a confirmation dialog
   - Create `features/admin/hooks/useCreateVariantType.ts`, `useCreateVariantOption.ts`, `useDeleteVariant.ts`
 
-- [ ] **Per-variant stock update** → `PATCH /products/:productId/variants/:variantId/stock`
+- [x] **Per-variant stock update** → `PATCH /products/:productId/variants/:variantId/stock`
   - In `VariantsTable.tsx`: add an editable stock cell — clicking it shows an inline number input + confirm; on confirm calls `PATCH /products/:productId/variants/:variantId/stock` with `{ stock: newValue }`
   - Alternatively, add a "Set stock" modal triggered per-row for a cleaner UX
   - Invalidate `["products", id]` query on success so the variant list refreshes
   - Create `features/admin/hooks/useUpdateVariantStock.ts`
 
-- [ ] **Soft-delete restore and hard purge** → `PATCH /products/:id/restore`, `DELETE /products/:id/purge`
+- [x] **Soft-delete restore and hard purge** → `PATCH /products/:id/restore`, `DELETE /products/:id/purge`
   - Add an "Archived" filter tab to `AdminProductsView.tsx` that calls `GET /products?deleted=true` (or the equivalent query param) to show soft-deleted products
   - In the archived list: replace "Edit" and "Delete" with "Restore" (calls `PATCH /products/:id/restore`) and "Permanently delete" (calls `DELETE /products/:id/purge` with a strong confirmation dialog)
   - Create `features/admin/hooks/useRestoreProduct.ts` and `useHardDeleteProduct.ts`
 
-- [ ] **Product CSV import** → `POST /products/import/csv`
+- [x] **Product CSV import** → `POST /products/import/csv`
   - Add an "Import CSV" button to the admin products page header
   - Create `features/admin/components/CsvImportModal/CsvImportModal.tsx`:
     - File picker (accept `.csv` only)

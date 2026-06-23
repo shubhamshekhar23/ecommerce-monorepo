@@ -167,7 +167,7 @@ The app has no `/account` section. These items create it.
 
 ## Admin: Product Management Completions
 
-- [ ] **Variant type and option management** → `POST /products/:productId/variant-types`, `POST /products/:productId/variant-types/:typeId/options`, `DELETE /products/:productId/variants/:variantId`
+- [x] **Variant type and option management** → `POST /products/:productId/variant-types`, `POST /products/:productId/variant-types/:typeId/options`, `DELETE /products/:productId/variants/:variantId`
   - Add a "Variants" tab to the admin product edit page alongside the existing product fields
   - Create `features/admin/components/VariantTypesManager/VariantTypesManager.tsx`:
     - Lists existing variant types (e.g. "Size", "Color") from `GET /products/:id`
@@ -178,19 +178,19 @@ The app has no `/account` section. These items create it.
   - Create hooks `useCreateVariantType.ts`, `useCreateVariantOption.ts`, `useDeleteVariant.ts`
   - Complexity: Medium
 
-- [ ] **Per-variant stock update** → `PATCH /products/:productId/variants/:variantId/stock`
+- [x] **Per-variant stock update** → `PATCH /products/:productId/variants/:variantId/stock`
   - In `VariantsTable.tsx`: add an editable stock cell; clicking opens an inline number input + confirm button; on confirm calls `PATCH /products/:productId/variants/:variantId/stock` with `{ stock: newValue }`
   - Invalidate `["products", id]` on success so the variants table refreshes
   - Create `features/admin/hooks/useUpdateVariantStock.ts`
   - Complexity: Easy
 
-- [ ] **Soft-delete restore and hard purge** → `PATCH /products/:id/restore`, `DELETE /products/:id/purge`
+- [x] **Soft-delete restore and hard purge** → `PATCH /products/:id/restore`, `DELETE /products/:id/purge`
   - Add an "Archived" tab to `AdminProductsView.tsx` that fetches soft-deleted products
   - In the archived list: replace Edit/Delete with "Restore" (calls `PATCH /products/:id/restore`) and "Permanently delete" (calls `DELETE /products/:id/purge` with a strong confirmation: "This cannot be undone")
   - Create `features/admin/hooks/useRestoreProduct.ts` and `useHardDeleteProduct.ts`
   - Complexity: Easy
 
-- [ ] **Product CSV import** → `POST /products/import/csv`
+- [x] **Product CSV import** → `POST /products/import/csv`
   - Add an "Import CSV" button to the admin products page header
   - Create `features/admin/components/CsvImportModal/CsvImportModal.tsx`:
     - File picker (`accept=".csv"`)
