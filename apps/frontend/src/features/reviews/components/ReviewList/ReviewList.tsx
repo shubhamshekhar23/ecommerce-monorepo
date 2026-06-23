@@ -61,7 +61,10 @@ export function ReviewList({ productId }: ReviewListProps) {
                 {new Date(review.createdAt).toLocaleDateString()}
               </time>
             </div>
-            <p className={styles.comment}>{review.comment}</p>
+            {review.title && (
+              <p className={styles.reviewTitle}>{review.title}</p>
+            )}
+            {review.body && <p className={styles.comment}>{review.body}</p>}
           </li>
         ))}
       </ul>

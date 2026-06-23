@@ -85,6 +85,12 @@
   margin-left: auto;
 }
 
+.reviewTitle {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  margin: 0;
+}
+
 .comment {
   font-size: var(--font-size-sm);
   line-height: 1.6;

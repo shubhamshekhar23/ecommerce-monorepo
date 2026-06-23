@@ -5,8 +5,15 @@ export { ReviewForm } from "./components/ReviewForm/ReviewForm";
 export {
   useProductReviews,
   useCreateReview,
-  useUpdateReview,
-  useDeleteReview,
+  useApproveReview,
+  useRejectReview,
 } from "./hooks/useReviews";
+
+export {
+  getProductReviewsApi,
+  createReviewApi,
+  approveReviewApi,
+  rejectReviewApi,
+} from "./api/reviews.api";
 
 export type { Review, CreateReviewPayload } from "./interfaces";

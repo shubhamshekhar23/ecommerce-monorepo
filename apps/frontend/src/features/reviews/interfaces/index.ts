@@ -3,7 +3,9 @@ export interface Review {
   productId: string;
   userId: string;
   rating: number;
-  comment: string;
+  title: string | null;
+  body: string | null;
+  status: string;
   createdAt: string;
   updatedAt: string;
   user: {
@@ -13,6 +15,8 @@ export interface Review {
 }
 
 export interface CreateReviewPayload {
+  productId: string;
   rating: number;
-  comment: string;
+  title?: string;
+  body?: string;
 }

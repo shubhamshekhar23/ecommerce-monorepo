@@ -7,10 +7,12 @@ import styles from "./ReviewForm.module.scss";
 
 const schema = z.object({
   rating: z.number().min(1).max(5),
-  comment: z
+  title: z.string().max(120).optional(),
+  body: z
     .string()
     .min(10, "Review must be at least 10 characters")
-    .max(2000),
+    .max(2000)
+    .optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -19,7 +21,7 @@ interface ReviewFormProps {
   onSubmit: (values: FormValues) => void;
   onCancel?: () => void;
   isPending: boolean;
-  initial?: { rating: number; comment: string };
+  initial?: { rating: number; title?: string; body?: string };
 }
 
 export function ReviewForm({
@@ -36,7 +38,7 @@ export function ReviewForm({
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: initial ?? { rating: 5, comment: "" },
+    defaultValues: initial ?? { rating: 5, title: "", body: "" },
   });
 
   const rating = useWatch({ control, name: "rating" });
@@ -60,14 +62,21 @@ export function ReviewForm({
         )}
       </div>
 
+      <input
+        {...register("title")}
+        type="text"
+        placeholder="Title (optional)"
+        className={styles.titleInput}
+      />
+
       <textarea
-        {...register("comment")}
+        {...register("body")}
         rows={4}
         placeholder="Share your experience with this product..."
         className={styles.textarea}
       />
-      {errors.comment && (
-        <span className={styles.error}>{errors.comment.message}</span>
+      {errors.body && (
+        <span className={styles.error}>{errors.body.message}</span>
       )}
 
       <div className={styles.actions}>

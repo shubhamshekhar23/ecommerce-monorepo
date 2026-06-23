@@ -5,8 +5,8 @@ import { toast } from "sonner";
 import {
   getProductReviewsApi,
   createReviewApi,
-  updateReviewApi,
-  deleteReviewApi,
+  approveReviewApi,
+  rejectReviewApi,
 } from "../api/reviews.api";
 import { handleMutationError } from "@/shared/mutationError";
 import type { CreateReviewPayload } from "../interfaces";
@@ -24,42 +24,36 @@ export function useProductReviews(productId: string) {
 export function useCreateReview(productId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: CreateReviewPayload) =>
-      createReviewApi(productId, payload),
+    mutationFn: (payload: Omit<CreateReviewPayload, "productId">) =>
+      createReviewApi({ ...payload, productId }),
     onSuccess: () => {
-      toast.success("Review submitted.");
+      toast.success("Review submitted. It will appear after moderation.");
       qc.invalidateQueries({ queryKey: reviewsKey(productId) });
     },
     onError: (err) => handleMutationError(err, "Failed to submit review."),
   });
 }
 
-export function useUpdateReview(productId: string) {
+export function useApproveReview() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      reviewId,
-      payload,
-    }: {
-      reviewId: string;
-      payload: Partial<CreateReviewPayload>;
-    }) => updateReviewApi(productId, reviewId, payload),
-    onSuccess: () => {
-      toast.success("Review updated.");
-      qc.invalidateQueries({ queryKey: reviewsKey(productId) });
+    mutationFn: approveReviewApi,
+    onSuccess: (review) => {
+      toast.success("Review approved.");
+      qc.invalidateQueries({ queryKey: reviewsKey(review.productId) });
     },
-    onError: (err) => handleMutationError(err, "Failed to update review."),
+    onError: (err) => handleMutationError(err, "Failed to approve review."),
   });
 }
 
-export function useDeleteReview(productId: string) {
+export function useRejectReview() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (reviewId: string) => deleteReviewApi(productId, reviewId),
-    onSuccess: () => {
-      toast.success("Review deleted.");
-      qc.invalidateQueries({ queryKey: reviewsKey(productId) });
+    mutationFn: rejectReviewApi,
+    onSuccess: (review) => {
+      toast.success("Review rejected.");
+      qc.invalidateQueries({ queryKey: reviewsKey(review.productId) });
     },
-    onError: (err) => handleMutationError(err, "Failed to delete review."),
+    onError: (err) => handleMutationError(err, "Failed to reject review."),
   });
 }
