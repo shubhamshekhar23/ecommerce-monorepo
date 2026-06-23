@@ -76,3 +76,21 @@ If the app uses analytics, error tracking, or any cookies that aren't strictly n
   }
   ```
   - Complexity: Easy
+
+---
+
+## Data Deletion (Right to Erasure)
+
+GDPR Article 17 gives users the right to request deletion of their personal data. The backend implements this via two endpoints.
+
+- [ ] **GDPR data deletion request UI** → `DELETE /users/me/data`
+  - Create `app/[locale]/account/privacy/page.tsx` — explains what personal data is stored and what deletion means; includes a "Request account data deletion" button
+  - On click: show a confirmation dialog ("This will schedule deletion of all your personal data. You have 30 days to cancel before it is processed.")
+  - On confirm: call `DELETE /users/me/data`; show a "Deletion scheduled" state with the scheduled date
+  - The existing `app/[locale]/privacy/page.tsx` is a static info page — the new account/privacy page is the interactive action page; link between them from the footer
+  - Complexity: Easy
+
+- [ ] **Cancel deletion request UI** → `DELETE /users/me/data/cancel`
+  - If `GET /users/me` returns a non-null `deletionRequestedAt`, show a "Your data deletion is scheduled for [date]" banner on the account/privacy page with a "Cancel deletion" button
+  - On confirm: call `DELETE /users/me/data/cancel`; hide the banner and show a success toast
+  - Complexity: Easy

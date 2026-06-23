@@ -63,3 +63,52 @@ features/<name>/
 
 - [x] **`.editorconfig`** — ensures consistent indentation (2 spaces), line endings (LF), and charset (utf-8) across editors and contributors. Respected by VS Code, JetBrains, etc. without plugins.
   - Complexity: Easy (one file, ~10 lines)
+
+---
+
+## V4 Feature Folder Stubs
+
+The V4 implementation adds eight new feature domains. Each must follow the same internal structure as existing features (`api/`, `hooks/`, `components/`, `interfaces/`, `utils/`, `constants/`, `mocks/`).
+
+- [ ] **`features/account/`** — profile edit and `PATCH /users/me`; shared layout shell for the `/account/*` pages
+  - Complexity: Easy (structure only; implementation in [ux/user-experience.md](../ux/user-experience.md))
+
+- [ ] **`features/addresses/`** — saved shipping address CRUD
+  - Complexity: Easy (structure only; implementation in [ux/user-experience.md](../ux/user-experience.md))
+
+- [ ] **`features/reviews/`** — product review submit and listing
+  - Complexity: Easy (structure only; implementation in [ux/user-experience.md](../ux/user-experience.md))
+
+- [ ] **`features/stock-alerts/`** — back-in-stock subscribe/unsubscribe
+  - Complexity: Easy (structure only; implementation in [ux/user-experience.md](../ux/user-experience.md))
+
+- [ ] **`features/returns/`** — customer return request and admin returns management
+  - Complexity: Easy (structure only; implementation in [ux/user-experience.md](../ux/user-experience.md))
+
+- [ ] **`features/coupons/`** — coupon code validation and input component
+  - Complexity: Easy (structure only; implementation in [security/payment-ux.md](../security/payment-ux.md))
+
+- [ ] **`features/recommendations/`** — product recommendation strip from the analytics-service
+  - Complexity: Easy (structure only; implementation in [architecture/feature-flags.md](./feature-flags.md))
+
+- [ ] **`features/promotions/`** — admin promotion rule CRUD (consumer-facing promotions are applied server-side; this feature is admin-only)
+  - Complexity: Easy (structure only; implementation in [ux/user-experience.md](../ux/user-experience.md))
+
+### New Admin Pages
+
+The following route segments need to be created under `app/[locale]/admin/`:
+
+- `promotion-rules/` — list, `new/`, `[id]/edit/`
+- `returns/` — list
+- `queue/` — monitoring dashboard
+- `feature-flags/` — runtime flag management
+- `db-analytics/` — database health panel
+
+### New Account Pages
+
+The following route segments need to be created under `app/[locale]/account/`:
+
+- `profile/` — name and email edit
+- `addresses/` — saved address management
+- `security/` — 2FA setup and disable
+- `privacy/` — GDPR data deletion request

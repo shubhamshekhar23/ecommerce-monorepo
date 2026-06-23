@@ -84,3 +84,33 @@ Feature flags decouple deployment from release. Code ships to production hidden 
 - [x] **Add flag env vars to Zod validation** — once `25-environment-config.md` is implemented, add feature flag env vars to the Zod schema so a misconfigured flag (typo, wrong type) fails at startup, not silently.
   - Complexity: Easy
   - Depends on: `25-environment-config.md`
+
+---
+
+## Activating the Recommendations Flag
+
+The `recommendations` flag is already declared in `featureFlags.ts` and `env.ts` but no component actually calls the recommendations API. It is a dead stub.
+
+- [ ] **Wire the `recommendations` flag to the analytics-service API** → `GET /api/recommendations/products/:id`
+  - Create `features/recommendations/api/recommendations.api.ts` — `getRecommendations(productId)` hitting the analytics-service via the gateway
+  - Create `features/recommendations/hooks/useRecommendations.ts` — TanStack query keyed on `["recommendations", productId]`; disabled when the flag is off or `productId` is undefined
+  - Create `features/recommendations/components/RecommendationStrip/RecommendationStrip.tsx` — horizontal scrollable row of `ProductCard`s labelled "You might also like"; renders nothing when the query returns an empty array
+  - Wrap with `<FlagGuard flag="recommendations">` in `ProductDetailView.tsx` so the section only appears when `NEXT_PUBLIC_FLAG_RECOMMENDATIONS=true`
+  - Complexity: Medium
+  - Files: `features/recommendations/`, `features/products/components/ProductDetailView/ProductDetailView.tsx`
+
+---
+
+## Admin Feature Flag Management UI
+
+The backend exposes a full CRUD API for runtime feature flags stored in the database. The frontend currently reads flags only from env vars (build-time). This panel lets admins toggle flags live without a redeployment.
+
+- [ ] **Admin feature flags page** → `GET /admin/feature-flags`, `POST /admin/feature-flags`, `PATCH /admin/feature-flags/:name`, `DELETE /admin/feature-flags/:name`
+  - Create `app/[locale]/admin/feature-flags/page.tsx` — table of all runtime flags; columns: name, enabled (toggle), description, created at, actions
+  - Enabled toggle: calls `PATCH /admin/feature-flags/:name` with `{ enabled: !current }` inline — no page reload needed
+  - "New flag" form: name and description fields; calls `POST /admin/feature-flags`
+  - Delete: calls `DELETE /admin/feature-flags/:name` with a confirmation dialog
+  - Add "Feature Flags" link under a "System" section in `AdminNav.tsx`
+  - Document in a page comment that env vars are build-time defaults; database flags override at runtime when the backend checks them
+  - Create `features/admin/hooks/useFeatureFlags.ts`, `useCreateFeatureFlag.ts`, `useUpdateFeatureFlag.ts`, `useDeleteFeatureFlag.ts`
+  - Complexity: Medium

@@ -75,3 +75,26 @@ Payment flows are the highest-stakes part of an ecommerce frontend. Errors here 
   3. Navigate to `/orders/[id]` confirmation page
   - Complexity: Easy
   - File: `src/features/checkout/hooks/` (in mutation `onSuccess`)
+
+---
+
+## Coupon Codes
+
+- [ ] **Coupon code input at cart and checkout** → `GET /coupons/:code/validate`
+  - Create `features/coupons/api/coupons.api.ts` — `validateCoupon(code)` returns the coupon type, discount value, and whether it is still valid
+  - Create `features/coupons/hooks/useCoupon.ts` — local state for the applied coupon code; calls validate on submit; clears when the cart is cleared or the order completes
+  - Create `features/coupons/components/CouponInput/CouponInput.tsx` — text input + "Apply" button; shows the discount amount and type on success (e.g. "10% off applied"); "Remove" link to clear; inline error for invalid, expired, or already-used codes
+  - Add `CouponInput` to `CartSummary.tsx` above the total row
+  - Pass the validated coupon code into the order creation payload in `CheckoutView` — the backend applies the actual discount server-side; the frontend only previews it
+  - Never trust the client-calculated discount amount for billing — the backend is the source of truth
+  - Complexity: Medium
+  - Files: `features/coupons/`, `features/cart/components/CartSummary/CartSummary.tsx`, `features/checkout/components/CheckoutView/CheckoutView.tsx`
+
+### Saved Address at Checkout
+
+- [ ] **Saved address selector in checkout** → `GET /addresses`
+  - Before the address form fields in `CheckoutForm.tsx`, add a "Use a saved address" section that fetches the user's saved addresses and renders them as a radio list
+  - Selecting an address pre-fills all the form fields; the user can still edit before submitting
+  - If the user has no saved addresses, skip the section entirely — the inline form is the only option
+  - Complexity: Medium
+  - File: `features/checkout/components/CheckoutForm/CheckoutForm.tsx`

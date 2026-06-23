@@ -58,3 +58,18 @@ Source: `others.md`
 - [x] **Background sync for offline cart mutations** — when the user is offline and the IndexedDB cart queue has pending mutations (from `11-web-storage.md`), the Service Worker registers a background sync event. When connectivity returns (even if the browser tab is closed), the Service Worker fires and drains the queue.
   - Complexity: Complex
   - Depends on: IndexedDB cart queue (11-web-storage.md) + Service Worker above
+
+---
+
+## Admin Real-Time Order Feed
+
+- [ ] **WebSocket admin order feed** → Socket.IO gateway at `/admin/orders`
+  - The backend `OrdersGateway` emits `order:created` to the `/admin/orders` Socket.IO namespace every time a new order is placed
+  - In `AdminOrdersView.tsx`: connect to `io('/admin/orders', { auth: { token: accessToken } })` on mount; listen for `order:created` events; prepend the new order object to the TanStack Query cache via `queryClient.setQueryData` so the table updates instantly without a refetch
+  - Show a toast "New order #XYZ received" on each event so admins are notified even when scrolled down
+  - Disconnect and clean up the socket on component unmount
+  - Install `socket.io-client` if not already in the frontend dependencies
+  - Create `features/admin/hooks/useAdminOrderFeed.ts` — encapsulates socket setup, teardown, and cache mutation; imported by `AdminOrdersView`
+  - Why WebSocket here (not SSE): the admin dashboard may eventually send commands back (claim an order, mark as reviewed) over the same connection; Socket.IO's namespace/room model also makes it easy to scope the feed without multiple HTTP connections
+  - Complexity: Medium
+  - Files: `features/admin/hooks/useAdminOrderFeed.ts`, `features/admin/components/AdminOrdersView/AdminOrdersView.tsx`
