@@ -11,5 +11,8 @@ export { VariantTypesManager } from "./components/VariantTypesManager/VariantTyp
 export { VariantsTable } from "./components/VariantsTable/VariantsTable";
 export { CsvImportModal } from "./components/CsvImportModal/CsvImportModal";
 export { AdminArchivedView } from "./components/AdminArchivedView/AdminArchivedView";
+export { PromotionRuleForm } from "./components/PromotionRuleForm/PromotionRuleForm";
+export type { ReturnStatus } from "./api/admin-returns.api";
+export type { PromotionRule } from "./api/admin-promotions.api";
 
 export * from "./hooks";

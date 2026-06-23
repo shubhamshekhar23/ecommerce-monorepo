@@ -168,7 +168,7 @@ The admin product form only has basic fields. The backend supports full variant 
 
 Three admin workflows that require new pages under `/admin/`.
 
-- [ ] **Promotion rules management** → `GET /admin/promotion-rules`, `POST /admin/promotion-rules`, `PATCH /admin/promotion-rules/:id`, `DELETE /admin/promotion-rules/:id`
+- [x] **Promotion rules management** → `GET /admin/promotion-rules`, `POST /admin/promotion-rules`, `PATCH /admin/promotion-rules/:id`, `DELETE /admin/promotion-rules/:id`
   - Create `app/[locale]/admin/promotion-rules/page.tsx` — paginated table of rules; columns: name, priority, active (toggle), starts/expires at, actions
   - Create `app/[locale]/admin/promotion-rules/new/page.tsx`
   - Create `app/[locale]/admin/promotion-rules/[id]/edit/page.tsx`
@@ -182,7 +182,7 @@ Three admin workflows that require new pages under `/admin/`.
   - Create `features/admin/hooks/usePromotionRules.ts`, `useCreatePromotionRule.ts`, `useUpdatePromotionRule.ts`, `useDeletePromotionRule.ts`
   - Add "Promotion Rules" link to `AdminNav.tsx`
 
-- [ ] **Returns management** → `GET /returns` (admin), `PATCH /returns/:id/approve`, `PATCH /returns/:id/reject`, `PATCH /returns/:id/refund`
+- [x] **Returns management** → `GET /returns` (admin), `PATCH /returns/:id/approve`, `PATCH /returns/:id/reject`, `PATCH /returns/:id/refund`
   - Create `app/[locale]/admin/returns/page.tsx` — table of all return requests; columns: order ID, customer, reason, status, requested at, actions
   - Filter tabs: All / Pending / Approved / Refunded / Rejected
   - Per-row actions based on status:
@@ -192,7 +192,7 @@ Three admin workflows that require new pages under `/admin/`.
   - Create `features/admin/hooks/useReturns.ts`, `useApproveReturn.ts`, `useRejectReturn.ts`, `useRefundReturn.ts`
   - Add "Returns" link to `AdminNav.tsx` with a badge showing the pending count
 
-- [ ] **Admin real-time order feed (WebSocket)** → Socket.IO gateway at `/admin/orders`
+- [x] **Admin real-time order feed (WebSocket)** → Socket.IO gateway at `/admin/orders`
   - The backend `OrdersGateway` emits `order:created` to the `/admin/orders` namespace on every new order
   - In `AdminOrdersView.tsx`: on mount connect to `io('/admin/orders', { auth: { token: accessToken } })`; listen for `order:created` events and prepend the new order to the TanStack Query cache (`queryClient.setQueryData`)
   - Show a toast "New order #XYZ" on each event so the admin knows there's activity even if they're scrolled down

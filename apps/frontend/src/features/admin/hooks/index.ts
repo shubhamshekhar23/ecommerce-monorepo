@@ -27,3 +27,16 @@ export {
   usePurgeProduct,
 } from "./useArchivedProducts";
 export { useCsvImport } from "./useCsvImport";
+export {
+  usePromotionRules,
+  useCreatePromotionRule,
+  useUpdatePromotionRule,
+  useDeletePromotionRule,
+} from "./usePromotionRules";
+export {
+  useAdminReturns,
+  useApproveReturn,
+  useRejectReturn,
+  useRefundReturn,
+} from "./useAdminReturns";
+export { useAdminOrderFeed } from "./useAdminOrderFeed";

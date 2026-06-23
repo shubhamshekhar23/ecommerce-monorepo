@@ -4,6 +4,7 @@ import { useRef, useTransition } from "react";
 import Link from "next/link";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useAdminOrders, useUpdateOrderStatus } from "../../hooks";
+import { useAdminOrderFeed } from "../../hooks/useAdminOrderFeed";
 import { AdminTableSkeleton } from "../AdminTableSkeleton/AdminTableSkeleton";
 import { EmptyState } from "@/components/EmptyState/EmptyState";
 import { useUrlState } from "@/hooks/useUrlState";
@@ -31,6 +32,7 @@ const TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
 };
 
 export function AdminOrdersView() {
+  useAdminOrderFeed();
   const [isPending, startTransition] = useTransition();
   const [statusFilter, setStatusFilter] = useUrlState("status");
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
