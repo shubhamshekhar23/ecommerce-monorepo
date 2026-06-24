@@ -25,8 +25,10 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/packages ./packages
-COPY package.json package-lock.json ./
+# Copy shared-types source directly from build context — tsconfig resolves
+# @ecommerce/shared-types to packages/shared-types/src/index.ts at build time.
+COPY packages/shared-types ./packages/shared-types
+COPY package.json package-lock.json .npmrc ./
 COPY apps/frontend ./apps/frontend
 
 # NEXT_PUBLIC_* vars are baked in at build time — pass them as build args.
