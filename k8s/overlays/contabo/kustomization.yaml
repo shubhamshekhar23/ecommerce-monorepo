@@ -3,19 +3,20 @@ kind: Kustomization
 
 namespace: ecommerce
 
+# Contabo single-node VPS overlay (8 GB RAM, k3s).
+# Differences from production:
+#   - No managed cloud services — postgres/redis/rabbitmq/opensearch run as StatefulSets on the VPS
+#   - All app replicas scaled to 1 (single node)
+#   - analytics-service scaled to 0 (needs Redpanda + ClickHouse, not in base infra)
+#   - Ingress uses Traefik (k3s default) instead of nginx, no TLS for now
+#   - No service-mesh/keda/rollouts/monitoring — those are in production overlay only
 resources:
   - ../../base
-  - additional/mailpit.yaml  # staging uses mailpit for email testing
-  # Operator-dependent resources — staging mirrors production to catch
-  # Istio/KEDA/Argo config bugs before they reach prod.
-  - ../../base/service-mesh
-  - ../../base/keda
-  - ../../base/rollouts
 
 patches:
-  - path: patches/ingress-host.yaml
+  - path: patches/scale-to-one.yaml
+  - path: patches/ingress-contabo.yaml
 
-# CI sets these via: kustomize edit set image ghcr.io/...=sha-<commit>
 images:
   - name: ghcr.io/shubhamshekhar23/ecommerce-monorepo/backend
     newTag: latest

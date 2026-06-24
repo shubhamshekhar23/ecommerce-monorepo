@@ -1,0 +1,51 @@
+# App services — 1 replica each (single-node 8 GB VPS)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: ecommerce
+spec:
+  replicas: 1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  namespace: ecommerce
+spec:
+  replicas: 1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: ecommerce
+spec:
+  replicas: 1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: search-service
+  namespace: ecommerce
+spec:
+  replicas: 1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  namespace: ecommerce
+spec:
+  replicas: 1
+---
+# analytics-service needs Redpanda (Kafka) + ClickHouse — neither is in base infra.
+# Scaled to 0 so the init containers don't block the whole deployment.
+# Enable once Redpanda and ClickHouse StatefulSets are added.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytics-service
+  namespace: ecommerce
+spec:
+  replicas: 0

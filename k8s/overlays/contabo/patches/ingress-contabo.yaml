@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ecommerce-ingress
+  namespace: ecommerce
+  annotations:
+    # Traefik does not use nginx annotations — these are intentionally removed.
+    # Add Traefik-specific middleware here if rate limiting is needed later.
+spec:
+  # k3s ships with Traefik as the default ingress controller, not nginx.
+  ingressClassName: traefik
+  rules:
+    # No host restriction — accepts traffic on any hostname or raw VPS IP.
+    # Once you have a domain, replace this with:
+    #   - host: api.yourdomain.com
+    #     http: ...
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gateway
+                port:
+                  number: 3000

@@ -7,8 +7,6 @@ resources:
   - namespace.yaml
   - network-policies/
   - pdb/
-  - service-mesh/
-  - keda/
   - infra/
   - backend/
   - auth-service/
@@ -17,6 +15,13 @@ resources:
   - notification-service/
   - analytics-service/
   - ingress/
-  - monitoring/
   - jobs/
-  - rollouts/
+  # The following directories are NOT in base — they require cluster operators
+  # or have config file references that must be resolved per-overlay:
+  #   monitoring/   — configMapGenerator references ../../../apps/backend/* files
+  #                   (kustomize security restriction). Fix: copy files locally, then
+  #                   add "- ../../base/monitoring" to overlays that want it.
+  #   service-mesh/ — requires Istio
+  #   keda/         — requires KEDA operator
+  #   rollouts/     — requires Argo Rollouts operator
+  # Add these explicitly in overlays that target clusters with those tools installed.

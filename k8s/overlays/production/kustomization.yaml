@@ -5,6 +5,11 @@ namespace: ecommerce
 
 resources:
   - ../../base
+  # Operator-dependent resources added back for production — these require
+  # Istio, KEDA, and Argo Rollouts to be installed on the cluster.
+  - ../../base/service-mesh
+  - ../../base/keda
+  - ../../base/rollouts
 
 patches:
   # Scale up for production traffic.
