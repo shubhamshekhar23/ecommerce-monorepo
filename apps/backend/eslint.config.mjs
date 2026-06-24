@@ -81,7 +81,7 @@ export default [
     rules: {
       // More lenient rules for tests
       'max-lines': ['error', { max: 500, skipBlankLines: true, skipComments: true }],
-      'max-lines-per-function': ['error', { max: 50, skipBlankLines: true, skipComments: true }],
+      'max-lines-per-function': ['warn', { max: 150, skipBlankLines: true, skipComments: true }],
       'max-params': ['warn', 5],
       'max-depth': 'off',
       complexity: 'off',

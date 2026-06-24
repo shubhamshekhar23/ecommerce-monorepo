@@ -19,6 +19,6 @@ self.onmessage = (event: MessageEvent<WorkerCartItem[]>) => {
     itemCount: items.length,
     totalPrice: items.reduce((sum, item) => sum + item.subtotal, 0),
   };
-   
+
   postMessage(result);
 };

@@ -32,5 +32,18 @@ BEGIN
   END LOOP;
 END $$;
 
+-- Drop searchVector first — it is a GENERATED column that depends on description.
+-- Recreated below without description (which has moved to ProductDetail).
+ALTER TABLE "Product" DROP COLUMN "searchVector";
+DROP INDEX IF EXISTS "products_search_vector_idx";
+
 -- Drop cold column from Product — all reads now go through ProductDetail
 ALTER TABLE "Product" DROP COLUMN "description";
+
+-- Recreate searchVector using only name (description is now in ProductDetail)
+ALTER TABLE "Product" ADD COLUMN "searchVector" tsvector
+    GENERATED ALWAYS AS (
+        setweight(to_tsvector('english', "name"), 'A')
+    ) STORED;
+
+CREATE INDEX "products_search_vector_idx" ON "Product" USING GIN("searchVector");

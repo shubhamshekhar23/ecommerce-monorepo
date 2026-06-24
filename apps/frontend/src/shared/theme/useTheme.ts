@@ -48,7 +48,6 @@ export function useTheme() {
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
     const handleChange = (e: MediaQueryListEvent) => {
       if (!localStorage.getItem(STORAGE_KEY)) {
-         
         setTheme(e.matches ? "dark" : "light");
       }
     };

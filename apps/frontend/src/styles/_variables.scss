@@ -31,8 +31,7 @@
   --color-badge: #e11d48;
 
   /* Typography — --font-sans and --font-display are injected by next/font */
-  --font-family-base:
-    var(--font-sans), "Avenir Next", "Segoe UI", sans-serif;
+  --font-family-base: var(--font-sans), "Avenir Next", "Segoe UI", sans-serif;
   --font-family-display:
     var(--font-display), "Iowan Old Style", "Times New Roman", serif;
   --font-family-mono: "SF Mono", menlo, monaco, consolas, monospace;
