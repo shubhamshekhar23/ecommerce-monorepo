@@ -64,7 +64,7 @@
     "load:scenario-21": "artillery run load-tests/scenarios/scenario-21-silent-transaction-failure.yml"
   },
   "dependencies": {
-    "@apollo/server": "^4.13.0",
+    "@apollo/server": "^5.5.1",
     "@bull-board/api": "^8.0.0",
     "@bull-board/express": "^8.0.0",
     "@bull-board/nestjs": "^8.0.0",
