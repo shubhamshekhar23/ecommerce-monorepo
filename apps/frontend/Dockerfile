@@ -6,7 +6,7 @@ FROM node:22-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json .npmrc ./
 # All workspace package.json files must be present so npm can build the full
 # dependency graph and hoist packages correctly to /app/node_modules.
 COPY apps/frontend/package.json ./apps/frontend/
