@@ -231,9 +231,11 @@ jobs:
     # skipped. `always()` here lets build run even when those jobs were skipped.
     if: |
       always() &&
-      github.event_name == 'push' &&
-      needs.detect-changes.outputs.any-service == 'true' &&
-      !contains(needs.*.result, 'failure')
+      !contains(needs.*.result, 'failure') &&
+      (
+        (github.event_name == 'push' && needs.detect-changes.outputs.any-service == 'true') ||
+        github.event_name == 'workflow_dispatch'
+      )
     permissions:
       contents: read
       packages: write
@@ -265,17 +267,17 @@ jobs:
 
     steps:
       - name: Skip unchanged service
-        if: matrix.changed != 'true'
+        if: matrix.changed != 'true' && github.event_name != 'workflow_dispatch'
         run: echo "No changes in ${{ matrix.service }} — skipping build."
 
       - uses: actions/checkout@v4
-        if: matrix.changed == 'true'
+        if: matrix.changed == 'true' || github.event_name == 'workflow_dispatch'
 
       - uses: docker/setup-buildx-action@v3
-        if: matrix.changed == 'true'
+        if: matrix.changed == 'true' || github.event_name == 'workflow_dispatch'
 
       - uses: docker/login-action@v3
-        if: matrix.changed == 'true'
+        if: matrix.changed == 'true' || github.event_name == 'workflow_dispatch'
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -283,7 +285,7 @@ jobs:
 
       - name: Image metadata
         id: meta
-        if: matrix.changed == 'true'
+        if: matrix.changed == 'true' || github.event_name == 'workflow_dispatch'
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.image }}
@@ -294,7 +296,7 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
 
       - uses: docker/build-push-action@v6
-        if: matrix.changed == 'true'
+        if: matrix.changed == 'true' || github.event_name == 'workflow_dispatch'
         with:
           context: .
           file: ${{ matrix.dockerfile }}
