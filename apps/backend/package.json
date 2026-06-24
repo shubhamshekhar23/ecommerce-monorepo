@@ -115,7 +115,7 @@
     "nodemailer": "^8.0.0",
     "opossum": "^9.0.0",
     "otplib": "^13.4.0",
-    "p-limit": "^3.1.0",
+    "p-limit": "^7.3.0",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "passport-jwt": "^4.0.1",
