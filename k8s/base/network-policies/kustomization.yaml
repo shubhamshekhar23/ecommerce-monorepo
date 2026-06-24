@@ -9,6 +9,7 @@ resources:
   - search-service.yaml
   - notification-service.yaml
   - analytics-service.yaml
+  - pgbouncer.yaml
   - postgres.yaml
   - redis.yaml
   - rabbitmq.yaml

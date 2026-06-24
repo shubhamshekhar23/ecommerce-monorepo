@@ -1,27 +1,20 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: allow-postgres-ingress
+  name: allow-pgbouncer-ingress
 spec:
   podSelector:
     matchLabels:
-      app: postgres
+      app: pgbouncer
   policyTypes:
     - Ingress
   ingress:
-    # pgbouncer is the primary entry point; backend and auth-service use DIRECT_DATABASE_URL
     - from:
-        - podSelector:
-            matchLabels:
-              app: pgbouncer
         - podSelector:
             matchLabels:
               app: backend
         - podSelector:
             matchLabels:
               app: auth-service
-        - podSelector:
-            matchLabels:
-              app: migrate
       ports:
-        - port: 5432
+        - port: 6432

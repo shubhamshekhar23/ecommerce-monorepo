@@ -19,8 +19,9 @@ spec:
           image: redis:7-alpine
           # appendonly yes: every write is fsynced — survives container restart.
           # appendfsync everysec: flush to disk once per second (balance of durability vs perf).
-          # maxmemory 256mb + allkeys-lru: evict least-recently-used keys when full instead of
-          # returning errors (noeviction default), which would break BullMQ job enqueues.
+          # noeviction: BullMQ requires this — evicting queue keys loses in-flight jobs.
+          # maxmemory 256mb with noeviction means Redis returns ENOMEM if full,
+          # which is preferable to silently dropping jobs.
           command:
             - redis-server
             - --appendonly
@@ -30,7 +31,7 @@ spec:
             - --maxmemory
             - 256mb
             - --maxmemory-policy
-            - allkeys-lru
+            - noeviction
           ports:
             - containerPort: 6379
           volumeMounts:

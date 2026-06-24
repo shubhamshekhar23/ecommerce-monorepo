@@ -16,8 +16,19 @@ export class KafkaProducerService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleInit(): Promise<void> {
-    await this.producer.connect();
-    this.logger.log('Kafka producer connected');
+    try {
+      await this.producer.connect();
+      this.logger.log('Kafka producer connected');
+    } catch (err) {
+      /*
+       - Kafka is an optional analytics dependency. If the broker is unavailable
+       - (e.g. Contabo single-node where Redpanda is not deployed), log a warning
+       - and continue. publish() calls will fail at runtime but won't crash the app.
+       */
+      this.logger.warn(
+        `Kafka producer could not connect: ${String(err)}. Analytics events will be dropped.`,
+      );
+    }
   }
 
   async onModuleDestroy(): Promise<void> {
