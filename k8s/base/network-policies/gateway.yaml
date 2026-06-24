@@ -9,11 +9,14 @@ spec:
   policyTypes:
     - Ingress
   ingress:
-    # Accept external traffic from the ingress-nginx controller only.
-    # All public internet traffic reaches gateway through this controller.
+    # Accept external traffic from the ingress controller.
+    # Production uses ingress-nginx; k3s/Contabo uses Traefik (kube-system namespace).
     - from:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: ingress-nginx
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
       ports:
         - port: 3000

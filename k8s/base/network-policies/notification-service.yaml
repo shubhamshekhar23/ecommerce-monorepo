@@ -9,11 +9,14 @@ spec:
   policyTypes:
     - Ingress
   ingress:
-    # notification-service has no HTTP callers — it is a pure RabbitMQ consumer.
-    # Allow only Prometheus to scrape its /metrics health endpoint.
+    # notification-service is a RabbitMQ consumer with a health HTTP endpoint.
+    # Gateway polls /health for the aggregated health check.
     - from:
         - podSelector:
             matchLabels:
               app: prometheus
+        - podSelector:
+            matchLabels:
+              app: gateway
       ports:
         - port: 3004

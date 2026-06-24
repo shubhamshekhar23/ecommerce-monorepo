@@ -79,6 +79,10 @@ $KC create secret generic auth-secrets \
   --from-literal=RABBITMQ_URL="$RABBITMQ_URL" \
   --save-config --dry-run=client -o yaml | $KC apply -f -
 
+$KC create secret generic gateway-secrets \
+  --from-literal=JWT_PUBLIC_KEY="$JWT_PUBLIC_KEY" \
+  --save-config --dry-run=client -o yaml | $KC apply -f -
+
 $KC create secret generic search-secrets \
   --from-literal=RABBITMQ_URL="$RABBITMQ_URL" \
   --save-config --dry-run=client -o yaml | $KC apply -f -

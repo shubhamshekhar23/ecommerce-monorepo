@@ -41,10 +41,16 @@ export class CdcConsumer implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleInit(): Promise<void> {
-    await this.consumer.connect();
-    await this.consumer.subscribe({ topic: TOPIC, fromBeginning: true });
-    void this.consumer.run({ eachMessage: (p) => this.handleMessage(p) });
-    this.logger.log(`CDC consumer started — listening on ${TOPIC}`);
+    try {
+      await this.consumer.connect();
+      await this.consumer.subscribe({ topic: TOPIC, fromBeginning: true });
+      void this.consumer.run({ eachMessage: (p) => this.handleMessage(p) });
+      this.logger.log(`CDC consumer started — listening on ${TOPIC}`);
+    } catch (err) {
+      this.logger.warn(
+        `CDC consumer could not connect to Kafka: ${String(err)}. Product CDC sync will be unavailable.`,
+      );
+    }
   }
 
   async onModuleDestroy(): Promise<void> {

@@ -1,0 +1,21 @@
+# On a single-node VPS, HPAs are counterproductive:
+# - minReplicas: 2 forces 2 pods on a node with limited CPU/RAM
+# - Metrics Server is not installed, so HPA can never actually scale
+# Set minReplicas=1, maxReplicas=1 to make them no-ops.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: backend-hpa
+  namespace: ecommerce
+spec:
+  minReplicas: 1
+  maxReplicas: 1
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: gateway-hpa
+  namespace: ecommerce
+spec:
+  minReplicas: 1
+  maxReplicas: 1

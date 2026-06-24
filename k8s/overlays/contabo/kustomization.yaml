@@ -15,6 +15,7 @@ resources:
 
 patches:
   - path: patches/scale-to-one.yaml
+  - path: patches/disable-hpa.yaml
   - path: patches/ingress-contabo.yaml
 
 images:
