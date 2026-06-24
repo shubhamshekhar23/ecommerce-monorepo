@@ -35,7 +35,7 @@ export class CdcConsumer implements OnModuleInit, OnModuleDestroy {
     const kafka = new Kafka({
       clientId: "search-service",
       brokers: (process.env.KAFKA_BROKERS ?? "redpanda:9092").split(","),
-      retry: { retries: 10 },
+      retry: { retries: 3 },
     });
     this.consumer = kafka.consumer({ groupId: "search-service-cdc" });
   }
