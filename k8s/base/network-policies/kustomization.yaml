@@ -3,6 +3,7 @@ kind: Kustomization
 
 resources:
   - default-deny-ingress.yaml
+  - frontend.yaml
   - gateway.yaml
   - backend.yaml
   - auth-service.yaml

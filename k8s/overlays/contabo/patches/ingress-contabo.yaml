@@ -16,10 +16,27 @@ spec:
     #     http: ...
     - http:
         paths:
-          - path: /
+          # API and health routes go to the gateway.
+          # More specific paths must come before the catch-all /.
+          - path: /api
             pathType: Prefix
             backend:
               service:
                 name: gateway
+                port:
+                  number: 3000
+          - path: /health
+            pathType: Exact
+            backend:
+              service:
+                name: gateway
+                port:
+                  number: 3000
+          # Everything else (pages, assets, _next/static) goes to the frontend.
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
                 port:
                   number: 3000

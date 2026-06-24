@@ -70,6 +70,10 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Produce a self-contained build in .next/standalone — no node_modules copy needed.
+  // The Docker runner stage copies only .next/standalone + .next/static + public/.
+  output: "standalone",
+
   images: {
     // Serve AVIF first (20-30% smaller than WebP), then WebP as fallback.
     // Next.js negotiates via Accept header — zero change required in <Image> props.

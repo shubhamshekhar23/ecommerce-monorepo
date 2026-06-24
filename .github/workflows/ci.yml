@@ -251,22 +251,35 @@ jobs:
             changed: ${{ needs.detect-changes.outputs.backend }}
             dockerfile: apps/backend/Dockerfile
             image: backend
+            build_args: ""
           - service: auth-service
             changed: ${{ needs.detect-changes.outputs.auth-service }}
             dockerfile: apps/auth-service/Dockerfile
             image: auth-service
+            build_args: ""
           - service: gateway
             changed: ${{ needs.detect-changes.outputs.gateway }}
             dockerfile: apps/gateway/Dockerfile
             image: gateway
+            build_args: ""
           - service: notification-service
             changed: ${{ needs.detect-changes.outputs.notification-service }}
             dockerfile: apps/notification-service/Dockerfile
             image: notification-service
+            build_args: ""
           - service: search-service
             changed: ${{ needs.detect-changes.outputs.search-service }}
             dockerfile: apps/search-service/Dockerfile
             image: search-service
+            build_args: ""
+          - service: frontend
+            changed: ${{ needs.detect-changes.outputs.frontend }}
+            dockerfile: apps/frontend/Dockerfile
+            image: frontend
+            build_args: |
+              NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
+              NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${{ vars.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+              NEXT_PUBLIC_APP_URL=${{ vars.NEXT_PUBLIC_APP_URL }}
 
     steps:
       - name: Skip unchanged service
@@ -307,6 +320,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: ${{ matrix.build_args }}
           cache-from: type=gha,scope=${{ matrix.service }}
           cache-to: type=gha,mode=max,scope=${{ matrix.service }}
 
@@ -663,6 +677,9 @@ jobs:
           - service: search-service
             changed: ${{ needs.detect-changes.outputs.search-service }}
             deployment: search-service
+          - service: frontend
+            changed: ${{ needs.detect-changes.outputs.frontend }}
+            deployment: frontend
 
     steps:
       - name: Skip unchanged service

@@ -19,6 +19,8 @@ patches:
   - path: patches/ingress-contabo.yaml
 
 images:
+  - name: ghcr.io/shubhamshekhar23/ecommerce-monorepo/frontend
+    newTag: latest
   - name: ghcr.io/shubhamshekhar23/ecommerce-monorepo/backend
     newTag: latest
   - name: ghcr.io/shubhamshekhar23/ecommerce-monorepo/auth-service
