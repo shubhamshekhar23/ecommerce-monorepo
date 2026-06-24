@@ -18,8 +18,14 @@ import { OutboxProcessor } from './outbox.processor';
           { name: 'product.events', type: 'topic' },
           { name: 'review.events', type: 'topic' },
         ],
-        // Don't fail app startup if RabbitMQ is unavailable in dev without broker running
+        /*
+         - Don't fail app startup if RabbitMQ is unavailable in dev without broker running.
+         - Skip consumer registration in test env: RabbitMQ is not started by testcontainers,
+         - and amqp-connection-manager would queue channel setups indefinitely causing
+         - onApplicationBootstrap to hang when @RabbitSubscribe handlers are present.
+         */
         connectionInitOptions: { wait: false },
+        registerHandlers: process.env.NODE_ENV !== 'test',
       }),
     }),
   ],
