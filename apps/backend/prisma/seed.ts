@@ -388,11 +388,12 @@ async function main() {
 
   const products = await Promise.all(
     productData.map(async (data) => {
-      const { images, price, cost, stock, ...productInput } = data;
+      const { images, price, cost, stock, description, ...productInput } = data;
       const product = await prisma.product.create({
         data: {
           ...productInput,
           images: { create: images },
+          detail: description ? { create: { description } } : undefined,
         },
         include: { images: true },
       });
