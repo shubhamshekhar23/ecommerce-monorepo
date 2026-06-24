@@ -48,12 +48,13 @@ export const CategorySchema = z
 
 export const ProductVariantSchema = z
   .object({
-    id: z.string(),
-    productId: z.string(),
-    sku: z.string(),
-    price: z.number(),
-    stock: z.number(),
-    isActive: z.boolean(),
+    id: z.string().optional(),
+    productId: z.string().optional(),
+    sku: z.string().optional(),
+    // price comes as string from cursor endpoint, number from paginated endpoint
+    price: z.union([z.number(), z.string()]).optional(),
+    stock: z.number().optional(),
+    isActive: z.boolean().optional(),
   })
   .passthrough();
 
@@ -62,9 +63,12 @@ export const ProductSchema = z
     id: z.string(),
     name: z.string(),
     slug: z.string(),
-    price: z.number(),
-    cost: z.number(),
-    stock: z.number(),
+    // price/cost/stock moved to ProductVariant — optional here for cursor responses
+    // which return priceRange: { min, max } instead of flat price/cost/stock
+    price: z.number().optional(),
+    cost: z.number().optional(),
+    stock: z.number().optional(),
+    priceRange: z.object({ min: z.number(), max: z.number() }).optional(),
     categoryId: z.string(),
     images: z.array(ProductImageSchema),
     variants: z.array(ProductVariantSchema),

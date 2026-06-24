@@ -73,8 +73,13 @@ function ProductCardComponent({
     [status, router, addToCart, product.id],
   );
 
-  const price = Number(product.price).toFixed(2);
-  const inStock = product.stock > 0;
+  // cursor API returns priceRange.min; paginated API returns flat price
+  const rawPrice =
+    product.price ??
+    (product as { priceRange?: { min: number } }).priceRange?.min;
+  const price = rawPrice !== undefined ? Number(rawPrice).toFixed(2) : "—";
+  // cursor API has no flat stock field; undefined → treat as in-stock
+  const inStock = product.stock === undefined ? true : product.stock > 0;
 
   const getButtonLabel = (): string => {
     if (isPending) return "Adding...";
@@ -116,7 +121,11 @@ function ProductCardComponent({
         <div className={styles.price}>${price}</div>
 
         <div className={inStock ? styles.inStock : styles.outOfStock}>
-          {inStock ? `In Stock (${product.stock})` : "Out of Stock"}
+          {inStock
+            ? product.stock !== undefined
+              ? `In Stock (${product.stock})`
+              : "In Stock"
+            : "Out of Stock"}
         </div>
 
         <button
