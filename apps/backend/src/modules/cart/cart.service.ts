@@ -48,17 +48,23 @@ export class CartService {
   async addItem(
     userId: string,
     productId: string,
-    variantId: string,
+    variantId: string | undefined,
     quantity: number,
   ): Promise<CartResponseDto | null> {
     if (quantity < 1 || quantity > 999) {
       throw new BadRequestException('Quantity must be between 1 and 999');
     }
 
-    const variant = await this.prisma.productVariant.findUnique({
-      where: { id: variantId },
-      include: { product: true },
-    });
+    const variant = variantId
+      ? await this.prisma.productVariant.findUnique({
+          where: { id: variantId },
+          include: { product: true },
+        })
+      : await this.prisma.productVariant.findFirst({
+          where: { productId, isActive: true },
+          include: { product: true },
+          orderBy: { price: 'asc' },
+        });
 
     if (!variant || !variant.isActive || variant.productId !== productId) {
       throw new BadRequestException('Variant not found or inactive');
@@ -71,13 +77,15 @@ export class CartService {
       throw new BadRequestException('Insufficient stock');
     }
 
+    const resolvedVariantId = variant.id;
+
     let cart = await this.prisma.cart.findUnique({ where: { userId } });
     if (!cart) {
       cart = await this.prisma.cart.create({ data: { userId } });
     }
 
     const existing = await this.prisma.cartItem.findUnique({
-      where: { cartId_variantId: { cartId: cart.id, variantId } },
+      where: { cartId_variantId: { cartId: cart.id, variantId: resolvedVariantId } },
     });
 
     if (existing) {
@@ -87,11 +95,11 @@ export class CartService {
       });
     } else {
       await this.prisma.cartItem.create({
-        data: { cartId: cart.id, productId, variantId, quantity },
+        data: { cartId: cart.id, productId, variantId: resolvedVariantId, quantity },
       });
     }
 
-    this.logger.log(`Item added: userId=${userId} variantId=${variantId} qty=${quantity}`);
+    this.logger.log(`Item added: userId=${userId} variantId=${resolvedVariantId} qty=${quantity}`);
     void this.cartRecovery.scheduleCheck(userId, cart.id);
     return this.getCart(userId);
   }

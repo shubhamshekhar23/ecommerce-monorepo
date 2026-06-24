@@ -4,7 +4,7 @@ export interface OrderItemReadModel {
   productName: string;
   categoryName: string | null;
   quantity: number;
-  price: string;
+  price: number;
   subtotal: number;
 }
 
@@ -14,7 +14,7 @@ export interface OrderReadModel {
   userId: string;
   status: string;
   paymentStatus: string;
-  totalPrice: string;
+  totalPrice: number;
   itemCount: number;
   items: OrderItemReadModel[];
   createdAt: string;

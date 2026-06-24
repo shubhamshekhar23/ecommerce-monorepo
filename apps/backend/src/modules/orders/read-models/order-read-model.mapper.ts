@@ -12,7 +12,7 @@ export function mapToOrderReadModel(order: OrderWithDetails): OrderReadModel {
     userId: order.userId,
     status: order.status,
     paymentStatus: order.paymentStatus,
-    totalPrice: String(order.totalPrice),
+    totalPrice: parseFloat(String(order.totalPrice)),
     itemCount: order.items.length,
     items: order.items.map((item) => ({
       id: item.id,
@@ -20,7 +20,7 @@ export function mapToOrderReadModel(order: OrderWithDetails): OrderReadModel {
       productName: item.product.name,
       categoryName: item.categoryName ?? null,
       quantity: item.quantity,
-      price: String(item.price),
+      price: parseFloat(String(item.price)),
       subtotal: parseFloat(String(item.price)) * item.quantity,
     })),
     createdAt: order.createdAt.toISOString(),

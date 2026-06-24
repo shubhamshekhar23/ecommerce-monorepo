@@ -11,9 +11,12 @@
   },
   "globals": {
     "ts-jest": {
-      "tsconfig": "<rootDir>/../tsconfig.json"
+      "tsconfig": "<rootDir>/../tsconfig.test.json"
     }
   },
+  "transformIgnorePatterns": [
+    "node_modules/(?!(uuid)/)"
+  ],
   "globalSetup": "<rootDir>/global-setup.ts",
   "globalTeardown": "<rootDir>/global-teardown.ts",
   "testTimeout": 120000

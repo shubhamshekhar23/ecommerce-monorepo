@@ -231,7 +231,7 @@ export class OrdersService {
           productName: item.product?.name ?? null,
           categoryName: item.categoryName ?? null,
           quantity: item.quantity,
-          price: String(item.price),
+          price: parseFloat(String(item.price)),
           variantAttributes: item.variantAttributes as Record<string, string> | null,
           subtotal: parseFloat(String(item.price)) * item.quantity,
         }),
@@ -240,8 +240,9 @@ export class OrdersService {
         order.shippingCost !== null && order.shippingCost !== undefined
           ? String(order.shippingCost)
           : null,
-      totalPrice: String(order.totalPrice),
+      totalPrice: parseFloat(String(order.totalPrice)),
       status: order.status,
+      paymentStatus: order.paymentStatus,
       notes: order.notes,
       createdAt: order.createdAt,
       updatedAt: order.updatedAt,

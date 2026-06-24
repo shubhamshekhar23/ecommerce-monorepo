@@ -39,6 +39,9 @@
       "bash -c 'cd apps/frontend && npx stylelint --fix \"$@\"' --"
     ]
   },
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "devDependencies": {
     "@nestjs/core": "^10.0.0",
     "husky": "^9.1.7",

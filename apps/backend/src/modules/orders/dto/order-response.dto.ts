@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { OrderStatus } from '@prisma/client';
+import { OrderStatus, PaymentStatus } from '@prisma/client';
 
 export class OrderItemResponseDto {
   @ApiProperty({ example: 'clxyz123' })
@@ -14,8 +14,8 @@ export class OrderItemResponseDto {
   @ApiProperty({ example: 2 })
   quantity!: number;
 
-  @ApiProperty({ description: 'Unit price at time of order', example: '74.99' })
-  price!: string;
+  @ApiProperty({ description: 'Unit price at time of order', example: 74.99 })
+  price!: number;
 
   @ApiProperty({ example: 'Electronics', nullable: true })
   categoryName!: string | null;
@@ -47,11 +47,14 @@ export class OrderResponseDto {
   @ApiProperty({ example: '5.00', nullable: true })
   shippingCost!: string | null;
 
-  @ApiProperty({ example: '154.99' })
-  totalPrice!: string;
+  @ApiProperty({ example: 154.99 })
+  totalPrice!: number;
 
   @ApiProperty({ enum: OrderStatus, example: OrderStatus.PENDING })
   status!: OrderStatus;
+
+  @ApiProperty({ enum: PaymentStatus, example: PaymentStatus.PENDING })
+  paymentStatus!: PaymentStatus;
 
   @ApiProperty({ example: 'Please leave at the door', nullable: true })
   notes!: string | null;
