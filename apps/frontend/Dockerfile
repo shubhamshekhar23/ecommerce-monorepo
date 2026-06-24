@@ -7,8 +7,16 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-COPY packages/ packages/
-COPY apps/frontend/package.json apps/frontend/
+# All workspace package.json files must be present so npm can build the full
+# dependency graph and hoist packages correctly to /app/node_modules.
+COPY apps/frontend/package.json ./apps/frontend/
+COPY apps/backend/package.json ./apps/backend/
+COPY apps/auth-service/package.json ./apps/auth-service/
+COPY apps/gateway/package.json ./apps/gateway/
+COPY apps/notification-service/package.json ./apps/notification-service/
+COPY apps/search-service/package.json ./apps/search-service/
+COPY apps/analytics-service/package.json ./apps/analytics-service/
+COPY packages/shared-types/package.json ./packages/shared-types/
 
 RUN npm ci
 
