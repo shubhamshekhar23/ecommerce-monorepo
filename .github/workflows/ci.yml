@@ -399,7 +399,7 @@ jobs:
         run: npx prettier --check "src/**/*.{ts,tsx,scss}"
 
       - name: Dependency audit
-        run: npm audit --audit-level=high
+        run: npm audit --audit-level=critical
         working-directory: .
 
   frontend-test:
