@@ -153,8 +153,8 @@ export default async function LocaleLayout({
           </Providers>
         </NextIntlClientProvider>
 
-        <Analytics />
-        <SpeedInsights />
+        {process.env.NEXT_PUBLIC_VERCEL_ENV && <Analytics />}
+        {process.env.NEXT_PUBLIC_VERCEL_ENV && <SpeedInsights />}
       </body>
     </html>
   );
