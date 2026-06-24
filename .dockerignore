@@ -1,11 +1,15 @@
-# Root .dockerignore — applies when building the backend image from monorepo root.
-# The build context is the monorepo root so Docker can access package-lock.json.
-# We exclude everything that is not needed to build and run the backend.
+# Root .dockerignore — applies to all service builds from the monorepo root.
 
-# Exclude the frontend source — not needed for backend image.
-# package.json must stay: npm ci reads it to resolve the workspace dependency graph.
-apps/frontend
-!apps/frontend/package.json
+# Frontend: exclude heavy derived artifacts but keep source for the frontend Dockerfile.
+# The backend/gateway/etc Dockerfiles never COPY apps/frontend/** so source files
+# don't affect those builds — only the frontend Dockerfile needs the source.
+apps/frontend/.next
+apps/frontend/node_modules
+apps/frontend/coverage
+apps/frontend/playwright-report
+apps/frontend/.env
+apps/frontend/.env.*
+!apps/frontend/.env.example
 
 # Exclude backend artefacts that should not be in the image
 apps/backend/dist
