@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConflictException, NotFoundException } from '@nestjs/common';
-import { getQueueToken } from '@nestjs/bull';
+import { getQueueToken } from '@nestjs/bullmq';
 import { UsersService } from './users.service';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 import * as passwordUtil from '@/common/utils/password.util';

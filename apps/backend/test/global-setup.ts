@@ -27,6 +27,7 @@ export default async function globalSetup(): Promise<void> {
   const publicKeyPem = publicKey.export({ type: 'spki', format: 'pem' }) as string;
 
   process.env.DATABASE_URL = dbUrl;
+  process.env.DIRECT_DATABASE_URL = dbUrl;
   process.env.REDIS_URL = redisUrl;
   process.env.JWT_PUBLIC_KEY = publicKeyPem.replace(/\n/g, '\\n');
 
@@ -40,7 +41,7 @@ export default async function globalSetup(): Promise<void> {
   process.env.TEST_JWT_PRIVATE_KEY = privateKeyPem;
 
   execSync('npx prisma migrate deploy', {
-    env: { ...process.env, DATABASE_URL: dbUrl },
+    env: { ...process.env, DATABASE_URL: dbUrl, DIRECT_DATABASE_URL: dbUrl },
     stdio: 'inherit',
     cwd: join(__dirname, '..'),
   });
