@@ -6,12 +6,14 @@ on:
     paths:
       - 'apps/**'
       - 'packages/**'
+      - 'k8s/**'
       - '.github/workflows/ci.yml'
   pull_request:
     branches: [main, develop]
     paths:
       - 'apps/**'
       - 'packages/**'
+      - 'k8s/**'
       - '.github/workflows/ci.yml'
   workflow_dispatch:
   # Mutation testing runs weekly — too slow for per-PR. Reveals tests that pass
@@ -64,6 +66,7 @@ jobs:
             any-service:
               - 'apps/**'
               - 'packages/**'
+              - 'k8s/**'
 
   # ── Job 2: Lint + Type Check (backend) ───────────────────────────────────────
   # Fastest job — runs in parallel with test. Catches code quality issues immediately.
@@ -626,9 +629,55 @@ jobs:
           path: apps/backend/reports/mutation/mutation.html
           retention-days: 30
 
-  # ── Deploy jobs disabled — no cluster configured ──────────────────────────────
-  # deploy-staging and deploy-production are disabled until Argo CD is set up.
-  # They require KUBECONFIG secrets and a live cluster that don't exist yet.
-  # GitOps plan: CI writes the new image tag to k8s/ manifests and commits it;
-  # Argo CD detects the change and reconciles the cluster automatically.
-  # See docs/todo/ci-cd-gitops.md for the full Argo CD implementation plan.
+  # ── Job 8: Deploy to Contabo ─────────────────────────────────────────────────
+  # Runs after build succeeds. Only triggers on push to main (not PRs, not develop).
+  # Restarts only the deployments whose images were just rebuilt — not the whole cluster.
+  # kubectl rollout status blocks until the new pod is healthy or times out (5 min).
+  deploy:
+    name: Deploy — ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [build, detect-changes]
+    if: |
+      always() &&
+      needs.build.result == 'success' &&
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main'
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: backend
+            changed: ${{ needs.detect-changes.outputs.backend }}
+            deployment: backend
+          - service: auth-service
+            changed: ${{ needs.detect-changes.outputs.auth-service }}
+            deployment: auth-service
+          - service: gateway
+            changed: ${{ needs.detect-changes.outputs.gateway }}
+            deployment: gateway
+          - service: notification-service
+            changed: ${{ needs.detect-changes.outputs.notification-service }}
+            deployment: notification-service
+          - service: search-service
+            changed: ${{ needs.detect-changes.outputs.search-service }}
+            deployment: search-service
+
+    steps:
+      - name: Skip unchanged service
+        if: matrix.changed != 'true' && github.event_name != 'workflow_dispatch'
+        run: echo "No changes in ${{ matrix.service }} — skipping deploy."
+
+      - name: Set up kubeconfig
+        if: matrix.changed == 'true' || github.event_name == 'workflow_dispatch'
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_CONTABO }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Rollout restart
+        if: matrix.changed == 'true' || github.event_name == 'workflow_dispatch'
+        run: |
+          kubectl rollout restart deployment/${{ matrix.deployment }} -n ecommerce
+          kubectl rollout status deployment/${{ matrix.deployment }} -n ecommerce --timeout=300s
