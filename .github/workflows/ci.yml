@@ -747,7 +747,30 @@ jobs:
             --from-literal=GF_SECURITY_ADMIN_PASSWORD="${GRAFANA_ADMIN_PASSWORD:-admin}" \
             --save-config --dry-run=client -o yaml | $KN apply -f -
 
-  # ── Job 8: Deploy to Contabo ─────────────────────────────────────────────────
+  # ── Job 8: Apply k8s manifests ───────────────────────────────────────────────
+  # Runs on every push to main (or workflow_dispatch) to apply k8s YAML changes.
+  # Handles infra-only changes (new services, network policies, configmaps, etc.)
+  # that don't involve a Docker image rebuild.
+  apply-manifests:
+    name: Apply k8s manifests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_CONTABO }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Apply manifests
+        run: kubectl apply -k k8s/overlays/contabo
+
+  # ── Job 9: Deploy to Contabo ─────────────────────────────────────────────────
   # Runs after build succeeds. Only triggers on push to main (not PRs, not develop).
   # Restarts only the deployments whose images were just rebuilt — not the whole cluster.
   # kubectl rollout status blocks until the new pod is healthy or times out (5 min).
@@ -759,7 +782,7 @@ jobs:
     if: |
       always() &&
       needs.build.result == 'success' &&
-      github.event_name == 'push' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
       github.ref == 'refs/heads/main'
 
     strategy:
