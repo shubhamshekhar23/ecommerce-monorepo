@@ -39,6 +39,13 @@ spec:
                 name: grafana
                 port:
                   number: 3000
+          - path: /jaeger
+            pathType: Prefix
+            backend:
+              service:
+                name: jaeger
+                port:
+                  number: 16686
           # Everything else (pages, assets, _next/static) goes to the frontend.
           - path: /
             pathType: Prefix

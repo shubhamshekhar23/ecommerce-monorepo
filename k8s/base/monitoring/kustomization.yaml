@@ -6,6 +6,7 @@ resources:
   - grafana-deployment.yaml
   - loki-statefulset.yaml
   - promtail-daemonset.yaml
+  - jaeger.yaml
 
 # ConfigMapGenerator loads the actual config files from disk — no content duplication.
 # Kustomize appends a hash suffix to the ConfigMap name and updates all references automatically.
