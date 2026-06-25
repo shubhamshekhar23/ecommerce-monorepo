@@ -1,0 +1,134 @@
+{
+  "uid": "ecommerce-infrastructure",
+  "title": "Infrastructure Dashboard",
+  "description": "CPU, memory, GC, heap usage — container-level health.",
+  "tags": ["ecommerce", "infrastructure", "nodejs"],
+  "timezone": "browser",
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "panels": [
+    {
+      "id": 1,
+      "title": "CPU Usage (%)",
+      "description": "Node.js process CPU usage. Sustained >80% on a single core means the event loop is saturated.",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "rate(process_cpu_seconds_total[1m]) * 100",
+          "legendFormat": "CPU %"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "steps": [
+              { "value": 0, "color": "green" },
+              { "value": 70, "color": "yellow" },
+              { "value": 90, "color": "red" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Heap Memory Used vs Total (MB)",
+      "description": "If used approaches total, GC is under heavy pressure. The NestJS app has a 512MB heap limit.",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "nodejs_heap_size_used_bytes / 1024 / 1024",
+          "legendFormat": "Heap Used (MB)"
+        },
+        {
+          "expr": "nodejs_heap_size_total_bytes / 1024 / 1024",
+          "legendFormat": "Heap Total (MB)"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "MB" } }
+    },
+    {
+      "id": 3,
+      "title": "Resident Memory (MB)",
+      "description": "Total OS-allocated memory. Includes heap, native modules, and Buffer pool. A steadily rising line = memory leak.",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "process_resident_memory_bytes / 1024 / 1024",
+          "legendFormat": "RSS (MB)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "MB",
+          "thresholds": {
+            "steps": [
+              { "value": 0, "color": "green" },
+              { "value": 350, "color": "yellow" },
+              { "value": 450, "color": "red" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Garbage Collection Duration (ms/s)",
+      "description": "Time spent in GC per second. >50ms/s means GC is becoming a bottleneck — reduce object allocation.",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "rate(nodejs_gc_duration_seconds_sum[1m]) * 1000",
+          "legendFormat": "GC ms/s"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ms" } }
+    },
+    {
+      "id": 5,
+      "title": "Process Uptime (hours)",
+      "description": "How long the current process has been running. Frequent restarts indicate OOM kills or uncaught exceptions.",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 16, "w": 8, "h": 4 },
+      "targets": [
+        {
+          "expr": "process_uptime_seconds / 3600",
+          "legendFormat": "Uptime"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "h" } }
+    },
+    {
+      "id": 6,
+      "title": "Open File Descriptors",
+      "description": "Each TCP connection and file open uses one FD. Linux default limit is 1024. Node.js handles thousands but watch for leaks.",
+      "type": "stat",
+      "gridPos": { "x": 8, "y": 16, "w": 8, "h": 4 },
+      "targets": [
+        {
+          "expr": "process_open_fds",
+          "legendFormat": "Open FDs"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Active Handles & Requests",
+      "description": "libuv handles (open sockets, timers). Unexpected growth here means connections are not being closed.",
+      "type": "stat",
+      "gridPos": { "x": 16, "y": 16, "w": 8, "h": 4 },
+      "targets": [
+        {
+          "expr": "nodejs_active_handles_total",
+          "legendFormat": "Active Handles"
+        }
+      ]
+    }
+  ],
+  "overwrite": true
+}

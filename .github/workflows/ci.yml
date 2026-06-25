@@ -672,6 +672,7 @@ jobs:
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
         run: |
           PG_USER="ecommerce"
           PG_DB="ecommerce"
@@ -740,6 +741,10 @@ jobs:
             --from-literal=SMTP_PASSWORD="${SMTP_PASS:-placeholder}" \
             --from-literal=SMTP_FROM="$SMTP_FROM" \
             --from-literal=APP_URL="http://${VPS_IP}" \
+            --save-config --dry-run=client -o yaml | $KN apply -f -
+
+          $KN create secret generic grafana-secrets \
+            --from-literal=GF_SECURITY_ADMIN_PASSWORD="${GRAFANA_ADMIN_PASSWORD:-admin}" \
             --save-config --dry-run=client -o yaml | $KN apply -f -
 
   # ── Job 8: Deploy to Contabo ─────────────────────────────────────────────────

@@ -1,0 +1,159 @@
+{
+  "uid": "ecommerce-red",
+  "title": "RED Dashboard — API Health",
+  "description": "Rate, Errors, Duration — the three numbers that tell you if the API is healthy right now.",
+  "tags": ["ecommerce", "red", "api"],
+  "timezone": "browser",
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "templating": {
+    "list": [
+      {
+        "name": "topN",
+        "type": "custom",
+        "label": "Top N routes",
+        "description": "Number of slowest routes to show in the per-route chart. Select All to show every route.",
+        "query": "5,10,20,100",
+        "options": [
+          { "text": "5",   "value": "5",   "selected": true  },
+          { "text": "10",  "value": "10",  "selected": false },
+          { "text": "20",  "value": "20",  "selected": false },
+          { "text": "All", "value": "100", "selected": false }
+        ],
+        "current": { "text": "5", "value": "5" },
+        "hide": 0,
+        "includeAll": false,
+        "multi": false
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Request Rate (req/s)",
+      "description": "Total HTTP requests per second. A sudden drop can mean the app is down or traffic routing broke.",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 0, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "expr": "sum(rate(http_request_duration_ms_count[1m])) by (method, route)",
+          "legendFormat": "{{ method }} {{ route }}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    },
+    {
+      "id": 2,
+      "title": "Error Rate by Class (%)",
+      "description": "5xx = server broken (bug, crash, DB down). 4xx = bad client requests (auth failures, missing resources, validation errors). A 4xx spike with no 5xx means the problem is on the caller side, not yours.",
+      "type": "timeseries",
+      "gridPos": { "x": 8, "y": 0, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "expr": "sum(rate(http_request_duration_ms_count{status_code=~\"5..\"}[1m])) / sum(rate(http_request_duration_ms_count[1m])) * 100",
+          "legendFormat": "5xx (server errors)"
+        },
+        {
+          "expr": "sum(rate(http_request_duration_ms_count{status_code=~\"4..\"}[1m])) / sum(rate(http_request_duration_ms_count[1m])) * 100",
+          "legendFormat": "4xx (client errors)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "5xx (server errors)" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "4xx (client errors)" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "orange" } }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "title": "Latency Percentiles (ms)",
+      "description": "P50/P95/P99 response times. P99 tells you the worst-case experience for 1% of users.",
+      "type": "timeseries",
+      "gridPos": { "x": 16, "y": 0, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_ms_bucket[1m])) by (le))",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_ms_bucket[1m])) by (le))",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_ms_bucket[1m])) by (le))",
+          "legendFormat": "p99"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ms" } }
+    },
+    {
+      "id": 4,
+      "title": "Active In-Flight Requests",
+      "description": "Requests currently being processed. A sustained spike here means the app is backed up.",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 18, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "expr": "nodejs_active_requests_total",
+          "legendFormat": "In-Flight"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "P95 Latency by Route (ms)",
+      "description": "Which endpoints are slowest? Sort descending to find the bottleneck.",
+      "type": "table",
+      "gridPos": { "x": 6, "y": 18, "w": 18, "h": 8 },
+      "targets": [
+        {
+          "expr": "sort_desc(histogram_quantile(0.95, sum(rate(http_request_duration_ms_bucket[5m])) by (le, route)))",
+          "legendFormat": "{{ route }}",
+          "instant": true
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ms" } }
+    },
+    {
+      "id": 6,
+      "title": "P95 Latency per Route — Top $topN (time series)",
+      "description": "One line per route, showing p95 over time. Use the Top N dropdown at the top of the dashboard to control how many routes are shown — default is the 5 slowest. Switch to All to see every route. When a spike happens, the route name in the legend tells you exactly which endpoint caused it.",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 8, "w": 24, "h": 10 },
+      "targets": [
+        {
+          "expr": "topk($topN, histogram_quantile(0.95, sum(rate(http_request_duration_ms_bucket[1m])) by (le, route)))",
+          "legendFormat": "{{ route }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 5
+          }
+        }
+      },
+      "options": {
+        "tooltip": { "mode": "multi", "sort": "desc" },
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["max", "mean", "lastNotNull"] }
+      }
+    }
+  ],
+  "overwrite": true
+}

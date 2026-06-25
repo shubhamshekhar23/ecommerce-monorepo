@@ -13,20 +13,18 @@ resources:
 configMapGenerator:
   - name: prometheus-config
     files:
-      # K8s-specific prometheus config (scrapes backend:4000, not app:4000).
-      # Docker Compose still uses apps/backend/prometheus.yml with app:4000.
       - prometheus.yml=prometheus.yml
-      - alert_rules.yml=../../../apps/backend/alert_rules.yml
+      - alert_rules.yml=alert_rules.yml
   - name: grafana-datasources
     files:
-      - prometheus.yml=../../../apps/backend/grafana/provisioning/datasources/prometheus.yml
-      - loki.yml=../../../apps/backend/grafana/provisioning/datasources/loki.yml
+      - prometheus.yml=grafana-ds-prometheus.yml
+      - loki.yml=grafana-ds-loki.yml
   - name: grafana-dashboards-config
     files:
-      - dashboards.yml=../../../apps/backend/grafana/provisioning/dashboards/dashboards.yml
+      - dashboards.yml=grafana-dashboards-config.yml
   - name: grafana-dashboards
     files:
-      - api-metrics.json=../../../apps/backend/grafana/provisioning/dashboards/api-metrics.json
-      - business.json=../../../apps/backend/grafana/provisioning/dashboards/business.json
-      - database.json=../../../apps/backend/grafana/provisioning/dashboards/database.json
-      - infrastructure.json=../../../apps/backend/grafana/provisioning/dashboards/infrastructure.json
+      - api-metrics.json=api-metrics.json
+      - business.json=business.json
+      - database.json=database.json
+      - infrastructure.json=infrastructure.json

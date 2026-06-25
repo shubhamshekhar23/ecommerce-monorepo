@@ -1,0 +1,88 @@
+groups:
+  - name: ecommerce_slo
+    rules:
+      # ─── Error Rate ─────────────────────────────────────────────────────────
+      # Why 1% threshold? Industry standard SLO for 99% availability.
+      # 5xx errors indicate server-side bugs. 4xx errors are client mistakes — do not alert on them.
+      - alert: HighErrorRate
+        expr: >
+          rate(http_request_duration_seconds_count{status=~"5.."}[5m])
+          /
+          rate(http_request_duration_seconds_count[5m]) > 0.01
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High 5xx error rate on {{ $labels.route }}"
+          description: "Error rate is {{ $value | humanizePercentage }} over the last 5 minutes."
+
+      # ─── Latency ────────────────────────────────────────────────────────────
+      # P95 > 500ms: 5% of users are waiting half a second. Usually means a missing index or N+1.
+      # P99 > 2000ms: 1% of users wait 2 seconds. Likely a slow DB query or downstream timeout.
+      - alert: HighP95Latency
+        expr: >
+          histogram_quantile(0.95,
+            rate(http_request_duration_seconds_bucket[5m])
+          ) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "P95 latency above 500ms on {{ $labels.route }}"
+          description: "P95 latency is {{ $value | humanizeDuration }}."
+
+      - alert: HighP99Latency
+        expr: >
+          histogram_quantile(0.99,
+            rate(http_request_duration_seconds_bucket[5m])
+          ) > 2
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "P99 latency above 2s on {{ $labels.route }}"
+          description: "P99 latency is {{ $value | humanizeDuration }}. Investigate slow DB queries."
+
+      # ─── Business Metrics ───────────────────────────────────────────────────
+      # Payment failure spike: if more than 1 payment fails per 5-minute window,
+      # something is wrong with Stripe integration or card processing.
+      - alert: PaymentFailureSpike
+        expr: rate(payment_events_total{status="failed"}[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Payment failure rate spike"
+          description: "Payment failures are occurring at {{ $value }} per second. Check Stripe dashboard."
+
+      # Inventory reservation failures indicate either a bug or a flash sale depleting stock.
+      - alert: InventoryReservationFailures
+        expr: rate(inventory_reservation_failures_total[5m]) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High inventory reservation failure rate"
+          description: "{{ $value }} reservation failures/s. Stock may be depleted or there is an oversell bug."
+
+      # ─── Infrastructure ──────────────────────────────────────────────────────
+      # Memory above 400MB in a container that has 512MB heap limit means GC pressure.
+      - alert: HighMemoryUsage
+        expr: process_resident_memory_bytes > 419430400
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Process memory is {{ $value | humanize1024 }}B. Check for memory leaks."
+
+      # If the process restarts, it will disappear from Prometheus scrapes.
+      # This alert fires when a service has been down for more than 2 minutes.
+      - alert: ServiceDown
+        expr: up{job="ecommerce-backend"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "ecommerce-backend is down"
+          description: "The NestJS application has not responded to scrapes for 2 minutes."

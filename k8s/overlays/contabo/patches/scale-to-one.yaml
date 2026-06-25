@@ -47,6 +47,23 @@ metadata:
 spec:
   replicas: 1
 ---
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: ecommerce
+spec:
+  replicas: 1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: ecommerce
+spec:
+  replicas: 1
+---
 # analytics-service needs Redpanda (Kafka) + ClickHouse — neither is in base infra.
 # Scaled to 0 so the init containers don't block the whole deployment.
 # Enable once Redpanda and ClickHouse StatefulSets are added.

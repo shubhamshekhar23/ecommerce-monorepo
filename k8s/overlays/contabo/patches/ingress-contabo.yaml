@@ -32,6 +32,13 @@ spec:
                 name: gateway
                 port:
                   number: 3000
+          - path: /grafana
+            pathType: Prefix
+            backend:
+              service:
+                name: grafana
+                port:
+                  number: 3000
           # Everything else (pages, assets, _next/static) goes to the frontend.
           - path: /
             pathType: Prefix

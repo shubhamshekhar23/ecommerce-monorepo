@@ -15,3 +15,4 @@ resources:
   - redis.yaml
   - rabbitmq.yaml
   - opensearch.yaml
+  - monitoring.yaml

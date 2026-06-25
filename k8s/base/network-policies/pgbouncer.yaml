@@ -18,3 +18,9 @@ spec:
               app: auth-service
       ports:
         - port: 6432
+    - from:
+        - podSelector:
+            matchLabels:
+              app: prometheus
+      ports:
+        - port: 9127
