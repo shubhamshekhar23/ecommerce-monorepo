@@ -1,0 +1,57 @@
+# Switch all app deployments from RollingUpdate (maxSurge:1) to Recreate.
+# RollingUpdate spins up a new pod before killing the old one — on an 8GB
+# single-node VPS this causes OOM during rollouts. Recreate kills the old
+# pod first, accepts brief downtime, and avoids the memory spike.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: ecommerce
+spec:
+  strategy:
+    type: Recreate
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: ecommerce
+spec:
+  strategy:
+    type: Recreate
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  namespace: ecommerce
+spec:
+  strategy:
+    type: Recreate
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: ecommerce
+spec:
+  strategy:
+    type: Recreate
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: search-service
+  namespace: ecommerce
+spec:
+  strategy:
+    type: Recreate
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  namespace: ecommerce
+spec:
+  strategy:
+    type: Recreate

@@ -17,6 +17,7 @@ patches:
   - path: patches/scale-to-one.yaml
   - path: patches/disable-hpa.yaml
   - path: patches/ingress-contabo.yaml
+  - path: patches/recreate-strategy.yaml
 
 images:
   - name: ghcr.io/shubhamshekhar23/ecommerce-monorepo/frontend
