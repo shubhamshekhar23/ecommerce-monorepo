@@ -16,23 +16,7 @@ import { setupBullBoard } from './bull-board.setup';
 const logger = new Logger('Bootstrap');
 
 function setupMiddleware(app: NestExpressApplication): void {
-  const { 'upgrade-insecure-requests': _removed, ...cspDefaults } =
-    helmet.contentSecurityPolicy.getDefaultDirectives();
-  app.use(
-    helmet({
-      contentSecurityPolicy: {
-        directives: {
-          /*
-           - upgrade-insecure-requests is removed from defaults because it rewrites
-           - relative HTTP asset URLs to HTTPS — which fails on a non-TLS server.
-           */
-          ...cspDefaults,
-          scriptSrc: ["'self'", 'https://cdnjs.cloudflare.com'],
-          styleSrc: ["'self'", "'unsafe-inline'", 'https://cdnjs.cloudflare.com'],
-        },
-      },
-    }),
-  );
+  app.use(helmet({ contentSecurityPolicy: false }));
   app.use(
     compression({
       filter: (req, res) => {
