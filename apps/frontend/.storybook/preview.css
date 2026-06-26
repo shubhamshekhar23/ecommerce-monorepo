@@ -1,0 +1,6 @@
+/* Reset the app's radial/linear gradient body background for the Storybook canvas.
+   The gradient looks great in the real app but obscures components in isolation. */
+body {
+  background: var(--sb-bg, #ffffff) !important;
+  min-height: unset !important;
+}
