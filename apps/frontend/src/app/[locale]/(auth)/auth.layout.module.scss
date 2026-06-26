@@ -1,9 +1,11 @@
 .container {
+  /* pull back the main's padding-block so auth panel fills the full available height */
+  margin-block: calc(-1 * var(--space-12)) calc(-1 * var(--space-16));
   min-height: calc(100vh - var(--header-height) - var(--navbar-height));
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: clamp(1.25rem, 4vh, 2.5rem) var(--space-4);
+  padding: clamp(0.5rem, 1.5vh, 1rem) var(--space-4);
   background: var(--color-bg-canvas);
 }
 
