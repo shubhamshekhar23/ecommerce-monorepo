@@ -32,6 +32,17 @@ export const tokenStorage = {
   },
 };
 
+// Clears both localStorage tokens and the middleware session cookie so that
+// the Next.js middleware stops treating an expired session as authenticated,
+// allowing the user to reach the /login page.
+function clearSession(): void {
+  tokenStorage.clearTokens();
+  if (typeof window !== "undefined") {
+    document.cookie =
+      "auth_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+  }
+}
+
 // === ERROR NORMALISATION ===
 
 function normaliseError(status: number, serverMessage?: string): AppError {
@@ -98,7 +109,7 @@ async function performRefresh(): Promise<{
 
     return { accessToken: newAccessToken, refreshToken: newRefreshToken };
   } catch (error) {
-    tokenStorage.clearTokens();
+    clearSession();
     if (typeof window !== "undefined") {
       window.location.href = "/login?session_expired=1";
     }
@@ -160,7 +171,7 @@ apiClient.interceptors.response.use(
     if (status === 401 && originalRequest) {
       const req = originalRequest as unknown as Record<string, unknown>;
       if (req._retried) {
-        tokenStorage.clearTokens();
+        clearSession();
         if (typeof window !== "undefined") {
           window.location.href = "/login?session_expired=1";
         }
