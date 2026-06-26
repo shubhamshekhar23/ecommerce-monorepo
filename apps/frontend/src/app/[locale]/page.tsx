@@ -39,9 +39,9 @@ export default async function HomePage() {
             },
           ]}
           fallback={{
-            src: "/images/hero-desktop.svg",
-            width: 1440,
-            height: 600,
+            src: "/images/hero-desktop.png",
+            width: 1456,
+            height: 816,
           }}
           alt="ShopHub — discover curated products"
           priority
