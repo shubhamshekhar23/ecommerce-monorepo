@@ -49,7 +49,19 @@ function setupSwagger(app: NestExpressApplication): void {
     .setVersion('1.0.0')
     .addBearerAuth()
     .build();
-  SwaggerModule.setup('api/v1/docs', app, SwaggerModule.createDocument(app, config));
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/v1/docs', app, document, {
+    /*
+     - Traefik sends X-Forwarded-Proto: https which makes NestJS generate https://
+     - asset URLs — these fail with ERR_CERT_AUTHORITY_INVALID on a non-TLS server.
+     - CDN URLs are always valid HTTPS, bypassing the issue until SSL is set up.
+     */
+    customCssUrl: 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.18.2/swagger-ui.min.css',
+    customJs: [
+      'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.18.2/swagger-ui-bundle.min.js',
+      'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.18.2/swagger-ui-standalone-preset.min.js',
+    ],
+  });
 }
 
 // Graceful shutdown: stop accepting new connections, let in-flight requests finish,
