@@ -27,6 +27,7 @@
 .row {
   display: flex;
   gap: var(--space-4);
+  padding-bottom: var(--space-4);
 
   > * {
     flex: 1;

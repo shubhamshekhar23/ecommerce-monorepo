@@ -19,7 +19,7 @@
 .heroContent {
   padding: var(--space-10);
   border-radius: var(--radius-xl);
-  background: linear-gradient(145deg, #fff, #e9f1ff);
+  background: var(--color-bg-surface);
   box-shadow: var(--shadow-lg);
 }
 
@@ -140,7 +140,7 @@
   display: grid;
   gap: var(--space-4);
   border: 1px solid var(--color-border);
-  background: linear-gradient(170deg, #fff 0%, #f8fbff 100%);
+  background: var(--color-bg-surface);
   border-radius: var(--radius-lg);
   padding: var(--space-5);
   transition:
