@@ -92,10 +92,10 @@ select {
     border-color var(--transition-base),
     box-shadow var(--transition-base);
 
-  &:focus {
+  &:focus,
+  &:focus-visible {
     outline: none;
     border-color: var(--color-accent);
-    box-shadow: 0 0 0 3px rgb(37 99 235 / 18%);
   }
 }
 

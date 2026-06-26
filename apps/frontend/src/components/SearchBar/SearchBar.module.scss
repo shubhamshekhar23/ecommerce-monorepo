@@ -18,17 +18,16 @@
 
   &:focus-within {
     border-color: var(--color-accent);
-    box-shadow: 0 0 0 3px var(--color-accent-soft);
   }
 }
 
 .input {
   border: 0;
   background: transparent;
-  padding: 0;
+  padding: 0 6px;
   width: 100%;
   font: inherit;
-  font-size: 14px;
+  font-size: var(--font-size-base);
   color: var(--color-text-primary);
 
   &::placeholder {

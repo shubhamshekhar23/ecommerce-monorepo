@@ -22,10 +22,10 @@
   transition: border-color 0.15s ease;
   width: 100%;
 
-  &:focus {
+  &:focus,
+  &:focus-visible {
     outline: none;
     border-color: var(--color-accent);
-    box-shadow: 0 0 0 3px rgb(var(--color-accent-rgb, 59 130 246) / 15%);
   }
 
   &[aria-invalid="true"] {
