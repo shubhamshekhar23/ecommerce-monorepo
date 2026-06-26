@@ -16,7 +16,18 @@ import { setupBullBoard } from './bull-board.setup';
 const logger = new Logger('Bootstrap');
 
 function setupMiddleware(app: NestExpressApplication): void {
-  app.use(helmet({ contentSecurityPolicy: false }));
+  app.use(
+    helmet({
+      contentSecurityPolicy: false,
+      /*
+       - HSTS tells browsers "always use HTTPS for this origin for 180 days".
+       - Sending it over HTTP causes browsers to upgrade all subsequent requests
+       - (including relative asset URLs) to HTTPS — which fails with a self-signed
+       - cert on Traefik. Disabled until the site has a valid TLS certificate.
+       */
+      hsts: false,
+    }),
+  );
   app.use(
     compression({
       filter: (req, res) => {
