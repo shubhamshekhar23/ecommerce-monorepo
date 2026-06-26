@@ -16,7 +16,23 @@ import { setupBullBoard } from './bull-board.setup';
 const logger = new Logger('Bootstrap');
 
 function setupMiddleware(app: NestExpressApplication): void {
-  app.use(helmet());
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+          /*
+           - upgradeInsecureRequests causes the browser to rewrite relative HTTP asset
+           - URLs to HTTPS — which fails with ERR_CERT_AUTHORITY_INVALID on a non-TLS
+           - server. Only meaningful on HTTPS sites; disabled until SSL is configured.
+           */
+          upgradeInsecureRequests: null,
+          scriptSrc: ["'self'", 'https://cdnjs.cloudflare.com'],
+          styleSrc: ["'self'", "'unsafe-inline'", 'https://cdnjs.cloudflare.com'],
+        },
+      },
+    }),
+  );
   app.use(
     compression({
       filter: (req, res) => {
