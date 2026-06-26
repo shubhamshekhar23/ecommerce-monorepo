@@ -22,7 +22,7 @@ export class RequestMetricsMiddleware implements NestMiddleware {
   private readonly logger = new Logger(RequestMetricsMiddleware.name);
   private static readonly SAMPLE_RATE = 0.1;
 
-  private static readonly SKIP_PATHS = ['/health', '/api/metrics', '/api/docs'];
+  private static readonly SKIP_PATHS = ['/health', '/api/v1/metrics', '/api/v1/docs'];
 
   constructor(private readonly prisma: PrismaService) {}
 

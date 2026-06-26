@@ -49,7 +49,7 @@ function setupSwagger(app: NestExpressApplication): void {
     .setVersion('1.0.0')
     .addBearerAuth()
     .build();
-  SwaggerModule.setup('api/docs', app, SwaggerModule.createDocument(app, config));
+  SwaggerModule.setup('api/v1/docs', app, SwaggerModule.createDocument(app, config));
 }
 
 // Graceful shutdown: stop accepting new connections, let in-flight requests finish,
