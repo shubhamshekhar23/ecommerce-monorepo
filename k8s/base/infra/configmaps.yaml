@@ -17,3 +17,4 @@ data:
   OPENSEARCH_URL: "http://opensearch:9200"
   # Jaeger OTLP endpoint — overridden to external tracing service in production.
   OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4318/v1/traces"
+  KAFKAJS_NO_PARTITIONER_WARNING: "1"

@@ -824,4 +824,4 @@ jobs:
         if: matrix.changed == 'true' || github.event_name == 'workflow_dispatch'
         run: |
           kubectl rollout restart deployment/${{ matrix.deployment }} -n ecommerce
-          kubectl rollout status deployment/${{ matrix.deployment }} -n ecommerce --timeout=300s
+          kubectl rollout status deployment/${{ matrix.deployment }} -n ecommerce --timeout=600s
