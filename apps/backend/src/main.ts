@@ -16,17 +16,17 @@ import { setupBullBoard } from './bull-board.setup';
 const logger = new Logger('Bootstrap');
 
 function setupMiddleware(app: NestExpressApplication): void {
+  const { 'upgrade-insecure-requests': _removed, ...cspDefaults } =
+    helmet.contentSecurityPolicy.getDefaultDirectives();
   app.use(
     helmet({
       contentSecurityPolicy: {
         directives: {
-          ...helmet.contentSecurityPolicy.getDefaultDirectives(),
           /*
-           - upgradeInsecureRequests causes the browser to rewrite relative HTTP asset
-           - URLs to HTTPS — which fails with ERR_CERT_AUTHORITY_INVALID on a non-TLS
-           - server. Only meaningful on HTTPS sites; disabled until SSL is configured.
+           - upgrade-insecure-requests is removed from defaults because it rewrites
+           - relative HTTP asset URLs to HTTPS — which fails on a non-TLS server.
            */
-          upgradeInsecureRequests: null,
+          ...cspDefaults,
           scriptSrc: ["'self'", 'https://cdnjs.cloudflare.com'],
           styleSrc: ["'self'", "'unsafe-inline'", 'https://cdnjs.cloudflare.com'],
         },
