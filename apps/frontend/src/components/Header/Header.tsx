@@ -5,6 +5,7 @@ import { useAuthStore } from "@/store/auth.store";
 import { useLogout } from "@/features/auth/hooks";
 import { useCart } from "@/features/cart/hooks";
 import { SearchBar } from "@/components/SearchBar/SearchBar";
+import { ThemeToggle } from "@/components/ThemeToggle/ThemeToggle";
 import styles from "./Header.module.scss";
 
 export function Header() {
@@ -16,6 +17,7 @@ export function Header() {
   return (
     <header className={styles.header}>
       <div className={styles.container}>
+        {/* Brand */}
         <Link href="/" className={styles.brand}>
           <span className={styles.brandMark}>S</span>
           <div className={styles.brandText}>
@@ -24,15 +26,14 @@ export function Header() {
           </div>
         </Link>
 
-        <SearchBar />
+        {/* Search */}
+        <div className={styles.searchWrap}>
+          <SearchBar />
+        </div>
 
+        {/* Right actions */}
         <div className={styles.actions}>
-          {user?.role === "ADMIN" && (
-            <Link href="/admin" className={styles.adminLink}>
-              Admin
-            </Link>
-          )}
-
+          {/* Account */}
           <div className={styles.account}>
             {user ? (
               <>
@@ -51,10 +52,41 @@ export function Header() {
             )}
           </div>
 
+          <ThemeToggle />
+          <span className={styles.divider} aria-hidden="true" />
+
+          {/* Orders */}
           <Link href="/orders" className={styles.ordersLink}>
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
+              <rect
+                x="3"
+                y="3"
+                width="18"
+                height="18"
+                rx="2"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              />
+              <path d="M3 9h18" stroke="currentColor" strokeWidth="1.8" />
+              <path d="M9 21V9" stroke="currentColor" strokeWidth="1.8" />
+            </svg>
             Orders
           </Link>
 
+          {/* Admin */}
+          {user?.role === "ADMIN" && (
+            <Link href="/admin" className={styles.adminLink}>
+              Admin
+            </Link>
+          )}
+
+          {/* Cart */}
           <Link
             href="/cart"
             className={styles.cartLink}

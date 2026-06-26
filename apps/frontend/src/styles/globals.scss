@@ -6,76 +6,78 @@
 @use "./utilities";
 @use "./print";
 
-// Dark mode token overrides — activated by data-theme="dark" attribute on <html>.
+// Dark mode token overrides — warm dark palette (activated by data-theme="dark").
 // Kept here (not in _variables.scss) because [data-theme] is a global selector
 // that CSS Modules would reject as "not pure" if included via @use.
 [data-theme="dark"] {
-  --color-bg-canvas: #0f1117;
-  --color-bg-surface: #1a1d27;
-  --color-bg-elevated: #22263a;
-  --color-bg-soft: #1e2235;
-  --color-text-primary: #f1f5f9;
-  --color-text-secondary: #94a3b8;
-  --color-text-muted: #64748b;
-  --color-border: #2d3348;
-  --color-border-strong: #3d4663;
-  --color-accent: #3b82f6;
-  --color-accent-hover: #60a5fa;
-  --color-accent-soft: #1e3a5f;
-  --color-accent-text: #93c5fd;
-  --color-success: #34d399;
-  --color-error: #f87171;
-  --color-warning: #fbbf24;
-  --color-background: var(--color-bg-canvas);
-  --color-card: var(--color-bg-surface);
-  --color-link: var(--color-accent);
-  --color-header-bg: rgb(26 29 39 / 90%);
-  --color-nav-bg: var(--color-bg-surface);
-  --color-nav-text: var(--color-text-secondary);
-  --shadow-sm: 0 2px 8px rgb(0 0 0 / 30%);
-  --shadow-md: 0 12px 24px rgb(0 0 0 / 40%);
-  --shadow-lg: 0 20px 45px rgb(0 0 0 / 50%);
-  --shadow-xl: 0 36px 64px rgb(0 0 0 / 60%);
-  --elevation-1: 0 1px 3px rgb(0 0 0 / 30%);
-  --elevation-2: 0 2px 8px rgb(0 0 0 / 35%);
-  --elevation-3: 0 8px 16px rgb(0 0 0 / 40%);
-  --elevation-4: 0 16px 32px rgb(0 0 0 / 45%);
-  --elevation-5: 0 32px 64px rgb(0 0 0 / 50%);
+  --color-bg-canvas:   #1C1710;
+  --color-bg-surface:  #252018;
+  --color-bg-elevated: #2E2820;
+  --color-bg-soft:     #1E2E26;
+  --color-text-primary:   #F0E9DC;
+  --color-text-secondary: #B5A898;
+  --color-text-muted:     #8A7D6D;
+  --color-text-faint:     #6A5E50;
+  --color-border:        rgb(240 233 220 / 8%);
+  --color-border-strong: rgb(240 233 220 / 12%);
+  --color-accent:       #4A8A6A;
+  --color-accent-hover: #5A9A7A;
+  --color-accent-soft:  #1B2F25;
+  --color-accent-text:  #8ABDA0;
+  --color-ink:          #F0E9DC;
+  --color-btn-ink-bg:   #F0E9DC;
+  --color-btn-ink-text: #221E18;
+  --color-background:   var(--color-bg-canvas);
+  --color-card:         var(--color-bg-surface);
+  --color-link:         var(--color-accent);
+  --color-header-bg:    rgb(28 23 16 / 92%);
+  --color-nav-bg:       var(--color-bg-canvas);
+  --color-nav-text:     var(--color-text-secondary);
+  --shadow-sm:  0 2px 8px  rgb(0 0 0 / 35%);
+  --shadow-md:  0 12px 24px rgb(0 0 0 / 45%);
+  --shadow-lg:  0 20px 45px rgb(0 0 0 / 55%);
+  --shadow-xl:  0 36px 64px rgb(0 0 0 / 60%);
+  --elevation-1: 0 1px 3px  rgb(0 0 0 / 35%);
+  --elevation-2: 0 2px 8px  rgb(0 0 0 / 40%);
+  --elevation-3: 0 8px 16px rgb(0 0 0 / 45%);
+  --elevation-4: 0 16px 32px rgb(0 0 0 / 50%);
+  --elevation-5: 0 32px 64px rgb(0 0 0 / 55%);
 }
 
-// OS-level dark mode preference — respected before any JS/user override.
+// OS-level dark mode — respected before JS/user override.
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --color-bg-canvas: #0f1117;
-    --color-bg-surface: #1a1d27;
-    --color-bg-elevated: #22263a;
-    --color-bg-soft: #1e2235;
-    --color-text-primary: #f1f5f9;
-    --color-text-secondary: #94a3b8;
-    --color-text-muted: #64748b;
-    --color-border: #2d3348;
-    --color-border-strong: #3d4663;
-    --color-accent: #3b82f6;
-    --color-accent-hover: #60a5fa;
-    --color-accent-soft: #1e3a5f;
-    --color-accent-text: #93c5fd;
-    --color-success: #34d399;
-    --color-error: #f87171;
-    --color-warning: #fbbf24;
-    --color-background: var(--color-bg-canvas);
-    --color-card: var(--color-bg-surface);
-    --color-link: var(--color-accent);
-    --color-header-bg: rgb(26 29 39 / 90%);
-    --color-nav-bg: var(--color-bg-surface);
-    --color-nav-text: var(--color-text-secondary);
-    --shadow-sm: 0 2px 8px rgb(0 0 0 / 30%);
-    --shadow-md: 0 12px 24px rgb(0 0 0 / 40%);
-    --shadow-lg: 0 20px 45px rgb(0 0 0 / 50%);
-    --shadow-xl: 0 36px 64px rgb(0 0 0 / 60%);
-    --elevation-1: 0 1px 3px rgb(0 0 0 / 30%);
-    --elevation-2: 0 2px 8px rgb(0 0 0 / 35%);
-    --elevation-3: 0 8px 16px rgb(0 0 0 / 40%);
-    --elevation-4: 0 16px 32px rgb(0 0 0 / 45%);
-    --elevation-5: 0 32px 64px rgb(0 0 0 / 50%);
+    --color-bg-canvas:   #1C1710;
+    --color-bg-surface:  #252018;
+    --color-bg-elevated: #2E2820;
+    --color-bg-soft:     #1E2E26;
+    --color-text-primary:   #F0E9DC;
+    --color-text-secondary: #B5A898;
+    --color-text-muted:     #8A7D6D;
+    --color-text-faint:     #6A5E50;
+    --color-border:        rgb(240 233 220 / 8%);
+    --color-border-strong: rgb(240 233 220 / 12%);
+    --color-accent:       #4A8A6A;
+    --color-accent-hover: #5A9A7A;
+    --color-accent-soft:  #1B2F25;
+    --color-accent-text:  #8ABDA0;
+    --color-ink:          #F0E9DC;
+  --color-btn-ink-bg:   #F0E9DC;
+  --color-btn-ink-text: #221E18;
+    --color-background:   var(--color-bg-canvas);
+    --color-card:         var(--color-bg-surface);
+    --color-link:         var(--color-accent);
+    --color-header-bg:    rgb(28 23 16 / 92%);
+    --color-nav-bg:       var(--color-bg-canvas);
+    --color-nav-text:     var(--color-text-secondary);
+    --shadow-sm:  0 2px 8px  rgb(0 0 0 / 35%);
+    --shadow-md:  0 12px 24px rgb(0 0 0 / 45%);
+    --shadow-lg:  0 20px 45px rgb(0 0 0 / 55%);
+    --shadow-xl:  0 36px 64px rgb(0 0 0 / 60%);
+    --elevation-1: 0 1px 3px  rgb(0 0 0 / 35%);
+    --elevation-2: 0 2px 8px  rgb(0 0 0 / 40%);
+    --elevation-3: 0 8px 16px rgb(0 0 0 / 45%);
+    --elevation-4: 0 16px 32px rgb(0 0 0 / 50%);
+    --elevation-5: 0 32px 64px rgb(0 0 0 / 55%);
   }
 }

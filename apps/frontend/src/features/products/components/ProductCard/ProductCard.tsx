@@ -1,5 +1,3 @@
-// src/features/products/components/ProductCard/ProductCard.tsx
-
 "use client";
 
 import React from "react";
@@ -15,6 +13,9 @@ import { buildImageUrl } from "@/shared/buildImageUrl";
 import type { Product } from "../../interfaces";
 import { highlightMatch } from "@/shared/utils/highlightMatch";
 import styles from "./ProductCard.module.scss";
+
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+const PAGE_LOAD_TIME = Date.now();
 
 interface ProductCardProps {
   product: Product;
@@ -34,6 +35,7 @@ function ProductCardComponent({
   const [buttonState, setButtonState] = useState<"idle" | "success" | "error">(
     "idle",
   );
+
   const mainImage =
     product.images.find((img) => img.isMain) || product.images[0];
   const [imageSrc, setImageSrc] = useState(
@@ -81,24 +83,23 @@ function ProductCardComponent({
   // cursor API has no flat stock field; undefined → treat as in-stock
   const inStock = product.stock === undefined ? true : product.stock > 0;
 
-  const getButtonLabel = (): string => {
-    if (isPending) return "Adding...";
-    if (buttonState === "success") return "Added ✓";
-    if (buttonState === "error") return "Failed";
-    return "Add to Cart";
-  };
+  const isNew = product.createdAt
+    ? PAGE_LOAD_TIME - new Date(product.createdAt).getTime() < THIRTY_DAYS_MS
+    : false;
 
-  const isButtonDisabled = !inStock || isPending || buttonState === "success";
+  const addBtnLabel =
+    buttonState === "success" ? "✓" : buttonState === "error" ? "!" : "+";
 
   return (
     <Link href={`/products/${product.slug}`} className={styles.card}>
       <div className={styles.imageWrapper}>
+        {isNew && <span className={styles.badge}>New</span>}
         {imageSrc ? (
           <Image
             src={imageSrc}
             alt={mainImage?.altText || product.name}
             fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             className={styles.image}
             priority={priority}
             quality={imageQuality}
@@ -112,29 +113,28 @@ function ProductCardComponent({
       </div>
 
       <div className={styles.content}>
+        {product.categoryName && (
+          <span className={styles.category}>{product.categoryName}</span>
+        )}
         <h3 className={styles.name}>
           {searchQuery
             ? highlightMatch(product.name, searchQuery)
             : product.name}
         </h3>
-
-        <div className={styles.price}>${price}</div>
-
-        <div className={inStock ? styles.inStock : styles.outOfStock}>
-          {inStock
-            ? product.stock !== undefined
-              ? `In Stock (${product.stock})`
-              : "In Stock"
-            : "Out of Stock"}
+        <div className={styles.priceRow}>
+          <span className={styles.price}>${price}</span>
+          <button
+            className={`${styles.addBtn} ${
+              buttonState === "success" ? styles.addBtnSuccess : ""
+            } ${buttonState === "error" ? styles.addBtnError : ""}`}
+            disabled={!inStock || isPending || buttonState === "success"}
+            onClick={handleAddToCart}
+            title={inStock ? "Add to cart" : "Out of stock"}
+            aria-label={`Add ${product.name} to cart`}
+          >
+            {addBtnLabel}
+          </button>
         </div>
-
-        <button
-          className={`${styles.addToCart} ${buttonState === "success" ? styles.addToCartSuccess : ""} ${buttonState === "error" ? styles.addToCartError : ""}`}
-          disabled={isButtonDisabled}
-          onClick={handleAddToCart}
-        >
-          {getButtonLabel()}
-        </button>
       </div>
     </Link>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition, useDeferredValue, useMemo } from "react";
+import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import {
   useProductsCursor,
@@ -41,8 +42,16 @@ export function ProductsView() {
   const urlSort =
     (searchParams.get("sort") as CursorQueryParams["sort"]) || undefined;
   const sort = urlSort ?? savedSort;
+  const minPrice = searchParams.get("minPrice")
+    ? Number(searchParams.get("minPrice"))
+    : undefined;
+  const maxPrice = searchParams.get("maxPrice")
+    ? Number(searchParams.get("maxPrice"))
+    : undefined;
   const isSearching = typeof search === "string" && search.trim().length > 0;
-  const hasActiveFilters = Boolean(categorySlug || urlSort);
+  const hasActiveFilters = Boolean(
+    categorySlug || urlSort || minPrice !== undefined || maxPrice !== undefined,
+  );
 
   // Resolve category slug → ID for the API (which takes categoryId, not slug)
   const { data: categoriesData } = useCategories();
@@ -56,8 +65,10 @@ export function ProductsView() {
     () => ({
       ...(categoryId ? { categoryId } : {}),
       ...(sort ? { sort } : {}),
+      ...(minPrice !== undefined ? { minPrice } : {}),
+      ...(maxPrice !== undefined ? { maxPrice } : {}),
     }),
-    [categoryId, sort],
+    [categoryId, sort, minPrice, maxPrice],
   );
 
   // Defer the filter value that drives the expensive product grid re-render.
@@ -103,17 +114,34 @@ export function ProductsView() {
 
   const handleClearFilters = () => startTransition(() => router.push(pathname));
 
-  let title = "Products";
+  let title = "All Products";
   if (isSearching) title = `Results for "${search}"`;
   else if (matchedCategory) title = matchedCategory.name;
+
+  const subtitle = isSearching
+    ? `${products.length} result${products.length !== 1 ? "s" : ""}`
+    : products.length > 0
+      ? `Showing ${products.length} curated item${products.length !== 1 ? "s" : ""}`
+      : "";
 
   return (
     <div className={styles.container}>
       <CategorySidebar />
 
       <main className={styles.main}>
-        <div className={styles.header}>
-          <h1 className={styles.title}>{title}</h1>
+        <nav className={styles.breadcrumb} aria-label="Breadcrumb">
+          <Link href="/" className={styles.breadcrumbLink}>
+            Home
+          </Link>
+          <span className={styles.breadcrumbSep}>/</span>
+          <span>Products</span>
+        </nav>
+
+        <div className={styles.pageHeader}>
+          <div>
+            <h1 className={styles.title}>{title}</h1>
+            {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
+          </div>
 
           <div className={styles.controls}>
             {!isSearching && (
@@ -139,14 +167,6 @@ export function ProductsView() {
             )}
           </div>
         </div>
-
-        <p className={styles.count}>
-          {isSearching
-            ? `${products.length} result${products.length !== 1 ? "s" : ""}`
-            : products.length > 0
-              ? `${products.length} loaded`
-              : ""}
-        </p>
 
         <div
           style={{ opacity: isPending ? 0.6 : 1, transition: "opacity 200ms" }}

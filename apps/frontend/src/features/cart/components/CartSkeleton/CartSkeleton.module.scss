@@ -12,11 +12,15 @@ $shimmer: linear-gradient(90deg, #ebf1ff 20%, #f8fafe 45%, #ebf1ff 70%);
 
 .container {
   display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: var(--space-8);
+  grid-template-columns: 1fr 380px;
+  gap: 28px;
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  padding: 72px 40px 64px;
 
-  @media (width <= 768px) {
+  @media (width <= 860px) {
     grid-template-columns: 1fr;
+    padding: 64px 20px 48px;
   }
 }
 

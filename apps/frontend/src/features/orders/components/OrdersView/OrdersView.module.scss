@@ -1,94 +1,141 @@
-@use "@/styles/variables" as *;
-@use "@/styles/mixins" as *;
-
-.container {
-  max-width: 900px;
+.page {
+  max-width: var(--container-max-width);
   margin: 0 auto;
-  padding: var(--space-6);
+  padding: 32px 40px 64px;
 
-  @include respond-to("md") {
-    padding: var(--space-4);
+  @media (width <= 768px) {
+    padding: 24px 20px 48px;
   }
+}
+
+/* ── Breadcrumb ── */
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin-bottom: 20px;
+}
+
+.breadcrumbLink {
+  color: var(--color-text-muted);
+  text-decoration: none;
+
+  &:hover {
+    color: var(--color-text-primary);
+  }
+}
+
+.breadcrumbSep {
+  color: var(--color-text-faint);
+}
+
+/* ── Page header ── */
+
+.pageHeader {
+  margin-bottom: 28px;
 }
 
 .title {
-  margin: 0 0 var(--space-6) 0;
-  font-size: clamp(1.8rem, 2.3vw, 2.2rem);
-  font-weight: 700;
+  margin: 0 0 6px;
+  font-size: clamp(1.75rem, 2.5vw, 2.5rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
   color: var(--color-text-primary);
-  line-height: 1.15;
-  letter-spacing: -0.015em;
 }
 
-.successBanner {
-  margin-bottom: var(--space-6);
-  padding: var(--space-4);
-  background-color: #d1e7dd;
-  border: 1px solid #badbcc;
-  border-radius: var(--radius-sm);
-  color: #0f5132;
-  font-weight: 600;
-  text-align: center;
-}
-
-.loadingContainer {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-.skeleton {
-  height: 160px;
-  background: linear-gradient(90deg, #e8ecef 25%, #f0f2f4 50%, #e8ecef 75%);
-  background-size: 200% 100%;
-  border-radius: var(--radius-sm);
-  animation: shimmer 1.5s infinite;
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-
-  100% {
-    background-position: -200% 0;
-  }
-}
-
-.emptyState {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 400px;
-  gap: var(--space-4);
-  padding: var(--space-6);
-  text-align: center;
-}
-
-.emptyMessage {
+.subtitle {
   margin: 0;
-  font-size: var(--font-size-lg);
+  font-size: 15px;
   color: var(--color-text-secondary);
 }
 
-.continueShopping {
-  padding: var(--space-3) var(--space-6);
-  background-color: var(--color-accent);
-  color: white;
-  border-radius: var(--radius-sm);
-  font-weight: 600;
-  text-decoration: none;
+/* ── Success banner ── */
 
-  @include transition(background-color 0.2s ease);
+.successBanner {
+  margin-bottom: 24px;
+  padding: 14px 20px;
+  background: #D9EFE3;
+  border: 1px solid #A3D4B8;
+  border-radius: var(--radius-md);
+  color: #0F5132;
+  font-weight: 600;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* ── Filter tabs ── */
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
 
   &:hover {
-    background-color: #0096a8;
+    border-color: var(--color-accent);
+    color: var(--color-accent-text);
+    background: var(--color-accent-soft);
   }
 }
+
+.tabActive {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+
+  &:hover {
+    background: var(--color-accent-hover);
+    border-color: var(--color-accent-hover);
+    color: #fff;
+  }
+}
+
+.tabCount {
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--color-bg-canvas);
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-full);
+  padding: 1px 7px;
+  min-width: 20px;
+  text-align: center;
+}
+
+.tabCountActive {
+  background: rgb(255 255 255 / 22%);
+  color: #fff;
+}
+
+/* ── Orders list ── */
 
 .ordersList {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: 12px;
+}
+
+.emptyTab {
+  text-align: center;
+  padding: 48px 0;
+  font-size: 14px;
+  color: var(--color-text-muted);
+  margin: 0;
 }

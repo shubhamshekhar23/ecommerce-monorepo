@@ -1,5 +1,3 @@
-// src/features/cart/components/CartItemRow/CartItemRow.tsx
-
 "use client";
 
 import React from "react";
@@ -18,6 +16,7 @@ function CartItemRowComponent({ item }: CartItemRowProps) {
 
   const price = Number(item.product.price).toFixed(2);
   const subtotal = Number(item.subtotal).toFixed(2);
+  const inStock = item.product.stock > 0;
 
   const handleDecrement = (): void => {
     if (item.quantity <= 1) return;
@@ -36,32 +35,38 @@ function CartItemRowComponent({ item }: CartItemRowProps) {
   const isDisabled = isUpdating || isRemoving;
 
   return (
-    <div className={styles.row}>
+    <div className={`${styles.row} ${isRemoving ? styles.rowRemoving : ""}`}>
       <div className={styles.imageWrapper}>
-        <div className={styles.placeholder}>
+        <span className={styles.placeholder}>
           {item.product.name.charAt(0).toUpperCase()}
-        </div>
+        </span>
       </div>
 
       <div className={styles.details}>
         <Link href={`/products/${item.product.slug}`} className={styles.name}>
           {item.product.name}
         </Link>
-        <div className={styles.unitPrice}>${price} each</div>
+        <div className={styles.meta}>
+          ${price} each
+          <span className={styles.dot}>·</span>
+          <span className={inStock ? styles.inStock : styles.outOfStock}>
+            {inStock ? "in stock" : "out of stock"}
+          </span>
+        </div>
       </div>
 
       <div className={styles.quantityControl}>
         <button
-          className={styles.qtyBtn}
+          className={styles.qtyBtnMinus}
           onClick={handleDecrement}
           disabled={isDisabled || item.quantity <= 1}
           aria-label="Decrease quantity"
         >
-          -
+          −
         </button>
         <span className={styles.qty}>{item.quantity}</span>
         <button
-          className={styles.qtyBtn}
+          className={styles.qtyBtnPlus}
           onClick={handleIncrement}
           disabled={isDisabled || item.quantity >= item.product.stock}
           aria-label="Increase quantity"
@@ -78,7 +83,25 @@ function CartItemRowComponent({ item }: CartItemRowProps) {
         disabled={isDisabled}
         aria-label={`Remove ${item.product.name} from cart`}
       >
-        {isRemoving ? "..." : "Remove"}
+        {isRemoving ? (
+          <span className={styles.removingDots}>…</span>
+        ) : (
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        )}
       </button>
     </div>
   );

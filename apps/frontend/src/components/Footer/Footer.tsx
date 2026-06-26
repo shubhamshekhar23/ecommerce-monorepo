@@ -1,22 +1,19 @@
-// Server Component — no 'use client' needed.
-// Only BackToTopButton is interactive; everything else is static markup.
-
 import Link from "next/link";
 import { BackToTopButton } from "./BackToTopButton";
 import styles from "./Footer.module.scss";
 
 const FOOTER_LINKS = {
-  shop: [
+  Shop: [
     { label: "Browse Products", href: "/products" },
     { label: "Today's Deals", href: "/deals" },
     { label: "New Arrivals", href: "/new" },
   ],
-  account: [
+  Account: [
     { label: "Your Orders", href: "/orders" },
     { label: "Your Cart", href: "/cart" },
     { label: "Sign In", href: "/login" },
   ],
-  support: [
+  Support: [
     { label: "Help Center", href: "/help" },
     { label: "Shipping Info", href: "/shipping" },
     { label: "Contact Us", href: "/contact" },
@@ -27,20 +24,23 @@ const FOOTER_LINKS = {
 export function Footer() {
   return (
     <footer className={styles.footer}>
-      <BackToTopButton />
+      <div className={styles.container}>
+        <div className={styles.columns}>
+          {/* Brand column */}
+          <div className={styles.brandColumn}>
+            <div className={styles.brandLockup}>
+              <span className={styles.brandMark}>S</span>
+              <span className={styles.brandName}>ShopHub</span>
+            </div>
+            <p className={styles.tagline}>
+              Elevated shopping for everyday essentials and standout finds.
+            </p>
+          </div>
 
-      <div className={styles.content}>
-        <div className={styles.brandColumn}>
-          <p className={styles.brand}>ShopHub</p>
-          <p className={styles.tagline}>
-            Elevated shopping for every day essentials and standout finds.
-          </p>
-        </div>
-
-        <div className={styles.linksGrid}>
-          {Object.entries(FOOTER_LINKS).map(([key, links]) => (
-            <div key={key} className={styles.column}>
-              <h4 className={styles.heading}>{key}</h4>
+          {/* Link columns */}
+          {Object.entries(FOOTER_LINKS).map(([heading, links]) => (
+            <div key={heading} className={styles.column}>
+              <h4 className={styles.eyebrow}>{heading}</h4>
               <ul className={styles.list}>
                 {links.map((link) => (
                   <li key={link.href}>
@@ -53,10 +53,14 @@ export function Footer() {
             </div>
           ))}
         </div>
-      </div>
 
-      <div className={styles.copyright}>
-        <p>© {new Date().getFullYear()} ShopHub. All rights reserved.</p>
+        {/* Bottom bar */}
+        <div className={styles.bottom}>
+          <span>
+            © {new Date().getFullYear()} ShopHub. All rights reserved.
+          </span>
+          <BackToTopButton />
+        </div>
       </div>
     </footer>
   );

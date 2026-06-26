@@ -1,230 +1,283 @@
-@use "@/styles/variables" as *;
 @use "@/styles/mixins" as *;
 
 .card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  padding: var(--space-4);
-  background-color: var(--color-card);
+  background: var(--color-bg-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-
-  @include transition(all 0.2s ease);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
 
   &:hover {
-    border-color: var(--color-accent);
+    border-color: var(--color-border-strong);
     box-shadow: var(--shadow-sm);
   }
 }
 
-.header {
+/* ── Header bar ── */
+
+.cardHeader {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: var(--space-4);
+  gap: 16px;
+  padding: 18px 24px 0;
 }
 
-.orderInfo {
+.headerLeft {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
+  align-items: center;
+  gap: 10px;
 }
 
 .orderNumber {
-  margin: 0;
-  font-size: var(--font-size-lg);
+  font-size: 14px;
   font-weight: 700;
   color: var(--color-text-primary);
+  letter-spacing: 0.01em;
 }
 
-.date {
-  margin: 0;
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
+/* ── Status badge ── */
+
+.badge {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
 }
 
-.status {
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-xs);
-  font-weight: 600;
-  white-space: nowrap;
-
-  &.statusPending {
-    background-color: #fff3cd;
-    color: #856404;
-  }
-
-  &.statusProcessing {
-    background-color: #d1ecf1;
-    color: #0c5460;
-  }
-
-  &.statusShipped {
-    background-color: #d1f2eb;
-    color: #0f5132;
-  }
-
-  &.statusDelivered {
-    background-color: #d1e7dd;
-    color: #0f5132;
-  }
-
-  &.statusCancelled {
-    background-color: #f8d7da;
-    color: #721c24;
-  }
+.statusProcessing {
+  background: #EAF1F8;
+  color: #1A5E8C;
 }
 
-.details {
+.statusShipped {
+  background: #E4EBDF;
+  color: #21382C;
+}
+
+.statusDelivered {
+  background: #D9EFE3;
+  color: #0F5132;
+}
+
+.statusCancelled {
+  background: #FBE9EC;
+  color: #9A1226;
+}
+
+/* ── Header right (total) ── */
+
+.headerRight {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-3) 0;
-  border-top: 1px solid var(--color-border);
+  align-items: flex-end;
+  gap: 1px;
+}
+
+.totalLabel {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-faint);
+}
+
+.totalValue {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  letter-spacing: -0.01em;
+}
+
+/* ── Date line ── */
+
+.dateLine {
+  margin: 6px 0 0;
+  padding: 0 24px 16px;
+  font-size: 13px;
+  color: var(--color-text-muted);
   border-bottom: 1px solid var(--color-border);
 }
 
-.row {
+/* ── Content row ── */
+
+.content {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-}
+  gap: 16px;
+  padding: 16px 24px;
 
-.label {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-}
-
-.value {
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  color: var(--color-text-primary);
-
-  &.total {
-    font-size: var(--font-size-lg);
-    color: var(--color-accent);
+  @media (width <= 720px) {
+    flex-wrap: wrap;
   }
 }
 
-.paymentFailed {
-  color: #721c24;
-  font-weight: 700;
+/* ── Product avatars ── */
+
+.avatars {
+  display: flex;
+  flex-shrink: 0;
 }
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-accent-soft);
+  color: var(--color-accent-text);
+  font-size: 14px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--color-bg-surface);
+  margin-left: -8px;
+
+  &:first-child {
+    margin-left: 0;
+  }
+}
+
+.avatarMore {
+  background: var(--color-bg-canvas);
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* ── Item info ── */
+
+.itemInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.productNames {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.meta {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+/* ── Action buttons ── */
 
 .actions {
   display: flex;
-  gap: var(--space-2);
-  flex-wrap: wrap;
-}
-
-.viewBtn,
-.cancelBtn {
-  flex: 1;
-  min-width: 120px;
-  padding: var(--space-2) var(--space-3);
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  cursor: pointer;
-
-  @include transition(all 0.2s ease);
-
-  &:focus-visible {
-    @include focus-ring;
-  }
-}
-
-.viewBtn {
-  background-color: var(--color-accent);
-  color: white;
-  text-decoration: none;
-  display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 8px;
+  flex-shrink: 0;
 
-  &:hover {
-    background-color: #0096a8;
+  @media (width <= 720px) {
+    width: 100%;
+    justify-content: flex-end;
   }
 }
 
-.cancelBtn {
-  background-color: #f0f0f0;
-  color: var(--color-text-primary);
-  border: 1px solid var(--color-border);
+.secondaryBtn {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 14px;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
 
   &:hover:not(:disabled) {
-    background-color: #e0e0e0;
-    border-color: #cc0c39;
-    color: #cc0c39;
+    border-color: var(--color-accent);
+    color: var(--color-accent-text);
+    background: var(--color-accent-soft);
   }
 
   &:disabled {
-    @include disabled-state;
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 }
 
-.confirmBox {
-  grid-column: 1 / -1;
+.primaryBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-btn-ink-bg);
+  color: var(--color-btn-ink-text);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 9px 14px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: opacity var(--transition-fast);
+
+  &:hover {
+    opacity: 0.85;
+  }
+}
+
+/* ── Confirm inline ── */
+
+.confirmInline {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  background-color: #f9f9f9;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  align-items: center;
+  gap: 8px;
 }
 
 .confirmText {
-  margin: 0;
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  text-align: center;
-}
-
-.confirmActions {
-  display: flex;
-  gap: var(--space-2);
+  font-size: 13px;
+  color: var(--color-error);
+  white-space: nowrap;
 }
 
 .confirmYes,
 .confirmNo {
-  flex: 1;
-  padding: var(--space-2);
-  border: none;
-  border-radius: var(--radius-sm);
+  font-size: 12px;
   font-weight: 600;
+  padding: 5px 12px;
+  border-radius: var(--radius-xs);
   cursor: pointer;
+  transition: all var(--transition-fast);
 
-  @include transition(all 0.2s ease);
-
-  &:focus-visible {
-    @include focus-ring;
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 }
 
 .confirmYes {
-  background-color: #cc0c39;
-  color: white;
+  background: var(--color-error);
+  color: #fff;
+  border: 1px solid var(--color-error);
 
   &:hover:not(:disabled) {
-    opacity: 0.9;
-  }
-
-  &:disabled {
-    @include disabled-state;
+    opacity: 0.85;
   }
 }
 
 .confirmNo {
-  background-color: white;
-  color: var(--color-text-primary);
-  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border-strong);
 
-  &:hover {
-    background-color: #f0f0f0;
+  &:hover:not(:disabled) {
+    background: var(--color-bg-canvas);
   }
 }

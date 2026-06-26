@@ -1,0 +1,147 @@
+$panel-dark: #1B2D22;
+$panel-dark-faint: rgb(255 255 255 / 6%);
+
+.split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 100%;
+  max-width: 1040px;
+  min-height: 560px;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 12px 48px rgb(0 0 0 / 14%);
+
+  @media (width <= 860px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Left dark panel ── */
+
+.left {
+  background: $panel-dark;
+  padding: 52px 52px 48px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+
+  /* subtle radial glow in top-right to hint at depth */
+  &::before {
+    content: "";
+    position: absolute;
+    top: -80px;
+    right: -80px;
+    width: 360px;
+    height: 360px;
+    background: radial-gradient(circle, rgb(46 90 69 / 55%) 0%, transparent 68%);
+    pointer-events: none;
+  }
+
+  @media (width <= 860px) {
+    display: none;
+  }
+}
+
+.leftInner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Badge pill ── */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgb(255 255 255 / 10%);
+  border: 1px solid rgb(255 255 255 / 15%);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 80%);
+  width: fit-content;
+  margin-bottom: 32px;
+}
+
+.badgeDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #5dba8a;
+  flex-shrink: 0;
+}
+
+/* ── Headline + body ── */
+
+.headline {
+  margin: 0 0 18px;
+  font-size: clamp(1.75rem, 2.6vw, 2.4rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: #fff;
+}
+
+.body {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.65;
+  color: rgb(240 233 220 / 60%);
+  max-width: 320px;
+}
+
+/* ── Benefits list ── */
+
+.benefits {
+  list-style: none;
+  padding: 0;
+  margin: auto 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.benefit {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  font-size: 14px;
+  color: rgb(240 233 220 / 75%);
+  font-weight: 500;
+}
+
+.check {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 10%);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: #5dba8a;
+}
+
+/* ── Right light panel ── */
+
+.right {
+  background: var(--color-bg-surface);
+  padding: 52px 56px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  @media (width <= 860px) {
+    padding: 40px 28px;
+  }
+
+  @media (width <= 480px) {
+    padding: 32px 20px;
+  }
+}

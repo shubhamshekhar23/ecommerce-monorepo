@@ -1,15 +1,12 @@
-// src/features/cart/components/CartSummary/CartSummary.tsx
-
 "use client";
 
-import { useReducer } from "react";
 import { useRouter } from "next/navigation";
 import type { Cart } from "../../interfaces";
-import { useClearCart } from "../../hooks";
 import { useCartTotalsWorker } from "../../hooks/useCartTotalsWorker";
-import { cartUiReducer, cartUiInitialState } from "../../cartReducer";
 import { CouponInput, useCoupon } from "@/features/coupons";
 import styles from "./CartSummary.module.scss";
+
+const TAX_RATE = 0.08;
 
 interface CartSummaryProps {
   cart: Cart;
@@ -17,8 +14,6 @@ interface CartSummaryProps {
 
 export function CartSummary({ cart }: CartSummaryProps) {
   const router = useRouter();
-  const { mutate: clearCart, isPending: isClearing } = useClearCart();
-  const [state, dispatch] = useReducer(cartUiReducer, cartUiInitialState);
   const {
     appliedCoupon,
     apply: applyCoupon,
@@ -32,24 +27,14 @@ export function CartSummary({ cart }: CartSummaryProps) {
   const workerTotals = useCartTotalsWorker(cart.items);
   const subtotal = workerTotals?.totalPrice ?? Number(cart.totalPrice);
   const discount = computeDiscount(subtotal);
-  const displayTotal = (subtotal - discount).toFixed(2);
+  const afterDiscount = subtotal - discount;
+  const tax = afterDiscount * TAX_RATE;
+  const orderTotal = afterDiscount + tax;
   const displayItemCount = workerTotals?.itemCount ?? cart.itemCount;
-  const itemLabel =
-    displayItemCount === 1 ? "1 item" : `${displayItemCount} items`;
-
-  const handleConfirmClear = (): void => {
-    dispatch({ type: "CONFIRM_CLEAR" });
-    clearCart(undefined);
-  };
 
   return (
     <aside className={styles.summary}>
-      <h2 className={styles.title}>Order Summary</h2>
-
-      <div className={styles.row}>
-        <span className={styles.label}>Items</span>
-        <span className={styles.value}>{itemLabel}</span>
-      </div>
+      <h2 className={styles.title}>Order summary</h2>
 
       <CouponInput
         onApply={applyCoupon}
@@ -58,60 +43,82 @@ export function CartSummary({ cart }: CartSummaryProps) {
         isPending={isCouponPending}
       />
 
-      {discount > 0 && (
+      <div className={styles.rows}>
         <div className={styles.row}>
-          <span className={styles.label}>Discount</span>
-          <span
-            className={styles.value}
-            style={{ color: "var(--color-error)" }}
-          >
-            −${discount.toFixed(2)}
+          <span className={styles.label}>
+            Subtotal ({displayItemCount}{" "}
+            {displayItemCount === 1 ? "item" : "items"})
           </span>
+          <span className={styles.value}>${afterDiscount.toFixed(2)}</span>
         </div>
-      )}
+
+        {discount > 0 && (
+          <div className={styles.row}>
+            <span className={styles.label}>Discount</span>
+            <span className={`${styles.value} ${styles.discount}`}>
+              −${discount.toFixed(2)}
+            </span>
+          </div>
+        )}
+
+        <div className={styles.row}>
+          <span className={styles.label}>Shipping</span>
+          <span className={`${styles.value} ${styles.free}`}>Free</span>
+        </div>
+
+        <div className={styles.row}>
+          <span className={styles.label}>Estimated tax</span>
+          <span className={styles.value}>${tax.toFixed(2)}</span>
+        </div>
+      </div>
 
       <div className={styles.divider} />
 
-      <div className={`${styles.row} ${styles.totalRow}`}>
-        <span className={styles.totalLabel}>Order Total</span>
-        <span className={styles.totalValue}>${displayTotal}</span>
+      <div className={styles.totalRow}>
+        <span className={styles.totalLabel}>Order total</span>
+        <span className={styles.totalValue}>${orderTotal.toFixed(2)}</span>
       </div>
 
       <button
         className={styles.checkoutBtn}
         onClick={() => router.push("/checkout")}
       >
-        Proceed to Checkout
+        Proceed to checkout
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M5 12h14M12 5l7 7-7 7"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
       </button>
 
-      {state.phase === "browsing" ? (
-        <button
-          className={styles.clearBtn}
-          onClick={() => dispatch({ type: "REQUEST_CLEAR" })}
-          disabled={isClearing}
+      <p className={styles.trustBadge}>
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
         >
-          Clear Cart
-        </button>
-      ) : (
-        <div className={styles.confirmBox}>
-          <p className={styles.confirmText}>Remove all items?</p>
-          <div className={styles.confirmActions}>
-            <button
-              className={styles.confirmYes}
-              onClick={handleConfirmClear}
-              disabled={isClearing}
-            >
-              {isClearing ? "Clearing..." : "Yes, clear"}
-            </button>
-            <button
-              className={styles.confirmNo}
-              onClick={() => dispatch({ type: "CANCEL" })}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
+          <path
+            d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
+            stroke="currentColor"
+            strokeWidth="1.75"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+        Secure checkout · 30-day returns
+      </p>
     </aside>
   );
 }

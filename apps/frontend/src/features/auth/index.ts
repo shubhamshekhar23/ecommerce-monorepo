@@ -2,6 +2,7 @@
 export { AuthProvider } from "./components/AuthProvider/AuthProvider";
 export { LoginForm } from "./components/LoginForm/LoginForm";
 export { RegisterForm } from "./components/RegisterForm/RegisterForm";
+export { AuthSplitPanel } from "./components/AuthSplitPanel/AuthSplitPanel";
 
 export { useLogin } from "./hooks/useLogin";
 export { useLogout } from "./hooks/useLogout";
