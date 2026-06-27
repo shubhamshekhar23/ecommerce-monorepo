@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useAuthStore } from "@/store/auth.store";
 import { useLogout } from "@/features/auth/hooks";
@@ -19,7 +20,14 @@ export function Header() {
       <div className={styles.container}>
         {/* Brand */}
         <Link href="/" className={styles.brand}>
-          <span className={styles.brandMark}>S</span>
+          <Image
+            src="/images/logo-icon.png"
+            alt="ShopHub"
+            width={44}
+            height={44}
+            className={styles.brandMark}
+            priority
+          />
           <div className={styles.brandText}>
             <span className={styles.brandTitle}>ShopHub</span>
             <span className={styles.brandSub}>Curated everyday commerce</span>

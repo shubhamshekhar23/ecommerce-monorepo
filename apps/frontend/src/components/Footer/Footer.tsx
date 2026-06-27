@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { BackToTopButton } from "./BackToTopButton";
 import styles from "./Footer.module.scss";
@@ -29,7 +30,13 @@ export function Footer() {
           {/* Brand column */}
           <div className={styles.brandColumn}>
             <div className={styles.brandLockup}>
-              <span className={styles.brandMark}>S</span>
+              <Image
+                src="/images/logo-icon.png"
+                alt="ShopHub"
+                width={44}
+                height={44}
+                className={styles.brandMark}
+              />
               <span className={styles.brandName}>ShopHub</span>
             </div>
             <p className={styles.tagline}>
