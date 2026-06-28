@@ -76,13 +76,8 @@ function ProductCardComponent({
     [status, router, addToCart, product.id],
   );
 
-  // cursor API returns priceRange.min; paginated API returns flat price
-  const rawPrice =
-    product.price ??
-    (product as { priceRange?: { min: number } }).priceRange?.min;
-  const price = rawPrice !== undefined ? Number(rawPrice).toFixed(2) : "—";
-  // cursor API has no flat stock field; undefined → treat as in-stock
-  const inStock = product.stock === undefined ? true : product.stock > 0;
+  const price = product.price.toFixed(2);
+  const inStock = product.stock > 0;
 
   const isNew = product.createdAt
     ? PAGE_LOAD_TIME - new Date(product.createdAt).getTime() < THIRTY_DAYS_MS

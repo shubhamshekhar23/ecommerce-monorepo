@@ -41,21 +41,6 @@ function badgeClass(stock: number): string {
   return styles.badgeGreen;
 }
 
-// The listing API returns priceRange instead of a top-level price field.
-// Fall back to variants[0].price so the column never shows $NaN.
-function resolvePrice(product: Product): string {
-  const top = product.price as number | undefined;
-  if (top !== undefined && !Number.isNaN(Number(top))) {
-    return `$${Number(top).toFixed(2)}`;
-  }
-  const variantPrice = product.variants[0]?.price;
-  if (variantPrice !== undefined) {
-    const val = Number(variantPrice);
-    if (!Number.isNaN(val)) return `$${val.toFixed(2)}`;
-  }
-  return "—";
-}
-
 function matchesStatus(stock: number, filter: StockStatus): boolean {
   if (filter === "all") return true;
   return stockStatus(stock) === filter;
@@ -416,7 +401,7 @@ export function AdminProductsView() {
                                 "—"}
                             </td>
                             <td className={styles.price}>
-                              {resolvePrice(product)}
+                              ${product.price.toFixed(2)}
                             </td>
                             <td>
                               <span

@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { getProductsCursorApi } from "../api/products.api";
 import type { CursorQueryParams } from "../interfaces";
+import { normalizeProduct } from "../utils/product.normalize";
 
 const FALLBACK_LIMIT = 20;
 const CARD_HEIGHT_PX = 320;
@@ -32,5 +33,12 @@ export function useProductsCursor(enabled = true, filters: FilterParams = {}) {
     getNextPageParam: (lastPage) => lastPage.meta.nextCursor ?? undefined,
     staleTime: 2 * 60 * 1000,
     enabled,
+    select: (data) => ({
+      ...data,
+      pages: data.pages.map((page) => ({
+        ...page,
+        data: page.data.map(normalizeProduct),
+      })),
+    }),
   });
 }

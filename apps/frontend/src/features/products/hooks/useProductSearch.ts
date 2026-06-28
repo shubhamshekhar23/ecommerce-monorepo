@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { searchProductsApi } from "../api/products.api";
 import type { CursorPageProducts } from "../interfaces";
+import { normalizeProduct } from "../utils/product.normalize";
 
 // Full-text search against GET /products/search?q=<term>.
 // Unlike the old ILIKE search, results are ranked by relevance (ts_rank).
@@ -17,5 +18,6 @@ export function useProductSearch(term: string | undefined): {
     queryFn: () => searchProductsApi(term!),
     enabled: typeof term === "string" && term.trim().length > 0,
     staleTime: 30_000, // search results are stable for 30s
+    select: (data) => ({ ...data, data: data.data.map(normalizeProduct) }),
   });
 }
