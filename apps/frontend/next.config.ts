@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 import bundleAnalyzer from "@next/bundle-analyzer";
 import withPWAInit from "@ducanh2912/next-pwa";
 import createNextIntlPlugin from "next-intl/plugin";
+import { withSentryConfig } from "@sentry/nextjs";
 
 // Fail fast at build/start time if required env vars are missing.
 // The full Zod validation runs in src/shared/config/env.ts at module load.
@@ -134,4 +135,9 @@ const withPWA = withPWAInit({
 // next-intl plugin connects the i18n/request.ts config to the Next.js build.
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
-export default withBundleAnalyzer(withPWA(withNextIntl(nextConfig)));
+const baseConfig = withBundleAnalyzer(withPWA(withNextIntl(nextConfig)));
+
+export default withSentryConfig(baseConfig, {
+  silent: true,
+  disableLogger: true,
+});
