@@ -49,6 +49,19 @@ async function bootstrap(): Promise<void> {
     logger: ["log", "warn", "error"],
   });
 
+  const allowedOrigins = (
+    process.env.ALLOWED_ORIGINS ?? "http://localhost:3000,http://localhost:3002"
+  )
+    .split(",")
+    .map((o) => o.trim());
+
+  app.enableCors({
+    origin: allowedOrigins,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  });
+
   const port = parseInt(process.env.PORT ?? "3000", 10);
   const backendUrl = process.env.BACKEND_URL ?? "http://localhost:3001";
   const authUrl = process.env.AUTH_SERVICE_URL ?? "http://localhost:3006";

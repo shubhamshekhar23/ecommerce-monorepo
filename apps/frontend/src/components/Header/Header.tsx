@@ -87,10 +87,24 @@ export function Header() {
             Orders
           </Link>
 
-          {/* Admin */}
+          {/* Admin Dashboard */}
           {user?.role === "ADMIN" && (
             <Link href="/admin" className={styles.adminLink}>
-              Admin
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              Admin Dashboard
             </Link>
           )}
 

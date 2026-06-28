@@ -138,16 +138,20 @@
 }
 
 .adminLink {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 7px;
-  color: var(--color-text-primary);
-  font-size: 14px;
-  font-weight: 600;
-  transition: color var(--transition-fast);
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 7px 13px;
+  border-radius: var(--radius-md);
+  background: var(--color-accent);
+  color: var(--color-text-on-accent);
+  transition: opacity var(--transition-fast);
+  white-space: nowrap;
 
   &:hover {
-    color: var(--color-accent);
+    opacity: 0.85;
   }
 }
 
