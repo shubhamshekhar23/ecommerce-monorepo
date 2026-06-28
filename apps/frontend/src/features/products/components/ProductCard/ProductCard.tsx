@@ -12,6 +12,7 @@ import { useImageQuality } from "@/hooks/useConnectionQuality";
 import { buildImageUrl } from "@/shared/buildImageUrl";
 import type { Product } from "../../interfaces";
 import { highlightMatch } from "@/shared/utils/highlightMatch";
+import { WishlistButton } from "../WishlistButton/WishlistButton";
 import styles from "./ProductCard.module.scss";
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
@@ -94,6 +95,9 @@ function ProductCardComponent({
     <Link href={`/products/${product.slug}`} className={styles.card}>
       <div className={styles.imageWrapper}>
         {isNew && <span className={styles.badge}>New</span>}
+        <div className={styles.wishlist}>
+          <WishlistButton productId={product.id} />
+        </div>
         {imageSrc ? (
           <Image
             src={imageSrc}

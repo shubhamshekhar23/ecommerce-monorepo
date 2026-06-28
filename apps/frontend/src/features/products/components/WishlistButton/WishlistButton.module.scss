@@ -1,0 +1,25 @@
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 0;
+  background: rgb(255 255 255 / 85%);
+  backdrop-filter: blur(4px);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s, transform 0.15s;
+
+  &:hover {
+    color: #e05252;
+    background: #fff;
+    transform: scale(1.1);
+  }
+}
+
+.saved {
+  color: #e05252;
+  background: #fff;
+}

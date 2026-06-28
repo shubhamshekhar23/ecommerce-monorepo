@@ -78,6 +78,7 @@ Feature flags decouple deployment from release. Code ships to production hidden 
   }
   ```
   - Complexity: Easy
+  - Implemented: `src/shared/featureFlags/FlagGuard.tsx` — used in `WishlistButton` (`flag="wishlist"`, `fallback={null}`) so it silently hides when the flag is off. Enable via `NEXT_PUBLIC_FLAG_WISHLIST=true`.
 
 ### Environment-Variable Flag Validation
 
