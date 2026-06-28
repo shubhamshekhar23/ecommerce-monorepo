@@ -12,6 +12,9 @@ export { useProductsCursor } from "./hooks/useProductsCursor";
 export { useProductSearch } from "./hooks/useProductSearch";
 export { useCategories } from "./hooks/useCategories";
 
+export { ProductDetailPage } from "./pages/ProductDetailPage";
+export { fetchProductDetail } from "./api/fetchProductDetail";
+
 export type {
   Product,
   Category,

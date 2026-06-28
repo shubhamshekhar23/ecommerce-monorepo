@@ -25,3 +25,13 @@ export type {
 } from "./api/admin-db-analytics.api";
 
 export * from "./hooks";
+
+export { EditProductPage } from "./pages/EditProductPage";
+export { EditCategoryPage } from "./pages/EditCategoryPage";
+export { EditPromotionRulePage } from "./pages/EditPromotionRulePage";
+export { NewPromotionRulePage } from "./pages/NewPromotionRulePage";
+export { PromotionRulesPage } from "./pages/PromotionRulesPage";
+export { FeatureFlagsPage } from "./pages/FeatureFlagsPage";
+export { QueuePage } from "./pages/QueuePage";
+export { ReturnsPage } from "./pages/ReturnsPage";
+export { DbAnalyticsPage } from "./pages/DbAnalyticsPage";

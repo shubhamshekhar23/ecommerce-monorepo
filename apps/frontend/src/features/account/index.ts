@@ -13,3 +13,7 @@ export {
   requestDataDeletionApi,
   cancelDataDeletionApi,
 } from "./api/account.api";
+
+export { SecurityPage } from "./pages/SecurityPage";
+export { AddressesPage } from "./pages/AddressesPage";
+export { PrivacyPage } from "./pages/PrivacyPage";

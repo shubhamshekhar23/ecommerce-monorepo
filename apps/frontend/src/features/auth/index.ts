@@ -17,3 +17,6 @@ export {
   use2faDisable,
 } from "./hooks/use2fa";
 export { useOAuthCallback } from "./hooks/useOAuthCallback";
+
+export { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
+export { ResetPasswordPage } from "./pages/ResetPasswordPage";
