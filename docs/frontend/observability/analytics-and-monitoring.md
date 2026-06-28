@@ -25,22 +25,49 @@ Source: `others.md`
 
 ### Performance Monitoring
 
-- [x] **Vercel Analytics for Core Web Vitals** — since the app deploys on Vercel (or compatible), `@vercel/analytics` is the easiest way to track LCP, FID, CLS, TTFB, and FCP per page in production.
+- [x] **Sentry Performance for Core Web Vitals** — since Sentry is already installed, enabling performance monitoring costs zero extra setup. Sentry automatically captures LCP, FCP, TTFB, CLS, and FID as part of its performance tracing. Works on any host (Contabo, bare metal, etc.) — no Vercel dependency.
+  
+  Setup: set `tracesSampleRate` in your existing Sentry config:
+  ```ts
+  // sentry.client.config.ts
+  Sentry.init({
+    dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+    tracesSampleRate: 0.2,          // sample 20% of sessions
+    integrations: [Sentry.browserTracingIntegration()],
+  });
+  ```
+  View results in the Sentry dashboard under **Performance → Web Vitals**.
+  - Complexity: Easy (already have Sentry; just add two config lines)
+  - File: `sentry.client.config.ts`
+
+- [x] **`web-vitals` library → GA4** — for a second data source, Google's `web-vitals` package lets you measure Core Web Vitals and push them into GA4 as custom events. Platform-agnostic; works on Contabo.
   
   Setup:
-  ```tsx
-  // src/app/layout.tsx
-  import { Analytics } from '@vercel/analytics/react';
-  // ...
-  <Analytics />
+  ```bash
+  npm install web-vitals
   ```
-  View results in the Vercel dashboard under Analytics tab.
-  - Complexity: Easy (one import, one component)
-  - File: `src/app/layout.tsx`
+  ```ts
+  // src/lib/vitals.ts
+  import { onCLS, onFCP, onLCP, onTTFB, onINP } from 'web-vitals';
+  
+  function sendToGA(metric: { name: string; value: number; id: string }) {
+    window.gtag?.('event', metric.name, {
+      value: Math.round(metric.name === 'CLS' ? metric.value * 1000 : metric.value),
+      metric_id: metric.id,
+      non_interaction: true,
+    });
+  }
+  
+  export function reportWebVitals() {
+    onCLS(sendToGA); onFCP(sendToGA); onLCP(sendToGA); onTTFB(sendToGA); onINP(sendToGA);
+  }
+  ```
+  Call `reportWebVitals()` once in `src/app/layout.tsx` (inside a `useEffect` or via Next.js's `reportWebVitals` export).
+  - Complexity: Easy–Medium
+  - Files: `src/lib/vitals.ts`, `src/app/layout.tsx`
 
-- [x] **Vercel Speed Insights** — separate from Analytics. Tracks real-user performance scores (not just lab scores from Lighthouse). Install `@vercel/speed-insights` alongside Analytics.
-  - Complexity: Easy
-  - File: `src/app/layout.tsx`
+- [x] **Google Search Console** — free, zero-code option. Verify your domain once and Google surfaces field-data Core Web Vitals (real user data from Chrome) under **Experience → Core Web Vitals**. No SDK, no instrumentation. Good as a baseline sanity check alongside Sentry.
+  - Complexity: Easy (domain verification only)
 
 ---
 

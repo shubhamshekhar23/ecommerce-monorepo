@@ -3,8 +3,6 @@ import { headers } from "next/headers";
 import Script from "next/script";
 import { Hanken_Grotesk } from "next/font/google";
 import NextTopLoader from "nextjs-toploader";
-import { Analytics } from "@vercel/analytics/react";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -12,6 +10,7 @@ import { Providers } from "./providers";
 import { Header } from "@/components/Header/Header";
 import { Navbar } from "@/components/Navbar/Navbar";
 import { Footer } from "@/components/Footer/Footer";
+import { WebVitals } from "@/components/WebVitals/WebVitals";
 import { routing, getTextDirection } from "@/i18n/routing";
 import "@/styles/globals.scss";
 import styles from "./layout.module.scss";
@@ -142,8 +141,7 @@ export default async function LocaleLayout({
           </Providers>
         </NextIntlClientProvider>
 
-        {process.env.NEXT_PUBLIC_VERCEL_ENV && <Analytics />}
-        {process.env.NEXT_PUBLIC_VERCEL_ENV && <SpeedInsights />}
+        {GA_ID && <WebVitals />}
       </body>
     </html>
   );

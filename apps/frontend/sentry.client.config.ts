@@ -10,7 +10,9 @@ Sentry.init({
   // Only load when a DSN is configured — avoids noise in development.
   enabled: Boolean(process.env.NEXT_PUBLIC_SENTRY_DSN),
 
-  // Adjust sample rates for production — these are conservative defaults.
+  integrations: [Sentry.browserTracingIntegration()],
+
+  // Captures LCP, FCP, TTFB, CLS, INP per page as performance spans.
   tracesSampleRate: 0.2,
 
   // Replay captures session recordings for errors. Higher sample rate
