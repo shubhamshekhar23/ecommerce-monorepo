@@ -1,80 +1,367 @@
 .dashboard {
-  padding: var(--space-6);
-
-  @media (width <= 768px) {
-    padding: var(--space-4);
-  }
+  /* no extra padding — handled by layout .main */
 }
 
-.header {
-  margin-bottom: var(--space-6);
+/* ── Page Header ─────────────────────────────────────────────── */
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
 }
 
-.title {
+.pageTitle {
   margin: 0;
-  font-size: clamp(1.9rem, 2.4vw, 2.35rem);
-  line-height: 1.12;
-  letter-spacing: -0.015em;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
 }
 
-.subtitle {
-  margin-top: var(--space-2);
-  font-size: var(--font-size-sm);
+.pageSubtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--color-text-muted);
 }
 
-.grid {
+.exportBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+
+  &:hover {
+    background: var(--color-bg-canvas);
+  }
+}
+
+/* ── Stats Grid ──────────────────────────────────────────────── */
+.statsGrid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-4);
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
 
-  @media (width <= 1150px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  @media (width <= 1100px) {
+    grid-template-columns: repeat(2, 1fr);
   }
 
-  @media (width <= 700px) {
+  @media (width <= 600px) {
     grid-template-columns: 1fr;
   }
 }
 
-.card {
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
+.statCard {
   background: var(--color-bg-surface);
-  padding: var(--space-5);
-  transition:
-    transform var(--transition-base),
-    box-shadow var(--transition-base);
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-  }
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 20px;
 }
 
-.products {
-  border-top: 3px solid #2563eb;
+.statTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
 }
 
-.categories {
-  border-top: 3px solid #7c3aed;
+.statIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
-.orders {
-  border-top: 3px solid #0891b2;
+.iconOrange {
+  background: #c85a2a;
 }
 
-.users {
-  border-top: 3px solid #ea580c;
+.iconGreen {
+  background: #2e5a45;
 }
 
-.label {
-  font-size: var(--font-size-sm);
+.statChange {
+  font-size: 11px;
+  font-weight: 600;
   color: var(--color-text-muted);
 }
 
-.value {
-  margin-top: var(--space-3);
-  font-size: clamp(1.8rem, 3vw, 2.4rem);
+.statValue {
+  font-size: 2rem;
+  font-weight: 800;
   color: var(--color-text-primary);
-  font-weight: var(--font-weight-bold);
+  line-height: 1;
+  margin: 0 0 4px;
+}
+
+.statLabel {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+/* ── Content Grid ────────────────────────────────────────────── */
+.contentGrid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 20px;
+  margin-top: 20px;
+
+  @media (width <= 1000px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Recent Orders ───────────────────────────────────────────── */
+.recentOrders {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.sectionTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.viewAllLink {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-accent);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--color-text-muted);
+    letter-spacing: 0.06em;
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--color-border);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 12px 20px;
+    color: var(--color-text-primary);
+    border-bottom: 1px solid rgb(34 30 24 / 6%);
+  }
+
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  tbody tr:hover td {
+    background: rgb(34 30 24 / 3%);
+  }
+}
+
+.orderNumber {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.orderTotal {
+  font-weight: 700;
+}
+
+.emptyRow {
+  text-align: center;
+  color: var(--color-text-muted);
+  padding: 32px 20px !important;
+}
+
+/* ── Status Badge ────────────────────────────────────────────── */
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.statusFulfilled {
+  background: #221e18;
+  color: #fff;
+}
+
+.statusPending {
+  background: #c85a2a;
+  color: #fff;
+}
+
+.statusProcessing {
+  background: #64748b;
+  color: #fff;
+}
+
+.statusRefunded {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.statusCancelled {
+  background: #fecaca;
+  color: #7f1d1d;
+}
+
+/* ── Right Column ────────────────────────────────────────────── */
+.rightColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Quick Actions ───────────────────────────────────────────── */
+.quickActions {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 16px 20px;
+}
+
+.actionList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.actionBtnPrimary {
+  display: block;
+  text-align: center;
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  background: var(--color-accent);
+  color: #fff;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+
+  &:hover {
+    opacity: 0.9;
+  }
+}
+
+.actionBtn {
+  display: block;
+  text-align: center;
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  background: transparent;
+  color: var(--color-text-primary);
+  text-decoration: none;
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-bg-canvas);
+  }
+}
+
+/* ── Order Status ────────────────────────────────────────────── */
+.orderStatus {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 16px 20px;
+}
+
+.statusRows {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.statusRow {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.statusRowHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.statusRowLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.statusRowCount {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.progressBar {
+  height: 6px;
+  background: rgb(34 30 24 / 8%);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+  min-width: 0;
+}
+
+.progressGreen {
+  background: #2e5a45;
+}
+
+.progressOrange {
+  background: #c85a2a;
+}
+
+.progressGray {
+  background: #94a3b8;
 }

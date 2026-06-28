@@ -24,8 +24,9 @@ export function useLogin() {
 
       // The login response omits role and other profile fields. Fetch the full
       // profile immediately so the store has role before the redirect renders.
+      let fullUser = data.user;
       try {
-        const fullUser = await getMeApi();
+        fullUser = await getMeApi();
         setAuth(fullUser, data.accessToken, data.refreshToken);
         queryClient.setQueryData(["auth", "me"], fullUser);
       } catch {
@@ -39,9 +40,10 @@ export function useLogin() {
       localStorage.removeItem("auth-login");
 
       // Honor the callbackUrl middleware set when redirecting unauthenticated users.
+      // Admins always land on the admin console regardless of callbackUrl.
       const callbackUrl =
         new URLSearchParams(window.location.search).get("callbackUrl") ?? "/";
-      router.push(callbackUrl);
+      router.push(fullUser.role === "ADMIN" ? "/admin" : callbackUrl);
     },
     onError: (err, vars) => {
       handleMutationError(err, "Login failed", () => mutation.mutate(vars));
