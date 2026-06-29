@@ -35,48 +35,54 @@ export const ProductImageSchema = z.object({
   createdAt: z.string().optional(),
 });
 
-export const CategorySchema = z
-  .object({
-    id: z.string(),
-    name: z.string(),
-    slug: z.string(),
-    isActive: z.boolean(),
-    createdAt: z.string(),
-    updatedAt: z.string(),
-  })
-  .passthrough();
+export const CategorySchema = z.looseObject({
+  id: z.string(),
+  name: z.string(),
+  slug: z.string(),
+  isActive: z.boolean(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
 
-export const ProductVariantSchema = z
-  .object({
-    id: z.string().optional(),
-    productId: z.string().optional(),
-    sku: z.string().optional(),
-    // price comes as string from cursor endpoint, number from paginated endpoint
-    price: z.union([z.number(), z.string()]).optional(),
-    stock: z.number().optional(),
-    isActive: z.boolean().optional(),
-  })
-  .passthrough();
-
-export const ProductSchema = z
-  .object({
+export const VariantAttributeValueSchema = z.looseObject({
+  variantId: z.string().optional(),
+  optionId: z.string().optional(),
+  option: z.looseObject({
     id: z.string(),
-    name: z.string(),
-    slug: z.string(),
-    // price/cost/stock moved to ProductVariant — optional here for cursor responses
-    // which return priceRange: { min, max } instead of flat price/cost/stock
-    price: z.number().optional(),
-    cost: z.number().optional(),
-    stock: z.number().optional(),
-    priceRange: z.object({ min: z.number(), max: z.number() }).optional(),
-    categoryId: z.string(),
-    images: z.array(ProductImageSchema),
-    variants: z.array(ProductVariantSchema),
-    isActive: z.boolean(),
-    createdAt: z.string(),
-    updatedAt: z.string(),
-  })
-  .passthrough();
+    value: z.string(),
+    variantType: z.looseObject({ name: z.string() }),
+  }),
+});
+
+export const ProductVariantSchema = z.looseObject({
+  id: z.string().optional(),
+  productId: z.string().optional(),
+  sku: z.string().optional(),
+  // price comes as string from cursor endpoint, number from paginated endpoint
+  price: z.union([z.number(), z.string()]).optional(),
+  stock: z.number().optional(),
+  isActive: z.boolean().optional(),
+  // default to [] so variants without attributeValues don't crash iteration
+  attributeValues: z.array(VariantAttributeValueSchema).default([]),
+});
+
+export const ProductSchema = z.looseObject({
+  id: z.string(),
+  name: z.string(),
+  slug: z.string(),
+  // price/cost/stock moved to ProductVariant — optional here for cursor responses
+  // which return priceRange: { min, max } instead of flat price/cost/stock
+  price: z.number().optional(),
+  cost: z.number().optional(),
+  stock: z.number().optional(),
+  priceRange: z.object({ min: z.number(), max: z.number() }).optional(),
+  categoryId: z.string(),
+  images: z.array(ProductImageSchema),
+  variants: z.array(ProductVariantSchema),
+  isActive: z.boolean(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
 
 export const PaginatedProductsSchema = z.object({
   data: z.array(ProductSchema),
@@ -90,32 +96,28 @@ export const CursorPageProductsSchema = z.object({
 
 // ─── Cart ──────────────────────────────────────────────────────────────────
 
-export const CartItemSchema = z
-  .object({
-    id: z.string(),
-    productId: z.string(),
-    quantity: z.number().int().positive(),
-    subtotal: z.number(),
-  })
-  .passthrough();
+export const CartItemSchema = z.looseObject({
+  id: z.string(),
+  productId: z.string(),
+  quantity: z.number().int().positive(),
+  subtotal: z.number(),
+});
 
-export const CartSchema = z
-  .object({
-    id: z.string(),
-    userId: z.string(),
-    items: z.array(CartItemSchema),
-    itemCount: z.number().int().nonnegative(),
-    totalPrice: z.number(),
-    createdAt: z.string(),
-    updatedAt: z.string(),
-  })
-  .passthrough();
+export const CartSchema = z.looseObject({
+  id: z.string(),
+  userId: z.string(),
+  items: z.array(CartItemSchema),
+  itemCount: z.number().int().nonnegative(),
+  totalPrice: z.number(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
 
 // ─── User ──────────────────────────────────────────────────────────────────
 
 export const UserSchema = z.object({
   id: z.string(),
-  email: z.string().email(),
+  email: z.email(),
   firstName: z.string(),
   lastName: z.string(),
   role: z.enum(["USER", "ADMIN"]),
@@ -138,27 +140,23 @@ export const LoginResponseSchema = TokenPairSchema.extend({
 
 // ─── Order ─────────────────────────────────────────────────────────────────
 
-export const OrderItemSchema = z
-  .object({
-    id: z.string(),
-    productId: z.string(),
-    quantity: z.number().int().positive(),
-    unitPrice: z.number(),
-    subtotal: z.number(),
-  })
-  .passthrough();
+export const OrderItemSchema = z.looseObject({
+  id: z.string(),
+  productId: z.string(),
+  quantity: z.number().int().positive(),
+  unitPrice: z.number(),
+  subtotal: z.number(),
+});
 
-export const OrderSchema = z
-  .object({
-    id: z.string(),
-    userId: z.string(),
-    status: z.string(),
-    totalAmount: z.number(),
-    items: z.array(OrderItemSchema),
-    createdAt: z.string(),
-    updatedAt: z.string(),
-  })
-  .passthrough();
+export const OrderSchema = z.looseObject({
+  id: z.string(),
+  userId: z.string(),
+  status: z.string(),
+  totalAmount: z.number(),
+  items: z.array(OrderItemSchema),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
 
 export const PaginatedOrdersSchema = z.object({
   data: z.array(OrderSchema),
@@ -169,5 +167,5 @@ export const PaginatedOrdersSchema = z.object({
 
 export const PaginatedCategoriesSchema = z.object({
   data: z.array(CategorySchema),
-  meta: z.object({ total: z.number() }).passthrough(),
+  meta: z.looseObject({ total: z.number() }),
 });
