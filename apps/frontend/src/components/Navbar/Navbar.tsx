@@ -1,7 +1,4 @@
-"use client";
-
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { NavbarLinks } from "./NavbarLinks";
 import styles from "./Navbar.module.scss";
 
 const CATEGORIES = [
@@ -17,26 +14,10 @@ const CATEGORIES = [
 ];
 
 export function Navbar() {
-  const pathname = usePathname();
-  const isActive = (href: string) =>
-    (pathname.endsWith("/products") && href === "/products") ||
-    (href !== "/products" && pathname.includes(href.split("?")[0]));
-
   return (
     <nav className={styles.navbar} aria-label="Store categories">
       <div className={styles.container}>
-        {CATEGORIES.map((category) => (
-          <Link
-            key={category.id}
-            href={category.href}
-            className={`${styles.link} ${isActive(category.href) ? styles.active : ""}`}
-          >
-            {isActive(category.href) && (
-              <span className={styles.activeDot} aria-hidden="true" />
-            )}
-            {category.label}
-          </Link>
-        ))}
+        <NavbarLinks categories={CATEGORIES} />
       </div>
     </nav>
   );
