@@ -84,6 +84,26 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "picsum.photos",
       },
+      // Backend server — serves /uploads/... assets. Derived from NEXT_PUBLIC_API_URL
+      // so the config stays in sync with the env without a separate variable.
+      ...(process.env.NEXT_PUBLIC_API_URL
+        ? (() => {
+            try {
+              const { protocol, hostname, port } = new URL(
+                process.env.NEXT_PUBLIC_API_URL!,
+              );
+              return [
+                {
+                  protocol: protocol.replace(":", "") as "http" | "https",
+                  hostname,
+                  ...(port ? { port } : {}),
+                },
+              ];
+            } catch {
+              return [];
+            }
+          })()
+        : []),
       // When NEXT_PUBLIC_IMAGE_CDN_URL is set to a Cloudinary fetch URL, add
       // the CDN hostname here so Next.js accepts CDN-transformed image URLs:
       //   { protocol: "https", hostname: "res.cloudinary.com" }

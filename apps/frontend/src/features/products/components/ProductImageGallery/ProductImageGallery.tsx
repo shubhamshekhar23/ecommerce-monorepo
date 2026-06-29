@@ -67,7 +67,7 @@ export function ProductImageGallery({
               aria-label={`View image ${idx + 1}`}
             >
               <Image
-                src={image.url}
+                src={buildImageUrl(image.url)}
                 alt={image.altText || `${productName} image ${idx + 1}`}
                 fill
                 sizes="64px"

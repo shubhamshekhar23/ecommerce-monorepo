@@ -15,6 +15,15 @@
 
 const CDN_BASE = process.env.NEXT_PUBLIC_IMAGE_CDN_URL ?? "";
 
+// Derive the backend origin so relative /uploads/... paths resolve correctly.
+const API_ORIGIN = (() => {
+  try {
+    return new URL(process.env.NEXT_PUBLIC_API_URL ?? "").origin;
+  } catch {
+    return "";
+  }
+})();
+
 interface ImageTransformOptions {
   width?: number;
   quality?: number;
@@ -24,11 +33,15 @@ export function buildImageUrl(
   src: string,
   { width, quality = 80 }: ImageTransformOptions = {},
 ): string {
-  if (!CDN_BASE || !src.startsWith("http")) return src;
+  // Relative paths from the backend (e.g. /uploads/...) need an absolute origin.
+  const resolved =
+    src.startsWith("/") && API_ORIGIN ? `${API_ORIGIN}${src}` : src;
+
+  if (!CDN_BASE || !resolved.startsWith("http")) return resolved;
 
   const transforms = [width ? `w_${width}` : null, `q_${quality}`]
     .filter(Boolean)
     .join(",");
 
-  return `${CDN_BASE}/${transforms}/${encodeURIComponent(src)}`;
+  return `${CDN_BASE}/${transforms}/${encodeURIComponent(resolved)}`;
 }
