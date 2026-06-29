@@ -1,0 +1,173 @@
+.page {
+  max-width: 840px;
+  margin: 0 auto;
+  padding: var(--space-10) var(--space-4) var(--space-16);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+.hero {
+  text-align: center;
+  padding: var(--space-10) var(--space-8);
+  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-hover) 100%);
+  border-radius: var(--radius-xl);
+  color: var(--color-text-on-accent);
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  opacity: 0.75;
+  margin-bottom: var(--space-3);
+}
+
+.title {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  margin-bottom: var(--space-3);
+}
+
+.subtitle {
+  font-size: var(--font-size-base);
+  opacity: 0.85;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+
+  @media (width <= 640px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  transition: box-shadow var(--transition-base);
+
+  &:hover {
+    box-shadow: var(--shadow-md);
+  }
+}
+
+.cardHighlight {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+  position: relative;
+
+  &::before {
+    content: "Popular";
+    position: absolute;
+    top: var(--space-3);
+    right: var(--space-3);
+    background: var(--color-accent);
+    color: var(--color-text-on-accent);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-full);
+  }
+}
+
+.cardIcon {
+  font-size: 1.75rem;
+  margin-bottom: var(--space-1);
+}
+
+.cardName {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.cardDays {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.cardPrice {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-accent-text);
+  margin-top: auto;
+  padding-top: var(--space-2);
+}
+
+.policies {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6) var(--space-8);
+}
+
+.policiesHeading {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-5);
+}
+
+.policyList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.policyRow {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: var(--space-4);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  @media (width <= 500px) {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+  }
+}
+
+.policyLabel {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
+.policyValue {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.freeShippingBanner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  background: var(--color-accent-soft);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-6);
+  font-size: var(--font-size-sm);
+  color: var(--color-accent-text);
+}
+
+.bannerIcon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}

@@ -8,14 +8,18 @@ import * as Sentry from "@sentry/nextjs";
 
 // sentry.client.config.ts is not auto-injected without SENTRY_AUTH_TOKEN,
 // so we initialise the SDK here — earliest client-side module that loads on every page.
-Sentry.init({
-  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-  enabled: Boolean(process.env.NEXT_PUBLIC_SENTRY_DSN),
-  integrations: [Sentry.browserTracingIntegration()],
-  tracesSampleRate: 0.2,
-  replaysSessionSampleRate: 0.1,
-  replaysOnErrorSampleRate: 1.0,
-});
+// Guard with typeof window so Turbopack's server bundle evaluation doesn't hit
+// browser-only Sentry APIs (browserTracingIntegration lives in the client bundle only).
+if (typeof window !== "undefined") {
+  Sentry.init({
+    dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+    enabled: Boolean(process.env.NEXT_PUBLIC_SENTRY_DSN),
+    integrations: [Sentry.browserTracingIntegration()],
+    tracesSampleRate: 0.2,
+    replaysSessionSampleRate: 0.1,
+    replaysOnErrorSampleRate: 1.0,
+  });
+}
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { Toaster, toast } from "sonner";
