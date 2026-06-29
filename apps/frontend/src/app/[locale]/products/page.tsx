@@ -1,7 +1,14 @@
 // src/app/products/page.tsx
 
 import { Suspense } from "react";
-import { ProductsView } from "@/features/products";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import {
+  ProductsView,
+  getProductsCursorApi,
+  getCategoriesApi,
+} from "@/features/products";
+import type { CursorPageProducts } from "@/features/products";
+import { makeServerQueryClient } from "@/shared/queryClient.server";
 import styles from "./page.module.scss";
 
 // Serve the cached static page; regenerate in the background when older than 60s.
@@ -25,10 +32,29 @@ function ProductsLoading() {
   );
 }
 
-export default function ProductsPage() {
+export default async function ProductsPage() {
+  const queryClient = makeServerQueryClient();
+
+  await Promise.all([
+    queryClient.prefetchInfiniteQuery({
+      queryKey: ["products", "cursor", {}],
+      queryFn: ({ pageParam }: { pageParam: string | undefined }) =>
+        getProductsCursorApi({ cursor: pageParam, limit: 20 }),
+      initialPageParam: undefined as string | undefined,
+      getNextPageParam: (lastPage: CursorPageProducts) =>
+        lastPage.meta.nextCursor ?? undefined,
+    }),
+    queryClient.prefetchQuery({
+      queryKey: ["categories"],
+      queryFn: () => getCategoriesApi(),
+    }),
+  ]);
+
   return (
-    <Suspense fallback={<ProductsLoading />}>
-      <ProductsView />
-    </Suspense>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <Suspense fallback={<ProductsLoading />}>
+        <ProductsView />
+      </Suspense>
+    </HydrationBoundary>
   );
 }

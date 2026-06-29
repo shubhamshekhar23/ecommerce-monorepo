@@ -10,17 +10,19 @@ Source: `preserve-scroll-position.md`, `others.md`
 ### Scroll & Navigation
 
 - [x] **`useScrollRestoration` hook** — when a user clicks a product card, browses the detail page, then hits the browser Back button, the product listing reloads at the top. The pattern from the notes:
+
   ```ts
   // Before navigation: save position
-  sessionStorage.setItem('productsScrollY', String(window.scrollY));
+  sessionStorage.setItem("productsScrollY", String(window.scrollY));
 
   // On mount (returning to the list): restore
-  const saved = sessionStorage.getItem('productsScrollY');
+  const saved = sessionStorage.getItem("productsScrollY");
   if (saved) {
     window.scrollTo(0, Number(saved));
-    sessionStorage.removeItem('productsScrollY');
+    sessionStorage.removeItem("productsScrollY");
   }
   ```
+
   Build this as `src/hooks/useScrollRestoration.ts` that takes a storage key parameter so any list page can use it.
   - Complexity: Easy–Medium
   - Files: `src/hooks/useScrollRestoration.ts`, `ProductsView.tsx`
@@ -69,15 +71,17 @@ Source: `preserve-scroll-position.md`, `others.md`
   - Orders: order placed, cancellation confirmed
   - Auth: login success, session expired warning
   - Admin: product/category saved, deleted
-  
+
   Options: `react-hot-toast` (lightweight, zero-config) or `sonner` (modern, animations). Do not build from scratch.
   - Complexity: Easy (pick a library + wire up in mutation `onSuccess`/`onError`)
   - File: `src/app/providers.tsx` (add Toaster provider), then call `toast.success(...)` in mutation hooks
 
 - [x] **`useDebounce` hook for search input** — the product search in `ProductsView` fires a query on every keystroke. Debounce by 300ms before firing:
+
   ```ts
   const debouncedSearch = useDebounce(search, 300);
   ```
+
   Build as `src/hooks/useDebounce.ts`.
   - Complexity: Easy
   - Files: `src/hooks/useDebounce.ts`, `ProductsView.tsx`
@@ -226,3 +230,10 @@ The app has no `/account` section. These items create it.
   - Add "Returns" link to `AdminNav.tsx` with a count badge showing pending returns
   - Create `useReturns.ts`, `useApproveReturn.ts`, `useRejectReturn.ts`, `useRefundReturn.ts`
   - Complexity: Medium
+
+- [x] **`loading.tsx` per route segment** — Next.js automatically wraps `page.tsx` in a Suspense boundary when a `loading.tsx` file exists in the same segment. Add one per route:
+  - `app/products/loading.tsx` → renders `<ProductSkeleton />`
+  - `app/orders/loading.tsx` → renders a skeleton matching the orders list
+  - `app/cart/loading.tsx` → renders a cart skeleton
+  - `app/checkout/loading.tsx` → renders a checkout skeleton
+  - Complexity: Easy (once skeletons from 08-user-experience.md exist)

@@ -14,6 +14,8 @@ export { useCategories } from "./hooks/useCategories";
 
 export { ProductDetailPage } from "./pages/ProductDetailPage";
 export { fetchProductDetail } from "./api/fetchProductDetail";
+export { getProductsCursorApi } from "./api/products.api";
+export { getCategoriesApi } from "./api/categories.api";
 
 export type {
   Product,

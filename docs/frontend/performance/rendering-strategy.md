@@ -12,7 +12,7 @@ Source: `csr-ssr-ssg-pre-rendering.md`, `ssr-aws-react.md`
 - **ISR (Incremental Static Regeneration):** Like SSG but re-generates in the background after a set interval. Use when data changes but not per-user.
 - **SSR (Server-Side Rendering):** Page is rendered on the server per-request. Use when data is user-specific and must be fresh.
 - **Server Components (Next.js App Router):** Components that render on the server and send only HTML — zero JS to the client. Use for UI that doesn't need interactivity.
-- **Streaming SSR:** Send the page shell immediately, stream in data-dependent sections as they resolve. Improves Time to First Byte (TTFB).
+- **Streaming SSR:** Send the page shell immediately, stream in data-dependent sections as they resolve. Improves Time to First Byte (TTFB).Not used in the current architecture.
 
 ---
 
@@ -32,12 +32,14 @@ Source: `csr-ssr-ssg-pre-rendering.md`, `ssr-aws-react.md`
 ## Items to Implement
 
 - [x] **`generateStaticParams` for product detail pages** — `app/products/[slug]/page.tsx` currently renders on-demand (SSR or CSR). Pre-generate all product slug pages at build time:
+
   ```ts
   export async function generateStaticParams() {
     const products = await fetchAllProductSlugs(); // call your API
     return products.map((p) => ({ slug: p.slug }));
   }
   ```
+
   Each product page becomes a static HTML file served from CDN. Zero server cost per page view.
   - Complexity: Medium
   - File: `src/app/products/[slug]/page.tsx`
@@ -56,19 +58,7 @@ Source: `csr-ssr-ssg-pre-rendering.md`, `ssr-aws-react.md`
   - Complexity: Medium (requires splitting components)
   - Files: `src/components/Header/`, `src/components/Footer/`, `src/components/Navbar/`
 
-- [x] **Suspense boundaries for streaming SSR** — wrap data-dependent sections in `<Suspense>` so the page shell streams immediately while data loads:
-  ```tsx
-  <Suspense fallback={<ProductSkeleton />}>
-    <ProductsView />
-  </Suspense>
-  ```
-  This improves TTFB because the browser starts receiving and rendering HTML before all data is ready.
+- [x] **SSR with TanStack Query hydration for public pages** — prefetch the initial query on the server, dehydrate the query cache, and hydrate it on the client. This eliminates the duplicate client-side fetch for the initial page and allows TanStack Query to serve the first render from its hydrated cache. Client-side filtering, sorting, pagination, and mutations continue to work with TanStack Query.
+      **Note:** Because `ProductsView` is still a Client Component, the product markup is not rendered into the initial HTML. Rendering the product list directly in the HTML would require moving the data-rendering portion into a Server Component.
   - Complexity: Medium
-  - Files: `app/products/page.tsx`, `app/orders/page.tsx`, `app/page.tsx`
-
-- [x] **`loading.tsx` per route segment** — Next.js automatically wraps `page.tsx` in a Suspense boundary when a `loading.tsx` file exists in the same segment. Add one per route:
-  - `app/products/loading.tsx` → renders `<ProductSkeleton />`
-  - `app/orders/loading.tsx` → renders a skeleton matching the orders list
-  - `app/cart/loading.tsx` → renders a cart skeleton
-  - `app/checkout/loading.tsx` → renders a checkout skeleton
-  - Complexity: Easy (once skeletons from 08-user-experience.md exist)
+  - Files: `app/products/page.tsx`
