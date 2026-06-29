@@ -37,6 +37,10 @@ globalIgnores([
   "out/**",
   "build/**",
   "next-env.d.ts",
+  // Generated service worker and workbox files from next-pwa
+  "public/sw.js",
+  "public/workbox-*.js",
+  "public/swe-worker-*.js",
 ]), ...storybook.configs["flat/recommended"]]);
 
 export default eslintConfig;

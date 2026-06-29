@@ -99,6 +99,12 @@ src/
 - Acceptable: up to 100 lines
 - Refactor at: 120+ lines
 
+## Before finishing any edit to an existing component
+
+- Check the total line count of the file
+- If it exceeds 120 lines, consider if refactoring is possible before marking the task done
+- This applies even when the edit itself is small — the file total is what matters
+
 ## A Component Must
 
 - Handle one responsibility

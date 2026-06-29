@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, lazy } from "react";
 import { trackViewItem } from "@/shared/analytics/trackEvent";
 import { useAuthStore } from "@/store/auth.store";
 import { useAddToCart } from "@/features/cart/hooks";
@@ -10,9 +10,17 @@ import { useProduct, useInventoryStream } from "../../hooks";
 import { ProductImageGallery } from "../ProductImageGallery/ProductImageGallery";
 import { VariantSelector } from "../VariantSelector/VariantSelector";
 import { Breadcrumb } from "@/components/Breadcrumb/Breadcrumb";
-import { ReviewList } from "@/features/reviews";
-import { RecommendationStrip } from "@/features/recommendations";
+import { LazyOnVisible } from "@/components/LazyOnVisible/LazyOnVisible";
 import { useSubscribeStockAlert } from "@/features/stock-alerts";
+
+const ReviewList = lazy(() =>
+  import("@/features/reviews").then((m) => ({ default: m.ReviewList })),
+);
+const RecommendationStrip = lazy(() =>
+  import("@/features/recommendations").then((m) => ({
+    default: m.RecommendationStrip,
+  })),
+);
 import type { ProductVariant } from "../../interfaces";
 import styles from "./ProductDetailView.module.scss";
 
@@ -246,8 +254,12 @@ export function ProductDetailView({ slug }: ProductDetailViewProps) {
         </div>
       </div>
 
-      <ReviewList productId={product.id} />
-      <RecommendationStrip productId={product.id} />
+      <LazyOnVisible fallback={null}>
+        <ReviewList productId={product.id} />
+      </LazyOnVisible>
+      <LazyOnVisible fallback={null}>
+        <RecommendationStrip productId={product.id} />
+      </LazyOnVisible>
     </div>
   );
 }
