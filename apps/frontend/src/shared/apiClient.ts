@@ -111,7 +111,10 @@ async function performRefresh(): Promise<{
   } catch (error) {
     clearSession();
     if (typeof window !== "undefined") {
-      window.location.href = "/login?session_expired=1";
+      const callbackUrl = encodeURIComponent(
+        window.location.pathname + window.location.search,
+      );
+      window.location.href = `/login?session_expired=1&callbackUrl=${callbackUrl}`;
     }
     throw error;
   }
@@ -173,7 +176,10 @@ apiClient.interceptors.response.use(
       if (req._retried) {
         clearSession();
         if (typeof window !== "undefined") {
-          window.location.href = "/login?session_expired=1";
+          const callbackUrl = encodeURIComponent(
+            window.location.pathname + window.location.search,
+          );
+          window.location.href = `/login?session_expired=1&callbackUrl=${callbackUrl}`;
         }
         throw new AppError(
           "auth",
