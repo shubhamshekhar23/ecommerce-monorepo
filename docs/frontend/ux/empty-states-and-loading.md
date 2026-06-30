@@ -48,6 +48,7 @@ Blank screens feel broken. Every list view needs a designed empty state with a c
     action?: { label: string; href?: string; onClick?: () => void };
   }
   ```
+
   - Complexity: Easy
   - File: `src/components/EmptyState/EmptyState.tsx`
 
@@ -67,8 +68,6 @@ When to use which loading UI — using the wrong one creates jarring UX.
 
 - **Optimistic placeholder** — use when: an optimistic update is in flight. Show the expected result immediately. Covered in `06-state-management.md`.
 
-- **Streaming** — use when: parts of the page are ready before others. Show the shell and stream in sections. Covered in `05-rendering-strategy.md`.
-
 ### Items to Implement
 
 - [x] **Page transition progress bar** — add a thin progress bar at the top of the page during Next.js route navigation. Shows users that something is happening when pages take more than ~300ms to load:
@@ -77,11 +76,13 @@ When to use which loading UI — using the wrong one creates jarring UX.
   - Complexity: Easy
 
 - [x] **Spinner for button loading states** — the current pattern (`isPending ? 'Loading...' : 'Submit'`) is functional but could be more polished. Replace text with an accessible spinner icon inside the button:
+
   ```tsx
   <button disabled={isPending}>
-    {isPending ? <Spinner size="sm" aria-label="Loading" /> : 'Place Order'}
+    {isPending ? <Spinner size="sm" aria-label="Loading" /> : "Place Order"}
   </button>
   ```
+
   - Complexity: Easy
   - File: `src/components/Spinner/Spinner.tsx`
 
