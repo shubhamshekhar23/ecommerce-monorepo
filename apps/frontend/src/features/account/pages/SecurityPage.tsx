@@ -1,32 +1,38 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
+import { useState, useEffect } from "react";
+import QRCode from "qrcode";
 import { use2faSetup, use2faEnable, use2faDisable } from "@/features/auth";
+import { useAuthStore } from "@/store/auth.store";
 import styles from "./SecurityPage.module.scss";
 
 export function SecurityPage() {
+  const user = useAuthStore((s) => s.user);
   const [phase, setPhase] = useState<
     "idle" | "setup" | "enabled" | "disabling"
-  >("idle");
+  >(user?.totpEnabled ? "enabled" : "idle");
   const [setupData, setSetupData] = useState<{
-    qrCodeDataUrl: string;
+    uri: string;
     secret: string;
   } | null>(null);
-  const [backupCodes, setBackupCodes] = useState<string[]>([]);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [code, setCode] = useState("");
 
   const { mutate: setup, isPending: isSettingUp } = use2faSetup();
   const { mutate: enable, isPending: isEnabling } = use2faEnable();
   const { mutate: disable, isPending: isDisabling } = use2faDisable();
 
+  useEffect(() => {
+    if (!setupData?.uri) return;
+    QRCode.toDataURL(setupData.uri, { width: 180, margin: 1 }).then(
+      setQrDataUrl,
+    );
+  }, [setupData?.uri]);
+
   const handleSetup = () => {
     setup(undefined, {
       onSuccess: (data) => {
-        setSetupData({
-          qrCodeDataUrl: data.qrCodeDataUrl,
-          secret: data.secret,
-        });
+        setSetupData({ uri: data.uri, secret: data.secret });
         setPhase("setup");
       },
     });
@@ -34,8 +40,7 @@ export function SecurityPage() {
 
   const handleEnable = () => {
     enable(code, {
-      onSuccess: (data) => {
-        setBackupCodes(data.backupCodes);
+      onSuccess: () => {
         setCode("");
         setPhase("enabled");
       },
@@ -47,7 +52,7 @@ export function SecurityPage() {
       onSuccess: () => {
         setCode("");
         setSetupData(null);
-        setBackupCodes([]);
+        setQrDataUrl(null);
         setPhase("idle");
       },
     });
@@ -82,13 +87,15 @@ export function SecurityPage() {
             <p className={styles.body}>
               Scan this QR code with your authenticator app:
             </p>
-            <Image
-              src={setupData.qrCodeDataUrl}
-              alt="2FA QR code"
-              width={180}
-              height={180}
-              unoptimized
-            />
+            {qrDataUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={qrDataUrl} alt="2FA QR code" width={180} height={180} />
+            ) : (
+              <div
+                className={styles.qrPlaceholder}
+                aria-label="Loading QR code"
+              />
+            )}
             <p className={styles.body}>Or enter this secret manually:</p>
             <code className={styles.secret}>{setupData.secret}</code>
             <p className={styles.body}>
@@ -118,21 +125,9 @@ export function SecurityPage() {
         {phase === "enabled" && (
           <div className={styles.successBox}>
             <p className={styles.successText}>2FA is now active.</p>
-            {backupCodes.length > 0 && (
-              <>
-                <p className={styles.body}>
-                  Save these backup codes in a safe place. Each can only be used
-                  once:
-                </p>
-                <ul className={styles.backupCodes}>
-                  {backupCodes.map((c) => (
-                    <li key={c}>
-                      <code>{c}</code>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
+            <p className={styles.body}>
+              Your account is now protected with two-factor authentication.
+            </p>
             <button
               onClick={() => setPhase("disabling")}
               className={styles.dangerBtn}

@@ -104,6 +104,96 @@
   font-weight: 500;
 }
 
+/* ── User menu dropdown ── */
+
+.userMenu {
+  position: relative;
+}
+
+.userMenuTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  font-size: 14px;
+  font-family: inherit;
+  transition: color var(--transition-fast);
+
+  &:hover {
+    color: var(--color-text-primary);
+  }
+}
+
+.chevron {
+  transition: transform 200ms ease;
+  flex-shrink: 0;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.userMenuPanel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  min-width: 180px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 10%);
+  padding: 6px;
+  z-index: var(--z-index-dropdown, 200);
+  display: flex;
+  flex-direction: column;
+}
+
+.userMenuLink {
+  display: block;
+  padding: 9px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  text-decoration: none;
+  transition: background var(--transition-fast);
+
+  &:hover {
+    background: var(--color-surface-hover, rgb(0 0 0 / 5%));
+  }
+}
+
+.userMenuDivider {
+  height: 1px;
+  background: var(--color-border-strong);
+  margin: 4px 0;
+}
+
+.userMenuSignout {
+  display: block;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-error, #c0392b);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: background var(--transition-fast);
+
+  &:hover {
+    background: var(--color-surface-hover, rgb(0 0 0 / 5%));
+  }
+}
+
 .signinLink {
   color: var(--color-accent);
   font-weight: 700;
@@ -152,20 +242,6 @@
 
   &:hover {
     opacity: 0.85;
-  }
-}
-
-.ordersLink {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  color: var(--color-text-primary);
-  font-size: 14px;
-  font-weight: 600;
-  transition: color var(--transition-fast);
-
-  &:hover {
-    color: var(--color-accent);
   }
 }
 

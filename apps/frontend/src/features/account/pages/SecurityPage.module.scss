@@ -101,6 +101,19 @@
   }
 }
 
+.qrPlaceholder {
+  width: 180px;
+  height: 180px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-hover);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
 .primaryBtn {
   border: 0;
   border-radius: var(--radius-md);

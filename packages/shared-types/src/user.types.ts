@@ -8,6 +8,7 @@ export interface User {
   role: UserRole;
   isActive: boolean;
   emailVerified: boolean;
+  totpEnabled: boolean;
   createdAt: string;
   updatedAt: string;
 }

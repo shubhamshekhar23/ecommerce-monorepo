@@ -9,7 +9,7 @@ import { loginApi, getMeApi } from "../api/auth.api";
 import { useAuthStore } from "@/store/auth.store";
 import { logger } from "@/shared/logger";
 import { handleMutationError } from "@/shared/mutationError";
-import type { LoginPayload } from "../interfaces";
+import type { LoginPayload, LoginResponse } from "../interfaces";
 
 export function useLogin() {
   const router = useRouter();
@@ -18,7 +18,10 @@ export function useLogin() {
 
   const mutation = useMutation({
     mutationFn: (payload: LoginPayload) => loginApi(payload),
-    onSuccess: async (data) => {
+    onSuccess: async (data: LoginResponse) => {
+      // 2FA required — LoginForm holds the twoFactorToken and shows the interstitial.
+      if ("twoFactorRequired" in data) return;
+
       // Seed store with partial user so the token is available for the /users/me call.
       setAuth(data.user, data.accessToken, data.refreshToken);
 

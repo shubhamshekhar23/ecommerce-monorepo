@@ -154,6 +154,7 @@ export class UsersService {
       role: user.role,
       isActive: user.isActive,
       emailVerified: user.emailVerified,
+      totpEnabled: user.totpEnabled,
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
       phone: user.phone,

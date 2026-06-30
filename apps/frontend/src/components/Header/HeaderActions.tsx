@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useAuthStore } from "@/store/auth.store";
 import { useLogout } from "@/features/auth/hooks";
@@ -12,72 +13,110 @@ export function HeaderActions() {
   const { mutate: logout } = useLogout();
   const { data: cart } = useCart();
   const cartItemCount = cart?.itemCount ?? 0;
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    const onEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("mousedown", onClickOutside);
+    document.addEventListener("keydown", onEscape);
+    return () => {
+      document.removeEventListener("mousedown", onClickOutside);
+      document.removeEventListener("keydown", onEscape);
+    };
+  }, [menuOpen]);
+
+  const close = () => setMenuOpen(false);
 
   return (
     <div className={styles.actions}>
-      <div className={styles.account}>
-        {user ? (
-          <>
-            <span className={styles.greeting}>Hello, {user.firstName}</span>
-            <button onClick={() => logout()} className={styles.signoutLink}>
-              Sign out
-            </button>
-          </>
-        ) : (
-          <>
-            <span className={styles.greeting}>Welcome back</span>
-            <Link href="/login" className={styles.signinLink}>
-              Sign in
-            </Link>
-          </>
-        )}
-      </div>
-
-      <ThemeToggle />
-      <span className={styles.divider} aria-hidden="true" />
-
-      <Link href="/orders" className={styles.ordersLink}>
-        <svg
-          width="15"
-          height="15"
-          viewBox="0 0 24 24"
-          fill="none"
-          aria-hidden="true"
-        >
-          <rect
-            x="3"
-            y="3"
-            width="18"
-            height="18"
-            rx="2"
-            stroke="currentColor"
-            strokeWidth="1.8"
-          />
-          <path d="M3 9h18" stroke="currentColor" strokeWidth="1.8" />
-          <path d="M9 21V9" stroke="currentColor" strokeWidth="1.8" />
-        </svg>
-        Orders
-      </Link>
-
-      {user?.role === "ADMIN" && (
-        <Link href="/admin" className={styles.adminLink}>
-          <svg
-            width="13"
-            height="13"
-            viewBox="0 0 24 24"
-            fill="none"
-            aria-hidden="true"
+      {user ? (
+        <div className={styles.userMenu} ref={menuRef}>
+          <button
+            className={styles.userMenuTrigger}
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-expanded={menuOpen}
+            aria-haspopup="menu"
           >
-            <path
-              d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinejoin="round"
-            />
-          </svg>
-          Admin Dashboard
-        </Link>
+            Hello, {user.firstName}
+            <svg
+              className={`${styles.chevron} ${menuOpen ? styles.chevronOpen : ""}`}
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M6 9l6 6 6-6"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+
+          {menuOpen && (
+            <div className={styles.userMenuPanel} role="menu">
+              <Link
+                href="/account/profile"
+                className={styles.userMenuLink}
+                role="menuitem"
+                onClick={close}
+              >
+                My Account
+              </Link>
+              <Link
+                href="/orders"
+                className={styles.userMenuLink}
+                role="menuitem"
+                onClick={close}
+              >
+                Orders
+              </Link>
+              {user.role === "ADMIN" && (
+                <Link
+                  href="/admin"
+                  className={styles.userMenuLink}
+                  role="menuitem"
+                  onClick={close}
+                >
+                  Admin Dashboard
+                </Link>
+              )}
+              <div className={styles.userMenuDivider} />
+              <button
+                className={styles.userMenuSignout}
+                role="menuitem"
+                onClick={() => {
+                  logout();
+                  close();
+                }}
+              >
+                Sign out
+              </button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className={styles.account}>
+          <span className={styles.greeting}>Welcome back</span>
+          <Link href="/login" className={styles.signinLink}>
+            Sign in
+          </Link>
+        </div>
       )}
+
+      <span className={styles.divider} aria-hidden="true" />
 
       <Link
         href="/cart"
@@ -113,6 +152,8 @@ export function HeaderActions() {
             : ""}
         </span>
       </Link>
+
+      <ThemeToggle />
     </div>
   );
 }

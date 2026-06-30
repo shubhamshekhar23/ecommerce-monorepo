@@ -29,6 +29,7 @@ export function LoginForm({ sessionExpired = false }: LoginFormProps) {
   const { mutate: verify2fa, isPending: isVerifying } = use2faVerify();
   const setAuth = useAuthStore((s) => s.setAuth);
   const [twoFactorPending, setTwoFactorPending] = useState(false);
+  const [twoFactorToken, setTwoFactorToken] = useState("");
   const [tfaCode, setTfaCode] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
@@ -44,9 +45,9 @@ export function LoginForm({ sessionExpired = false }: LoginFormProps) {
     login(
       { email: values.email, password: values.password },
       {
-        onError: (err: unknown) => {
-          // Backend returns 202 with requires2fa flag — detect via business error message
-          if (err instanceof Error && err.message?.includes("2fa")) {
+        onSuccess: (data) => {
+          if ("twoFactorRequired" in data) {
+            setTwoFactorToken(data.twoFactorToken);
             setTwoFactorPending(true);
           }
         },
@@ -56,16 +57,24 @@ export function LoginForm({ sessionExpired = false }: LoginFormProps) {
 
   const handleTfaSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    verify2fa(tfaCode, {
-      onSuccess: async (tokens) => {
-        const { default: apiClient } = await import("@/shared/apiClient");
-        const res = await apiClient.get("/users/me");
-        setAuth(res.data, tokens.accessToken, tokens.refreshToken);
-        const callbackUrl =
-          new URLSearchParams(window.location.search).get("callbackUrl") ?? "/";
-        window.location.href = callbackUrl;
+    verify2fa(
+      { code: tfaCode, twoFactorToken },
+      {
+        onSuccess: async (tokens) => {
+          const { default: apiClient, tokenStorage } =
+            await import("@/shared/apiClient");
+          // Store tokens before fetching /users/me so the request interceptor
+          // picks up the new access token.
+          tokenStorage.setTokens(tokens.accessToken, tokens.refreshToken);
+          const res = await apiClient.get("/users/me");
+          setAuth(res.data, tokens.accessToken, tokens.refreshToken);
+          const callbackUrl =
+            new URLSearchParams(window.location.search).get("callbackUrl") ??
+            "/";
+          window.location.href = callbackUrl;
+        },
       },
-    });
+    );
   };
 
   if (twoFactorPending) {

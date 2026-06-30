@@ -3,6 +3,8 @@ export type {
   LoginPayload,
   RegisterPayload,
   AuthResponse,
+  TwoFactorPendingResponse,
+  LoginResponse,
   User,
   UserRole,
 } from "@ecommerce/shared-types";

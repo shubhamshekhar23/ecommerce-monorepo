@@ -6,11 +6,12 @@ import type {
   LoginPayload,
   RegisterPayload,
   AuthResponse,
+  LoginResponse,
 } from "../interfaces";
 import type { User } from "@/store/auth.store";
 
-export async function loginApi(payload: LoginPayload): Promise<AuthResponse> {
-  const response = await apiClient.post<AuthResponse>("/auth/login", payload);
+export async function loginApi(payload: LoginPayload): Promise<LoginResponse> {
+  const response = await apiClient.post<LoginResponse>("/auth/login", payload);
   return response.data;
 }
 

@@ -8,6 +8,7 @@ export const mockUser: AuthResponse["user"] = {
   role: "USER",
   isActive: true,
   emailVerified: true,
+  totpEnabled: false,
   createdAt: "2024-01-01T00:00:00.000Z",
   updatedAt: "2024-01-01T00:00:00.000Z",
 };

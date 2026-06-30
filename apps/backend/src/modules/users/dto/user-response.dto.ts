@@ -29,6 +29,9 @@ export class UserResponseDto implements User {
   @ApiProperty()
   emailVerified!: boolean;
 
+  @ApiProperty()
+  totpEnabled!: boolean;
+
   /*
    - JSON serialisation produces ISO-8601 strings; the shared User type
    - uses string for timestamps to reflect the wire format.

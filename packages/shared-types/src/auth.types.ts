@@ -17,3 +17,10 @@ export interface AuthResponse {
   refreshToken: string;
   user: User;
 }
+
+export interface TwoFactorPendingResponse {
+  twoFactorRequired: true;
+  twoFactorToken: string;
+}
+
+export type LoginResponse = AuthResponse | TwoFactorPendingResponse;

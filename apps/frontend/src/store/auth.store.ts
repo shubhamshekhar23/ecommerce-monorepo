@@ -14,6 +14,7 @@ export interface User {
   role: "USER" | "ADMIN" | "VENDOR";
   isActive: boolean;
   emailVerified: boolean;
+  totpEnabled: boolean;
   createdAt: string;
   updatedAt: string;
 }

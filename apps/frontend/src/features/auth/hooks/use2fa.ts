@@ -6,13 +6,8 @@ import apiClient from "@/shared/apiClient";
 import { handleMutationError } from "@/shared/mutationError";
 
 interface Setup2faResponse {
-  otpauthUrl: string;
+  uri: string;
   secret: string;
-  qrCodeDataUrl: string;
-}
-
-interface Enable2faResponse {
-  backupCodes: string[];
 }
 
 export function use2faSetup() {
@@ -27,11 +22,8 @@ export function use2faSetup() {
 
 export function use2faEnable() {
   return useMutation({
-    mutationFn: async (code: string): Promise<Enable2faResponse> => {
-      const res = await apiClient.post<Enable2faResponse>("/auth/2fa/enable", {
-        code,
-      });
-      return res.data;
+    mutationFn: async (code: string): Promise<void> => {
+      await apiClient.post("/auth/2fa/enable", { code });
     },
     onSuccess: () => toast.success("Two-factor authentication enabled."),
     onError: (err) =>
@@ -41,13 +33,17 @@ export function use2faEnable() {
 
 export function use2faVerify() {
   return useMutation({
-    mutationFn: async (
-      code: string,
-    ): Promise<{ accessToken: string; refreshToken: string }> => {
+    mutationFn: async ({
+      code,
+      twoFactorToken,
+    }: {
+      code: string;
+      twoFactorToken: string;
+    }): Promise<{ accessToken: string; refreshToken: string }> => {
       const res = await apiClient.post<{
         accessToken: string;
         refreshToken: string;
-      }>("/auth/2fa/verify", { code });
+      }>("/auth/2fa/verify", { code, twoFactorToken });
       return res.data;
     },
     onError: (err) =>
