@@ -1,11 +1,19 @@
 import apiClient from "@/shared/apiClient";
 import type { Review, CreateReviewPayload } from "../interfaces";
 
+interface ProductReviewsResponse {
+  reviews: Review[];
+  avgRating: number | null;
+  reviewCount: number;
+}
+
 export async function getProductReviewsApi(
   productId: string,
 ): Promise<Review[]> {
-  const res = await apiClient.get<Review[]>(`/reviews/products/${productId}`);
-  return res.data;
+  const res = await apiClient.get<ProductReviewsResponse>(
+    `/reviews/products/${productId}`,
+  );
+  return res.data.reviews;
 }
 
 export async function createReviewApi(
