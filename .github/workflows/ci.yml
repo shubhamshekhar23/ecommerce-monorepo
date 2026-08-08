@@ -40,7 +40,7 @@ jobs:
       frontend: ${{ steps.filter.outputs.frontend }}
       any-service: ${{ steps.filter.outputs.any-service }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: dorny/paths-filter@v3
         id: filter
@@ -81,7 +81,7 @@ jobs:
         working-directory: apps/backend
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v4
         with:
@@ -123,7 +123,7 @@ jobs:
     if: needs.detect-changes.outputs.backend == 'true'
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -173,7 +173,7 @@ jobs:
           - 6379:6379
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v4
         with:
@@ -287,7 +287,7 @@ jobs:
         if: matrix.changed != 'true' && github.event_name != 'workflow_dispatch'
         run: echo "No changes in ${{ matrix.service }} — skipping build."
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         if: matrix.changed == 'true' || github.event_name == 'workflow_dispatch'
 
       - uses: docker/setup-buildx-action@v3
@@ -341,7 +341,7 @@ jobs:
       needs.detect-changes.outputs.any-service == 'true'
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v4
         with:
@@ -392,7 +392,7 @@ jobs:
         working-directory: apps/frontend
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v4
         with:
@@ -431,7 +431,7 @@ jobs:
         working-directory: apps/frontend
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v4
         with:
@@ -469,7 +469,7 @@ jobs:
         working-directory: apps/frontend
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v4
         with:
@@ -509,7 +509,7 @@ jobs:
         working-directory: apps/frontend
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v4
         with:
@@ -563,7 +563,7 @@ jobs:
         working-directory: apps/frontend
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v4
         with:
@@ -610,7 +610,7 @@ jobs:
         working-directory: apps/backend
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v4
         with:
@@ -657,7 +657,7 @@ jobs:
       (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
       github.event_name == 'workflow_dispatch'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up kubeconfig
         run: |
@@ -760,7 +760,7 @@ jobs:
       (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
       github.event_name == 'workflow_dispatch'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up kubeconfig
         run: |
